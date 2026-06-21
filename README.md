@@ -1,6 +1,8 @@
 # wvdas - 위저드리 대프니(Wizardry Daphne) 자동 파밍 스크립트
 [English (v1.8.20)](file:///c:/Users/momo3/Documents/antigravity/README.en.md) | [中文](file:///c:/Users/momo3/Documents/antigravity/README.md)
 
+한국어 패치 버전입니다.
+
 GUI가 내장된 위저드리 모바일 게임(위저드리 대프니)의 자동 사냥 스크립트입니다.
 현재 2.0 버전 업데이트가 완료되었습니다!
 
