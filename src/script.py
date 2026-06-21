@@ -340,9 +340,9 @@ def CheckAndRecoverDevice(setting : FarmConfig, runtimeContext: RuntimeContext, 
                     stderr=subprocess.DEVNULL,
                     check=False
                 )
-            logger.info(_("已尝试终止模拟器进程: {a}".format(a=emulator_name)))
+            logger.info(_("已尝试终止模拟器进程: {a}").format(a=emulator_name))
         except Exception as e:
-            logger.error(_("终止模拟器进程时出错: {a}".format(a=str(e))))
+            logger.error(_("终止模拟器进程时出错: {a}").format(a=str(e)))
         finally:
             # 重置进程号
             runtimeContext._RUNNING_EMU_PID = None
@@ -350,12 +350,12 @@ def CheckAndRecoverDevice(setting : FarmConfig, runtimeContext: RuntimeContext, 
     def StartEmulator():
         hd_player_path = setting.EMU_PATH
         if not os.path.exists(hd_player_path):
-            logger.error(_("模拟器启动程序不存在: {a}".format(a=hd_player_path)))
+            logger.error(_("模拟器启动程序不存在: {a}").format(a=hd_player_path))
             return False
         
         cmd = ("\"{hd}\" control -v {a}").format(hd=hd_player_path, a=setting.EMU_INDEX)
         try:
-            logger.info(_("启动模拟器: {a}".format(a=cmd)))
+            logger.info(_("启动模拟器: {a}").format(a=cmd))
 
             # 启动前检查进程
             pre_result_list = CheckEmulator()
@@ -378,10 +378,10 @@ def CheckAndRecoverDevice(setting : FarmConfig, runtimeContext: RuntimeContext, 
             if new_tasks:
                 # 模拟器启动成功，pid捕获成功
                 runtimeContext._RUNNING_EMU_PID = int(new_tasks[0])
-                logger.info(_("模拟器启动开始，进程号为{a}".format(a=runtimeContext._RUNNING_EMU_PID)))
+                logger.info(_("模拟器启动开始，进程号为{a}").format(a=runtimeContext._RUNNING_EMU_PID))
 
         except Exception as e:
-            logger.error(_("启动模拟器失败: {a}".format(a=str(e))))
+            logger.error(_("启动模拟器失败: {a}").format(a=str(e)))
             return False
         
         logger.info(_("等待模拟器启动..."))
@@ -434,7 +434,7 @@ def CheckAndRecoverDevice(setting : FarmConfig, runtimeContext: RuntimeContext, 
                 logger.debug("{a}".format(a=results_list))
                 if len(results_list)==1:
                     runtimeContext._RUNNING_EMU_PID = int(results_list[0])
-                    logger.info(_("模拟器进程号为{a}.".format(a=runtimeContext._RUNNING_EMU_PID)))
+                    logger.info(_("模拟器进程号为{a}.").format(a=runtimeContext._RUNNING_EMU_PID))
                 else:
                     logger.info(_("\n\n***********\n有多个模拟器已经启动, 无法识别进程号. 当需要重启模拟器的时候, 会重启所有模拟器.\n为了避免此问题, 请关闭目标模拟器, 并使用本脚本自动启动模拟器.\n\n"))
                 break
@@ -449,13 +449,13 @@ def CheckAndRecoverDevice(setting : FarmConfig, runtimeContext: RuntimeContext, 
                     break
                 logger.info(_("无法连接. 检查adb端口."))
 
-            logger.info(_("连接失败: {a}".format(a=result.stderr.strip())))
+            logger.info(_("连接失败: {a}").format(a=result.stderr.strip()))
             time.sleep(2)
             KillEmulator()
             KillAdb()
             time.sleep(2)
         except Exception as e:
-            logger.error(_("重启ADB服务时出错: {a}".format(a=e)))
+            logger.error(_("重启ADB服务时出错: {a}").format(a=e))
             time.sleep(2)
             KillEmulator()
             KillAdb()
@@ -473,10 +473,10 @@ def CheckAndRecoverDevice(setting : FarmConfig, runtimeContext: RuntimeContext, 
         target_device = "{a}".format(a=setting.ADB_ADRESS)
         for device in devices:
             if device.serial == target_device:
-                logger.info(_("成功创建设备对象: {a}".format(a=device.serial)))
+                logger.info(_("成功创建设备对象: {a}").format(a=device.serial))
                 return device
     except Exception as e:
-        logger.error(_("创建ADB设备时出错: {a}".format(a=e)))
+        logger.error(_("创建ADB设备时出错: {a}").format(a=e))
     
     return None
 ##################################################################
@@ -535,7 +535,7 @@ def Factory():
             logger.info(_("ADB服务成功启动，设备已连接."))
     def DeviceShell(cmdStr):
         while True:
-            logger.debug(_("DeviceShell {a}".format(a=cmdStr)))
+            logger.debug(_("DeviceShell {a}").format(a=cmdStr))
             exception = None
             result = None
             completed = Event()
@@ -556,7 +556,7 @@ def Factory():
             try:
                 if not completed.wait(timeout=7):
                     # 线程超时未完成
-                    logger.warning(_("ADB命令执行超时: {a}".format(a=cmdStr)))
+                    logger.warning(_("ADB命令执行超时: {a}").format(a=cmdStr))
                     raise TimeoutError(_("ADB命令在7秒内未完成"))
                 
                 if exception is not None:
@@ -599,7 +599,7 @@ def Factory():
                 )
                 
                 if process_result.stderr:
-                    logger.error(_("截图命令报错: {a}".format(a=process_result.stderr.decode('utf-8', errors='ignore'))))
+                    logger.error(_("截图命令报错: {a}").format(a=process_result.stderr.decode('utf-8', errors='ignore')))
                     raise RuntimeError(_("截图命令报错"))
 
                 raw_data = process_result.stdout
@@ -621,7 +621,7 @@ def Factory():
                     # 通常是多了4个字节的结束符，直接切掉尾部多余的
                     pixels_data = pixels_data[:expected_pixels]
                 else:
-                    logger.error(_("数据长度校验失败: 头部声明 {a}x{b}, 实际收到 {c}, 期望 {d}".format(a=w,b=h,c=len(pixels_data), d=expected_pixels)))
+                    logger.error(_("数据长度校验失败: 头部声明 {a}x{b}, 实际收到 {c}, 期望 {d}").format(a=w,b=h,c=len(pixels_data), d=expected_pixels))
                     raise RuntimeError(_("截图数据不完整"))
 
                 image = np.frombuffer(pixels_data, dtype=np.uint8)
@@ -633,12 +633,12 @@ def Factory():
                
                 if (current_h, current_w) != (1600, 900):
                     if (current_h, current_w) == (900, 1600):
-                        logger.error(_("截图尺寸错误: 当前{a}, 检测为横屏.".format(a=image.shape)))  
+                        logger.error(_("截图尺寸错误: 当前{a}, 检测为横屏.").format(a=image.shape))  
                         # 不能截图, 截图就爆栈了.
                         restartGame(skip_screenshot=True)
                     else:
-                        logger.error(_("截图尺寸错误: 期望(1600,900), 实际({a},{b}).".format(a=current_h,b=current_w)))
-                        raise RuntimeError(_("分辨率异常: {a}x{b}".format(a=current_w, b=current_h)))
+                        logger.error(_("截图尺寸错误: 期望(1600,900), 实际({a},{b}).").format(a=current_h,b=current_w))
+                        raise RuntimeError(_("分辨率异常: {a}x{b}").format(a=current_w, b=current_h))
 
                 # logger.info(f"{time.time()-t}")
 
@@ -650,28 +650,34 @@ def Factory():
                 ResetDevice(force_restart_adb=True)
                 
             except Exception as e:
-                logger.debug(_("截图发生异常: {a}".format(a=e)))
+                logger.debug(_("截图发生异常: {a}").format(a=e))
                 if isinstance(e, (AttributeError, RuntimeError, ConnectionResetError, cv2.error)):
                     logger.info(_("ADB操作失败/数据错误, 尝试重启ADB或模拟器程序..."))
                     ResetDevice()
                 time.sleep(1)
     def _check(screenImage, template, roi = None, outputMatchResult = False):
+        if screenImage is None or template is None:
+            logger.error(_("图像匹配输入为空(screenImage or template is None)"))
+            return None, 0.0
         screenshot = screenImage.copy()
         pos = None
         search_area = CutRoI(screenshot, roi)
+
+        t_h, t_w = template.shape[:2]
+        s_h, s_w = search_area.shape[:2]
+        if t_h > s_h or t_w > s_w:
+            scale = min(s_w / t_w, s_h / t_h)
+            new_w = max(1, int(t_w * scale))
+            new_h = max(1, int(t_h * scale))
+            logger.debug(_("模板尺寸{a}大于搜索区域{b}. 已调整模板尺寸为{c}.").format(a=(t_h, t_w), b=(s_h, s_w), c=(new_h, new_w)))
+            template = cv2.resize(template, (new_w, new_h), interpolation=cv2.INTER_AREA)
+
         try:
             result = cv2.matchTemplate(search_area, template, cv2.TM_CCOEFF_NORMED)
+            underscore, max_val, underscore, max_loc = cv2.minMaxLoc(result)
         except Exception as e:
-                logger.error("{a}".format(a=e))
-                logger.info("{a}".format(a=e))
-                if isinstance(e, (cv2.error)):
-                    logger.info(_("cv2异常."))
-                    # timestamp = datetime.now().strftime("cv2_%Y%m%d_%H%M%S")  # 格式：20230825_153045
-                    # file_path = os.path.join(LOGS_FOLDER_NAME, f"{timestamp}.png")
-                    # cv2.imwrite(file_path, ScreenShot())
-                    return None
-
-        underscore, max_val, underscore, max_loc = cv2.minMaxLoc(result)
+            logger.error(_("cv2.matchTemplate 异常: {a}").format(a=e))
+            return None, 0.0
 
         if outputMatchResult:
             cv2.imwrite("origin.png", search_area)
@@ -689,15 +695,15 @@ def Factory():
         pos, max_val = _check(screenImage, LoadTemplateImage(shortPathOfTarget), roi, outputMatchResult)
 
         if max_val < 0.8:
-            logger.debug(_("匹配失败: {a}的匹配程度为{b:.2f}%, 不足阈值.".format(a=shortPathOfTarget, b=max_val*100)))
+            logger.debug(_("匹配失败: {a}的匹配程度为{b:.2f}%, 不足阈值.").format(a=shortPathOfTarget, b=max_val*100))
             return None
         else:
-            logger.debug(_("匹配成功: {a}的匹配程度为{b:.2f}%, 位于{c}.".format(a=shortPathOfTarget, b=max_val*100,c=pos)))
+            logger.debug(_("匹配成功: {a}的匹配程度为{b:.2f}%, 位于{c}.").format(a=shortPathOfTarget, b=max_val*100,c=pos))
             return pos
     def CheckHow(screenImage, shortPathOfTarget, roi = None, outputMatchResult = False):
         pos, max_val = _check(screenImage, LoadTemplateImage(shortPathOfTarget), roi, outputMatchResult)
 
-        logger.debug(_("匹配检测: {a}的匹配程度为{b:.2f}%, 位于{c}.".format(a=shortPathOfTarget,b=max_val*100, c=pos)))
+        logger.debug(_("匹配检测: {a}的匹配程度为{b:.2f}%, 位于{c}.").format(a=shortPathOfTarget,b=max_val*100, c=pos))
         return max_val
     def CheckIf_MultiRect(screenImage, shortPathOfTarget):
         template = LoadTemplateImage(shortPathOfTarget)
@@ -724,15 +730,21 @@ def Factory():
         return pos_list
     def CheckIf_FocusCursor(screenImage, shortPathOfTarget):
         template = LoadTemplateImage(shortPathOfTarget)
+        if template is None or screenImage is None:
+            return False
         screenshot = screenImage
-        result = cv2.matchTemplate(screenshot, template, cv2.TM_CCOEFF_NORMED)
+        try:
+            result = cv2.matchTemplate(screenshot, template, cv2.TM_CCOEFF_NORMED)
+            underscore, max_val, underscore, max_loc = cv2.minMaxLoc(result)
+        except Exception as e:
+            logger.error(_("CheckIf_FocusCursor 异常: {a}").format(a=e))
+            return False
 
         threshold = 0.80
-        underscore, max_val, underscore, max_loc = cv2.minMaxLoc(result)
-        logger.debug(_("搜索到疑似{a}, 匹配程度:{b:.2f}%".format(a=shortPathOfTarget, b=max_val*100)))
+        logger.debug(_("搜索到疑似{a}, 匹配程度:{b:.2f}%").format(a=shortPathOfTarget, b=max_val*100))
         if max_val >= threshold:
             if max_val<=0.9:
-                logger.debug(_("警告: {a}的匹配程度超过了80%但不足90%".format(a=shortPathOfTarget)))
+                logger.debug(_("警告: {a}的匹配程度超过了80%但不足90%").format(a=shortPathOfTarget))
 
             cropped = screenshot[max_loc[1]:max_loc[1]+template.shape[0], max_loc[0]:max_loc[0]+template.shape[1]]
             SIZE = 15 # size of cursor 光标就是这么大
@@ -747,7 +759,7 @@ def Factory():
             gray1 = cv2.cvtColor(midimg_scn, cv2.COLOR_BGR2GRAY)
             gray2 = cv2.cvtColor(miding_ptn, cv2.COLOR_BGR2GRAY)
             mean_diff = cv2.absdiff(gray1, gray2).mean()/255
-            logger.debug(_("中心匹配检查:{a:.2f}".format(a=mean_diff)))
+            logger.debug(_("中心匹配检查:{a:.2f}").format(a=mean_diff))
 
             if mean_diff<0.2:
                 return True
@@ -760,7 +772,7 @@ def Factory():
         for i in range(4):
             pos, max_val = _check(cropped, LoadTemplateImage(f"cursor_{i}"))
 
-            logger.debug(_("目标格搜索{a}, 匹配程度:{b:.2f}%".format(a=position, b=max_val*100)))
+            logger.debug(_("目标格搜索{a}, 匹配程度:{b:.2f}%").format(a=position, b=max_val*100))
             if max_val > 0.8:
                 logger.debug(_("已达到检测阈值."))
                 return None 
@@ -776,7 +788,7 @@ def Factory():
             # 验证楼层
             pos, max_val = _check(screenshot, LoadTemplateImage(targetInfo.target))
 
-            logger.debug(_("搜索楼层标识{a}, 匹配程度:{b:.2f}%".format(a=targetInfo.target,b=max_val*100)))
+            logger.debug(_("搜索楼层标识{a}, 匹配程度:{b:.2f}%").format(a=targetInfo.target,b=max_val*100))
             if max_val > threshold:
                 logger.info(_("楼层正确, 判定为已通过"))
                 return None
@@ -785,7 +797,7 @@ def Factory():
         else: #equal: targetInfo.target IN stair_img
             pos, max_val = _check(cropped, LoadTemplateImage(targetInfo.target))
 
-            logger.debug(_("搜索楼梯{a}, 匹配程度:{b:.2f}%".format(a=targetInfo.target, b=max_val*100)))
+            logger.debug(_("搜索楼梯{a}, 匹配程度:{b:.2f}%").format(a=targetInfo.target, b=max_val*100))
             if max_val > threshold:
                 logger.info(_("判定为楼梯存在, 尚未通过."))
                 return position
@@ -801,7 +813,7 @@ def Factory():
         if (correctStair != None) and isinstance(correctStair, str) and correctStair.startswith('stair_'):
             pos, max_val = _check(screenshot, LoadTemplateImage(correctStair))
 
-            logger.debug(_("楼层验证中, 目标楼层标识{a}, 匹配程度:{b:.2f}%".format(a=correctStair,b=max_val*100)))
+            logger.debug(_("楼层验证中, 目标楼层标识{a}, 匹配程度:{b:.2f}%").format(a=correctStair,b=max_val*100))
             if max_val > threshold:
                 logger.info(_("楼层验证判定通过, 当前处于正确楼层."))
                 isInCorrectStair = True
@@ -817,7 +829,7 @@ def Factory():
         if isInCorrectStair:
             pos, max_val = _check(screenshot, LoadTemplateImage(target))
 
-            logger.debug(_("哈肯搜索, 目标{a}, 匹配程度:{b:.2f}%".format(a=target,b=max_val*100)))
+            logger.debug(_("哈肯搜索, 目标{a}, 匹配程度:{b:.2f}%").format(a=target,b=max_val*100))
             if max_val > threshold:
                 logger.info(_("哈肯搜索, 已找到哈肯."))
                 return pos
@@ -826,16 +838,22 @@ def Factory():
     def CheckIf_fastForwardOff(screenImage):
         position = [240,1490]
         template =  LoadTemplateImage(f"fastforward_off")
+        if template is None or screenImage is None:
+            return None
         screenshot =  screenImage
         cropped = screenshot[position[1]-50:position[1]+50, position[0]-50:position[0]+50]
-        
-        result = cv2.matchTemplate(cropped, template, cv2.TM_CCOEFF_NORMED)
-        underscore, max_val, underscore, max_loc = cv2.minMaxLoc(result)
+        try:
+            result = cv2.matchTemplate(cropped, template, cv2.TM_CCOEFF_NORMED)
+            underscore, max_val, underscore, max_loc = cv2.minMaxLoc(result)
+        except Exception as e:
+            logger.error(_("CheckIf_fastForwardOff 异常: {a}").format(a=e))
+            return None
+            
         threshold = 0.80
         pos=[position[0]+max_loc[0] - cropped.shape[1]//2, position[1]+max_loc[1] -cropped.shape[0]//2]
 
         if max_val > threshold:
-            logger.info(_("快进未开启, 即将开启.{a}".format(a=pos)))
+            logger.info(_("快进未开启, 即将开启.{a}").format(a=pos))
             return pos
         return None
     def Press(pos):
@@ -919,7 +937,7 @@ def Factory():
                                     if (waittime:=(time.time()-t)) < 0.1:
                                         Sleep(0.1-waittime)
                                 else:
-                                    logger.debug(_("错误: 非法的目标{a}.".format(a=p)))
+                                    logger.debug(_("错误: 非法的目标{a}.").format(a=p))
                                     setting._FORCESTOPING.set()
                                     return None
                     else:
@@ -931,7 +949,7 @@ def Factory():
                             return None
                 Sleep(waitTime) # and wait
 
-            logger.info(_("{a}次截图依旧没有找到目标{b}, 疑似卡死. 重启游戏.".format(a=setting.MAX_TRY_LIMIT, b=targetPattern)))
+            logger.info(_("{a}次截图依旧没有找到目标{b}, 疑似卡死. 重启游戏.").format(a=setting.MAX_TRY_LIMIT, b=targetPattern))
             Sleep()
             restartGame()
             return None # restartGame会抛出异常 所以直接返回none就行了
@@ -951,12 +969,12 @@ def Factory():
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")  # 格式：20230825_153045
             file_path = os.path.join(LOGS_FOLDER_NAME, f"{timestamp}.png")
             cv2.imwrite(file_path, ScreenShot())
-            logger.info(_("重启前截图已保存在{a}中.".format(a=file_path)))
+            logger.info(_("重启前截图已保存在{a}中.").format(a=file_path))
 
         package_name = "jp.co.drecom.wizardry.daphne"
 
         runtimeContext._CRASHCOUNTER +=1
-        logger.info(_("崩溃计数: {a}\n崩溃计数超过{b}次后会重启模拟器.".format(a=runtimeContext._CRASHCOUNTER, b=setting.MAX_CRASH_LIMIT)))
+        logger.info(_("崩溃计数: {a}\n崩溃计数超过{b}次后会重启模拟器.").format(a=runtimeContext._CRASHCOUNTER, b=setting.MAX_CRASH_LIMIT))
         if runtimeContext._CRASHCOUNTER > setting.MAX_CRASH_LIMIT:
             runtimeContext._CRASHCOUNTER = 0
             force_restart_EMU = True
@@ -973,7 +991,7 @@ def Factory():
         Sleep(10)
         logs = DeviceShell("logcat -d | grep -i \"unable to initialize.*graphics api\"")
         if logs.strip():
-            logger.error(_("检测到崩溃日志, 关闭模拟器重启.{a}".format(a=logs)))
+            logger.error(_("检测到崩溃日志, 关闭模拟器重启.{a}").format(a=logs))
             restartGame(skip_screenshot = False, force_restart_EMU = True)
         raise RestartSignal()
     class RestartSignal(Exception):
@@ -1050,11 +1068,11 @@ def Factory():
 
         if runtimeContext._LAPTIME!= 0:
             runtimeContext._TOTALTIME = runtimeContext._TOTALTIME + time.time() - runtimeContext._LAPTIME
-            summary_text = _("已完成{a}次\"{b}\"地下城.\n总计{c}秒.上次用时:{d}秒.\n".format(a=runtimeContext._COUNTERDUNG, b=setting.FARM_TARGET_TEXT, c=round(runtimeContext._TOTALTIME,2), d=round(time.time()-runtimeContext._LAPTIME,2)))
+            summary_text = _("已完成{a}次\"{b}\"地下城.\n总计{c}秒.上次用时:{d}秒.\n").format(a=runtimeContext._COUNTERDUNG, b=setting.FARM_TARGET_TEXT, c=round(runtimeContext._TOTALTIME,2), d=round(time.time()-runtimeContext._LAPTIME,2))
             if runtimeContext._COUNTERCHEST > 0:
-                summary_text += f"箱子效率{round(runtimeContext._TOTALTIME/runtimeContext._COUNTERCHEST,2)}秒/箱.\n累计开箱{runtimeContext._COUNTERCHEST}次,开箱平均耗时{round(runtimeContext._TIME_CHEST_TOTAL/runtimeContext._COUNTERCHEST,2)}秒.\n"
+                summary_text += _("箱子效率{a}秒/箱.\n累计开箱{b}次,开箱平均耗时{c}秒.\n").format(a=round(runtimeContext._TOTALTIME/runtimeContext._COUNTERCHEST,2), b=runtimeContext._COUNTERCHEST, c=round(runtimeContext._TIME_CHEST_TOTAL/runtimeContext._COUNTERCHEST,2))
             if runtimeContext._COUNTERCOMBAT > 0:
-                summary_text += _("累计战斗{a}次.战斗平均用时{b}秒.".format(a=runtimeContext._COUNTERCOMBAT, b=round(runtimeContext._TIME_COMBAT_TOTAL/runtimeContext._COUNTERCOMBAT,2)))
+                summary_text += _("累计战斗{a}次.战斗平均用时{b}秒.").format(a=runtimeContext._COUNTERCOMBAT, b=round(runtimeContext._TIME_COMBAT_TOTAL/runtimeContext._COUNTERCOMBAT,2))
             logger.info("{a}{b}".format(a=runtimeContext._IMPORTANTINFO, b=summary_text),extra={"summary": True})
         # 圈数计时器
         runtimeContext._LAPTIME = time.time()
@@ -1133,7 +1151,7 @@ def Factory():
             logger.info(_("因为面板设置, 跳过了调整因果."))
             CSC_symbol = None
 
-        logger.info(_("开始时间跳跃, 本次跳跃目标:{a}".format(a=target)))
+        logger.info(_("开始时间跳跃, 本次跳跃目标:{a}").format(a=target))
 
         # 调整条目以找到跳跃目标
         FindCoordsOrElseExecuteFallbackAndWait("cursedWheelTitle",["cursedWheel","ruins","startdownload",[1,1]],1)
@@ -1218,7 +1236,7 @@ def Factory():
         counter = 0
         while 1:
             screen = ScreenShot()
-            logger.info(_("状态检查中...(第{a}次)".format(a=counter+1)))
+            logger.info(_("状态检查中...(第{a}次)").format(a=counter+1))
 
             if setting._FORCESTOPING.is_set():
                 return State.Quit, DungeonState.Quit, screen
@@ -1340,8 +1358,8 @@ def Factory():
                         num = num - 1
                         new_str = f"+{num}"
 
-                    logger.info(_("即将进行善恶值调整. 剩余次数:{a}".format(a=new_str)))
-                    AddImportantInfo(_("新的善恶:{a}".format(a=new_str)))
+                    logger.info(_("即将进行善恶值调整. 剩余次数:{a}").format(a=new_str))
+                    AddImportantInfo(_("新的善恶:{a}").format(a=new_str))
                     setting.KARMA_ADJUST = new_str
                     SetOneVarInGeneralConfig("KARMA_ADJUST",setting.KARMA_ADJUST)
                     Sleep(2)
@@ -1401,7 +1419,7 @@ def Factory():
             GameFrozenCheck.call_counter = 0
         GameFrozenCheck.call_counter += 1
 
-        logger.debug(_("卡死检测截图 counter={a} length={b}".format(a=GameFrozenCheck.call_counter, b=len(queue))))
+        logger.debug(_("卡死检测截图 counter={a} length={b}").format(a=GameFrozenCheck.call_counter, b=len(queue)))
 
         if (GameFrozenCheck.call_counter % tick == 0) and (len(queue)==LENGTH):
             totalDiff = 0
@@ -1411,8 +1429,8 @@ def Factory():
                 grayLast = cv2.cvtColor(queue[i-1], cv2.COLOR_BGR2GRAY)
                 mean_diff = cv2.absdiff(grayThis, grayLast).mean()/255
                 totalDiff += mean_diff
-            logger.info(f"卡死检测耗时: {time.time()-t:.5f}秒")
-            logger.info(f"卡死检测结果: {totalDiff:.5f}")
+            logger.info(_("卡死检测耗时: {a}秒").format(a=f"{time.time()-t:.5f}"))
+            logger.info(_("卡死检测结果: {a}").format(a=f"{totalDiff:.5f}"))
             if totalDiff<=threshold:
                 return queue, True
         return queue, False
@@ -1460,6 +1478,7 @@ def Factory():
         if runtimeContext._TIME_COMBAT==0:
             runtimeContext._TIME_COMBAT = time.time()
         # 内部函数：复制策略到 runtime.CURRENT_STRATEGY
+
         def AutoThisChar():
             Press([850,1100])
             Sleep(0.5)
@@ -1473,8 +1492,8 @@ def Factory():
             Sleep(5)
             return
         def SkillLvlSelectAndDoubleCheck(skillPos,skilllvl, supportTarget):
-            skillPosDict = { "左上技能":[266,965],"右上技能":[640,965],"左下技能":[266,1054],"右下技能":[640,1054]}
-            supportTargetDict = {"左上角色": [200,1200], "中上角色": [450,1200], "右上角色": [700,1200], "左下角色":[200,1400], "中下角色":[450,1400], "右下角色":[700,1400]}
+            skillPosDict = { _("左上技能"):[266,965], _("右上技能"):[640,965], _("左下技能"):[266,1054], _("右下技能"):[640,1054]}
+            supportTargetDict = {_("左上角色"): [200,1200], _("中上角色"): [450,1200], _("右上角色"): [700,1200], _("左下角色"):[200,1400], _("中下角色"):[450,1400], _("右下角色"):[700,1400]}
             
             # 打开详情界面
             into_detail = False
@@ -1485,7 +1504,7 @@ def Factory():
                     into_detail = True
                     break
             if not into_detail:
-                logger.info("没有检测到任务详情界面. 疑似法力不足, 使用自动战斗.")
+                logger.info(_("没有检测到任务详情界面. 疑似法力不足, 使用自动战斗."))
                 for underscore in range(3):
                     PressReturn()
                     Sleep(0.2)
@@ -1517,22 +1536,22 @@ def Factory():
             if CheckIf(ScreenShot(),"supportSkillCheck",[[677,1475,189,80]]):
                 if supportTarget in supportTargetDict.keys():
                     Press(supportTargetDict[supportTarget])
-                    logger.info(_("释放了位于\"{a}\"的辅助技能, 技能等级为{b}, 释放对象为{c}".format(a=skillPos, b=skilllvl, c=supportTarget)))
+                    logger.info(_("释放了位于\"{a}\"的辅助技能, 技能等级为{b}, 释放对象为{c}").format(a=skillPos, b=skilllvl, c=supportTarget))
 
             # 确认
             scn = ScreenShot()
             if Press(CheckIf(scn,"OK")):
-                logger.info(_("释放了位于\"{a}\"的全体技能, 技能等级为{b}.".format(a=skillPos, b=skilllvl)))
+                logger.info(_("释放了位于\"{a}\"的全体技能, 技能等级为{b}.").format(a=skillPos, b=skilllvl))
                 Sleep(2)
             elif pos:=(CheckIf(scn,"next")):
                 Press([pos[0]-15+random.randint(0,30),pos[1]+150+random.randint(0,30)])
-                logger.info(_("释放了位于\"{a}\"的单体技能, 技能等级为{b}. 选择next作为敌方目标.".format(a=skillPos, b=skilllvl)))
+                logger.info(_("释放了位于\"{a}\"的单体技能, 技能等级为{b}. 选择next作为敌方目标.").format(a=skillPos, b=skilllvl))
             else:
                 for t in range(12):
                     i= t % 6
                     Press([150*i-150-15+random.randint(0,30),750-30+random.randint(0,60)])
                     Sleep(0.1)
-                logger.info(_("释放了位于\"{a}\"的单体技能, 技能等级为{b}. 随机选择敌方目标.".format(a=skillPos, b=skilllvl)))
+                logger.info(_("释放了位于\"{a}\"的单体技能, 技能等级为{b}. 随机选择敌方目标.").format(a=skillPos, b=skilllvl))
                 Sleep(2)
 
             # 资源不足
@@ -1587,20 +1606,22 @@ def Factory():
         target_skill = None
         scn = ScreenShot()
         t = time.time()
+        REVERSE_ROLE_MAP = {_(char): char for char in CHAR_LIST}
         for skill in skill_settings:
             role_var = skill.get("role_var")
             if not role_var:  # 如果 role_var 为空则跳过
                 continue
-            for candidate in [role_var, role_var + "_sp", role_var + "_alt"]:
+            chinese_role = REVERSE_ROLE_MAP.get(role_var, role_var)
+            for candidate in [chinese_role, chinese_role + "_sp", chinese_role + "_alt"]:
                 # 构造图片完整路径并检查是否存在
                 img_path = os.path.join(IMAGE_FOLDER, "spellskill", "char", f"{candidate}.png")
                 full_path = ResourcePath(img_path)
                 if os.path.exists(full_path):
-                    match_rate = CheckHow(scn, f"spellskill/char/{candidate}", [[87,55,73,51]])
+                    match_rate = CheckHow(scn, f"spellskill/char/{candidate}", [[87,55,110,51]])
                     if match_rate > highest_match_rate:
                         highest_match_rate = match_rate
                         target_skill = skill
-                        logger.debug(_("最佳 {a}, {b}".format(a=candidate, b=highest_match_rate)))
+                        logger.debug(_("最佳 {a}, {b}").format(a=candidate, b=highest_match_rate))
         logger.debug(f"匹配时间 {time.time() - t}")
 
         # 5. 判断匹配率是否达标
@@ -1615,6 +1636,8 @@ def Factory():
             Sleep(0.1)
             Press([513,1200])
             Sleep(0.1)
+        elif target_skill.get("skill_var") == _("双击自动"):
+            AutoThisChar()
         else:
             SkillLvlSelectAndDoubleCheck(target_skill.get("skill_var"), target_skill.get("skill_lvl"), target_skill.get("target_var"))
 
@@ -1643,19 +1666,19 @@ def Factory():
             
             targetPos = None
             if target == "position":
-                logger.info(_("当前目标: 地点{a}".format(a=roi)))
+                logger.info(_("当前目标: 地点{a}").format(a=roi))
                 targetPos = CheckIf_ReachPosition(scn,targetInfo)
             elif target in ['harken','Bharken']:
                 targetPos = CheckIf_harkenStair(scn,targetInfo)
             elif target.startswith("stair"):
-                logger.info(_("当前目标: 楼梯{a}".format(a=target)))
+                logger.info(_("当前目标: 楼梯{a}").format(a=target))
                 targetPos = CheckIf_throughStair(scn,targetInfo)
             else:
-                logger.info(_("搜索{a}...".format(a=target)))
+                logger.info(_("搜索{a}...").format(a=target))
                 if targetPos:=CheckIf(scn,target,roi):
-                    logger.info(_("找到了 {a}! {b}".format(a=target, b=targetPos)))
+                    logger.info(_("找到了 {a}! {b}").format(a=target, b=targetPos))
                     if (target == "chest") and (swipeDir!= None):
-                        logger.debug(_("宝箱热力图: 地图:{a} 方向:{b} 位置:{c}".format(a=setting.FARM_TARGET, b=swipeDir, c=targetPos)))
+                        logger.debug(_("宝箱热力图: 地图:{a} 方向:{b} 位置:{c}").format(a=setting.FARM_TARGET, b=swipeDir, c=targetPos))
                     Sleep(1)
                     break
             if targetPos!=None:
@@ -1675,7 +1698,7 @@ def Factory():
                 dungState = dungState.Dungeon
                 break
             if dungState != DungeonState.Dungeon:
-                logger.info(_("已退出移动状态. 当前状态: {a}.".format(a=dungState)))
+                logger.info(_("已退出移动状态. 当前状态: {a}.").format(a=dungState))
                 break
             if lastscreen is not None:
                 gray1 = cv2.cvtColor(CutRoI(screen,[[650,25,225,225]]), cv2.COLOR_BGR2GRAY)
@@ -1706,7 +1729,7 @@ def Factory():
         try:
             searchResult = StateMap_FindSwipeClick(targetInfo)
         except KeyError as e:
-            logger.info(_("错误: {a}".format(a=e))) # 一般来说这里只会返回"地图不可用
+            logger.info(_("错误: {a}").format(a=e)) # 一般来说这里只会返回"地图不可用
             return None, False
     
         if not CheckIf(map,"mapFlag"):
@@ -1722,7 +1745,7 @@ def Factory():
             else:
                 # 这种时候我们认为真正失败了. 所以不弹出.
                 # 当然, 更好的做法时传递finish标识()
-                logger.info(_("未找到目标{a}.".format(a=target)))
+                logger.info(_("未找到目标{a}.").format(a=target))
                 return DungeonState.Map,  False
         else:
             if target in normalPlace or target.endswith("_quit") or target.startswith("stair"):
@@ -1868,7 +1891,7 @@ def Factory():
             if setting._FORCESTOPING.is_set():
                 logger.info(_("即将停止脚本..."))
                 dungState = DungeonState.Quit
-            logger.info(_("当前状态(地下城): {a}".format(a=dungState)))
+            logger.info(_("当前状态(地下城): {a}").format(a=dungState))
 
             match dungState:
                 case None:
@@ -1900,7 +1923,7 @@ def Factory():
                         if runtimeContext._TIME_COMBAT !=0:
                             spend_on_combat = time.time()-runtimeContext._TIME_COMBAT
                             runtimeContext._TIME_COMBAT = 0
-                        logger.info(f"粗略统计: 宝箱{spend_on_chest:.2f}秒, 战斗{spend_on_combat:.2f}秒.")
+                        logger.info(_("粗略统计: 宝箱{a}秒, 战斗{b}秒.").format(a=f"{spend_on_chest:.2f}", b=f"{spend_on_combat:.2f}"))
                         if (spend_on_chest!=0) and (spend_on_combat!=0):
                             if spend_on_combat>spend_on_chest:
                                 runtimeContext._TIME_COMBAT_TOTAL = runtimeContext._TIME_COMBAT_TOTAL + spend_on_combat-spend_on_chest
@@ -1991,7 +2014,7 @@ def Factory():
                             Sleep(3)
                             underscore, dungState,screen = IdentifyState()
                             if dungState != DungeonState.Dungeon:
-                                logger.info(_("已退出移动状态. 当前状态为{a}.".format(a=dungState)))
+                                logger.info(_("已退出移动状态. 当前状态为{a}.").format(a=dungState))
                                 not_moving = True
                             elif lastscreen is not None:
                                 gray1 = cv2.cvtColor(screen, cv2.COLOR_BGR2GRAY)
@@ -2000,7 +2023,7 @@ def Factory():
                                 logger.debug(f"移动停止检查:{mean_diff:.2f}")
                                 if mean_diff < 0.1:
                                     runtimeContext._RESUMEAVAILABLE = False
-                                    logger.info(_("已退出移动状态. 当前状态为{a}.".format(a=dungState)))
+                                    logger.info(_("已退出移动状态. 当前状态为{a}.").format(a=dungState))
                                     not_moving = True
                                 lastscreen = screen
                             if counter == 29:
@@ -2068,7 +2091,7 @@ def Factory():
                     
                     if not ifTargetPointComplete:
                         gameFrozen_map +=1
-                        logger.info(_("地图卡死检测:{a}".format(a=gameFrozen_map)))
+                        logger.info(_("地图卡死检测:{a}").format(a=gameFrozen_map))
                     else:
                         gameFrozen_map = 0
                     if gameFrozen_map > 50:
@@ -2112,7 +2135,7 @@ def Factory():
             if setting._FORCESTOPING.is_set():
                 logger.info(_("即将停止脚本..."))
                 break
-            logger.info(_("当前状态: {a}".format(a=state)))
+            logger.info(_("当前状态: {a}").format(a=state))
             match state:
                 case None:
                     def _identifyState():
@@ -2121,7 +2144,7 @@ def Factory():
                     RestartableSequenceExecution(
                         lambda: _identifyState()
                         )
-                    logger.info(_("下一状态: {a}".format(a=state)))
+                    logger.info(_("下一状态: {a}").format(a=state))
                     if state ==State.Quit:
                         logger.info(_("即将停止脚本..."))
                         break
@@ -2227,7 +2250,7 @@ def Factory():
                         lambda: stepMain()
                         )
                     costtime = time.time()-starttime
-                    logger.info(_("第{a}次\"7000G\"完成. 该次花费时间{b:.2f}, 每秒收益:{c:.2f}Gps.".format(a=runtimeContext._COUNTERDUNG, b=costtime, c=7000/costtime)),
+                    logger.info(_("第{a}次\"7000G\"完成. 该次花费时间{b:.2f}, 每秒收益:{c:.2f}Gps.").format(a=runtimeContext._COUNTERDUNG, b=costtime, c=7000/costtime),
                                 extra={"summary": True})
             case "fordraig":
                 quest._SPECIALDIALOGOPTION = ["fordraig/thedagger","fordraig/InsertTheDagger"]
@@ -2296,7 +2319,7 @@ def Factory():
                     FindCoordsOrElseExecuteFallbackAndWait("Inn",[1,1],1)
 
                     costtime = time.time()-starttime
-                    logger.info(_("第{a}次\"鸟剑\"完成. 该次花费时间{b:.2f}.".format(a=runtimeContext._COUNTERDUNG, b=costtime)),
+                    logger.info(_("第{a}次\"鸟剑\"完成. 该次花费时间{b:.2f}.").format(a=runtimeContext._COUNTERDUNG, b=costtime),
                             extra={"summary": True})
             case "repelEnemyForces":
                 if not setting.ACTIVE_REST:
@@ -2326,7 +2349,7 @@ def Factory():
                     logger.info(_("已抵达目标地点, 开始战斗."))
                     FindCoordsOrElseExecuteFallbackAndWait("dungFlag",["return",[1,1]],1)
                     for i in range(setting.REST_INTERVEL):
-                        logger.info(_("第{a}轮开始.".format(a=i+1)))
+                        logger.info(_("第{a}轮开始.").format(a=i+1))
                         secondcombat = False
                         while 1:
                             Press(FindCoordsOrElseExecuteFallbackAndWait(["icanstillgo","combatActive"],["input swipe 400 400 400 100",[1,1]],1))
@@ -2351,7 +2374,7 @@ def Factory():
                                 Press(CheckIf(ScreenShot(),"letswithdraw"))
                                 Sleep(1)
                                 break
-                        logger.info(_("第{a}轮结束.".format(a=i+1)))
+                        logger.info(_("第{a}轮结束.").format(a=i+1))
                     RestartableSequenceExecution(
                         lambda:StateDungeon([TargetInfo("position","左上",[612,448])])
                     )
@@ -2362,7 +2385,7 @@ def Factory():
                         lambda:FindCoordsOrElseExecuteFallbackAndWait("Inn",["return",[1,1]],1)
                     )
                     counter+=1
-                    logger.info(_("第{a}x{b}轮\"击退敌势力\"完成, 共计{c}场战斗. 该次花费时间{c:.2f}秒.".format(a=counter, b=setting.REST_INTERVEL, c=counter*setting.REST_INTERVEL*2), c=(time.time()-t)),
+                    logger.info(_("第{a}x{b}轮\"击退敌势力\"完成, 共计{c}场战斗. 该次花费时间{c:.2f}秒.").format(a=counter, b=setting.REST_INTERVEL, c=counter*setting.REST_INTERVEL*2), c=(time.time()-t),
                                     extra={"summary": True})
             case "darkLight":
                 gameFrozen_none = []
@@ -2401,7 +2424,7 @@ def Factory():
                                 if runtimeContext._TIME_COMBAT !=0:
                                     spend_on_combat = time.time()-runtimeContext._TIME_COMBAT
                                     runtimeContext._TIME_COMBAT = 0
-                                logger.info(f"粗略统计: 宝箱{spend_on_chest:.2f}秒, 战斗{spend_on_combat:.2f}秒.")
+                                logger.info(_("粗略统计: 宝箱{a}秒, 战斗{b}秒.").format(a=f"{spend_on_chest:.2f}", b=f"{spend_on_combat:.2f}"))
                                 if (spend_on_chest!=0) and (spend_on_combat!=0):
                                     if spend_on_combat>spend_on_chest:
                                         runtimeContext._TIME_COMBAT_TOTAL = runtimeContext._TIME_COMBAT_TOTAL + spend_on_combat-spend_on_chest
@@ -2495,7 +2518,7 @@ def Factory():
                         break
                     if runtimeContext._LAPTIME!= 0:
                         runtimeContext._TOTALTIME = runtimeContext._TOTALTIME + time.time() - runtimeContext._LAPTIME
-                        logger.info(_("第{a}次三牛完成. 本次用时:{b}秒. 累计开箱子{c}, 累计战斗{d}, 累计用时{e}秒.".format(a=runtimeContext._COUNTERDUNG, b=round(time.time()-runtimeContext._LAPTIME,2),c=runtimeContext._COUNTERCHEST, d=runtimeContext._COUNTERCOMBAT, e=round(runtimeContext._TOTALTIME,2))),
+                        logger.info(_("第{a}次三牛完成. 本次用时:{b}秒. 累计开箱子{c}, 累计战斗{d}, 累计用时{e}秒.").format(a=runtimeContext._COUNTERDUNG, b=round(time.time()-runtimeContext._LAPTIME,2),c=runtimeContext._COUNTERCHEST, d=runtimeContext._COUNTERCOMBAT, e=round(runtimeContext._TOTALTIME,2)),
                                     extra={"summary": True})
                     runtimeContext._LAPTIME = time.time()
                     runtimeContext._COUNTERDUNG+=1
@@ -2558,7 +2581,7 @@ def Factory():
                         break
                     if runtimeContext._LAPTIME!= 0:
                         runtimeContext._TOTALTIME = runtimeContext._TOTALTIME + time.time() - runtimeContext._LAPTIME
-                        logger.info(_("第{a}次忍洞完成. 本次用时:{b}秒. 累计开箱子{c}, 累计战斗{d}, 累计用时{e}秒.".format(a=runtimeContext._COUNTERDUNG, b=round(time.time()-runtimeContext._LAPTIME,2),c=runtimeContext._COUNTERCHEST, d=runtimeContext._COUNTERCOMBAT, e=round(runtimeContext._TOTALTIME,2))),
+                        logger.info(_("第{a}次忍洞完成. 本次用时:{b}秒. 累计开箱子{c}, 累计战斗{d}, 累计用时{e}秒.").format(a=runtimeContext._COUNTERDUNG, b=round(time.time()-runtimeContext._LAPTIME,2),c=runtimeContext._COUNTERCHEST, d=runtimeContext._COUNTERCOMBAT, e=round(runtimeContext._TOTALTIME,2)),
                                     extra={"summary": True})
                     runtimeContext._LAPTIME = time.time()
                     runtimeContext._COUNTERDUNG+=1
@@ -2625,7 +2648,7 @@ def Factory():
                         break
                     if runtimeContext._LAPTIME!= 0:
                         runtimeContext._TOTALTIME = runtimeContext._TOTALTIME + time.time() - runtimeContext._LAPTIME
-                        logger.info(_("第{a}次约定之剑完成. 本次用时:{b}秒. 累计开箱子{c}, 累计战斗{d}, 累计用时{e}秒.".format(a=runtimeContext._COUNTERDUNG, b=round(time.time()-runtimeContext._LAPTIME,2),c=runtimeContext._COUNTERCHEST, d=runtimeContext._COUNTERCOMBAT, e=round(runtimeContext._TOTALTIME,2))),
+                        logger.info(_("第{a}次约定之剑完成. 本次用时:{b}秒. 累计开箱子{c}, 累计战斗{d}, 累计用时{e}秒.").format(a=runtimeContext._COUNTERDUNG, b=round(time.time()-runtimeContext._LAPTIME,2),c=runtimeContext._COUNTERCHEST, d=runtimeContext._COUNTERCOMBAT, e=round(runtimeContext._TOTALTIME,2)),
                                     extra={"summary": True})
                     runtimeContext._LAPTIME = time.time()
                     runtimeContext._COUNTERDUNG+=1
@@ -2713,7 +2736,7 @@ def Factory():
                         break
                     if runtimeContext._LAPTIME!= 0:
                         runtimeContext._TOTALTIME = runtimeContext._TOTALTIME + time.time() - runtimeContext._LAPTIME
-                        logger.info(_("第{a}次巨人完成. 本次用时:{b}秒. 累计开箱子{c}, 累计战斗{d}, 累计用时{e}秒.".format(a=runtimeContext._COUNTERDUNG, b=round(time.time()-runtimeContext._LAPTIME,2),c=runtimeContext._COUNTERCHEST, d=runtimeContext._COUNTERCOMBAT, e=round(runtimeContext._TOTALTIME,2))),
+                        logger.info(_("第{a}次巨人完成. 本次用时:{b}秒. 累计开箱子{c}, 累计战斗{d}, 累计用时{e}秒.").format(a=runtimeContext._COUNTERDUNG, b=round(time.time()-runtimeContext._LAPTIME,2),c=runtimeContext._COUNTERCHEST, d=runtimeContext._COUNTERCOMBAT, e=round(runtimeContext._TOTALTIME,2)),
                                     extra={"summary": True})
                     runtimeContext._LAPTIME = time.time()
                     runtimeContext._COUNTERDUNG+=1
@@ -2815,7 +2838,7 @@ def Factory():
                         
                     costtime = time.time()-starttime
                     total_time = total_time + costtime
-                    logger.info(_("第{a}次\"悬赏:蝎女\"完成. \n该次花费时间{b:.2f}s.\n总计用时{c:.2f}s.\n平均用时{d:.2f}".format(a=runtimeContext._COUNTERDUNG,b=costtime, c=total_time, d=total_time/runtimeContext._COUNTERDUNG)),
+                    logger.info(_("第{a}次\"悬赏:蝎女\"完成. \n该次花费时间{b:.2f}s.\n总计用时{c:.2f}s.\n平均用时{d:.2f}").format(a=runtimeContext._COUNTERDUNG,b=costtime, c=total_time, d=total_time/runtimeContext._COUNTERDUNG),
                             extra={"summary": True})
             case "Scorpionesses_plus_6_hands":
                 total_time = 0
@@ -2915,7 +2938,7 @@ def Factory():
                         
                     costtime = time.time()-starttime
                     total_time = total_time + costtime
-                    logger.info(_("第{a}次\"悬赏:蝎女+六手\"完成. \n该次花费时间{b:.2f}s.\n总计用时{c:.2f}s.\n平均用时{d:.2f}".format(a=runtimeContext._COUNTERDUNG,b=costtime, c=total_time, d=total_time/runtimeContext._COUNTERDUNG)),
+                    logger.info(_("第{a}次\"悬赏:蝎女+六手\"完成. \n该次花费时间{b:.2f}s.\n总计用时{c:.2f}s.\n平均用时{d:.2f}").format(a=runtimeContext._COUNTERDUNG,b=costtime, c=total_time, d=total_time/runtimeContext._COUNTERDUNG),
                             extra={"summary": True})
             case "steeltrail":
                 total_time = 0
@@ -2950,7 +2973,7 @@ def Factory():
                             )
                     costtime = time.time()-starttime
                     total_time = total_time + costtime
-                    logger.info(_("第{a}次\"钢试炼\"完成. \n该次花费时间{b:.2f}s.\n总计用时{c:.2f}s.\n平均用时{d:.2f}".format(a=runtimeContext._COUNTERDUNG,b=costtime, c=total_time, d=total_time/runtimeContext._COUNTERDUNG)),
+                    logger.info(_("第{a}次\"钢试炼\"完成. \n该次花费时间{b:.2f}s.\n总计用时{c:.2f}s.\n平均用时{d:.2f}").format(a=runtimeContext._COUNTERDUNG,b=costtime, c=total_time, d=total_time/runtimeContext._COUNTERDUNG),
                             extra={"summary": True})
             case "jier":
                 total_time = 0
@@ -3014,7 +3037,7 @@ def Factory():
                         
                     costtime = time.time()-starttime
                     total_time = total_time + costtime
-                    logger.info(_("第{a}次\"悬赏:吉尔\"完成. \n该次花费时间{b:.2f}s.\n总计用时{c:.2f}s.\n平均用时{d:.2f}".format(a=runtimeContext._COUNTERDUNG,b=costtime, c=total_time, d=total_time/runtimeContext._COUNTERDUNG)),
+                    logger.info(_("第{a}次\"悬赏:吉尔\"完成. \n该次花费时间{b:.2f}s.\n总计用时{c:.2f}s.\n平均用时{d:.2f}").format(a=runtimeContext._COUNTERDUNG,b=costtime, c=total_time, d=total_time/runtimeContext._COUNTERDUNG),
                             extra={"summary": True})
             case "lovesleep":
                 logger.info(_("开始睡觉."))
@@ -3123,7 +3146,7 @@ def Factory():
                         break
                     if runtimeContext._LAPTIME!= 0:
                         runtimeContext._TOTALTIME = runtimeContext._TOTALTIME + time.time() - runtimeContext._LAPTIME
-                        logger.info(_("第{a}次要塞小精灵完成. 本次用时:{b}秒. 累计开箱子{c}, 累计战斗{d}, 累计用时{e}秒.".format(a=runtimeContext._COUNTERDUNG, b=round(time.time()-runtimeContext._LAPTIME,2),c=runtimeContext._COUNTERCHEST, d=runtimeContext._COUNTERCOMBAT, e=round(runtimeContext._TOTALTIME,2))),
+                        logger.info(_("第{a}次要塞小精灵完成. 本次用时:{b}秒. 累计开箱子{c}, 累计战斗{d}, 累计用时{e}秒.").format(a=runtimeContext._COUNTERDUNG, b=round(time.time()-runtimeContext._LAPTIME,2),c=runtimeContext._COUNTERCHEST, d=runtimeContext._COUNTERCOMBAT, e=round(runtimeContext._TOTALTIME,2)),
                                     extra={"summary": True})
                     runtimeContext._LAPTIME = time.time()
                     runtimeContext._COUNTERDUNG+=1

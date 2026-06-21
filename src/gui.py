@@ -7,6 +7,167 @@ from auto_updater import *
 from utils import *
 import webbrowser
 from datetime import datetime, date
+
+# Korean translation for categories and targets
+KO_CATEGORY_TRANSLATIONS = {
+    "主线前三章": "메인 시나리오 1~3장",
+    "主线第四章": "메인 시나리오 4장",
+    "任务洞窟": "퀘스트 동굴",
+    "矿石": "광석 파밍",
+    "月常": "일일/주간/콘텐츠",
+    "其他": "기타"
+}
+
+KO_TARGET_TRANSLATIONS = {
+    "[宝箱]水路一号街": "[상자] 무역수로 1번가",
+    "[宝箱]水路船二lounge": "[상자] 무역수로 선실 2층 (라운지)",
+    "[宝箱]要塞一层": "[상자] 요새 1층",
+    "[妖精]要塞八层门口": "[요정] 요새 8층 입구",
+    "[妖精]要塞八层陷阱": "[요정] 요새 8층 함정",
+    "[灯怪]要塞10层": "[등불] 요새 10층",
+    "[刷怪]要塞7f刷巨人": "[몬스터] 요새 7층 거인 파밍",
+    "[刷怪]深雪R4": "[몬스터] 심설의 동굴 R4",
+    "[宝箱+刷怪]深雪R6": "[상자+몬스터] 심설의 동굴 R6",
+    "[宝箱+刷怪]深雪R7矿洞右": "[상자+몬스터] 심설의 동굴 R7 광산 우측",
+    "[宝箱+刷怪]深雪R7自动箱": "[상자+몬스터] 심설의 동굴 R7 자동 상자",
+    "[宝箱+刷怪]深雪R10": "[상자+몬스터] 심설의 동굴 R10",
+    "[刷怪]深雪R10巨人": "[몬스터] 심설의 동굴 R10 거인",
+    "[宝箱]教会-自动宝箱上半": "[상자] 교회 - 자동 상자 상반",
+    "[宝箱]教会-全范围找箱": "[상자] 교회 - 전체 구역 상자 찾기",
+    "[刷怪]教会白巨人 byXX": "[몬스터] 교회 백색 거인 (byXX)",
+    "[宝箱]药师洞1f宝箱": "[상자] 약사의 동굴 1F",
+    "[宝箱]鬼洞1f 水路出发": "[상자] 귀신 동굴 1F (수로 출발)",
+    "[宝箱]鬼洞2F": "[상자] 귀신 동굴 2F",
+    "[刷怪]怨嗟洞窟三层": "[몬스터] 원차의 동굴 3층",
+    "[宝箱]弗德莱戈的迷宫三层fordraigB3F": "[상자] 프레드라그의 미궁 3층 (fordraig B3F)",
+    "[宝箱]忍洞一层": "[상자] 사영 동굴(닌자) 1층",
+    "[宝箱]卢比肯宝箱": "[상자] 루비콘의 상자",
+    "[宝箱]狼洞2f": "[상자] 백아의 동굴 2F",
+    "[宝箱]狼洞1f": "[상자] 백아의 동굴 1F (고르곤 없음)",
+    "[宝箱]百花之庭固定怪": "[상자] 백화의 정원 고정 몬스터",
+    "[宝箱]离别洞窟": "[상자] 이별의 동굴",
+    "[宝箱]离别洞窟(只刷2f)": "[상자] 이별의 동굴 (2F 전용)",
+    "[任务]卢比肯 三牛": "[퀘스트] 루비콘 삼우 (세 마리 황소)",
+    "[任务]忍洞一层 金箱": "[퀘스트] 사영 동굴 1층 금색 상자",
+    "[矿石]土洞(中/次)": "[광석] 토석의 구멍 (중급/하급)",
+    "[矿石]火洞(特/中/次)": "[광석] 화염의 구멍 (특급/중급/하급)",
+    "[矿石]火洞plus-地图全开": "[광석] 화염의 구멍 Plus (지도 전체 개방)",
+    "[矿石]风洞(特/上/中)": "[광석] 바람의 구멍 (특급/상급/중급)",
+    "[矿石]风洞plus-地图全开": "[광석] 바람의 구멍 Plus (지도 전체 개방)",
+    "[矿石]光洞(特/上/中)": "[광석] 빛의 구멍 (특급/상급/중급)",
+    "[矿石]光洞plus-地图全开": "[광석] 빛의 구멍 Plus (지도 전체 개방)",
+    "[矿石]水洞(银/特/上)": "[광석] 수류의 구멍 (은/특급/상급)",
+    "[骨头]炉壶灵庙(王都出发)": "[뼈] 노호의 영묘 (왕도 출발)",
+    "[骨头]炉壶灵庙(战士骨)": "[뼈] 노호의 영묘 (전사의 뼈)",
+    "[悬赏]吉尔": "[현상수배] 질",
+    "[悬赏]蝎女": "[현상수배] 스코피온 (전갈 여인)",
+    "[悬赏]蝎女+风暴六手": "[현상수배] 스코피온 + 폭풍의 식스암즈",
+    "[金币]7000G": "[골드] 황녀에게 7000G 받기",
+    "[装备]半自动大恶魔": "[장비] 대악마 반자동 파밍",
+    "[装备]暗灯": "[장비] 사신의 어둠 등불",
+    "[刷药]喜欢睡觉": "[포션] 잠꾸러기 퀘스트",
+    "mergeBlastNumber": "Tapjoy 연동 (mergeBlastNumber)"
+}
+
+REVERSE_CATEGORY_MAP = {v: k for k, v in KO_CATEGORY_TRANSLATIONS.items()}
+REVERSE_TARGET_MAP = {v: k for k, v in KO_TARGET_TRANSLATIONS.items()}
+
+def trans_cat(cat):
+    if LANGUAGE == 'ko_KR':
+        return KO_CATEGORY_TRANSLATIONS.get(cat, cat)
+    return cat
+
+def trans_tgt(tgt):
+    if LANGUAGE == 'ko_KR':
+        return KO_TARGET_TRANSLATIONS.get(tgt, tgt)
+    return tgt
+
+ORIG_SKILLS = ["左上技能", "右上技能", "左下技能", "右下技能", "防御", "双击自动"]
+ORIG_TARGETS = ["左上角色", "中上角色", "右上角色", "左下角色", "右下角色", "中下角色", "不可用", "低生命值"]
+ORIG_FREQS = ["每场战斗仅一次", "每次副本仅一次", "每次启动仅一次", "重复"]
+ORIG_GROUPS = ["全自动战斗", "柚子", "自定义任务点策略"]
+
+REVERSE_SKILL_MAP = {_(opt): opt for opt in ORIG_SKILLS}
+REVERSE_TARGET_MAP_STRAT = {_(opt): opt for opt in ORIG_TARGETS}
+REVERSE_FREQ_MAP = {_(opt): opt for opt in ORIG_FREQS}
+REVERSE_GROUP_MAP = {_(opt): opt for opt in ORIG_GROUPS}
+
+REVERSE_ROLE_MAP = {_(char): char for char in CHAR_LIST}
+
+def translate_single_strategy(config):
+    if not isinstance(config, dict):
+        return config
+    translated = config.copy()
+    if 'group_name' in config:
+        translated['group_name'] = _(config['group_name'])
+    if 'skill_settings' in config:
+        new_settings = []
+        for setting in config['skill_settings']:
+            new_setting = setting.copy()
+            if 'role_var' in setting and setting['role_var']:
+                new_setting['role_var'] = _(setting['role_var'])
+            if 'skill_var' in setting and setting['skill_var']:
+                new_setting['skill_var'] = _(setting['skill_var'])
+            if 'target_var' in setting and setting['target_var']:
+                new_setting['target_var'] = _(setting['target_var'])
+            if 'freq_var' in setting and setting['freq_var']:
+                new_setting['freq_var'] = _(setting['freq_var'])
+            new_settings.append(new_setting)
+        translated['skill_settings'] = new_settings
+    return translated
+
+def untranslate_single_strategy(config):
+    if not isinstance(config, dict):
+        return config
+    untranslated = config.copy()
+    if 'group_name' in config:
+        untranslated['group_name'] = REVERSE_GROUP_MAP.get(config['group_name'], config['group_name'])
+    if 'skill_settings' in config:
+        new_settings = []
+        for setting in config['skill_settings']:
+            new_setting = setting.copy()
+            if 'role_var' in setting:
+                new_setting['role_var'] = REVERSE_ROLE_MAP.get(setting['role_var'], setting['role_var'])
+            if 'skill_var' in setting:
+                new_setting['skill_var'] = REVERSE_SKILL_MAP.get(setting['skill_var'], setting['skill_var'])
+            if 'target_var' in setting:
+                new_setting['target_var'] = REVERSE_TARGET_MAP_STRAT.get(setting['target_var'], setting['target_var'])
+            if 'freq_var' in setting:
+                new_setting['freq_var'] = REVERSE_FREQ_MAP.get(setting['freq_var'], setting['freq_var'])
+            new_settings.append(new_setting)
+        untranslated['skill_settings'] = new_settings
+    return untranslated
+
+def translate_task_point_strategy(strategy_dict):
+    if not isinstance(strategy_dict, dict):
+        return strategy_dict
+    new_dict = {}
+    if 'overall_strategy' in strategy_dict:
+        new_dict['overall_strategy'] = _(strategy_dict['overall_strategy'])
+    if 'task_point' in strategy_dict:
+        tp = strategy_dict['task_point']
+        new_tp = {}
+        if isinstance(tp, dict):
+            for k, v in tp.items():
+                new_tp[k] = _(v)
+        new_dict['task_point'] = new_tp
+    return new_dict
+
+def untranslate_task_point_strategy(strategy_dict):
+    if not isinstance(strategy_dict, dict):
+        return strategy_dict
+    new_dict = {}
+    if 'overall_strategy' in strategy_dict:
+        val = strategy_dict['overall_strategy']
+        new_dict['overall_strategy'] = REVERSE_GROUP_MAP.get(val, val)
+    if 'task_point' in strategy_dict:
+        tp = strategy_dict['task_point']
+        new_tp = {}
+        if isinstance(tp, dict):
+            for k, v in tp.items():
+                new_tp[k] = REVERSE_GROUP_MAP.get(v, v)
+        new_dict['task_point'] = new_tp
+    return new_dict
 ############################################
 def BLOCK_WHEEL(event):
     # 向上查找第一个 Canvas 类型的控件
@@ -167,7 +328,8 @@ class SkillConfigPanel(CollapsibleSection):
         self.default_row_data = {}
         
         # 常量
-        self.ROLE_LIST = CHAR_LIST
+        self.ROLE_LIST = [_(char) for char in CHAR_LIST]
+        self.REVERSE_ROLE_MAP = {_(char): char for char in CHAR_LIST}
         self.SKILL_OPTIONS = [_("左上技能"), _("右上技能"), _("左下技能"), _("右下技能"), _("防御")]
         self.TARGET_OPTIONS = [_("左上角色"), _("中上角色"), _("右上角色"), _("左下角色"), _("右下角色"), _("中下角色"), _("不可用")]
         self.SKILL_LVL = [1, 2, 3, 4, 5, 6, 7]
@@ -227,8 +389,9 @@ class SkillConfigPanel(CollapsibleSection):
                     
                     # 设置配置值
                     role = setting.get('role_var', '')
-                    if role in self.ROLE_LIST:
-                        row_data['role_var'].set(role)
+                    role_translated = _(role)
+                    if role_translated in self.ROLE_LIST:
+                        row_data['role_var'].set(role_translated)
                     else:
                         row_data['role_var'].set(self.ROLE_LIST[0])
                         
@@ -297,10 +460,10 @@ class SkillConfigPanel(CollapsibleSection):
 
         if is_default:
             role_var.set(_("默认"))
-            role_cb = ttk.Combobox(row_frame, textvariable=role_var, width=8, state="disabled")
+            role_cb = ttk.Combobox(row_frame, textvariable=role_var, width=14, state="disabled")
         else:
             role_var.set(self.ROLE_LIST[0])
-            role_cb = ttk.Combobox(row_frame, textvariable=role_var, values=self.ROLE_LIST, width=8, state="readonly")
+            role_cb = ttk.Combobox(row_frame, textvariable=role_var, values=self.ROLE_LIST, width=14, state="readonly")
         role_cb.grid(row=0, column=0, padx=(0, 5), sticky=tk.W)
 
         skill_cb = ttk.Combobox(row_frame, textvariable=skill_var, values=self.SKILL_OPTIONS, width=7, state="readonly")
@@ -382,8 +545,10 @@ class SkillConfigPanel(CollapsibleSection):
         
         # 只添加自定义行，不包含默认行
         for row in self.custom_rows_data:
+            selected_role = row['role_var'].get()
+            chinese_role = self.REVERSE_ROLE_MAP.get(selected_role, selected_role)
             item = {
-                'role_var': row['role_var'].get(),
+                'role_var': chinese_role,
                 'skill_var': row['skill_var'].get(),
                 'target_var': row['target_var'].get(),
                 'freq_var': row['freq_var'].get(),
@@ -405,6 +570,21 @@ def LoadSettingFromDict(input_dict):
             setattr(setting, attr_name, default_value)
         else:
             setattr(setting, attr_name, input_dict[attr_name])
+
+    if hasattr(setting, 'STRATEGY') and isinstance(setting.STRATEGY, list):
+        setting.STRATEGY = [translate_single_strategy(g) for g in setting.STRATEGY]
+    
+    if hasattr(setting, 'DEFAULT_OVERALL_STRATEGY') and isinstance(setting.DEFAULT_OVERALL_STRATEGY, str):
+        setting.DEFAULT_OVERALL_STRATEGY = _(setting.DEFAULT_OVERALL_STRATEGY)
+    
+    if hasattr(setting, 'RELOAD_STRATEGY_WHEN') and isinstance(setting.RELOAD_STRATEGY_WHEN, str):
+        setting.RELOAD_STRATEGY_WHEN = _(setting.RELOAD_STRATEGY_WHEN)
+
+    if hasattr(setting, 'TASK_POINT_STRATEGY') and isinstance(setting.TASK_POINT_STRATEGY, dict):
+        setting.TASK_POINT_STRATEGY = translate_task_point_strategy(setting.TASK_POINT_STRATEGY)
+
+    if LANGUAGE == 'ko_KR' and hasattr(setting, 'FARM_TARGET_TEXT') and setting.FARM_TARGET_TEXT:
+        setting.FARM_TARGET_TEXT = KO_TARGET_TRANSLATIONS.get(setting.FARM_TARGET_TEXT, setting.FARM_TARGET_TEXT)
 
     return setting
 def LoadConfig(specific = 'ALL'):
@@ -447,6 +627,7 @@ class ConfigPanelApp(tk.Toplevel):
         self.controller = master_controller
         self.msg_queue = msg_queue
         self.geometry('630x700')
+        self.minsize(630, 700)
         
         self.title(self.TITLE)
 
@@ -477,6 +658,18 @@ class ConfigPanelApp(tk.Toplevel):
 
         # --- UI 变量 ---
         config_dict = LoadConfig()
+        if LANGUAGE == 'ko_KR':
+            if 'FARM_TARGET_TEXT' in config_dict and config_dict['FARM_TARGET_TEXT']:
+                orig = config_dict['FARM_TARGET_TEXT']
+                config_dict['FARM_TARGET_TEXT'] = KO_TARGET_TRANSLATIONS.get(orig, orig)
+            if 'STRATEGY' in config_dict and isinstance(config_dict['STRATEGY'], list):
+                config_dict['STRATEGY'] = [translate_single_strategy(g) for g in config_dict['STRATEGY']]
+            if 'DEFAULT_OVERALL_STRATEGY' in config_dict and isinstance(config_dict['DEFAULT_OVERALL_STRATEGY'], str):
+                config_dict['DEFAULT_OVERALL_STRATEGY'] = _(config_dict['DEFAULT_OVERALL_STRATEGY'])
+            if 'RELOAD_STRATEGY_WHEN' in config_dict and isinstance(config_dict['RELOAD_STRATEGY_WHEN'], str):
+                config_dict['RELOAD_STRATEGY_WHEN'] = _(config_dict['RELOAD_STRATEGY_WHEN'])
+            if 'TASK_POINT_STRATEGY' in config_dict and isinstance(config_dict['TASK_POINT_STRATEGY'], dict):
+                config_dict['TASK_POINT_STRATEGY'] = translate_task_point_strategy(config_dict['TASK_POINT_STRATEGY'])
         for category, attr_name, var_type, default_value in CONFIG_VAR_LIST:
             if issubclass(var_type, tk.Variable):
                 setattr(self, attr_name, var_type(value = (config_dict[attr_name] if (attr_name in config_dict)and(config_dict[attr_name] is not None) else default_value)))
@@ -510,9 +703,10 @@ class ConfigPanelApp(tk.Toplevel):
         self.EMU_PATH.set(emu_path)
 
         # farm target
+        selected_target_chinese = REVERSE_TARGET_MAP.get(self.FARM_TARGET_TEXT.get(), self.FARM_TARGET_TEXT.get())
         for category in DUNGEON_TARGETS.keys():
-            if self.FARM_TARGET_TEXT.get() in DUNGEON_TARGETS[category]:
-                self.FARM_TARGET.set(DUNGEON_TARGETS[category][self.FARM_TARGET_TEXT.get()])
+            if selected_target_chinese in DUNGEON_TARGETS[category]:
+                self.FARM_TARGET.set(DUNGEON_TARGETS[category][selected_target_chinese])
                 break
             else:
                 self.FARM_TARGET.set(None)
@@ -530,6 +724,21 @@ class ConfigPanelApp(tk.Toplevel):
                 value = getattr(self, attr_name).get()
             else:
                 value = getattr(self, attr_name)
+            if LANGUAGE == 'ko_KR' and attr_name == "FARM_TARGET_TEXT":
+                value = REVERSE_TARGET_MAP.get(value, value)
+            if attr_name == "DEFAULT_OVERALL_STRATEGY" and isinstance(value, str):
+                value = REVERSE_GROUP_MAP.get(value, value)
+            elif attr_name == "RELOAD_STRATEGY_WHEN" and isinstance(value, str):
+                reverse_map = {
+                    _("不需要"): "不需要",
+                    _("每场战斗前"): "每场战斗前",
+                    _("每次副本开始"): "每次副本开始"
+                }
+                value = reverse_map.get(value, value)
+            elif attr_name == "TASK_POINT_STRATEGY" and isinstance(value, dict):
+                value = untranslate_task_point_strategy(value)
+            elif attr_name == "STRATEGY" and isinstance(value, list):
+                value = [untranslate_single_strategy(g) for g in value]
             if category=='GENERAL':
                 new_general[attr_name] = value
             else:
@@ -687,14 +896,15 @@ class ConfigPanelApp(tk.Toplevel):
         frame_row = ttk.Frame(container)
         frame_row.grid(row=row_counter, column=0, sticky="ew", pady=2)
         current_quest_cate = ""
+        current_target_chinese = REVERSE_TARGET_MAP.get(self.FARM_TARGET_TEXT.get(), self.FARM_TARGET_TEXT.get())
         for k in DUNGEON_TARGETS.keys():
-            if self.FARM_TARGET_TEXT.get() in DUNGEON_TARGETS[k]:
+            if current_target_chinese in DUNGEON_TARGETS[k]:
                 current_quest_cate = k
         ttk.Label(frame_row, text=_("任务类别:")).grid(row=0, column=0, sticky=tk.W, pady=5)
         self.farm_target_category_combo = ttk.Combobox(frame_row,
-                                              values=list(DUNGEON_TARGETS.keys()),
+                                              values=[trans_cat(k) for k in DUNGEON_TARGETS.keys()],
                                               state="readonly")
-        self.farm_target_category_combo.set(current_quest_cate)
+        self.farm_target_category_combo.set(trans_cat(current_quest_cate))
         self.farm_target_category_combo.grid(row=0, column=1, sticky=(tk.W, tk.E), pady=5)
 
         # 地下城目标
@@ -711,6 +921,14 @@ class ConfigPanelApp(tk.Toplevel):
             for category, attr_name, var_type, default_value in CONFIG_VAR_LIST:
                 if attr_name in task_config:
                     value = task_config[attr_name]
+                    if LANGUAGE == 'ko_KR' and attr_name == 'FARM_TARGET_TEXT' and value:
+                        value = KO_TARGET_TRANSLATIONS.get(value, value)
+                    if attr_name == "DEFAULT_OVERALL_STRATEGY" and isinstance(value, str):
+                        value = _(value)
+                    elif attr_name == "STRATEGY" and isinstance(value, list):
+                        value = [translate_single_strategy(g) for g in value]
+                    elif attr_name == "TASK_POINT_STRATEGY" and isinstance(value, dict):
+                        value = translate_task_point_strategy(value)
                     if issubclass(var_type, tk.Variable):
                         # 获取或创建变量，然后设置值
                         if not hasattr(self, attr_name):
@@ -732,7 +950,7 @@ class ConfigPanelApp(tk.Toplevel):
             # 任务点, 这里无论如何都要拿specific的设置.
             specific_config = LoadConfig("specific")
             if ("TASK_POINT_STRATEGY" in specific_config)and(specific_config["TASK_POINT_STRATEGY"]!=None):
-                self.TASK_POINT_STRATEGY = specific_config["TASK_POINT_STRATEGY"]
+                self.TASK_POINT_STRATEGY = translate_task_point_strategy(specific_config["TASK_POINT_STRATEGY"])
             else:
                 self.TASK_POINT_STRATEGY = {"overall_strategy": _("全自动战斗")}
 
@@ -773,11 +991,12 @@ class ConfigPanelApp(tk.Toplevel):
             return
 
         ttk.Label(frame_row, text=_("任务目标:")).grid(row=0, column=0, sticky=tk.W, pady=5)
-        category = self.farm_target_category_combo.get()
+        category_translated = self.farm_target_category_combo.get()
+        category = REVERSE_CATEGORY_MAP.get(category_translated, category_translated)
         if category not in DUNGEON_TARGETS.keys():
-            dungeon_target_list = [key for k in DUNGEON_TARGETS.keys() for key in DUNGEON_TARGETS[k].keys()]
+            dungeon_target_list = [trans_tgt(key) for k in DUNGEON_TARGETS.keys() for key in DUNGEON_TARGETS[k].keys()]
         else:
-            dungeon_target_list = [key for key in DUNGEON_TARGETS[category].keys()]
+            dungeon_target_list = [trans_tgt(key) for key in DUNGEON_TARGETS[category].keys()]
         self.farm_target_combo = ttk.Combobox(frame_row,
                                               textvariable=self.FARM_TARGET_TEXT, 
                                               values=dungeon_target_list,
@@ -788,8 +1007,9 @@ class ConfigPanelApp(tk.Toplevel):
 
         # 这是分类那个combobox
         def on_category_change(event=None):
-            category = self.farm_target_category_combo.get()
-            self.farm_target_combo['values'] = list(DUNGEON_TARGETS[category].keys())
+            category_translated = self.farm_target_category_combo.get()
+            category = REVERSE_CATEGORY_MAP.get(category_translated, category_translated)
+            self.farm_target_combo['values'] = [trans_tgt(key) for key in DUNGEON_TARGETS[category].keys()]
             current_target = self.farm_target_combo.get()
             if current_target not in self.farm_target_combo['values']:
                 self.farm_target_combo.set(self.farm_target_combo['values'][0])
@@ -1047,7 +1267,7 @@ class ConfigPanelApp(tk.Toplevel):
                         overall_var.set(saved_overall)
                     else:
                         logger.info(_("当前保存的战斗策略无效, 使用默认策略\"全自动战斗\"."))
-                        overall_var.set(_("全自动战斗."))
+                        overall_var.set(_("全自动战斗"))
                         
             # 初始化全程策略
             self.overall_combo = ttk.Combobox(overall_frame, textvariable=overall_var,
@@ -1156,7 +1376,7 @@ class ConfigPanelApp(tk.Toplevel):
         container = self.section_combat_adv.content_frame
 
         row_counter = 0
-        ttk.Label(container, text="战斗方案会在每次重启游戏, 以及任意角色死亡后重置.", width=20, anchor=tk.W).grid(row=row_counter, column=0, sticky=tk.EW)
+        ttk.Label(container, text=_("战斗方案会在每次重启游戏, 以及任意角色死亡后重置."), width=20, anchor=tk.W).grid(row=row_counter, column=0, sticky=tk.EW)
 
         row_counter += 1
         frame_row = ttk.Frame(container)
@@ -1182,6 +1402,21 @@ class ConfigPanelApp(tk.Toplevel):
             self.STRATEGY = all_configs
             self.save_config()
             # 不需要 return
+        def _sync_task_point_strategy_from_vars():
+            """task_point_vars의 현재 값으로 TASK_POINT_STRATEGY를 동기화"""
+            if not hasattr(self, 'task_point_vars') or not self.task_point_vars:
+                return
+            config = {"overall_strategy": "", "task_point": {}}
+            if _("全程") in self.task_point_vars:
+                config["overall_strategy"] = self.task_point_vars[_("全程")].get()
+            if hasattr(self, 'is_current_task_dungeon') and self.is_current_task_dungeon:
+                if hasattr(self, 'current_task_points'):
+                    for idx, point in enumerate(self.current_task_points):
+                        if point in self.task_point_vars:
+                            config["task_point"][idx] = self.task_point_vars[point].get()
+            self.TASK_POINT_STRATEGY = config
+            if not self.TASK_SPECIFIC_CONFIG.get() and _("全程") in self.task_point_vars:
+                self.DEFAULT_OVERALL_STRATEGY.set(self.task_point_vars[_("全程")].get())
         def on_delete_panel(p):
             """删除面板的回调函数"""
             # 从字典中删除该panel
@@ -1191,27 +1426,52 @@ class ConfigPanelApp(tk.Toplevel):
             # 销毁面板
             p.destroy()
 
-            # 更新列表
+            # 更新列表 (유효하지 않은 선택은 자동으로 리셋됨)
             update_combat_strategy_combobox_values()
 
             # 如果没有面板了，隐藏容器
             if len(self.strategy_panels) == 0:
                 self.strategy_panels_container.grid_forget()
 
+            # 리셋된 콤보박스 값으로 TASK_POINT_STRATEGY 동기화
+            _sync_task_point_strategy_from_vars()
+
             save_strategy()
         def on_panel_name_changed(panel, new_name):
-            """面板名称改变时的回调"""
-            # 检查新名称是否已经存在（排除自身）
+            """면板名称改变时的回调"""
+            # 검查新名称是否已经存在（排除自身）
             existing_names = [name for p, name in self.strategy_panels.items() if p != panel]
             if new_name in existing_names:
                 messagebox.showerror(_("错误"), _("名称 '%s' 已存在，请使用其他名称") % new_name)
                 return False
 
+            # 获取旧名称
+            old_name = self.strategy_panels.get(panel, "")
+
             # 更新映射
             self.strategy_panels[panel] = new_name
 
+            # 전략 이름 변경 시 모든 참조를 갱신
+            if hasattr(self, 'task_point_vars') and self.task_point_vars:
+                for key, var in self.task_point_vars.items():
+                    if var.get() == old_name:
+                        var.set(new_name)
+            if hasattr(self, 'TASK_POINT_STRATEGY') and isinstance(self.TASK_POINT_STRATEGY, dict):
+                if self.TASK_POINT_STRATEGY.get('overall_strategy') == old_name:
+                    self.TASK_POINT_STRATEGY['overall_strategy'] = new_name
+                tp = self.TASK_POINT_STRATEGY.get('task_point', {})
+                if isinstance(tp, dict):
+                    for k, v in tp.items():
+                        if v == old_name:
+                            tp[k] = new_name
+            if hasattr(self, 'DEFAULT_OVERALL_STRATEGY') and self.DEFAULT_OVERALL_STRATEGY.get() == old_name:
+                self.DEFAULT_OVERALL_STRATEGY.set(new_name)
+
             # 更新列表
             update_combat_strategy_combobox_values()
+
+            # TASK_POINT_STRATEGY 동기화 후 저장
+            _sync_task_point_strategy_from_vars()
 
             # 保存
             save_strategy()
@@ -1357,8 +1617,8 @@ class ConfigPanelApp(tk.Toplevel):
 
             return input_period == current_period
         def click_am():
-            self.farm_target_category_combo.set('月常')
-            self.farm_target_combo.set('[骨头]炉壶灵庙(王都出发)')
+            self.farm_target_category_combo.set(trans_cat('月常'))
+            self.farm_target_combo.set(trans_tgt('[骨头]炉壶灵庙(王都出发)'))
             self.farm_target_combo.event_generate('<<ComboboxSelected>>')
             self.AM_switch.grid_remove()
             self.AM_REFRESH_TIME.set(datetime.now().strftime(DATE_FORMAT))
@@ -1470,7 +1730,7 @@ class ConfigPanelApp(tk.Toplevel):
             if P == "" or (P.isdigit() and int(P) >= int(limit)):
                 return True
             else:
-                logger.info(_("尝试次数不能低于{a}次.".format(a=limit)))
+                logger.info(_("尝试次数不能低于{a}次.").format(a=limit))
                 w.set(limit)
                 return False
 
@@ -1523,8 +1783,74 @@ class ConfigPanelApp(tk.Toplevel):
         button_frame.columnconfigure(1, weight=1)
         button_frame.columnconfigure(2, weight=1)
 
-        label1 = ttk.Label(button_frame, text="",  anchor='center')
-        label1.grid(row=0, column=0, sticky='nsew', padx=5, pady=5)
+        def take_screenshot_action():
+            emu_path = self.EMU_PATH.get()
+            adb_address = self.ADB_ADRESS.get()
+            adb_path = GetADBPathFromEmuPath(emu_path)
+            if not adb_path or not os.path.exists(adb_path):
+                messagebox.showerror(_("错误"), _("ADB 실행 파일이 존재하지 않습니다. ADB 주소를 확인해 주세요."))
+                return
+
+            def run_screenshot():
+                try:
+                    logger.info(_("正在尝试截取模拟器屏幕..."))
+                    subprocess.run([adb_path, "connect", adb_address], capture_output=True)
+                    
+                    result = subprocess.run(
+                        [adb_path, "-s", adb_address, "exec-out", "screencap"],
+                        capture_output=True,
+                        timeout=5
+                    )
+                    
+                    if result.returncode != 0 or not result.stdout:
+                        result = subprocess.run(
+                            [adb_path, "exec-out", "screencap"],
+                            capture_output=True,
+                            timeout=5
+                        )
+                        
+                    if result.returncode != 0 or not result.stdout:
+                        logger.error(_("截屏失败，请检查模拟器是否启动以及ADB连接是否正常。"))
+                        return
+                    
+                    raw_data = result.stdout
+                    if len(raw_data) < 12:
+                        logger.error(_("截屏数据异常"))
+                        return
+                    
+                    w, h, fmt = struct.unpack("<III", raw_data[:12])
+                    expected_size = w * h * 4
+                    pixels_data = raw_data[12:]
+                    
+                    if len(pixels_data) > expected_size:
+                        pixels_data = pixels_data[:expected_size]
+                    elif len(pixels_data) < expected_size:
+                        logger.error(_("截屏数据不完整"))
+                        return
+                    
+                    image = np.frombuffer(pixels_data, dtype=np.uint8)
+                    image = image.reshape((h, w, 4))
+                    image = cv2.cvtColor(image, cv2.COLOR_RGBA2BGR)
+                    
+                    os.makedirs("screenshots", exist_ok=True)
+                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                    filename = f"screenshots/screenshot_{timestamp}.png"
+                    cv2.imwrite(filename, image)
+                    
+                    logger.info(_("截图已保存至: %s") % filename)
+                    os.startfile(os.path.abspath(filename))
+                    
+                except Exception as e:
+                    logger.error(_("截屏发生异常: %s") % e)
+
+            Thread(target=run_screenshot, daemon=True).start()
+
+        self.screenshot_btn = ttk.Button(
+            button_frame,
+            text=_("📸 模拟器截图"),
+            command=take_screenshot_action,
+        )
+        self.screenshot_btn.grid(row=0, column=0, sticky='nsew', padx=5, pady=26)
 
         label3 = ttk.Label(button_frame, text="",  anchor='center')
         label3.grid(row=0, column=2, sticky='nsew', padx=5, pady=5)
@@ -1652,7 +1978,7 @@ class ConfigPanelApp(tk.Toplevel):
 
     def toggle_start_stop(self):
         if not self.quest_active:
-            self.start_stop_btn.config(text="停止")
+            self.start_stop_btn.config(text=_("停止"))
             self.set_controls_state(tk.DISABLED)
             setting = LoadSettingFromDict(LoadConfig())
             setting._FINISHINGCALLBACK = self.finishingcallback

@@ -1,0 +1,1739 @@
+# Translations template for PROJECT.
+# Copyright (C) 2026 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2026-06-18 20:39+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: src/gui.py:102
+msgid "group_name"
+msgstr ""
+
+#: src/gui.py:108
+msgid "role_var"
+msgstr ""
+
+#: src/gui.py:110
+msgid "skill_var"
+msgstr ""
+
+#: src/gui.py:112
+msgid "target_var"
+msgstr ""
+
+#: src/gui.py:114
+msgid "freq_var"
+msgstr ""
+
+#: src/gui.py:146
+msgid "overall_strategy"
+msgstr ""
+
+#: src/gui.py:310
+msgid "技能配置组"
+msgstr ""
+
+#: src/gui.py:333 src/gui.py:399 src/script.py:37 src/script.py:1611
+msgid "左上技能"
+msgstr ""
+
+#: src/gui.py:333 src/script.py:1611
+msgid "右上技能"
+msgstr ""
+
+#: src/gui.py:333 src/script.py:1611
+msgid "左下技能"
+msgstr ""
+
+#: src/gui.py:333 src/script.py:1611
+msgid "右下技能"
+msgstr ""
+
+#: src/gui.py:333 src/gui.py:540 src/script.py:1766
+msgid "防御"
+msgstr ""
+
+#: src/gui.py:333 src/gui.py:474 src/gui.py:540 src/script.py:1715
+#: src/script.py:1761
+msgid "双击自动"
+msgstr ""
+
+#: src/gui.py:334 src/script.py:1612
+msgid "左上角色"
+msgstr ""
+
+#: src/gui.py:334 src/script.py:1612
+msgid "中上角色"
+msgstr ""
+
+#: src/gui.py:334 src/script.py:1612
+msgid "右上角色"
+msgstr ""
+
+#: src/gui.py:334 src/script.py:1612
+msgid "左下角色"
+msgstr ""
+
+#: src/gui.py:334 src/script.py:1612
+msgid "右下角色"
+msgstr ""
+
+#: src/gui.py:334 src/script.py:1612
+msgid "中下角色"
+msgstr ""
+
+#: src/gui.py:334 src/gui.py:501 src/gui.py:542 src/gui.py:547 src/script.py:38
+msgid "不可用"
+msgstr ""
+
+#: src/gui.py:334 src/gui.py:400 src/gui.py:548
+msgid "低生命值"
+msgstr ""
+
+#: src/gui.py:336 src/script.py:1776
+msgid "每场战斗仅一次"
+msgstr ""
+
+#: src/gui.py:336 src/script.py:1776 src/script.py:1779
+msgid "每次副本仅一次"
+msgstr ""
+
+#: src/gui.py:336 src/script.py:39 src/script.py:1776 src/script.py:1779
+#: src/script.py:1788
+msgid "每次启动仅一次"
+msgstr ""
+
+#: src/gui.py:336 src/gui.py:401 src/gui.py:483 src/script.py:1715
+#: src/script.py:1762
+msgid "重复"
+msgstr ""
+
+#: src/gui.py:343 src/gui.py:950 src/gui.py:1246 src/gui.py:1250
+#: src/gui.py:1303 src/script.py:45 src/script.py:48 src/script.py:1702
+msgid "全自动战斗"
+msgstr ""
+
+#: src/gui.py:349
+msgid "➕新增角色"
+msgstr ""
+
+#: src/gui.py:352
+msgid "🗑删除此组"
+msgstr ""
+
+#: src/gui.py:355
+msgid "✎重命名"
+msgstr ""
+
+#: src/gui.py:412
+msgid "重命名"
+msgstr ""
+
+#: src/gui.py:412
+msgid "修改配置组名称:"
+msgstr ""
+
+#: src/gui.py:429
+msgid "确认删除"
+msgstr ""
+
+#: src/gui.py:429
+#, python-format
+msgid "确定要删除[%s]吗？"
+msgstr ""
+
+#: src/gui.py:463
+msgid "默认"
+msgstr ""
+
+#: src/gui.py:492
+msgid "治疗:"
+msgstr ""
+
+#: src/gui.py:496
+msgid "等级:"
+msgstr ""
+
+#: src/gui.py:505
+msgid "[默认]"
+msgstr ""
+
+#: src/gui.py:509
+msgid "取消"
+msgstr ""
+
+#: src/gui.py:625
+#, python-format
+msgid "WvDAS 巫术daphne自动刷怪 v%s @德德Dellyla(B站)"
+msgstr ""
+
+#: src/gui.py:626
+#, python-format
+msgid ""
+"遇到问题? 请访问:\n"
+"%s \n"
+"或加入Q群: 922497356."
+msgstr ""
+
+#: src/gui.py:672
+msgid "DEFAULT_OVERALL_STRATEGY"
+msgstr ""
+
+#: src/gui.py:687
+#, python-format
+msgid "当前版本: %s"
+msgstr ""
+
+#: src/gui.py:794
+msgid "模拟器"
+msgstr ""
+
+#: src/gui.py:812
+msgid "选择ADB执行文件"
+msgstr ""
+
+#: src/gui.py:820
+msgid "修改"
+msgstr ""
+
+#: src/gui.py:826
+msgid "已设置模拟器"
+msgstr ""
+
+#: src/gui.py:828
+msgid "未设置模拟器"
+msgstr ""
+
+#: src/gui.py:837
+msgid "ADB地址:"
+msgstr ""
+
+#: src/gui.py:868 src/gui.py:878 src/gui.py:1097 src/gui.py:1690
+#: src/gui.py:1705
+msgid "保存"
+msgstr ""
+
+#: src/gui.py:873
+msgid "模拟器编号:"
+msgstr ""
+
+#: src/gui.py:885
+msgid "目标"
+msgstr ""
+
+#: src/gui.py:898
+msgid "任务类别:"
+msgstr ""
+
+#: src/gui.py:939 src/gui.py:1044 src/gui.py:1045
+msgid "随机"
+msgstr ""
+
+#: src/gui.py:982
+#, python-format
+msgid "删除任务定制的配置文件, 任务为 %s."
+msgstr ""
+
+#: src/gui.py:988
+msgid "任务目标:"
+msgstr ""
+
+#: src/gui.py:1019
+msgid "用任务定制的配置文件覆盖默认配置."
+msgstr ""
+
+#: src/gui.py:1026
+msgid "清除"
+msgstr ""
+
+#: src/gui.py:1032
+msgid "探索"
+msgstr ""
+
+#: src/gui.py:1042
+msgid "开箱人选:"
+msgstr ""
+
+#: src/gui.py:1044
+msgid "左上"
+msgstr ""
+
+#: src/gui.py:1044
+msgid "中上"
+msgstr ""
+
+#: src/gui.py:1044
+msgid "右上"
+msgstr ""
+
+#: src/gui.py:1044
+msgid "左下"
+msgstr ""
+
+#: src/gui.py:1044
+msgid "中下"
+msgstr ""
+
+#: src/gui.py:1044
+msgid "右下"
+msgstr ""
+
+#: src/gui.py:1057
+msgid "快速开箱"
+msgstr ""
+
+#: src/gui.py:1065
+msgid "跳过战后恢复"
+msgstr ""
+
+#: src/gui.py:1071
+msgid "跳过开箱后恢复"
+msgstr ""
+
+#: src/gui.py:1079
+msgid "刚进入地下城时恢复一次."
+msgstr ""
+
+#: src/gui.py:1089
+msgid "启用旅店休息"
+msgstr ""
+
+#: src/gui.py:1092
+msgid " | 完成"
+msgstr ""
+
+#: src/gui.py:1096
+msgid "次后休息."
+msgstr ""
+
+#: src/gui.py:1104
+msgid "善恶:"
+msgstr ""
+
+#: src/gui.py:1107 src/gui.py:1109
+msgid "维持现状"
+msgstr ""
+
+#: src/gui.py:1107 src/gui.py:1110
+msgid "恶→中立,中立→善"
+msgstr ""
+
+#: src/gui.py:1107 src/gui.py:1111
+msgid "善→中立,中立→恶"
+msgstr ""
+
+#: src/gui.py:1126
+msgid "还需"
+msgstr ""
+
+#: src/gui.py:1128
+msgid "点"
+msgstr ""
+
+#: src/gui.py:1133
+msgid "战斗"
+msgstr ""
+
+#: src/gui.py:1138
+msgid "请先选择任务目标"
+msgstr ""
+
+#: src/gui.py:1151 src/gui.py:1152 src/gui.py:1156 src/gui.py:1242
+#: src/gui.py:1273 src/gui.py:1274 src/gui.py:1338
+msgid "全程"
+msgstr ""
+
+#: src/gui.py:1183 src/gui.py:1248 src/gui.py:1319 src/gui.py:1339
+#: src/gui.py:1354 src/script.py:1576
+msgid "自定义任务点策略"
+msgstr ""
+
+#: src/gui.py:1189
+msgid "启用任务专用配置"
+msgstr ""
+
+#: src/gui.py:1190
+msgid "自定义任务点策略需要使用任务专用的配置文件。是否立即启用任务专用配置？"
+msgstr ""
+
+#: src/gui.py:1226
+msgid "不可用的任务名."
+msgstr ""
+
+#: src/gui.py:1264
+msgid "当前保存的战斗策略无效, 使用默认策略\"全自动战斗\"."
+msgstr ""
+
+#: src/gui.py:1265
+msgid "全自动战斗."
+msgstr ""
+
+#: src/gui.py:1316
+#, python-format
+msgid "已刷新任务点界面，任务点数量: %s"
+msgstr ""
+
+#: src/gui.py:1369
+msgid "战斗方案"
+msgstr ""
+
+#: src/gui.py:1408 src/gui.py:1732
+msgid "错误"
+msgstr ""
+
+#: src/gui.py:1408
+#, python-format
+msgid "名称 '%s' 已存在，请使用其他名称"
+msgstr ""
+
+#: src/gui.py:1439 src/gui.py:1441
+#, python-format
+msgid "策略配置 %s"
+msgstr ""
+
+#: src/gui.py:1465
+msgid "➕ 添加新技能配置"
+msgstr ""
+
+#: src/gui.py:1484
+msgid "日常/周常"
+msgstr ""
+
+#: src/gui.py:1520
+msgid "点此领取50钻(旧)"
+msgstr ""
+
+#: src/gui.py:1530
+msgid "点此领取50钻(新)"
+msgstr ""
+
+#: src/gui.py:1572
+msgid "灵庙已刷新! 点此自动切换"
+msgstr ""
+
+#: src/gui.py:1585
+msgid "高级"
+msgstr ""
+
+#: src/gui.py:1598
+msgid "没有火的时候自动找王女要钱"
+msgstr ""
+
+#: src/gui.py:1611
+msgid "住豪华房"
+msgstr ""
+
+#: src/gui.py:1624
+msgid "跳跃到第三章结局\"凯旋\""
+msgstr ""
+
+#: src/gui.py:1637
+msgid "跳跃到第四章结局\"美丽矿石的真相\""
+msgstr ""
+
+#: src/gui.py:1650
+msgid "尝试调整因果"
+msgstr ""
+
+#: src/gui.py:1663
+msgid "重启后尝试绕过空气墙"
+msgstr ""
+
+#: src/gui.py:1674
+#, python-brace-format
+msgid "尝试次数不能低于{a}次."
+msgstr ""
+
+#: src/gui.py:1689
+msgid "次定位失败后重启游戏."
+msgstr ""
+
+#: src/gui.py:1704
+msgid "次重启游戏后重启模拟器."
+msgstr ""
+
+#: src/gui.py:1732
+msgid "ADB 실행 파일이 존재하지 않습니다. ADB 주소를 확인해 주세요."
+msgstr ""
+
+#: src/gui.py:1737
+msgid "正在尝试截取模拟器屏幕..."
+msgstr ""
+
+#: src/gui.py:1754
+msgid "截屏失败，请检查模拟器是否启动以及ADB连接是否正常。"
+msgstr ""
+
+#: src/gui.py:1759
+msgid "截屏数据异常"
+msgstr ""
+
+#: src/gui.py:1769
+msgid "截屏数据不完整"
+msgstr ""
+
+#: src/gui.py:1781
+#, python-format
+msgid "截图已保存至: %s"
+msgstr ""
+
+#: src/gui.py:1785
+#, python-format
+msgid "截屏发生异常: %s"
+msgstr ""
+
+#: src/gui.py:1791
+msgid "📸 模拟器截图"
+msgstr ""
+
+#: src/gui.py:1806 src/gui.py:1932
+msgid "脚本, 启动!"
+msgstr ""
+
+#: src/gui.py:1822
+msgid "发现新版本:"
+msgstr ""
+
+#: src/gui.py:1830
+msgid "自动下载"
+msgstr ""
+
+#: src/gui.py:1845
+msgid "手动下载最新版"
+msgstr ""
+
+#: src/gui.py:1931
+msgid "已停止."
+msgstr ""
+
+#: src/gui.py:1946
+msgid "唔, 看起来一次成功的地下城都没有完成."
+msgstr ""
+
+#: src/gui.py:1947
+#, python-format
+msgid ""
+"你的队伍已经耗尽了所有的再起之火.\n"
+"在耗尽再起之火前,\n"
+"你的队伍已经完成了如下了不起的壮举:\n"
+"\n"
+"%s\n"
+"\n"
+"不过没关系, 至少, 你还可以找公主要钱.\n"
+"\n"
+"赞美公主殿下!\n"
+msgstr ""
+
+#: src/script.py:33
+msgid "柚子"
+msgstr ""
+
+#: src/script.py:36 src/utils.py:382
+msgid "F 柚奈壬姬"
+msgstr ""
+
+#: src/script.py:84
+#, python-format
+msgid "FarmConfig对象没有属性'%s'"
+msgstr ""
+
+#: src/script.py:129
+#, python-format
+msgid "FarmQuest对象没有属性'%s'"
+msgstr ""
+
+#: src/script.py:186
+msgid "任务列表已更新.请重新手动选择地下城任务."
+msgstr ""
+
+#: src/script.py:199
+#, python-format
+msgid "'%s'并不存在于FarmQuest中."
+msgstr ""
+
+#: src/script.py:204
+#, python-format
+msgid "执行cmd命令: %s"
+msgstr ""
+
+#: src/script.py:213
+#, python-brace-format
+msgid "cmd命令返回:{}"
+msgstr ""
+
+#: src/script.py:216
+#, python-brace-format
+msgid "cmd命令错误:{}"
+msgstr ""
+
+#: src/script.py:227
+#, python-brace-format
+msgid "adb程序序不存在: {a}"
+msgstr ""
+
+#: src/script.py:257
+msgid "正在检查并关闭adb..."
+msgstr ""
+
+#: src/script.py:283
+msgid "已尝试终止adb"
+msgstr ""
+
+#: src/script.py:285 src/script.py:348
+#, python-brace-format
+msgid "终止模拟器进程时出错: {a}"
+msgstr ""
+
+#: src/script.py:290
+#, python-brace-format
+msgid "正在检查并关闭已运行的模拟器实例{a}..."
+msgstr ""
+
+#: src/script.py:294
+#, python-brace-format
+msgid "使用已知进程号{a}关闭模拟器..."
+msgstr ""
+
+#: src/script.py:312
+msgid "模拟器uid未知, 全杀了."
+msgstr ""
+
+#: src/script.py:346
+#, python-brace-format
+msgid "已尝试终止模拟器进程: {a}"
+msgstr ""
+
+#: src/script.py:356
+#, python-brace-format
+msgid "模拟器启动程序不存在: {a}"
+msgstr ""
+
+#: src/script.py:361
+#, python-brace-format
+msgid "启动模拟器: {a}"
+msgstr ""
+
+#: src/script.py:384
+#, python-brace-format
+msgid "模拟器启动开始，进程号为{a}"
+msgstr ""
+
+#: src/script.py:387
+#, python-brace-format
+msgid "启动模拟器失败: {a}"
+msgstr ""
+
+#: src/script.py:390
+msgid "等待模拟器启动..."
+msgstr ""
+
+#: src/script.py:410
+#, python-brace-format
+msgid ""
+"-----------------------\n"
+"开始尝试连接adb. 次数:{a}/{b}..."
+msgstr ""
+
+#: src/script.py:413
+msgid "失败次数过多, 尝试关闭adb."
+msgstr ""
+
+#: src/script.py:419
+msgid "检查adb服务..."
+msgstr ""
+
+#: src/script.py:430
+msgid "尝试连接到adb..."
+msgstr ""
+
+#: src/script.py:435
+msgid "成功连接到模拟器!"
+msgstr ""
+
+#: src/script.py:440
+#, python-brace-format
+msgid "模拟器进程号为{a}."
+msgstr ""
+
+#: src/script.py:442
+msgid ""
+"\n"
+"\n"
+"***********\n"
+"有多个模拟器已经启动, 无法识别进程号. 当需要重启模拟器的时候, 会重启所有模拟器.\n"
+"为了避免此问题, 请关闭目标模拟器, 并使用本脚本自动启动模拟器.\n"
+"\n"
+msgstr ""
+
+#: src/script.py:446
+msgid "模拟器未运行，尝试启动..."
+msgstr ""
+
+#: src/script.py:448
+msgid ""
+"模拟器(应该)启动完毕.\n"
+" 尝试连接到模拟器..."
+msgstr ""
+
+#: src/script.py:451
+msgid "成功连接到模拟器"
+msgstr ""
+
+#: src/script.py:453
+msgid "无法连接. 检查adb端口."
+msgstr ""
+
+#: src/script.py:455
+#, python-brace-format
+msgid "连接失败: {a}"
+msgstr ""
+
+#: src/script.py:461
+#, python-brace-format
+msgid "重启ADB服务时出错: {a}"
+msgstr ""
+
+#: src/script.py:468
+msgid "达到最大重试次数，连接失败"
+msgstr ""
+
+#: src/script.py:479
+#, python-brace-format
+msgid "成功创建设备对象: {a}"
+msgstr ""
+
+#: src/script.py:482
+#, python-brace-format
+msgid "创建ADB设备时出错: {a}"
+msgstr ""
+
+#: src/script.py:538
+msgid "ADB服务成功启动，设备已连接."
+msgstr ""
+
+#: src/script.py:541
+#, python-brace-format
+msgid "DeviceShell {a}"
+msgstr ""
+
+#: src/script.py:562
+#, python-brace-format
+msgid "ADB命令执行超时: {a}"
+msgstr ""
+
+#: src/script.py:563
+msgid "ADB命令在7秒内未完成"
+msgstr ""
+
+#: src/script.py:570
+#, python-brace-format
+msgid "ADB操作失败 ({a}): {b}"
+msgstr ""
+
+#: src/script.py:571 src/script.py:652
+msgid "ADB操作失败, 尝试重启ADB或模拟器程序..."
+msgstr ""
+
+#: src/script.py:577
+msgid "ADB超时, 尝试重启ADB或模拟器程序..."
+msgstr ""
+
+#: src/script.py:584
+#, python-brace-format
+msgid "非预期的ADB异常({a}): {b}"
+msgstr ""
+
+#: src/script.py:605
+#, python-brace-format
+msgid "截图命令报错: {a}"
+msgstr ""
+
+#: src/script.py:606
+msgid "截图命令报错"
+msgstr ""
+
+#: src/script.py:612
+msgid "截图数据不足12字节(无头信息)"
+msgstr ""
+
+#: src/script.py:613
+msgid "截图数据异常"
+msgstr ""
+
+#: src/script.py:627
+#, python-brace-format
+msgid "数据长度校验失败: 头部声明 {a}x{b}, 实际收到 {c}, 期望 {d}"
+msgstr ""
+
+#: src/script.py:628
+msgid "截图数据不完整"
+msgstr ""
+
+#: src/script.py:639
+#, python-brace-format
+msgid "截图尺寸错误: 当前{a}, 检测为横屏."
+msgstr ""
+
+#: src/script.py:643
+#, python-brace-format
+msgid "截图尺寸错误: 期望(1600,900), 实际({a},{b})."
+msgstr ""
+
+#: src/script.py:644
+#, python-brace-format
+msgid "分辨率异常: {a}x{b}"
+msgstr ""
+
+#: src/script.py:651
+msgid "截图超时 (Subprocess)"
+msgstr ""
+
+#: src/script.py:656
+#, python-brace-format
+msgid "截图发生异常: {a}"
+msgstr ""
+
+#: src/script.py:658
+msgid "ADB操作失败/数据错误, 尝试重启ADB或模拟器程序..."
+msgstr ""
+
+#: src/script.py:671
+msgid "cv2异常."
+msgstr ""
+
+#: src/script.py:695
+#, python-brace-format
+msgid "匹配失败: {a}的匹配程度为{b:.2f}%, 不足阈值."
+msgstr ""
+
+#: src/script.py:698
+#, python-brace-format
+msgid "匹配成功: {a}的匹配程度为{b:.2f}%, 位于{c}."
+msgstr ""
+
+#: src/script.py:703
+#, python-brace-format
+msgid "匹配检测: {a}的匹配程度为{b:.2f}%, 位于{c}."
+msgstr ""
+
+#: src/script.py:735
+#, python-brace-format
+msgid "搜索到疑似{a}, 匹配程度:{b:.2f}%"
+msgstr ""
+
+#: src/script.py:738
+#, python-brace-format
+msgid "警告: {a}的匹配程度超过了80%但不足90%"
+msgstr ""
+
+#: src/script.py:753
+#, python-brace-format
+msgid "中心匹配检查:{a:.2f}"
+msgstr ""
+
+#: src/script.py:766
+#, python-brace-format
+msgid "目标格搜索{a}, 匹配程度:{b:.2f}%"
+msgstr ""
+
+#: src/script.py:768
+msgid "已达到检测阈值."
+msgstr ""
+
+#: src/script.py:782
+#, python-brace-format
+msgid "搜索楼层标识{a}, 匹配程度:{b:.2f}%"
+msgstr ""
+
+#: src/script.py:784
+msgid "楼层正确, 判定为已通过"
+msgstr ""
+
+#: src/script.py:791
+#, python-brace-format
+msgid "搜索楼梯{a}, 匹配程度:{b:.2f}%"
+msgstr ""
+
+#: src/script.py:793
+msgid "判定为楼梯存在, 尚未通过."
+msgstr ""
+
+#: src/script.py:807
+#, python-brace-format
+msgid "楼层验证中, 目标楼层标识{a}, 匹配程度:{b:.2f}%"
+msgstr ""
+
+#: src/script.py:809
+msgid "楼层验证判定通过, 当前处于正确楼层."
+msgstr ""
+
+#: src/script.py:815
+msgid "目前处于错误的楼层中, 可能是由于错误点击导致的, 开始全地图搜索哈肯."
+msgstr ""
+
+#: src/script.py:823
+#, python-brace-format
+msgid "哈肯搜索, 目标{a}, 匹配程度:{b:.2f}%"
+msgstr ""
+
+#: src/script.py:825
+msgid "哈肯搜索, 已找到哈肯."
+msgstr ""
+
+#: src/script.py:841
+#, python-brace-format
+msgid "快进未开启, 即将开启.{a}"
+msgstr ""
+
+#: src/script.py:859
+msgid "开始下载……"
+msgstr ""
+
+#: src/script.py:862 src/script.py:866
+msgid "发现并点击了\"重试\". 你遇到了网络波动."
+msgstr ""
+
+#: src/script.py:872
+msgid "👆向上滑动查看重要信息👆\n"
+msgstr ""
+
+#: src/script.py:925
+#, python-brace-format
+msgid "错误: 非法的目标{a}."
+msgstr ""
+
+#: src/script.py:932
+msgid "错误: 非法的目标."
+msgstr ""
+
+#: src/script.py:937
+#, python-brace-format
+msgid "{a}次截图依旧没有找到目标{b}, 疑似卡死. 重启游戏."
+msgstr ""
+
+#: src/script.py:955
+#, python-brace-format
+msgid "重启前截图已保存在{a}中."
+msgstr ""
+
+#: src/script.py:960
+#, python-brace-format
+msgid ""
+"崩溃计数: {a}\n"
+"崩溃计数超过{b}次后会重启模拟器."
+msgstr ""
+
+#: src/script.py:972
+msgid "巫术, 启动!"
+msgstr ""
+
+#: src/script.py:977
+#, python-brace-format
+msgid "检测到崩溃日志, 关闭模拟器重启.{a}"
+msgstr ""
+
+#: src/script.py:985 src/script.py:990 src/script.py:996
+msgid "任务已停止."
+msgstr ""
+
+#: src/script.py:998
+msgid "任务进度重置中..."
+msgstr ""
+
+#: src/script.py:1166
+#, python-brace-format
+msgid ""
+"已完成{a}次\"{b}\"地下城.\n"
+"总计{c}秒.上次用时:{d}秒.\n"
+msgstr ""
+
+#: src/script.py:1170
+#, python-brace-format
+msgid "累计战斗{a}次.战斗平均用时{b}秒."
+msgstr ""
+
+#: src/script.py:1246
+msgid "因为面板设置, 跳过了调整因果."
+msgstr ""
+
+#: src/script.py:1249
+#, python-brace-format
+msgid "开始时间跳跃, 本次跳跃目标:{a}"
+msgstr ""
+
+#: src/script.py:1321
+msgid "快快请起."
+msgstr ""
+
+#: src/script.py:1322
+msgid "面具死了, 但是再起."
+msgstr ""
+
+#: src/script.py:1330
+#, python-brace-format
+msgid "状态检查中...(第{a}次)"
+msgstr ""
+
+#: src/script.py:1339
+msgid "确认, 下载, 确认."
+msgstr ""
+
+#: src/script.py:1358
+msgid "尝试复活队友..."
+msgstr ""
+
+#: src/script.py:1374 src/script.py:1397
+msgid "不满足回城条件, 跳过回城."
+msgstr ""
+
+#: src/script.py:1422
+msgid "看起来遇到了一些不太寻常的情况..."
+msgstr ""
+
+#: src/script.py:1433
+msgid "看起来你没有选择找王女要钱. 那么就等两个小时吧."
+msgstr ""
+
+#: src/script.py:1451
+#, python-brace-format
+msgid "即将进行善恶值调整. 剩余次数:{a}"
+msgstr ""
+
+#: src/script.py:1452
+#, python-brace-format
+msgid "新的善恶:{a}"
+msgstr ""
+
+#: src/script.py:1461
+msgid "购买了骨头."
+msgstr ""
+
+#: src/script.py:1463
+msgid "购买了尸油."
+msgstr ""
+
+#: src/script.py:1474
+msgid "死了好几个, 惨哦"
+msgstr ""
+
+#: src/script.py:1480
+msgid "网络故障警报! 网络故障警报! 返回标题, 重复, 返回标题!"
+msgstr ""
+
+#: src/script.py:1486
+msgid "看起来遇到了一些非同寻常的情况...重启游戏."
+msgstr ""
+
+#: src/script.py:1502
+msgid "GameFrozenCheck被传入了一个空值."
+msgstr ""
+
+#: src/script.py:1512
+#, python-brace-format
+msgid "卡死检测截图 counter={a} length={b}"
+msgstr ""
+
+#: src/script.py:1596
+msgid "无法获取当前策略."
+msgstr ""
+
+#: src/script.py:1655
+#, python-brace-format
+msgid "释放了位于\"{a}\"的辅助技能, 技能等级为{b}, 释放对象为{c}"
+msgstr ""
+
+#: src/script.py:1660
+#, python-brace-format
+msgid "释放了位于\"{a}\"的全体技能, 技能等级为{b}."
+msgstr ""
+
+#: src/script.py:1664
+#, python-brace-format
+msgid "释放了位于\"{a}\"的单体技能, 技能等级为{b}. 选择next作为敌方目标."
+msgstr ""
+
+#: src/script.py:1670
+#, python-brace-format
+msgid "释放了位于\"{a}\"的单体技能, 技能等级为{b}. 随机选择敌方目标."
+msgstr ""
+
+#: src/script.py:1700
+msgid "错误: 当前战斗策略内容为空. 使用全自动战斗."
+msgstr ""
+
+#: src/script.py:1703
+msgid "当前战斗为\"全自动战斗\", 因此使用全自动战斗."
+msgstr ""
+
+#: src/script.py:1706
+msgid "当前战斗技能列表内容为空, 因此使用全自动战斗."
+msgstr ""
+
+#: src/script.py:1728
+msgid "战斗已结束."
+msgstr ""
+
+#: src/script.py:1751
+#, python-brace-format
+msgid "最佳 {a}, {b}"
+msgstr ""
+
+#: src/script.py:1756
+msgid "并未设定该角色的行为, 使用自动战斗."
+msgstr ""
+
+#: src/script.py:1763
+msgid "不需要同时设置为\"双击自动\"且\"重复\", 因为这是未设置角色时的默认行为."
+msgstr ""
+
+#: src/script.py:1778
+msgid "在当前战斗的策略中删除了该技能."
+msgstr ""
+
+#: src/script.py:1786
+msgid "在每次地下城的策略中删除了该技能."
+msgstr ""
+
+#: src/script.py:1795
+msgid "在每次启动中使用的策略里删除了该技能."
+msgstr ""
+
+#: src/script.py:1806
+msgid "地图不可用."
+msgstr ""
+
+#: src/script.py:1817
+#, python-brace-format
+msgid "当前目标: 地点{a}"
+msgstr ""
+
+#: src/script.py:1822
+#, python-brace-format
+msgid "当前目标: 楼梯{a}"
+msgstr ""
+
+#: src/script.py:1825
+#, python-brace-format
+msgid "搜索{a}..."
+msgstr ""
+
+#: src/script.py:1827
+#, python-brace-format
+msgid "找到了 {a}! {b}"
+msgstr ""
+
+#: src/script.py:1829
+#, python-brace-format
+msgid "宝箱热力图: 地图:{a} 方向:{b} 位置:{c}"
+msgstr ""
+
+#: src/script.py:1839
+msgid "面具男, 移动."
+msgstr ""
+
+#: src/script.py:1844
+msgid "开始移动失败. 不要停下来啊面具男!"
+msgstr ""
+
+#: src/script.py:1849
+#, python-brace-format
+msgid "已退出移动状态. 当前状态: {a}."
+msgstr ""
+
+#: src/script.py:1858
+msgid "已退出移动状态. 进行状态检查..."
+msgstr ""
+
+#: src/script.py:1869
+msgid "在暴风雪中."
+msgstr ""
+
+#: src/script.py:1874
+msgid "没有检测到地图."
+msgstr ""
+
+#: src/script.py:1880
+#, python-brace-format
+msgid "错误: {a}"
+msgstr ""
+
+#: src/script.py:1888
+msgid ""
+"没有找到宝箱.\n"
+"停止检索宝箱."
+msgstr ""
+
+#: src/script.py:1891
+msgid "已经抵达目标地点或目标楼层."
+msgstr ""
+
+#: src/script.py:1896
+#, python-brace-format
+msgid "未找到目标{a}."
+msgstr ""
+
+#: src/script.py:1905
+msgid "经过对比中心区域, 确认没有抵达."
+msgstr ""
+
+#: src/script.py:1911
+msgid "经过对比中心区域, 判断为抵达目标地点."
+msgstr ""
+
+#: src/script.py:1912
+msgid "无需等待, 当前目标已完成."
+msgstr ""
+
+#: src/script.py:2038 src/script.py:2285 src/script.py:2298
+msgid "即将停止脚本..."
+msgstr ""
+
+#: src/script.py:2040
+#, python-brace-format
+msgid "当前状态(地下城): {a}"
+msgstr ""
+
+#: src/script.py:2049 src/script.py:2555
+msgid "由于画面卡死, 在state:None中重启."
+msgstr ""
+
+#: src/script.py:2053 src/script.py:2559
+msgid "由于宝箱用时过久, 在state:None中重启."
+msgstr ""
+
+#: src/script.py:2056 src/script.py:2562
+msgid "由于战斗用时过久, 在state:None中重启."
+msgstr ""
+
+#: src/script.py:2088 src/script.py:2592
+msgid "进行开启宝箱后的恢复."
+msgstr ""
+
+#: src/script.py:2093 src/script.py:2597
+msgid "由于面板配置, 进行开启宝箱后恢复."
+msgstr ""
+
+#: src/script.py:2096 src/script.py:2600
+msgid "由于面板配置, 跳过了开启宝箱后恢复."
+msgstr ""
+
+#: src/script.py:2102 src/script.py:2606
+msgid "由于面板配置, 进行战后恢复."
+msgstr ""
+
+#: src/script.py:2105 src/script.py:2609
+msgid "由于面板配置, 跳过了战后恢复."
+msgstr ""
+
+#: src/script.py:2109
+msgid "由于面板配置, 在刚进入地下城时进行恢复."
+msgstr ""
+
+#: src/script.py:2144
+msgid "自动回复异常, 中止本次回复."
+msgstr ""
+
+#: src/script.py:2160
+msgid "resume可用. 使用resume."
+msgstr ""
+
+#: src/script.py:2166 src/script.py:2175
+#, python-brace-format
+msgid "已退出移动状态. 当前状态为{a}."
+msgstr ""
+
+#: src/script.py:2211 src/script.py:2216
+msgid "退出自动搜索."
+msgstr ""
+
+#: src/script.py:2243
+#, python-brace-format
+msgid "地图卡死检测:{a}"
+msgstr ""
+
+#: src/script.py:2251
+msgid "地下城目标完成. 地下城状态结束.(仅限任务模式.)"
+msgstr ""
+
+#: src/script.py:2275
+msgid "奇怪, 任务怎么已经接了."
+msgstr ""
+
+#: src/script.py:2287
+#, python-brace-format
+msgid "当前状态: {a}"
+msgstr ""
+
+#: src/script.py:2296
+#, python-brace-format
+msgid "下一状态: {a}"
+msgstr ""
+
+#: src/script.py:2302
+msgid "因为没有遇到战斗或宝箱, 跳过住宿."
+msgstr ""
+
+#: src/script.py:2304
+msgid "因为面板设置, 跳过住宿."
+msgstr ""
+
+#: src/script.py:2306
+msgid "还有许多地下城要刷. 面具男, 现在还不能休息哦."
+msgstr ""
+
+#: src/script.py:2308
+msgid "休息时间到!"
+msgstr ""
+
+#: src/script.py:2339
+msgid "第一步: 时间跳跃..."
+msgstr ""
+
+#: src/script.py:2345 src/script.py:2930 src/script.py:3011 src/script.py:3146
+msgid "第二步: 返回要塞..."
+msgstr ""
+
+#: src/script.py:2350 src/script.py:2935 src/script.py:2946 src/script.py:3016
+#: src/script.py:3027 src/script.py:3151
+msgid "第三步: 前往王城..."
+msgstr ""
+
+#: src/script.py:2356
+msgid "第四步: 给我!(伸手)"
+msgstr ""
+
+#: src/script.py:2402
+#, python-brace-format
+msgid "第{a}次\"7000G\"完成. 该次花费时间{b:.2f}, 每秒收益:{c:.2f}Gps."
+msgstr ""
+
+#: src/script.py:2412
+msgid "第一步: 诅咒之旅..."
+msgstr ""
+
+#: src/script.py:2421
+msgid "第二步: 领取任务."
+msgstr ""
+
+#: src/script.py:2425
+msgid "第三步: 进入地下城."
+msgstr ""
+
+#: src/script.py:2430
+msgid "第四步: 陷阱."
+msgstr ""
+
+#: src/script.py:2447
+msgid "已完成第二个陷阱."
+msgstr ""
+
+#: src/script.py:2457
+msgid "已完成第三个陷阱."
+msgstr ""
+
+#: src/script.py:2471
+#, python-brace-format
+msgid "第{a}次\"鸟剑\"完成. 该次花费时间{b:.2f}."
+msgstr ""
+
+#: src/script.py:2475
+msgid "注意, \"休息间隔\"控制连续战斗多少次后回城. 当前未启用休息, 强制设置为1."
+msgstr ""
+
+#: src/script.py:2478
+msgid "注意, \"休息间隔\"控制连续战斗多少次后回城. 当前值0为无效值, 最低为1."
+msgstr ""
+
+#: src/script.py:2480
+msgid "注意, 该流程不包括时间跳跃和接取任务, 请确保接取任务后再开启!"
+msgstr ""
+
+#: src/script.py:2498
+msgid "已抵达目标地点, 开始战斗."
+msgstr ""
+
+#: src/script.py:2501
+#, python-brace-format
+msgid "第{a}轮开始."
+msgstr ""
+
+#: src/script.py:2518
+msgid "第1场战斗结束."
+msgstr ""
+
+#: src/script.py:2522
+msgid "第2场战斗结束."
+msgstr ""
+
+#: src/script.py:2526
+#, python-brace-format
+msgid "第{a}轮结束."
+msgstr ""
+
+#: src/script.py:2537
+#, python-brace-format
+msgid "第{a}x{b}轮\"击退敌势力\"完成, 共计{c}场战斗. 该次花费时间{c:.2f}秒."
+msgstr ""
+
+#: src/script.py:2673
+#, python-brace-format
+msgid "第{a}次三牛完成. 本次用时:{b}秒. 累计开箱子{c}, 累计战斗{d}, 累计用时{e}秒."
+msgstr ""
+
+#: src/script.py:2679 src/script.py:2741 src/script.py:2808
+msgid "第一步: 重置因果"
+msgstr ""
+
+#: src/script.py:2684 src/script.py:2813
+msgid "第二步: 返回要塞"
+msgstr ""
+
+#: src/script.py:2688
+msgid "第三步: 前往王城"
+msgstr ""
+
+#: src/script.py:2694 src/script.py:2823
+msgid "第四步: 领取任务"
+msgstr ""
+
+#: src/script.py:2698
+msgid "第五步: 进入牛洞"
+msgstr ""
+
+#: src/script.py:2708
+msgid "第六步: 击杀一牛"
+msgstr ""
+
+#: src/script.py:2712
+msgid "第七步: 回去睡觉"
+msgstr ""
+
+#: src/script.py:2716
+msgid "第八步: 再入牛洞"
+msgstr ""
+
+#: src/script.py:2720
+msgid "第九步: 击杀二牛"
+msgstr ""
+
+#: src/script.py:2726
+msgid "第六步: 连杀三牛"
+msgstr ""
+
+#: src/script.py:2736
+#, python-brace-format
+msgid "第{a}次忍洞完成. 本次用时:{b}秒. 累计开箱子{c}, 累计战斗{d}, 累计用时{e}秒."
+msgstr ""
+
+#: src/script.py:2748
+msgid "第二步: 前往王城"
+msgstr ""
+
+#: src/script.py:2771
+msgid "第三步: 领取任务"
+msgstr ""
+
+#: src/script.py:2776
+msgid "第四步: 进入忍洞"
+msgstr ""
+
+#: src/script.py:2780
+msgid "第五步: 关闭陷阱"
+msgstr ""
+
+#: src/script.py:2786
+msgid "第六步: 第一个箱子"
+msgstr ""
+
+#: src/script.py:2803
+#, python-brace-format
+msgid "第{a}次约定之剑完成. 本次用时:{b}秒. 累计开箱子{c}, 累计战斗{d}, 累计用时{e}秒."
+msgstr ""
+
+#: src/script.py:2817
+msgid "第三步: 前往王城)"
+msgstr ""
+
+#: src/script.py:2830
+msgid "第五步: 进入洞窟"
+msgstr ""
+
+#: src/script.py:2841
+msgid "第六步: 1层找人"
+msgstr ""
+
+#: src/script.py:2851
+msgid "第七步: 2层找人"
+msgstr ""
+
+#: src/script.py:2862
+msgid "第八步: 3层找人"
+msgstr ""
+
+#: src/script.py:2878
+msgid "第九步: 离开洞穴"
+msgstr ""
+
+#: src/script.py:2891
+#, python-brace-format
+msgid "第{a}次巨人完成. 本次用时:{b}秒. 累计开箱子{c}, 累计战斗{d}, 累计用时{e}秒."
+msgstr ""
+
+#: src/script.py:2903
+msgid "跳过了巨人检测环节. 现在默认总是击杀灯怪."
+msgstr ""
+
+#: src/script.py:2925 src/script.py:2940 src/script.py:2952 src/script.py:3006
+#: src/script.py:3021 src/script.py:3033
+msgid "第一步: 时空跳跃..."
+msgstr ""
+
+#: src/script.py:2958 src/script.py:3039 src/script.py:3156
+msgid "第四步: 悬赏揭榜"
+msgstr ""
+
+#: src/script.py:2965 src/script.py:3046
+msgid "第五步: 击杀蝎女"
+msgstr ""
+
+#: src/script.py:2974 src/script.py:3070 src/script.py:3173
+msgid "第六步: 提交悬赏"
+msgstr ""
+
+#: src/script.py:2985 src/script.py:3085 src/script.py:3184
+msgid "第七步: 休息"
+msgstr ""
+
+#: src/script.py:2993
+#, python-brace-format
+msgid ""
+"第{a}次\"悬赏:蝎女\"完成. \n"
+"该次花费时间{b:.2f}s.\n"
+"总计用时{c:.2f}s.\n"
+"平均用时{d:.2f}"
+msgstr ""
+
+#: src/script.py:3058
+msgid "第5.5步: 击杀风暴六手"
+msgstr ""
+
+#: src/script.py:3093
+#, python-brace-format
+msgid ""
+"第{a}次\"悬赏:蝎女+六手\"完成. \n"
+"该次花费时间{b:.2f}s.\n"
+"总计用时{c:.2f}s.\n"
+"平均用时{d:.2f}"
+msgstr ""
+
+#: src/script.py:3128
+#, python-brace-format
+msgid ""
+"第{a}次\"钢试炼\"完成. \n"
+"该次花费时间{b:.2f}s.\n"
+"总计用时{c:.2f}s.\n"
+"平均用时{d:.2f}"
+msgstr ""
+
+#: src/script.py:3163
+msgid "第五步: 和吉尔说再见吧"
+msgstr ""
+
+#: src/script.py:3192
+#, python-brace-format
+msgid ""
+"第{a}次\"悬赏:吉尔\"完成. \n"
+"该次花费时间{b:.2f}s.\n"
+"总计用时{c:.2f}s.\n"
+"平均用时{d:.2f}"
+msgstr ""
+
+#: src/script.py:3195
+msgid "开始睡觉."
+msgstr ""
+
+#: src/script.py:3205
+#, python-brace-format
+msgid ""
+"完成了{a}次旅店休息.\n"
+"总计用时{c:.2f}s.\n"
+"平均用时{d:.2f}s."
+msgstr ""
+
+#: src/script.py:3301
+#, python-brace-format
+msgid "第{a}次要塞小精灵完成. 本次用时:{b}秒. 累计开箱子{c}, 累计战斗{d}, 累计用时{e}秒."
+msgstr ""
+
+#: src/utils.py:197
+msgid "配置已保存。"
+msgstr ""
+
+#: src/utils.py:226
+msgid "更新日志"
+msgstr ""
+
+#: src/utils.py:376
+msgid "0 面具"
+msgstr ""
+
+#: src/utils.py:377
+msgid "F 伊亚玛斯"
+msgstr ""
+
+#: src/utils.py:378
+msgid "F 凛音"
+msgstr ""
+
+#: src/utils.py:379
+msgid "F 吉拉德"
+msgstr ""
+
+#: src/utils.py:380
+msgid "F 夏莉莉妮雅"
+msgstr ""
+
+#: src/utils.py:381
+msgid "F 尤尔萨"
+msgstr ""
+
+#: src/utils.py:383
+msgid "F 狮樱"
+msgstr ""
+
+#: src/utils.py:384
+msgid "F 艾妮琪"
+msgstr ""
+
+#: src/utils.py:385
+msgid "F 艾尔文"
+msgstr ""
+
+#: src/utils.py:386
+msgid "F 莉娜莉亚"
+msgstr ""
+
+#: src/utils.py:387
+msgid "F 莉瓦娜"
+msgstr ""
+
+#: src/utils.py:388
+msgid "F 萨维亚"
+msgstr ""
+
+#: src/utils.py:389
+msgid "F 贝卡南"
+msgstr ""
+
+#: src/utils.py:390
+msgid "F 迦鲁巴多斯"
+msgstr ""
+
+#: src/utils.py:391
+msgid "F 银莲"
+msgstr ""
+
+#: src/utils.py:392
+msgid "F 阿尔博里斯"
+msgstr ""
+
+#: src/utils.py:393
+msgid "F 雅蓓妮斯"
+msgstr ""
+
+#: src/utils.py:394
+msgid "G 亚沙"
+msgstr ""
+
+#: src/utils.py:395
+msgid "G 克拉丽莎"
+msgstr ""
+
+#: src/utils.py:396
+msgid "G 克洛艾"
+msgstr ""
+
+#: src/utils.py:397
+msgid "G 切羽"
+msgstr ""
+
+#: src/utils.py:398
+msgid "G 加斯顿"
+msgstr ""
+
+#: src/utils.py:399
+msgid "G 奥利芙"
+msgstr ""
+
+#: src/utils.py:400
+msgid "G 奥菲莉亚"
+msgstr ""
+
+#: src/utils.py:401
+msgid "G 本杰明"
+msgstr ""
+
+#: src/utils.py:402
+msgid "G 海因里科"
+msgstr ""
+
+#: src/utils.py:403
+msgid "G 玛丽安娜"
+msgstr ""
+
+#: src/utils.py:404
+msgid "G 甘道夫"
+msgstr ""
+
+#: src/utils.py:405
+msgid "G 米拉娜"
+msgstr ""
+
+#: src/utils.py:406
+msgid "G 艾莉赛"
+msgstr ""
+
+#: src/utils.py:407
+msgid "G 芙尔特"
+msgstr ""
+
+#: src/utils.py:408
+msgid "G 阿米莉娅"
+msgstr ""
+
+#: src/utils.py:409
+msgid "P 亚当"
+msgstr ""
+
+#: src/utils.py:410
+msgid "P 叶卡捷琳娜"
+msgstr ""
+
+#: src/utils.py:411
+msgid "P 哲鲁夫"
+msgstr ""
+
+#: src/utils.py:412
+msgid "P 拉纳维尔"
+msgstr ""
+
+#: src/utils.py:413
+msgid "P 爱丽丝"
+msgstr ""
+
+#: src/utils.py:414
+msgid "P 黛波拉"
+msgstr ""
+

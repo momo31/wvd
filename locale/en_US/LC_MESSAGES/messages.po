@@ -1586,3 +1586,51 @@ msgstr "Config file saved."
 msgid "更新日志"
 msgstr "What's New"
 
+#: src/script.py:1522
+msgid "卡死检测耗时: {a}秒"
+msgstr "Freeze detection time: {a}s"
+
+#: src/script.py:1523
+msgid "卡死检测结果: {a}"
+msgstr "Freeze detection result: {a}"
+
+#: src/script.py:2076 src/script.py:2580
+msgid "粗略统计: 宝箱{a}秒, 战斗{b}秒."
+msgstr "Summary: Chest {a}s, Combat {b}s."
+
+#: src/script.py:1168
+msgid ""
+"箱子效率{a}秒/箱.\n"
+"累计开箱{b}次,开箱平均耗时{c}秒.\n"
+msgstr ""
+"Chest efficiency: {a}s/chest.\n"
+"Total chests opened: {b}, avg time per chest: {c}s.\n"
+
+#: src/script.py:1624
+msgid "没有检测到任务详情界面. 疑似法力不足, 使用自动战斗."
+msgstr "Skill detail screen not detected. Possibly insufficient mana, using auto-combat."
+
+msgid "战斗方案会在每次重启游戏, 以及任意角色死亡后重置."
+msgstr "The combat strategy will be reset on game restart and when any character dies."
+
+msgid "你也可以增加额外的重置:"
+msgstr "You can also add extra resets:"
+
+msgid "不需要"
+msgstr "None"
+
+msgid "每场战斗前"
+msgstr "Before every combat"
+
+msgid "每次副本开始"
+msgstr "Before every dungeon"
+
+msgid "停止"
+msgstr "Stop"
+
+msgid "等级"
+msgstr "Level"
+
+msgid "重启后尝试绕过空气墙"
+msgstr "Try to bypass invisible wall after restart"
+

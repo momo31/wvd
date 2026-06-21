@@ -30,3 +30,15 @@ screenshotwhenrestart/
 /人物截取/
 /本地化
 *.mo
+
+# Antigravity
+.antigravityrules
+.agents/
+
+# Auto-update and local temporary files
+__update_temp__/
+_update_restart.bat
+python-3.11.9-amd64.exe
+scratch_chinese_lines.txt
+chinese_in_gui.txt
+

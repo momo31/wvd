@@ -1,0 +1,1801 @@
+# English (United States) translations for PROJECT.
+# Copyright (C) 2026 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2026-06-18 20:39+0900\n"
+"PO-Revision-Date: 2026-06-12 14:27+0800\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ko_KR\n"
+"Language-Team: en_US <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: src/gui.py:102
+msgid "group_name"
+msgstr ""
+
+#: src/gui.py:108
+msgid "role_var"
+msgstr ""
+
+#: src/gui.py:110
+msgid "skill_var"
+msgstr ""
+
+#: src/gui.py:112
+msgid "target_var"
+msgstr ""
+
+#: src/gui.py:114
+msgid "freq_var"
+msgstr ""
+
+#: src/gui.py:146
+msgid "overall_strategy"
+msgstr ""
+
+#: src/gui.py:310
+msgid "技能配置组"
+msgstr "스킬 전략 그룹"
+
+#: src/gui.py:333 src/gui.py:399 src/script.py:37 src/script.py:1611
+msgid "左上技能"
+msgstr "좌측 상단 스킬"
+
+#: src/gui.py:333 src/script.py:1611
+msgid "右上技能"
+msgstr "우측 상단 스킬"
+
+#: src/gui.py:333 src/script.py:1611
+msgid "左下技能"
+msgstr "좌측 하단 스킬"
+
+#: src/gui.py:333 src/script.py:1611
+msgid "右下技能"
+msgstr "우측 하단 스킬"
+
+#: src/gui.py:333 src/gui.py:540 src/script.py:1766
+msgid "防御"
+msgstr "방어"
+
+#: src/gui.py:333 src/gui.py:474 src/gui.py:540 src/script.py:1715
+#: src/script.py:1761
+msgid "双击自动"
+msgstr "자동 전투 (더블 탭)"
+
+#: src/gui.py:334 src/script.py:1612
+msgid "左上角色"
+msgstr "좌측 상단 캐릭터"
+
+#: src/gui.py:334 src/script.py:1612
+msgid "中上角色"
+msgstr "중앙 상단 캐릭터"
+
+#: src/gui.py:334 src/script.py:1612
+msgid "右上角色"
+msgstr "우측 상단 캐릭터"
+
+#: src/gui.py:334 src/script.py:1612
+msgid "左下角色"
+msgstr "좌측 하단 캐릭터"
+
+#: src/gui.py:334 src/script.py:1612
+msgid "右下角色"
+msgstr "우측 하단 캐릭터"
+
+#: src/gui.py:334 src/script.py:1612
+msgid "中下角色"
+msgstr "중앙 하단 캐릭터"
+
+#: src/gui.py:334 src/gui.py:501 src/gui.py:542 src/gui.py:547 src/script.py:38
+msgid "不可用"
+msgstr "사용 불가"
+
+#: src/gui.py:334 src/gui.py:400 src/gui.py:548
+msgid "低生命值"
+msgstr "낮은 HP"
+
+#: src/gui.py:336 src/script.py:1776
+msgid "每场战斗仅一次"
+msgstr "전투당 1회"
+
+#: src/gui.py:336 src/script.py:1776 src/script.py:1779
+msgid "每次副本仅一次"
+msgstr "던전 입장당 1회"
+
+#: src/gui.py:336 src/script.py:39 src/script.py:1776 src/script.py:1779
+#: src/script.py:1788
+msgid "每次启动仅一次"
+msgstr "시작 시 1회"
+
+#: src/gui.py:336 src/gui.py:401 src/gui.py:483 src/script.py:1715
+#: src/script.py:1762
+msgid "重复"
+msgstr "반복"
+
+#: src/gui.py:343 src/gui.py:950 src/gui.py:1246 src/gui.py:1250
+#: src/gui.py:1303 src/script.py:45 src/script.py:48 src/script.py:1702
+msgid "全自动战斗"
+msgstr "완전 자동 전투"
+
+#: src/gui.py:349
+msgid "➕新增角色"
+msgstr "➕ 캐릭터 추가"
+
+#: src/gui.py:352
+msgid "🗑删除此组"
+msgstr "🗑️ 그룹 삭제"
+
+#: src/gui.py:355
+msgid "✎重命名"
+msgstr "✏️ 이름 변경"
+
+#: src/gui.py:412
+msgid "重命名"
+msgstr "이름 변경"
+
+#: src/gui.py:412
+msgid "修改配置组名称:"
+msgstr "전략 그룹 이름 수정:"
+
+#: src/gui.py:429
+msgid "确认删除"
+msgstr "삭제 확인"
+
+#: src/gui.py:429
+#, python-format
+msgid "确定要删除[%s]吗？"
+msgstr "정말로 [%s] 그룹을 삭제하시겠습니까?"
+
+#: src/gui.py:463
+msgid "默认"
+msgstr "기본"
+
+#: src/gui.py:492
+msgid "治疗:"
+msgstr "치료 대상:"
+
+#: src/gui.py:496
+msgid "等级:"
+msgstr "레벨:"
+
+#: src/gui.py:505
+msgid "[默认]"
+msgstr "[기본]"
+
+#: src/gui.py:509
+msgid "取消"
+msgstr "취소"
+
+#: src/gui.py:625
+#, python-format
+msgid "WvDAS 巫术daphne自动刷怪 v%s @德德Dellyla(B站)"
+msgstr "WvDAS v%s @Dellyla(Bilibili)"
+
+#: src/gui.py:626
+#, python-format
+msgid ""
+"遇到问题? 请访问:\n"
+"%s \n"
+"或加入Q群: 922497356."
+msgstr ""
+"문제가 발생했나요? 방문해주세요:\n"
+"%s"
+
+#: src/gui.py:672
+msgid "DEFAULT_OVERALL_STRATEGY"
+msgstr ""
+
+#: src/gui.py:687
+#, python-format
+msgid "当前版本: %s"
+msgstr "현재 버전: %s"
+
+#: src/gui.py:794
+msgid "模拟器"
+msgstr "앱플레이어"
+
+#: src/gui.py:812
+msgid "选择ADB执行文件"
+msgstr "ADB 실행 파일 선택"
+
+#: src/gui.py:820
+msgid "修改"
+msgstr "변경"
+
+#: src/gui.py:826
+msgid "已设置模拟器"
+msgstr "앱플레이어 설정 완료"
+
+#: src/gui.py:828
+msgid "未设置模拟器"
+msgstr "앱플레이어 설정 안 됨"
+
+#: src/gui.py:837
+msgid "ADB地址:"
+msgstr "ADB 주소:"
+
+#: src/gui.py:868 src/gui.py:878 src/gui.py:1097 src/gui.py:1690
+#: src/gui.py:1705
+msgid "保存"
+msgstr "저장"
+
+#: src/gui.py:873
+msgid "模拟器编号:"
+msgstr "앱플레이어 인덱스:"
+
+#: src/gui.py:885
+msgid "目标"
+msgstr "대상 던전"
+
+#: src/gui.py:898
+msgid "任务类别:"
+msgstr "퀘스트 분류:"
+
+#: src/gui.py:939 src/gui.py:1044 src/gui.py:1045
+msgid "随机"
+msgstr "무작위"
+
+#: src/gui.py:982
+#, python-format
+msgid "删除任务定制的配置文件, 任务为 %s."
+msgstr "작업에 대한 작업별 구성 파일을 삭제했습니다: %s."
+
+#: src/gui.py:988
+msgid "任务目标:"
+msgstr "퀘스트 목표:"
+
+#: src/gui.py:1019
+msgid "用任务定制的配置文件覆盖默认配置."
+msgstr "이 퀘스트 전용 설정 사용 (기본 설정 덮어쓰기)"
+
+#: src/gui.py:1026
+msgid "清除"
+msgstr "초기화"
+
+#: src/gui.py:1032
+msgid "探索"
+msgstr "탐색"
+
+#: src/gui.py:1042
+msgid "开箱人选:"
+msgstr "상자 개봉 담당:"
+
+#: src/gui.py:1044
+msgid "左上"
+msgstr "좌측 상단"
+
+#: src/gui.py:1044
+msgid "中上"
+msgstr "중앙 상단"
+
+#: src/gui.py:1044
+msgid "右上"
+msgstr "우측 상단"
+
+#: src/gui.py:1044
+msgid "左下"
+msgstr "좌측 하단"
+
+#: src/gui.py:1044
+msgid "中下"
+msgstr "중앙 하단"
+
+#: src/gui.py:1044
+msgid "右下"
+msgstr "우측 하단"
+
+#: src/gui.py:1057
+msgid "快速开箱"
+msgstr "빠른 상자 개봉"
+
+#: src/gui.py:1065
+msgid "跳过战后恢复"
+msgstr "전투 후 회복 건너뛰기"
+
+#: src/gui.py:1071
+msgid "跳过开箱后恢复"
+msgstr "상자 개봉 후 회복 건너뛰기"
+
+#: src/gui.py:1079
+msgid "刚进入地下城时恢复一次."
+msgstr "던전 입장 시 1회 회복합니다."
+
+#: src/gui.py:1089
+msgid "启用旅店休息"
+msgstr "여관 휴식 활성화"
+
+#: src/gui.py:1092
+msgid " | 完成"
+msgstr " | 완료"
+
+#: src/gui.py:1096
+msgid "次后休息."
+msgstr "회 후 휴식."
+
+#: src/gui.py:1104
+msgid "善恶:"
+msgstr "성향(카르마):"
+
+#: src/gui.py:1107 src/gui.py:1109
+msgid "维持现状"
+msgstr "현재 상태 유지"
+
+#: src/gui.py:1107 src/gui.py:1110
+msgid "恶→中立,中立→善"
+msgstr "악→중립, 중립→선"
+
+#: src/gui.py:1107 src/gui.py:1111
+msgid "善→中立,中立→恶"
+msgstr "선→중립, 중립→악"
+
+#: src/gui.py:1126
+msgid "还需"
+msgstr "남음:"
+
+#: src/gui.py:1128
+msgid "点"
+msgstr "포인트"
+
+#: src/gui.py:1133
+msgid "战斗"
+msgstr "전투"
+
+#: src/gui.py:1138
+msgid "请先选择任务目标"
+msgstr "먼저 퀘스트 목표를 선택해 주세요."
+
+#: src/gui.py:1151 src/gui.py:1152 src/gui.py:1156 src/gui.py:1242
+#: src/gui.py:1273 src/gui.py:1274 src/gui.py:1338
+msgid "全程"
+msgstr "전체 구간"
+
+#: src/gui.py:1183 src/gui.py:1248 src/gui.py:1319 src/gui.py:1339
+#: src/gui.py:1354 src/script.py:1576
+msgid "自定义任务点策略"
+msgstr "사용자 지정 포인트 전략"
+
+#: src/gui.py:1189
+msgid "启用任务专用配置"
+msgstr "퀘스트 전용 설정 활성화"
+
+#: src/gui.py:1190
+msgid "自定义任务点策略需要使用任务专用的配置文件。是否立即启用任务专用配置？"
+msgstr "사용자 지정 퀘스트 포인트 전략을 사용하려면 퀘스트 전용 설정 파일이 필요합니다. 지금 활성화하시겠습니까?"
+
+#: src/gui.py:1226
+msgid "不可用的任务名."
+msgstr "사용할 수 없는 퀘스트 이름입니다."
+
+#: src/gui.py:1264
+msgid "当前保存的战斗策略无效, 使用默认策略\"全自动战斗\"."
+msgstr "현재 저장된 전투 전략이 유효하지 않습니다. 기본 전략인 '완전 자동 전투'를 사용합니다."
+
+#: src/gui.py:1265
+msgid "全自动战斗."
+msgstr "완전 자동 전투."
+
+#: src/gui.py:1316
+#, python-format
+msgid "已刷新任务点界面，任务点数量: %s"
+msgstr "작업 지점 UI가 새로 고쳐졌습니다. 작업 포인트 수: %s"
+
+#: src/gui.py:1369
+msgid "战斗方案"
+msgstr "전투 전략 세트"
+
+#: src/gui.py:1408 src/gui.py:1732
+msgid "错误"
+msgstr "오류"
+
+#: src/gui.py:1408
+#, python-format
+msgid "名称 '%s' 已存在，请使用其他名称"
+msgstr "이름 '%s'이(가) 이미 존재합니다. 다른 이름을 사용해 주세요."
+
+#: src/gui.py:1439 src/gui.py:1441
+#, python-format
+msgid "策略配置 %s"
+msgstr "전략 설정 %s"
+
+#: src/gui.py:1465
+msgid "➕ 添加新技能配置"
+msgstr "➕ 새 스킬 전략 추가"
+
+#: src/gui.py:1484
+msgid "日常/周常"
+msgstr "일일/주간 임무"
+
+#: src/gui.py:1520
+msgid "点此领取50钻(旧)"
+msgstr "보석 50개 수령 (구버전)"
+
+#: src/gui.py:1530
+msgid "点此领取50钻(新)"
+msgstr "보석 50개 수령 (신버전)"
+
+#: src/gui.py:1572
+msgid "灵庙已刷新! 点此自动切换"
+msgstr "영묘가 갱신되었습니다! 전환하려면 여기를 클릭하세요."
+
+#: src/gui.py:1585
+msgid "高级"
+msgstr "고급 설정"
+
+#: src/gui.py:1598
+msgid "没有火的时候自动找王女要钱"
+msgstr "재기의 불꽃 소진 시 황녀에게 지원금 받기"
+
+#: src/gui.py:1611
+msgid "住豪华房"
+msgstr "로얄 스위트룸 투숙"
+
+#: src/gui.py:1624
+msgid "跳跃到第三章结局\"凯旋\""
+msgstr "가능하다면 Ch.3 엔딩으로 타임리프하세요."
+
+#: src/gui.py:1637
+msgid "跳跃到第四章结局\"美丽矿石的真相\""
+msgstr "가능하다면 Ch.4 엔딩으로 타임리프하세요."
+
+#: src/gui.py:1650
+msgid "尝试调整因果"
+msgstr "인과 조율 시도"
+
+#: src/gui.py:1663
+msgid "重启后尝试绕过空气墙"
+msgstr "재시작 후 보이지 않는 벽 우회 시도"
+
+#: src/gui.py:1674
+#, python-brace-format
+msgid "尝试次数不能低于{a}次."
+msgstr "시도 횟수는 {a}회 이상이어야 합니다."
+
+#: src/gui.py:1689
+msgid "次定位失败后重启游戏."
+msgstr "회 위치 인식 실패 시 게임 재시작."
+
+#: src/gui.py:1704
+msgid "次重启游戏后重启模拟器."
+msgstr "회 게임 재시작 시 앱플레이어 재시작."
+
+#: src/gui.py:1732
+msgid "ADB 실행 파일이 존재하지 않습니다. ADB 주소를 확인해 주세요."
+msgstr ""
+
+#: src/gui.py:1737
+msgid "正在尝试截取模拟器屏幕..."
+msgstr "에뮬레이터 화면 캡처를 시도하는 중..."
+
+#: src/gui.py:1754
+msgid "截屏失败，请检查模拟器是否启动以及ADB连接是否正常。"
+msgstr "화면 캡처 실패. 에뮬레이터가 실행 중인지, ADB 연결이 정상인지 확인해 주세요."
+
+#: src/gui.py:1759
+#, fuzzy
+msgid "截屏数据异常"
+msgstr "화면 캡처 데이터 오류"
+
+#: src/gui.py:1769
+#, fuzzy
+msgid "截屏数据不完整"
+msgstr "화면 캡처 데이터가 불완전합니다"
+
+#: src/gui.py:1781
+#, python-format
+msgid "截图已保存至: %s"
+msgstr "화면 캡처가 다음에 저장되었습니다: %s"
+
+#: src/gui.py:1785
+#, fuzzy, python-format
+msgid "截屏发生异常: %s"
+msgstr "화면 캡처 중 오류 발생: %s"
+
+#: src/gui.py:1791
+#, fuzzy
+msgid "📸 模拟器截图"
+msgstr "📸 화면 캡처"
+
+#: src/gui.py:1806 src/gui.py:1932
+msgid "脚本, 启动!"
+msgstr "스크립트 시작!"
+
+#: src/gui.py:1822
+msgid "发现新版本:"
+msgstr "새 버전 발견:"
+
+#: src/gui.py:1830
+msgid "自动下载"
+msgstr "자동 다운로드"
+
+#: src/gui.py:1845
+msgid "手动下载最新版"
+msgstr "수동 다운로드"
+
+#: src/gui.py:1931
+msgid "已停止."
+msgstr "중지됨."
+
+#: src/gui.py:1946
+msgid "唔, 看起来一次成功的地下城都没有完成."
+msgstr "성공적으로 완료한 던전이 없는 것 같습니다."
+
+#: src/gui.py:1947
+#, python-format
+msgid ""
+"你的队伍已经耗尽了所有的再起之火.\n"
+"在耗尽再起之火前,\n"
+"你的队伍已经完成了如下了不起的壮举:\n"
+"\n"
+"%s\n"
+"\n"
+"不过没关系, 至少, 你还可以找公主要钱.\n"
+"\n"
+"赞美公主殿下!\n"
+msgstr "당신의 파티는 재기의 불꽃을 모두 소진했습니다.\n소진되기 전에 파티는 다음과 같은 업적을 달성했습니다.\n\n%s\n\n하지만 괜찮습니다. 적어도 황녀에게 지원금을 받을 수는 있습니다.\n\n황녀님 만세!\n"
+
+#: src/script.py:33
+msgid "柚子"
+msgstr "유자"
+
+#: src/script.py:36 src/utils.py:382
+msgid "F 柚奈壬姬"
+msgstr "F 유즈나미키"
+
+#: src/script.py:84
+#, python-format
+msgid "FarmConfig对象没有属性'%s'"
+msgstr "FarmConfig 개체에 '%s' 속성이 없습니다."
+
+#: src/script.py:129
+#, python-format
+msgid "FarmQuest对象没有属性'%s'"
+msgstr "FarmQuest 개체에 '%s' 속성이 없습니다."
+
+#: src/script.py:186
+msgid "任务列表已更新.请重新手动选择地下城任务."
+msgstr "퀘스트 목록이 업데이트되었습니다. 대상 던전/퀘스트를 수동으로 다시 선택해 주세요."
+
+#: src/script.py:199
+#, python-format
+msgid "'%s'并不存在于FarmQuest中."
+msgstr "FarmQuest에 '%s'이(가) 존재하지 않습니다."
+
+#: src/script.py:204
+#, python-format
+msgid "执行cmd命令: %s"
+msgstr "cmd 명령 실행 중: %s"
+
+#: src/script.py:213
+#, python-brace-format
+msgid "cmd命令返回:{}"
+msgstr ""
+
+#: src/script.py:216
+#, python-brace-format
+msgid "cmd命令错误:{}"
+msgstr ""
+
+#: src/script.py:227
+#, python-brace-format
+msgid "adb程序序不存在: {a}"
+msgstr "adb 실행 파일이 존재하지 않습니다: {a}"
+
+#: src/script.py:257
+msgid "正在检查并关闭adb..."
+msgstr "ADB 프로세스 확인 및 종료 중..."
+
+#: src/script.py:283
+msgid "已尝试终止adb"
+msgstr "ADB 프로세스 종료를 시도했습니다."
+
+#: src/script.py:285 src/script.py:348
+#, python-brace-format
+msgid "终止模拟器进程时出错: {a}"
+msgstr "앱플레이어 프로세스 종료 중 오류 발생: {a}"
+
+#: src/script.py:290
+#, python-brace-format
+msgid "正在检查并关闭已运行的模拟器实例{a}..."
+msgstr "실행 중인 앱플레이어 인스턴스 {a} 확인 및 종료 중..."
+
+#: src/script.py:294
+#, python-brace-format
+msgid "使用已知进程号{a}关闭模拟器..."
+msgstr "알려진 PID {a}를 사용하여 앱플레이어 종료 중..."
+
+#: src/script.py:312
+msgid "模拟器uid未知, 全杀了."
+msgstr "앱플레이어 UID를 알 수 없어 실행 중인 프로세스를 모두 종료합니다."
+
+#: src/script.py:346
+#, python-brace-format
+msgid "已尝试终止模拟器进程: {a}"
+msgstr "앱플레이어 프로세스 종료를 시도했습니다: {a}"
+
+#: src/script.py:356
+#, python-brace-format
+msgid "模拟器启动程序不存在: {a}"
+msgstr "앱플레이어 실행 파일이 존재하지 않습니다: {a}"
+
+#: src/script.py:361
+#, python-brace-format
+msgid "启动模拟器: {a}"
+msgstr "앱플레이어 실행: {a}"
+
+#: src/script.py:384
+#, python-brace-format
+msgid "模拟器启动开始，进程号为{a}"
+msgstr "앱플레이어 시작됨, PID: {a}"
+
+#: src/script.py:387
+#, python-brace-format
+msgid "启动模拟器失败: {a}"
+msgstr "앱플레이어 시작 실패: {a}"
+
+#: src/script.py:390
+msgid "等待模拟器启动..."
+msgstr "앱플레이어 시작 대기 중..."
+
+#: src/script.py:410
+#, python-brace-format
+msgid ""
+"-----------------------\n"
+"开始尝试连接adb. 次数:{a}/{b}..."
+msgstr "----------\nADB 연결 시도 중. 시도 {a}/{b}회..."
+
+#: src/script.py:413
+msgid "失败次数过多, 尝试关闭adb."
+msgstr "연결 실패 횟수 초과, ADB 프로세스를 종료합니다."
+
+#: src/script.py:419
+msgid "检查adb服务..."
+msgstr "ADB 서비스 확인 중..."
+
+#: src/script.py:430
+msgid "尝试连接到adb..."
+msgstr "ADB 연결 시도 중..."
+
+#: src/script.py:435
+msgid "成功连接到模拟器!"
+msgstr "앱플레이어에 성공적으로 연결되었습니다!"
+
+#: src/script.py:440
+#, python-brace-format
+msgid "模拟器进程号为{a}."
+msgstr "앱플레이어 PID: {a}."
+
+#: src/script.py:442
+msgid ""
+"\n"
+"\n"
+"***********\n"
+"有多个模拟器已经启动, 无法识别进程号. 当需要重启模拟器的时候, 会重启所有模拟器.\n"
+"为了避免此问题, 请关闭目标模拟器, 并使用本脚本自动启动模拟器.\n"
+"\n"
+msgstr ""
+"***********\\n여러 앱플레이어가 이미 실행 중이므로 PID를 식별할 수 없습니다. 다시 시작해야 하면 모든 앱플레이어가 "
+"다시 시작됩니다.\\n이를 방지하려면 대상 앱플레이어를 닫고 이 스크립트가 자동으로 시작되도록 하세요."
+
+#: src/script.py:446
+msgid "模拟器未运行，尝试启动..."
+msgstr "앱플레이어가 실행 중이 아닙니다. 실행을 시도합니다..."
+
+#: src/script.py:448
+msgid ""
+"模拟器(应该)启动完毕.\n"
+" 尝试连接到模拟器..."
+msgstr "앱플레이어가 시작되었습니다. 연결을 시도합니다..."
+
+#: src/script.py:451
+msgid "成功连接到模拟器"
+msgstr "앱플레이어 연결 성공."
+
+#: src/script.py:453
+msgid "无法连接. 检查adb端口."
+msgstr "연결에 실패했습니다. ADB 포트를 확인해 주세요."
+
+#: src/script.py:455
+#, python-brace-format
+msgid "连接失败: {a}"
+msgstr "연결 실패: {a}"
+
+#: src/script.py:461
+#, python-brace-format
+msgid "重启ADB服务时出错: {a}"
+msgstr "ADB 서비스 재시작 중 오류 발생: {a}"
+
+#: src/script.py:468
+msgid "达到最大重试次数，连接失败"
+msgstr "최대 재시도 횟수 도달, 연결 실패"
+
+#: src/script.py:479
+#, python-brace-format
+msgid "成功创建设备对象: {a}"
+msgstr "장치 객체 생성 성공: {a}"
+
+#: src/script.py:482
+#, python-brace-format
+msgid "创建ADB设备时出错: {a}"
+msgstr "ADB 장치 생성 중 오류 발생: {a}"
+
+#: src/script.py:538
+msgid "ADB服务成功启动，设备已连接."
+msgstr "ADB 서비스가 시작되고 장치가 연결되었습니다."
+
+#: src/script.py:541
+#, python-brace-format
+msgid "DeviceShell {a}"
+msgstr "장치 쉘 {a}"
+
+#: src/script.py:562
+#, python-brace-format
+msgid "ADB命令执行超时: {a}"
+msgstr "ADB 명령 실행 시간 초과: {a}"
+
+#: src/script.py:563
+msgid "ADB命令在7秒内未完成"
+msgstr "ADB 명령이 7초 내에 완료되지 않았습니다."
+
+#: src/script.py:570
+#, python-brace-format
+msgid "ADB操作失败 ({a}): {b}"
+msgstr "ADB 작업 실패 ({a}): {b}"
+
+#: src/script.py:571 src/script.py:652
+msgid "ADB操作失败, 尝试重启ADB或模拟器程序..."
+msgstr "ADB 작업 실패, ADB 및 앱플레이어 재시작 시도 중..."
+
+#: src/script.py:577
+msgid "ADB超时, 尝试重启ADB或模拟器程序..."
+msgstr "ADB 시간 초과, ADB 및 앱플레이어 재시작 시도 중..."
+
+#: src/script.py:584
+#, python-brace-format
+msgid "非预期的ADB异常({a}): {b}"
+msgstr "예기치 않은 ADB 오류 ({a}): {b}"
+
+#: src/script.py:605
+#, python-brace-format
+msgid "截图命令报错: {a}"
+msgstr "화면 캡처 명령 오류: {a}"
+
+#: src/script.py:606
+msgid "截图命令报错"
+msgstr "화면 캡처 명령 오류"
+
+#: src/script.py:612
+msgid "截图数据不足12字节(无头信息)"
+msgstr "캡처 데이터가 12바이트 미만입니다 (헤더 정보 없음)"
+
+#: src/script.py:613
+msgid "截图数据异常"
+msgstr "화면 캡처 데이터 오류"
+
+#: src/script.py:627
+#, python-brace-format
+msgid "数据长度校验失败: 头部声明 {a}x{b}, 实际收到 {c}, 期望 {d}"
+msgstr "데이터 길이 검증 실패: 헤더 {a}x{b}, 수신 {c}, 예상 {d}"
+
+#: src/script.py:628
+msgid "截图数据不完整"
+msgstr "화면 캡처 데이터가 불완전합니다"
+
+#: src/script.py:639
+#, python-brace-format
+msgid "截图尺寸错误: 当前{a}, 检测为横屏."
+msgstr "화면 방향 오류: 현재 {a}, 가로 모드가 감지되었습니다."
+
+#: src/script.py:643
+#, python-brace-format
+msgid "截图尺寸错误: 期望(1600,900), 实际({a},{b})."
+msgstr "화면 해상도 오류: 예상(1600,900), 실제({a},{b})."
+
+#: src/script.py:644
+#, python-brace-format
+msgid "分辨率异常: {a}x{b}"
+msgstr "해상도 비정상: {a}x{b}"
+
+#: src/script.py:651
+msgid "截图超时 (Subprocess)"
+msgstr "화면 캡처 시간 초과 (Subprocess)"
+
+#: src/script.py:656
+#, python-brace-format
+msgid "截图发生异常: {a}"
+msgstr "화면 캡처 중 오류 발생: {a}"
+
+#: src/script.py:658
+msgid "ADB操作失败/数据错误, 尝试重启ADB或模拟器程序..."
+msgstr "ADB 작업 실패 또는 데이터 오류, ADB 및 앱플레이어 재시작 시도 중..."
+
+#: src/script.py:671
+msgid "cv2异常."
+msgstr "OpenCV(cv2) 오류."
+
+#: src/script.py:695
+#, python-brace-format
+msgid "匹配失败: {a}的匹配程度为{b:.2f}%, 不足阈值."
+msgstr "이미지 매칭 실패: {a} 일치도 {b:.2f}%, 임계값 미달."
+
+#: src/script.py:698
+#, python-brace-format
+msgid "匹配成功: {a}的匹配程度为{b:.2f}%, 位于{c}."
+msgstr "이미지 매칭 성공: {a} 일치도 {b:.2f}%, 위치 {c}."
+
+#: src/script.py:703
+#, python-brace-format
+msgid "匹配检测: {a}的匹配程度为{b:.2f}%, 位于{c}."
+msgstr "이미지 매칭 감지: {a} 일치도 {b:.2f}%, 위치 {c}."
+
+#: src/script.py:735
+#, python-brace-format
+msgid "搜索到疑似{a}, 匹配程度:{b:.2f}%"
+msgstr "감지 대상 {a} 탐색 중, 일치도: {b:.2f}%"
+
+#: src/script.py:738
+#, python-brace-format
+msgid "警告: {a}的匹配程度超过了80%但不足90%"
+msgstr "경고: {a} 일치도가 80% 이상 90% 미만입니다."
+
+#: src/script.py:753
+#, python-brace-format
+msgid "中心匹配检查:{a:.2f}"
+msgstr "중앙 매칭 검증: {a:.2f}"
+
+#: src/script.py:766
+#, python-brace-format
+msgid "目标格搜索{a}, 匹配程度:{b:.2f}%"
+msgstr "대상 그리드 {a} 검색 중, 일치도: {b:.2f}%"
+
+#: src/script.py:768
+msgid "已达到检测阈值."
+msgstr "감지 임계값에 도달했습니다."
+
+#: src/script.py:782
+#, python-brace-format
+msgid "搜索楼层标识{a}, 匹配程度:{b:.2f}%"
+msgstr "층 표시 {a} 검색 중, 일치도: {b:.2f}%"
+
+#: src/script.py:784
+msgid "楼层正确, 判定为已通过"
+msgstr "올바른 층, 통과 판정"
+
+#: src/script.py:791
+#, python-brace-format
+msgid "搜索楼梯{a}, 匹配程度:{b:.2f}%"
+msgstr "계단 {a} 검색 중, 일치도: {b:.2f}%"
+
+#: src/script.py:793
+msgid "判定为楼梯存在, 尚未通过."
+msgstr "계단이 존재하는 것으로 확인되었으나 아직 통과하지 못했습니다."
+
+#: src/script.py:807
+#, python-brace-format
+msgid "楼层验证中, 目标楼层标识{a}, 匹配程度:{b:.2f}%"
+msgstr "층 확인 중, 대상 층 표시 {a}, 일치도: {b:.2f}%"
+
+#: src/script.py:809
+msgid "楼层验证判定通过, 当前处于正确楼层."
+msgstr "층 확인 완료, 현재 올바른 층에 위치해 있습니다."
+
+#: src/script.py:815
+msgid "目前处于错误的楼层中, 可能是由于错误点击导致的, 开始全地图搜索哈肯."
+msgstr "잘못된 층에 위치해 있습니다. 오클릭이 원인일 수 있어 전체 지도에서 하켄 검색을 시작합니다."
+
+#: src/script.py:823
+#, python-brace-format
+msgid "哈肯搜索, 目标{a}, 匹配程度:{b:.2f}%"
+msgstr "하켄 검색 중, 대상 {a}, 일치도: {b:.2f}%"
+
+#: src/script.py:825
+msgid "哈肯搜索, 已找到哈肯."
+msgstr "하켄 검색 성공, 하켄을 찾았습니다."
+
+#: src/script.py:841
+#, python-brace-format
+msgid "快进未开启, 即将开启.{a}"
+msgstr "배속이 활성화되어 있지 않아 활성화합니다. {a}"
+
+#: src/script.py:859
+msgid "开始下载……"
+msgstr "다운로드 시작 중..."
+
+#: src/script.py:862 src/script.py:866
+msgid "发现并点击了\"重试\". 你遇到了网络波动."
+msgstr "'재시도' 버튼 클릭함. 네트워크 연결이 불안정합니다."
+
+#: src/script.py:872
+msgid "👆向上滑动查看重要信息👆\n"
+msgstr "👆 위로 스크롤하여 중요 정보 확인 👆\n"
+
+#: src/script.py:925
+#, python-brace-format
+msgid "错误: 非法的目标{a}."
+msgstr "오류: 잘못된 대상 {a}."
+
+#: src/script.py:932
+msgid "错误: 非法的目标."
+msgstr "오류: 잘못된 대상입니다."
+
+#: src/script.py:937
+#, python-brace-format
+msgid "{a}次截图依旧没有找到目标{b}, 疑似卡死. 重启游戏."
+msgstr "{a}회 캡처 후에도 {b} 대상을 찾지 못했습니다. 앱이 멈춘 것으로 판단하여 게임을 재시작합니다."
+
+#: src/script.py:955
+#, python-brace-format
+msgid "重启前截图已保存在{a}中."
+msgstr "재시작 전 화면 스크린샷이 {a}에 저장되었습니다."
+
+#: src/script.py:960
+#, python-brace-format
+msgid ""
+"崩溃计数: {a}\n"
+"崩溃计数超过{b}次后会重启模拟器."
+msgstr "크래시 횟수: {a}\n크래시가 {b}회를 초과하면 앱플레이어를 재시작합니다."
+
+#: src/script.py:972
+msgid "巫术, 启动!"
+msgstr "위저드리 다프네 실행!"
+
+#: src/script.py:977
+#, python-brace-format
+msgid "检测到崩溃日志, 关闭模拟器重启.{a}"
+msgstr "크래시 로그 감지, 앱플레이어를 재시작합니다. {a}"
+
+#: src/script.py:985 src/script.py:990 src/script.py:996
+#, fuzzy
+msgid "任务已停止."
+msgstr "중지됨."
+
+#: src/script.py:998
+msgid "任务进度重置中..."
+msgstr "퀘스트 진행도 초기화 중..."
+
+#: src/script.py:1166
+#, python-brace-format
+msgid ""
+"已完成{a}次\"{b}\"地下城.\n"
+"总计{c}秒.上次用时:{d}秒.\n"
+msgstr "\"{b}\" 던전 {a}회 파밍 완료.\n총 소요 시간: {c}초. 최근 소요 시간: {d}초.\n"
+
+#: src/script.py:1170
+#, python-brace-format
+msgid "累计战斗{a}次.战斗平均用时{b}秒."
+msgstr "누적 전투: {a}회. 평균 전투 시간: {b}초."
+
+#: src/script.py:1246
+msgid "因为面板设置, 跳过了调整因果."
+msgstr "설정에 따라 인과 조율(시공간 도약)을 건너뜁니다."
+
+#: src/script.py:1249
+#, python-brace-format
+msgid "开始时间跳跃, 本次跳跃目标:{a}"
+msgstr "시간 도약 시작, 목표 지점: {a}"
+
+#: src/script.py:1321
+msgid "快快请起."
+msgstr "부활 시도."
+
+#: src/script.py:1322
+msgid "面具死了, 但是再起."
+msgstr "주인공(Masked One)이 사망했으나 재기의 불꽃으로 부활했습니다."
+
+#: src/script.py:1330
+#, python-brace-format
+msgid "状态检查中...(第{a}次)"
+msgstr "상태 확인 중... ({a}회째 시도)"
+
+#: src/script.py:1339
+msgid "确认, 下载, 确认."
+msgstr "확인, 다운로드, 확인 진행."
+
+#: src/script.py:1358
+msgid "尝试复活队友..."
+msgstr "아군 부활 시도 중..."
+
+#: src/script.py:1374 src/script.py:1397
+msgid "不满足回城条件, 跳过回城."
+msgstr "마을 복귀 조건이 충족되지 않아 건너뜁니다."
+
+#: src/script.py:1422
+msgid "看起来遇到了一些不太寻常的情况..."
+msgstr "비정상적인 상황이 감지되었습니다..."
+
+#: src/script.py:1433
+msgid "看起来你没有选择找王女要钱. 那么就等两个小时吧."
+msgstr "황녀 지원금 받기가 활성화되지 않았습니다. 2시간 동안 대기합니다."
+
+#: src/script.py:1451
+#, python-brace-format
+msgid "即将进行善恶值调整. 剩余次数:{a}"
+msgstr "성향 조정을 진행합니다. 남은 시도 횟수: {a}"
+
+#: src/script.py:1452
+#, python-brace-format
+msgid "新的善恶:{a}"
+msgstr "새로운 성향: {a}"
+
+#: src/script.py:1461
+msgid "购买了骨头."
+msgstr "뼈를 구매했습니다."
+
+#: src/script.py:1463
+msgid "购买了尸油."
+msgstr "시체 기름을 구매했습니다."
+
+#: src/script.py:1474
+msgid "死了好几个, 惨哦"
+msgstr "다수의 캐릭터가 사망했습니다."
+
+#: src/script.py:1480
+msgid "网络故障警报! 网络故障警报! 返回标题, 重复, 返回标题!"
+msgstr "네트워크 경고! 타이틀 화면으로 돌아가 재시도를 수행합니다."
+
+#: src/script.py:1486
+msgid "看起来遇到了一些非同寻常的情况...重启游戏."
+msgstr "예외 상황 감지, 게임을 재시작합니다."
+
+#: src/script.py:1502
+msgid "GameFrozenCheck被传入了一个空值."
+msgstr "GameFrozenCheck에 빈 값이 전달되었습니다."
+
+#: src/script.py:1512
+#, python-brace-format
+msgid "卡死检测截图 counter={a} length={b}"
+msgstr "동결 감지 캡처 counter={a} length={b}"
+
+#: src/script.py:1596
+msgid "无法获取当前策略."
+msgstr "현재 전략을 가져올 수 없습니다."
+
+#: src/script.py:1655
+#, python-brace-format
+msgid "释放了位于\"{a}\"的辅助技能, 技能等级为{b}, 释放对象为{c}"
+msgstr "\"{a}\" 위치의 보조 스킬 시전, 스킬 레벨: {b}, 대상: {c}"
+
+#: src/script.py:1660
+#, python-brace-format
+msgid "释放了位于\"{a}\"的全体技能, 技能等级为{b}."
+msgstr "\"{a}\" 위치의 전체 공격 스킬 시전, 스킬 레벨: {b}."
+
+#: src/script.py:1664
+#, python-brace-format
+msgid "释放了位于\"{a}\"的单体技能, 技能等级为{b}. 选择next作为敌方目标."
+msgstr "\"{a}\" 위치의 단일 스킬 시전, 스킬 레벨: {b}. 적 대상을 다음(next)으로 선택."
+
+#: src/script.py:1670
+#, python-brace-format
+msgid "释放了位于\"{a}\"的单体技能, 技能等级为{b}. 随机选择敌方目标."
+msgstr "\"{a}\" 위치의 단일 스킬 시전, 스킬 레벨: {b}. 적 대상 무작위 선택."
+
+#: src/script.py:1700
+msgid "错误: 当前战斗策略内容为空. 使用全自动战斗."
+msgstr "오류: 현재 전투 전략이 비어 있습니다. 완전 자동 전투를 사용합니다."
+
+#: src/script.py:1703
+msgid "当前战斗为\"全自动战斗\", 因此使用全自动战斗."
+msgstr "현재 전투는 \"Full Auto\"이거나 스킬 목록이 비어 있어 Full Auto를 사용합니다."
+
+#: src/script.py:1706
+msgid "当前战斗技能列表内容为空, 因此使用全自动战斗."
+msgstr "현재 전투는 \"Full Auto\"이거나 스킬 목록이 비어 있어 Full Auto를 사용합니다."
+
+#: src/script.py:1728
+msgid "战斗已结束."
+msgstr "전투가 종료되었습니다."
+
+#: src/script.py:1751
+#, python-brace-format
+msgid "最佳 {a}, {b}"
+msgstr "최고 {a}, {b}"
+
+#: src/script.py:1756
+msgid "并未设定该角色的行为, 使用自动战斗."
+msgstr "해당 캐릭터의 행동이 설정되지 않아 자동 전투를 실행합니다."
+
+#: src/script.py:1763
+msgid "不需要同时设置为\"双击自动\"且\"重复\", 因为这是未设置角色时的默认行为."
+msgstr "\"자동 전투(더블 탭)\"와 \"반복\"을 동시에 설정할 필요가 없습니다. 이는 캐릭터 미설정 시의 기본 동작입니다."
+
+#: src/script.py:1778
+msgid "在当前战斗的策略中删除了该技能."
+msgstr "현재 전투 전략에서 해당 스킬을 삭제했습니다."
+
+#: src/script.py:1786
+msgid "在每次地下城的策略中删除了该技能."
+msgstr "매 던전 진입 전략에서 해당 스킬을 삭제했습니다."
+
+#: src/script.py:1795
+msgid "在每次启动中使用的策略里删除了该技能."
+msgstr "매 시작 시 사용되는 전략에서 해당 스킬을 삭제했습니다."
+
+#: src/script.py:1806
+msgid "地图不可用."
+msgstr "지도를 사용할 수 없습니다."
+
+#: src/script.py:1817
+#, python-brace-format
+msgid "当前目标: 地点{a}"
+msgstr "현재 대상: 위치 {a}"
+
+#: src/script.py:1822
+#, python-brace-format
+msgid "当前目标: 楼梯{a}"
+msgstr "현재 목표: 계단 {a}"
+
+#: src/script.py:1825
+#, python-brace-format
+msgid "搜索{a}..."
+msgstr "{a} 검색 중..."
+
+#: src/script.py:1827
+#, python-brace-format
+msgid "找到了 {a}! {b}"
+msgstr "{a}를 찾았습니다! {b}"
+
+#: src/script.py:1829
+#, python-brace-format
+msgid "宝箱热力图: 地图:{a} 方向:{b} 位置:{c}"
+msgstr "보물상자 히트맵: 지도:{a} 방향:{b} 위치:{c}"
+
+#: src/script.py:1839
+msgid "面具男, 移动."
+msgstr "주인공(Masked One), 이동 중."
+
+#: src/script.py:1844
+msgid "开始移动失败. 不要停下来啊面具男!"
+msgstr "이동을 시작하지 못했습니다. 멈추지 마세요, 주인공(Masked One)!"
+
+#: src/script.py:1849
+#, python-brace-format
+msgid "已退出移动状态. 当前状态: {a}."
+msgstr "이동 상태를 종료했습니다. 현재 상태: {a}."
+
+#: src/script.py:1858
+msgid "已退出移动状态. 进行状态检查..."
+msgstr "이동 상태를 종료했습니다. 상태 확인 중..."
+
+#: src/script.py:1869
+msgid "在暴风雪中."
+msgstr "눈보라 속에서."
+
+#: src/script.py:1874
+msgid "没有检测到地图."
+msgstr "지도가 감지되지 않았습니다."
+
+#: src/script.py:1880
+#, python-brace-format
+msgid "错误: {a}"
+msgstr "오류: {a}"
+
+#: src/script.py:1888
+msgid ""
+"没有找到宝箱.\n"
+"停止检索宝箱."
+msgstr "보물상자를 찾지 못했습니다.\n보물상자 검색을 중지합니다."
+
+#: src/script.py:1891
+msgid "已经抵达目标地点或目标楼层."
+msgstr "이미 대상 위치 또는 대상 층에 있습니다."
+
+#: src/script.py:1896
+#, python-brace-format
+msgid "未找到目标{a}."
+msgstr "대상 {a}을(를) 찾을 수 없습니다."
+
+#: src/script.py:1905
+msgid "经过对比中心区域, 确认没有抵达."
+msgstr "중앙 영역 비교 결과, 아직 도착하지 않았습니다."
+
+#: src/script.py:1911
+msgid "经过对比中心区域, 判断为抵达目标地点."
+msgstr "중앙 영역 비교 결과, 목표 지점에 도착했습니다."
+
+#: src/script.py:1912
+msgid "无需等待, 当前目标已完成."
+msgstr "기다릴 필요가 없습니다. 현재 목표가 완료되었습니다."
+
+#: src/script.py:2038 src/script.py:2285 src/script.py:2298
+msgid "即将停止脚本..."
+msgstr "스크립트를 중지합니다..."
+
+#: src/script.py:2040
+#, python-brace-format
+msgid "当前状态(地下城): {a}"
+msgstr "현재 상태(던전): {a}"
+
+#: src/script.py:2049 src/script.py:2555
+msgid "由于画面卡死, 在state:None中重启."
+msgstr "화면 멈춤으로 인해 state:None 상태에서 재시작합니다."
+
+#: src/script.py:2053 src/script.py:2559
+msgid "由于宝箱用时过久, 在state:None中重启."
+msgstr "보물상자 처리에 시간이 너무 오래 걸려 state:None 상태에서 재시작합니다."
+
+#: src/script.py:2056 src/script.py:2562
+msgid "由于战斗用时过久, 在state:None中重启."
+msgstr "전투 시간이 너무 오래 걸려 state:None 상태에서 재시작합니다."
+
+#: src/script.py:2088 src/script.py:2592
+msgid "进行开启宝箱后的恢复."
+msgstr "상자 개봉 후 회복을 수행합니다."
+
+#: src/script.py:2093 src/script.py:2597
+msgid "由于面板配置, 进行开启宝箱后恢复."
+msgstr "패널 설정에 따라 상자 개봉 후 회복을 진행합니다."
+
+#: src/script.py:2096 src/script.py:2600
+msgid "由于面板配置, 跳过了开启宝箱后恢复."
+msgstr "패널 설정에 따라 상자 개봉 후 회복을 건너뜁니다."
+
+#: src/script.py:2102 src/script.py:2606
+msgid "由于面板配置, 进行战后恢复."
+msgstr "패널 설정에 따라 전투 후 회복을 진행합니다."
+
+#: src/script.py:2105 src/script.py:2609
+msgid "由于面板配置, 跳过了战后恢复."
+msgstr "패널 설정에 따라 전투 후 회복을 건너뜁니다."
+
+#: src/script.py:2109
+msgid "由于面板配置, 在刚进入地下城时进行恢复."
+msgstr "패널 설정에 따라 던전 진입 즉시 회복을 진행합니다."
+
+#: src/script.py:2144
+msgid "自动回复异常, 中止本次回复."
+msgstr "자동 회복 중 오류가 발생하여 회복을 중단합니다."
+
+#: src/script.py:2160
+msgid "resume可用. 使用resume."
+msgstr "재개(Resume)가 가능하여 재개를 사용합니다."
+
+#: src/script.py:2166 src/script.py:2175
+#, python-brace-format
+msgid "已退出移动状态. 当前状态为{a}."
+msgstr "이동 상태를 종료했습니다. 현재 상태는 {a}입니다."
+
+#: src/script.py:2211 src/script.py:2216
+msgid "退出自动搜索."
+msgstr "자동 검색을 종료합니다."
+
+#: src/script.py:2243
+#, python-brace-format
+msgid "地图卡死检测:{a}"
+msgstr "지도 멈춤 감지: {a}"
+
+#: src/script.py:2251
+msgid "地下城目标完成. 地下城状态结束.(仅限任务模式.)"
+msgstr "던전 목표가 완료되어 던전 파밍을 마칩니다. (퀘스트 모드 전용)"
+
+#: src/script.py:2275
+msgid "奇怪, 任务怎么已经接了."
+msgstr "퀘스트가 이미 수락되어 있습니다."
+
+#: src/script.py:2287
+#, python-brace-format
+msgid "当前状态: {a}"
+msgstr "현재 상태: {a}"
+
+#: src/script.py:2296
+#, python-brace-format
+msgid "下一状态: {a}"
+msgstr "다음 상태: {a}"
+
+#: src/script.py:2302
+msgid "因为没有遇到战斗或宝箱, 跳过住宿."
+msgstr "전투 또는 상자 획득이 없었으므로 숙박을 건너뜁니다."
+
+#: src/script.py:2304
+msgid "因为面板设置, 跳过住宿."
+msgstr "설정에 따라 숙박을 건너뜁니다."
+
+#: src/script.py:2306
+msgid "还有许多地下城要刷. 面具男, 现在还不能休息哦."
+msgstr "진행할 던전이 아직 많이 남았습니다. 힘내서 계속 파밍합니다."
+
+#: src/script.py:2308
+msgid "休息时间到!"
+msgstr "휴식을 시작합니다!"
+
+#: src/script.py:2339
+msgid "第一步: 时间跳跃..."
+msgstr "1단계: 시간 도약..."
+
+#: src/script.py:2345 src/script.py:2930 src/script.py:3011 src/script.py:3146
+msgid "第二步: 返回要塞..."
+msgstr "2단계: 요새로 귀환..."
+
+#: src/script.py:2350 src/script.py:2935 src/script.py:2946 src/script.py:3016
+#: src/script.py:3027 src/script.py:3151
+msgid "第三步: 前往王城..."
+msgstr "3단계: 왕도로 이동..."
+
+#: src/script.py:2356
+msgid "第四步: 给我!(伸手)"
+msgstr "4단계: 황녀에게 지원금 받기"
+
+#: src/script.py:2402
+#, python-brace-format
+msgid "第{a}次\"7000G\"完成. 该次花费时间{b:.2f}, 每秒收益:{c:.2f}Gps."
+msgstr "황녀 지원금 {a}회 완료. 소요 시간: {b:.2f}초, 초당 수익: {c:.2f} G/s."
+
+#: src/script.py:2412
+msgid "第一步: 诅咒之旅..."
+msgstr "1단계: 저주의 바퀴 시간 도약..."
+
+#: src/script.py:2421
+msgid "第二步: 领取任务."
+msgstr "2단계: 퀘스트 수락."
+
+#: src/script.py:2425
+msgid "第三步: 进入地下城."
+msgstr "3단계: 던전 입장."
+
+#: src/script.py:2430
+msgid "第四步: 陷阱."
+msgstr "4단계: 함정 통과."
+
+#: src/script.py:2447
+msgid "已完成第二个陷阱."
+msgstr "두 번째 함정을 해제했습니다."
+
+#: src/script.py:2457
+msgid "已完成第三个陷阱."
+msgstr "세 번째 함정을 해제했습니다."
+
+#: src/script.py:2471
+#, python-brace-format
+msgid "第{a}次\"鸟剑\"完成. 该次花费时间{b:.2f}."
+msgstr "각새의 검 퀘스트 {a}회 완료. 소요 시간: {b:.2f}초."
+
+#: src/script.py:2475
+msgid "注意, \"休息间隔\"控制连续战斗多少次后回城. 当前未启用休息, 强制设置为1."
+msgstr "참고: '휴식 간격'은 마을로 돌아가기 전의 완료 횟수입니다. 현재 휴식이 비활성화되어 임의로 1회로 설정합니다."
+
+#: src/script.py:2478
+msgid "注意, \"休息间隔\"控制连续战斗多少次后回城. 当前值0为无效值, 最低为1."
+msgstr "참고: '휴식 간격'은 마을로 돌아가기 전의 완료 횟수입니다. 0은 유효하지 않으므로 최소 1회로 설정합니다."
+
+#: src/script.py:2480
+msgid "注意, 该流程不包括时间跳跃和接取任务, 请确保接取任务后再开启!"
+msgstr "경고: 이 과정에는 시간 도약 및 퀘스트 수락이 포함되지 않습니다. 수동으로 퀘스트 수락 후 실행해 주세요!"
+
+#: src/script.py:2498
+msgid "已抵达目标地点, 开始战斗."
+msgstr "목표 지점 도착, 전투를 시작합니다."
+
+#: src/script.py:2501
+#, python-brace-format
+msgid "第{a}轮开始."
+msgstr "{a}회차 루프 시작."
+
+#: src/script.py:2518
+msgid "第1场战斗结束."
+msgstr "첫 번째 전투 종료."
+
+#: src/script.py:2522
+msgid "第2场战斗结束."
+msgstr "두 번째 전투 종료."
+
+#: src/script.py:2526
+#, python-brace-format
+msgid "第{a}轮结束."
+msgstr "{a}회차 루프 종료."
+
+#: src/script.py:2537
+#, python-brace-format
+msgid "第{a}x{b}轮\"击退敌势力\"完成, 共计{c}场战斗. 该次花费时间{c:.2f}秒."
+msgstr "적 세력 격퇴 {a}x{b} 루프 완료, 총 {c}회 전투. 소요 시간: {d:.2f}초."
+
+#: src/script.py:2673
+#, python-brace-format
+msgid "第{a}次三牛完成. 本次用时:{b}秒. 累计开箱子{c}, 累计战斗{d}, 累计用时{e}秒."
+msgstr "삼우(세 마리 황소) {a}회 완료. 소요 시간: {b}초. 누적 상자: {c}, 누적 전투: {d}, 누적 시간: {e}초."
+
+#: src/script.py:2679 src/script.py:2741 src/script.py:2808
+msgid "第一步: 重置因果"
+msgstr "1단계: 인과 재설정"
+
+#: src/script.py:2684 src/script.py:2813
+msgid "第二步: 返回要塞"
+msgstr "2단계: 요새 귀환"
+
+#: src/script.py:2688
+msgid "第三步: 前往王城"
+msgstr "3단계: 왕도 이동"
+
+#: src/script.py:2694 src/script.py:2823
+msgid "第四步: 领取任务"
+msgstr "4단계: 퀘스트 수락"
+
+#: src/script.py:2698
+msgid "第五步: 进入牛洞"
+msgstr "5단계: 이별의 동굴(황소) 진입"
+
+#: src/script.py:2708
+msgid "第六步: 击杀一牛"
+msgstr "6단계: 1구역 황소 처치"
+
+#: src/script.py:2712
+msgid "第七步: 回去睡觉"
+msgstr "7단계: 복귀 후 휴식"
+
+#: src/script.py:2716
+msgid "第八步: 再入牛洞"
+msgstr "8단계: 이별의 동굴 재진입"
+
+#: src/script.py:2720
+msgid "第九步: 击杀二牛"
+msgstr "9단계: 2구역 황소 처치"
+
+#: src/script.py:2726
+msgid "第六步: 连杀三牛"
+msgstr "6단계: 세 마리 황소 연속 처치"
+
+#: src/script.py:2736
+#, python-brace-format
+msgid "第{a}次忍洞完成. 本次用时:{b}秒. 累计开箱子{c}, 累计战斗{d}, 累计用时{e}秒."
+msgstr "사영 동굴(닌자) {a}회 완료. 소요 시간: {b}초. 누적 상자: {c}, 누적 전투: {d}, 누적 시간: {e}초."
+
+#: src/script.py:2748
+msgid "第二步: 前往王城"
+msgstr "2단계: 왕도 이동"
+
+#: src/script.py:2771
+msgid "第三步: 领取任务"
+msgstr "3단계: 퀘스트 수락"
+
+#: src/script.py:2776
+msgid "第四步: 进入忍洞"
+msgstr "4단계: 사영 동굴 진입"
+
+#: src/script.py:2780
+msgid "第五步: 关闭陷阱"
+msgstr "5단계: 함정 해제"
+
+#: src/script.py:2786
+msgid "第六步: 第一个箱子"
+msgstr "6단계: 첫 번째 상자 해제"
+
+#: src/script.py:2803
+#, python-brace-format
+msgid "第{a}次约定之剑完成. 本次用时:{b}秒. 累计开箱子{c}, 累计战斗{d}, 累计用时{e}秒."
+msgstr "약속의 검 {a}회 완료. 소요 시간: {b}초. 누적 상자: {c}, 누적 전투: {d}, 누적 시간: {e}초."
+
+#: src/script.py:2817
+msgid "第三步: 前往王城)"
+msgstr "3단계: 왕도 이동)"
+
+#: src/script.py:2830
+msgid "第五步: 进入洞窟"
+msgstr "5단계: 약속의 검 동굴 진입"
+
+#: src/script.py:2841
+msgid "第六步: 1层找人"
+msgstr "6단계: 1층 조사"
+
+#: src/script.py:2851
+msgid "第七步: 2层找人"
+msgstr "7단계: 2층 조사"
+
+#: src/script.py:2862
+msgid "第八步: 3层找人"
+msgstr "8단계: 3층 조사"
+
+#: src/script.py:2878
+msgid "第九步: 离开洞穴"
+msgstr "9단계: 동굴 탈출"
+
+#: src/script.py:2891
+#, python-brace-format
+msgid "第{a}次巨人完成. 本次用时:{b}秒. 累计开箱子{c}, 累计战斗{d}, 累计用时{e}秒."
+msgstr "요새 7F 거인 {a}회 완료. 소요 시간: {b}초. 누적 상자: {c}, 누적 전투: {d}, 누적 시간: {e}초."
+
+#: src/script.py:2903
+msgid "跳过了巨人检测环节. 现在默认总是击杀灯怪."
+msgstr "거인 감지를 건너뛰며, 항상 등불 괴물(랜턴)을 격퇴합니다."
+
+#: src/script.py:2925 src/script.py:2940 src/script.py:2952 src/script.py:3006
+#: src/script.py:3021 src/script.py:3033
+msgid "第一步: 时空跳跃..."
+msgstr "1단계: 시간 도약..."
+
+#: src/script.py:2958 src/script.py:3039 src/script.py:3156
+msgid "第四步: 悬赏揭榜"
+msgstr "4단계: 현상수배 게시판 확인"
+
+#: src/script.py:2965 src/script.py:3046
+msgid "第五步: 击杀蝎女"
+msgstr "5단계: 수배 대상(스코피온) 처치"
+
+#: src/script.py:2974 src/script.py:3070 src/script.py:3173
+msgid "第六步: 提交悬赏"
+msgstr "6단계: 현상수배 완료 보고"
+
+#: src/script.py:2985 src/script.py:3085 src/script.py:3184
+msgid "第七步: 休息"
+msgstr "7단계: 휴식"
+
+#: src/script.py:2993
+#, python-brace-format
+msgid ""
+"第{a}次\"悬赏:蝎女\"完成. \n"
+"该次花费时间{b:.2f}s.\n"
+"总计用时{c:.2f}s.\n"
+"平均用时{d:.2f}"
+msgstr "현상수배: 스코피온 {a}회 완료. \n소요 시간: {b:.2f}초.\n누적 시간: {c:.2f}초.\n평균 소요 시간: {d:.2f}초"
+
+#: src/script.py:3058
+msgid "第5.5步: 击杀风暴六手"
+msgstr "5.5단계: 폭풍의 식스암즈 처치"
+
+#: src/script.py:3093
+#, python-brace-format
+msgid ""
+"第{a}次\"悬赏:蝎女+六手\"完成. \n"
+"该次花费时间{b:.2f}s.\n"
+"总计用时{c:.2f}s.\n"
+"平均用时{d:.2f}"
+msgstr "현상수배: 스코피온+식스암즈 {a}회 완료. \n소요 시간: {b:.2f}초.\n누적 시간: {c:.2f}초.\n평균 소요 시간: {d:.2f}초"
+
+#: src/script.py:3128
+#, python-brace-format
+msgid ""
+"第{a}次\"钢试炼\"完成. \n"
+"该次花费时间{b:.2f}s.\n"
+"总计用时{c:.2f}s.\n"
+"平均用时{d:.2f}"
+msgstr "강철의 시련 {a}회 완료. \n소요 시간: {b:.2f}초.\n누적 시간: {c:.2f}초.\n평균 소요 시간: {d:.2f}초"
+
+#: src/script.py:3163
+msgid "第五步: 和吉尔说再见吧"
+msgstr "5단계: 수배 대상(질) 처치"
+
+#: src/script.py:3192
+#, python-brace-format
+msgid ""
+"第{a}次\"悬赏:吉尔\"完成. \n"
+"该次花费时间{b:.2f}s.\n"
+"总计用时{c:.2f}s.\n"
+"平均用时{d:.2f}"
+msgstr "현상수배: 질 {a}회 완료. \n소요 시간: {b:.2f}초.\n누적 시간: {c:.2f}초.\n평균 소요 시간: {d:.2f}초"
+
+#: src/script.py:3195
+msgid "开始睡觉."
+msgstr "숙소 휴식 시작."
+
+#: src/script.py:3205
+#, python-brace-format
+msgid ""
+"完成了{a}次旅店休息.\n"
+"总计用时{c:.2f}s.\n"
+"平均用时{d:.2f}s."
+msgstr "{a}회 여관 휴식을 완료했습니다.\n총 소요 시간: {c:.2f}초.\n평균 소요 시간: {d:.2f}초."
+
+#: src/script.py:3301
+#, python-brace-format
+msgid "第{a}次要塞小精灵完成. 本次用时:{b}秒. 累计开箱子{c}, 累计战斗{d}, 累计用时{e}秒."
+msgstr "{a}회차 요새 요정 퀘스트 완료. 소요 시간: {b}초. 누적 상자 개봉: {c}, 누적 전투: {d}, 누적 소요 시간: {e}초."
+
+#: src/utils.py:197
+msgid "配置已保存。"
+msgstr "구성 파일이 저장되었습니다."
+
+#: src/utils.py:226
+msgid "更新日志"
+msgstr "업데이트 내역"
+
+#: src/utils.py:376
+msgid "0 面具"
+msgstr "0 주인공"
+
+#: src/utils.py:377
+msgid "F 伊亚玛斯"
+msgstr "F 이말마스"
+
+#: src/utils.py:378
+msgid "F 凛音"
+msgstr "F 린네"
+
+#: src/utils.py:379
+msgid "F 吉拉德"
+msgstr "F 기리온"
+
+#: src/utils.py:380
+msgid "F 夏莉莉妮雅"
+msgstr "F 셰리리냐"
+
+#: src/utils.py:381
+msgid "F 尤尔萨"
+msgstr "F 유르사"
+
+#: src/utils.py:383
+msgid "F 狮樱"
+msgstr "F 시오우"
+
+#: src/utils.py:384
+msgid "F 艾妮琪"
+msgstr "F 아이닛키"
+
+#: src/utils.py:385
+msgid "F 艾尔文"
+msgstr "F 엘빈"
+
+#: src/utils.py:386
+msgid "F 莉娜莉亚"
+msgstr "F 리나리아"
+
+#: src/utils.py:387
+msgid "F 莉瓦娜"
+msgstr "F 리바나"
+
+#: src/utils.py:388
+msgid "F 萨维亚"
+msgstr "F 사비아"
+
+#: src/utils.py:389
+msgid "F 贝卡南"
+msgstr "F 벨카난"
+
+#: src/utils.py:390
+msgid "F 迦鲁巴多斯"
+msgstr "F 갈바두스"
+
+#: src/utils.py:391
+msgid "F 银莲"
+msgstr "F 아네모네"
+
+#: src/utils.py:392
+msgid "F 阿尔博里斯"
+msgstr "F 아르보리스"
+
+#: src/utils.py:393
+msgid "F 雅蓓妮斯"
+msgstr "F 아베니우스"
+
+#: src/utils.py:394
+msgid "G 亚沙"
+msgstr "G 야샤"
+
+#: src/utils.py:395
+msgid "G 克拉丽莎"
+msgstr "G 클라리사"
+
+#: src/utils.py:396
+msgid "G 克洛艾"
+msgstr "G 클로에"
+
+#: src/utils.py:397
+msgid "G 切羽"
+msgstr "G 키리하바"
+
+#: src/utils.py:398
+msgid "G 加斯顿"
+msgstr "G 가스톤"
+
+#: src/utils.py:399
+msgid "G 奥利芙"
+msgstr "G 올리브"
+
+#: src/utils.py:400
+msgid "G 奥菲莉亚"
+msgstr "G 오필리아"
+
+#: src/utils.py:401
+msgid "G 本杰明"
+msgstr "G 벤자민"
+
+#: src/utils.py:402
+msgid "G 海因里科"
+msgstr "G 하인리코"
+
+#: src/utils.py:403
+msgid "G 玛丽安娜"
+msgstr "G 마리아나"
+
+#: src/utils.py:404
+msgid "G 甘道夫"
+msgstr "G 간달프"
+
+#: src/utils.py:405
+msgid "G 米拉娜"
+msgstr "G 미라나"
+
+#: src/utils.py:406
+msgid "G 艾莉赛"
+msgstr "G 엘리세"
+
+#: src/utils.py:407
+msgid "G 芙尔特"
+msgstr "G 포르테"
+
+#: src/utils.py:408
+msgid "G 阿米莉娅"
+msgstr "G 아멜리아"
+
+#: src/utils.py:409
+msgid "P 亚当"
+msgstr "P 아담"
+
+#: src/utils.py:410
+msgid "P 叶卡捷琳娜"
+msgstr "P 예카테리나"
+
+#: src/utils.py:411
+msgid "P 哲鲁夫"
+msgstr "P 게를루프"
+
+#: src/utils.py:412
+msgid "P 拉纳维尔"
+msgstr "P 라나뷔유"
+
+#: src/utils.py:413
+msgid "P 爱丽丝"
+msgstr "P 앨리스"
+
+#: src/utils.py:414
+msgid "P 黛波拉"
+msgstr "P 데보라"
+
+#~ msgid ""
+#~ "cmd命令返回:{a}\n"
+#~ " cmd命令错误:{b}"
+#~ msgstr ""
+#~ "cmd 반환: {a}\n"
+#~ " cmd 오류: {b}"
+
+#: src/script.py:1522
+msgid "卡死检测耗时: {a}秒"
+msgstr "프리징 감지 소요시간: {a}초"
+
+#: src/script.py:1523
+msgid "卡死检测结果: {a}"
+msgstr "프리징 감지 결과: {a}"
+
+#: src/script.py:2076 src/script.py:2580
+msgid "粗略统计: 宝箱{a}秒, 战斗{b}秒."
+msgstr "대략 통계: 상자 {a}초, 전투 {b}초."
+
+#: src/script.py:1168
+msgid ""
+"箱子效率{a}秒/箱.\n"
+"累计开箱{b}次,开箱平均耗时{c}秒.\n"
+msgstr ""
+"상자 효율 {a}초/상자.\n"
+"누적 개봉 {b}회, 평균 개봉 소요시간 {c}초.\n"
+
+#: src/script.py:1624
+msgid "没有检测到任务详情界面. 疑似法力不足, 使用自动战斗."
+msgstr "스킬 상세 화면이 감지되지 않았습니다. 마력 부족으로 추정, 자동 전투를 사용합니다."
+
+msgid "战斗方案会在每次重启游戏, 以及任意角色死亡后重置."
+msgstr "전투 전략 세트는 게임 재시작 및 캐릭터 사망 시 초기화됩니다."
+
+msgid "你也可以增加额外的重置:"
+msgstr "추가 초기화 설정:"
+
+msgid "不需要"
+msgstr "안 함"
+
+msgid "每场战斗前"
+msgstr "매 전투 전"
+
+msgid "每次副本开始"
+msgstr "매 던전 시작 시"
+
+msgid "停止"
+msgstr "정지"
+
+msgid "等级"
+msgstr "레벨"
+
+

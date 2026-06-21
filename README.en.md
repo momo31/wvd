@@ -1,4 +1,6 @@
 # wvdas - Wizardry Daphne Auto Script
+[中文](README.md) | [한국어](README.ko.md)
+
 An auto-farming script for the mobile game Wizardry Daphne with a built-in GUI.
 
 Compared to other popular game automation scripts, it includes special optimizations specifically for the ***complex network environment*** and ***occasional performance fluctuations*** of Wizardry Daphne.
