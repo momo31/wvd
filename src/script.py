@@ -474,6 +474,23 @@ def CheckAndRecoverDevice(setting : FarmConfig, runtimeContext: RuntimeContext, 
         for device in devices:
             if device.serial == target_device:
                 logger.info(_("成功创建设备对象: {a}").format(a=device.serial))
+                # 等待 Android 启动 (sys.boot_completed == 1)
+                boot_timeout = 60
+                boot_start = time.time()
+                boot_completed = False
+                while time.time() - boot_start < boot_timeout:
+                    try:
+                        res = device.shell("getprop sys.boot_completed").strip()
+                        if res == "1":
+                            boot_completed = True
+                            logger.info(_("Android 시스템 부팅 완료 확인."))
+                            break
+                    except Exception as e:
+                        logger.debug(f"부팅 상태 확인 중 예외 발생: {e}")
+                    logger.info(_("Android 시스템 부팅 대기 중..."))
+                    time.sleep(3)
+                if not boot_completed:
+                    logger.warning(_("경고: Android 부팅 대기 시간이 초과되었습니다."))
                 return device
     except Exception as e:
         logger.error(_("创建ADB设备时出错: {a}").format(a=e))
@@ -985,6 +1002,9 @@ def Factory():
 
         DeviceShell("logcat -c")
         mainAct = DeviceShell(f"cmd package resolve-activity --brief {package_name}").strip().split("\n")[-1]
+        if not mainAct or "/" not in mainAct or "error" in mainAct.lower() or "exception" in mainAct.lower():
+            logger.warning(_("기본 Activity를 확인할 수 없어, 기본값을 사용합니다."))
+            mainAct = f"{package_name}/com.google.firebase.MessagingUnityPlayerActivity"
         DeviceShell(f"am force-stop {package_name}")
         logger.info(_("巫术, 启动!"))
         logger.debug(DeviceShell(f"am start -n {mainAct}"))

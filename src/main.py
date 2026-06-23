@@ -70,6 +70,10 @@ class AppController(tk.Tk):
                     if hasattr(self, 'quest_threading') and self.quest_threading.is_alive():
                         if hasattr(self.quest_setting, '_FORCESTOPING'):
                             self.quest_setting._FORCESTOPING.set()
+
+                case 'quest_finished':
+                    if self.main_window:
+                        self.main_window.real_finishingcallback()
                 
                 case 'turn_to_7000G':
                     logger.info('开始要钱...')

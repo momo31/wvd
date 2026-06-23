@@ -127,20 +127,43 @@ def RegisterConsoleHandler():
     logger.addHandler(console_handler)
 
 class ScrolledTextHandler(logging.Handler):
-    def __init__(self, text_widget):
+    def __init__(self, text_widget, clear_on_emit=False):
         super().__init__()
         self.text_widget = text_widget
         self.text_widget.config(state=tk.DISABLED)
+        self.msg_queue = queue.Queue()
+        self.clear_on_emit = clear_on_emit
+        self._update_loop()
 
     def emit(self, record):
         msg = self.format(record)
+        action = 'clear_and_insert' if self.clear_on_emit else 'insert'
+        self.msg_queue.put((action, msg))
+
+    def _update_loop(self):
         try:
-            self.text_widget.config(state=tk.NORMAL)
-            self.text_widget.insert(tk.END, msg + '\n')
-            self.text_widget.see(tk.END)
-            self.text_widget.config(state=tk.DISABLED)
+            messages = []
+            while True:
+                try:
+                    messages.append(self.msg_queue.get_nowait())
+                except queue.Empty:
+                    break
+            
+            if messages:
+                self.text_widget.config(state=tk.NORMAL)
+                for action, msg in messages:
+                    if action == 'clear_and_insert':
+                        self.text_widget.delete(1.0, tk.END)
+                    self.text_widget.insert(tk.END, msg + '\n')
+                self.text_widget.see(tk.END)
+                self.text_widget.config(state=tk.DISABLED)
         except Exception:
-            self.handleError(record)
+            pass
+        finally:
+            try:
+                self.text_widget.after(50, self._update_loop)
+            except Exception:
+                pass
 class SummaryLogFilter(logging.Filter):
     def filter(self, record):
         if hasattr(record, 'summary') and record.summary:
