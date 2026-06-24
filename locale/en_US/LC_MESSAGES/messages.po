@@ -1634,3 +1634,5 @@ msgstr "Level"
 msgid "重启后尝试绕过空气墙"
 msgstr "Try to bypass invisible wall after restart"
 
+msgid "检测到恢复/状态画面，正在尝试返回以关闭。"
+msgstr "Detected recovery/status screen, trying to press back to close."

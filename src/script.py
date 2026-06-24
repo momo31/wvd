@@ -1268,6 +1268,12 @@ def Factory():
                 logger.info(_("确认, 下载, 确认."))
                 Sleep(2)
 
+            if CheckIf(screen, "trait") or CheckIf(screen, "recover"):
+                logger.info(_("检测到恢复/状态画面，正在尝试返回以关闭。"))
+                PressReturn()
+                Sleep(1.5)
+                continue
+
             identifyConfig = [
                 ("dungFlag",      DungeonState.Dungeon),
                 ("chestFlag",     DungeonState.Chest),
