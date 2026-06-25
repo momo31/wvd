@@ -1419,7 +1419,7 @@ msgstr "4단계: 퀘스트 수락"
 
 #: src/script.py:2698
 msgid "第五步: 进入牛洞"
-msgstr "5단계: 이별의 동굴(황소) 진입"
+msgstr "5단계: 영별의 동굴(황소) 진입"
 
 #: src/script.py:2708
 msgid "第六步: 击杀一牛"
@@ -1431,7 +1431,7 @@ msgstr "7단계: 복귀 후 휴식"
 
 #: src/script.py:2716
 msgid "第八步: 再入牛洞"
-msgstr "8단계: 이별의 동굴 재진입"
+msgstr "8단계: 영별의 동굴 재진입"
 
 #: src/script.py:2720
 msgid "第九步: 击杀二牛"
