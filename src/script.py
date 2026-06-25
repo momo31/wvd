@@ -1479,6 +1479,10 @@ def Factory():
         FindCoordsOrElseExecuteFallbackAndWait("Stay",["OK",[299,1464]],2)
         PressReturn()
     def StateEoT():
+        runtimeContext._RESUMEAVAILABLE = False
+        if quest._preEOTcheck:
+            Press(CheckIf(ScreenShot(),quest._preEOTcheck))
+
         def EoTStep(info):
             if info[1]=="intoWorldMap":
                 TeleportFromCityToWorldLocation(*info[2])
@@ -1486,22 +1490,22 @@ def Factory():
                 pos = FindCoordsOrElseExecuteFallbackAndWait(info[1], info[2], info[3])
                 if info[0]=="press":
                     Press(pos)
+        for info in quest._EOT[:-1]:
+            RestartableSequenceExecution(lambda i=info: EoTStep(i))
 
-        runtimeContext._RESUMEAVAILABLE = False
-        if quest._preEOTcheck:
-            if Press(CheckIf(ScreenShot(),quest._preEOTcheck)):
-                pass
-        if len(quest._EOT)>=2:
-            for info in quest._EOT[:-1]:
-                RestartableSequenceExecution(
-                    lambda: EoTStep(info)
-                    )
-        RestartableSequenceExecution(
-            lambda: FindCoordsOrElseExecuteFallbackAndWait(["dungFlag","GotoDung",quest._EOT[-1][1]], [quest._EOT[-1][2],[1,1]], 1)
+        last = quest._EOT[-1]
+        if last[1] == "intoWorldMap":
+            TeleportFromCityToWorldLocation(*last[2])
+        else:
+            RestartableSequenceExecution(
+                lambda: FindCoordsOrElseExecuteFallbackAndWait(
+                    ["dungFlag", "GotoDung", last[1]], [last[2], [1, 1]], 1
+                )
             )
         Press(CheckIf(ScreenShot(), quest._EOT[-1][1]))
         Sleep(1)
         Press(CheckIf(ScreenShot(), "GotoDung"))
+        return
     def StateCombat():
         if runtimeContext._TIME_COMBAT==0:
             runtimeContext._TIME_COMBAT = time.time()
@@ -1546,7 +1550,7 @@ def Factory():
             has_lv_1 = (CheckIf(scn,f"spellskill\skillLvl\lv1")) or (CheckIf(scn,f"spellskill\skillLvl\s_lv1"))
             if (not has_lv_1):
                 if (skilllvl>=2):
-                    logger.error("错误: 设定了高于1级的技能, 但并未检测到技能等级.\n 使用默认技能.")
+                    logger.error(_("错误: 设定了高于1级的技能, 但并未检测到技能等级.\n 使用默认技能."))
             else:
                 if skilllvl!=1:
                     has_lv_x = (CheckIf(scn,f"spellskill\skillLvl\lv{skilllvl}")) or (CheckIf(scn,f"spellskill\skillLvl\s_lv{skilllvl}"))
@@ -1555,10 +1559,10 @@ def Factory():
 
                 if not has_lv_x:
                     skilllvl = 1
-                    logger.error("错误: 未检测到目标等级\n 使用1级技能.")
+                    logger.error(_("错误: 未检测到目标等级\n 使用1级技能."))
                 if not Press(CheckIf(scn,f"spellskill\skillLvl\lv{skilllvl}")):
                     if not Press(CheckIf(scn,f"spellskill\skillLvl\s_lv{skilllvl}")):
-                        logger.error("错误: 我认为不可能发生这种情况. 请务必告诉我.")
+                        logger.error(_("错误: 我认为不可能发生这种情况. 请务必告诉我."))
 
             # 辅助技能
             if CheckIf(ScreenShot(),"supportSkillCheck",[[677,1475,189,80]]):
@@ -1575,9 +1579,9 @@ def Factory():
                 Press([pos[0]-15+random.randint(0,30),pos[1]+150+random.randint(0,30)])
                 logger.info(_("释放了位于\"{a}\"的单体技能, 技能等级为{b}. 选择next作为敌方目标.").format(a=skillPos, b=skilllvl))
             else:
-                for t in range(12):
-                    Press([75+random.random()*770,296+random.random()*600])
-                    Sleep(0.1)
+                for t in range(24):
+                    Press([75+random.random()*827,296+random.random()*600])
+                    Sleep(0.05)
                 logger.info(_("释放了位于\"{a}\"的单体技能, 技能等级为{b}. 随机选择敌方目标.").format(a=skillPos, b=skilllvl))
                 Sleep(2)
 

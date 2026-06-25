@@ -15,7 +15,7 @@ if sys.platform.startswith('win'):
 from gui import *
 import argparse
 
-__version__ = '2.3.7' 
+__version__ = '2.3.8' 
 OWNER = "arnold2957"
 REPO = "wvd"
 

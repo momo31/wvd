@@ -1793,6 +1793,201 @@ msgid "每次副本开始"
 msgstr "매 던전 시작 시"
 
 msgid "停止"
+#: src/utils.py:377
+msgid "F 伊亚玛斯"
+msgstr "F 이말마스"
+
+#: src/utils.py:378
+msgid "F 凛音"
+msgstr "F 린네"
+
+#: src/utils.py:379
+msgid "F 吉拉德"
+msgstr "F 기리온"
+
+#: src/utils.py:380
+msgid "F 夏莉莉妮雅"
+msgstr "F 셰리리냐"
+
+#: src/utils.py:381
+msgid "F 尤尔萨"
+msgstr "F 유르사"
+
+#: src/utils.py:383
+msgid "F 狮樱"
+msgstr "F 시오우"
+
+#: src/utils.py:384
+msgid "F 艾妮琪"
+msgstr "F 아이닛키"
+
+#: src/utils.py:385
+msgid "F 艾尔文"
+msgstr "F 엘빈"
+
+#: src/utils.py:386
+msgid "F 莉娜莉亚"
+msgstr "F 리나리아"
+
+#: src/utils.py:387
+msgid "F 莉瓦娜"
+msgstr "F 리바나"
+
+#: src/utils.py:388
+msgid "F 萨维亚"
+msgstr "F 사비아"
+
+#: src/utils.py:389
+msgid "F 贝卡南"
+msgstr "F 벨카난"
+
+#: src/utils.py:390
+msgid "F 迦鲁巴多斯"
+msgstr "F 갈바두스"
+
+#: src/utils.py:391
+msgid "F 银莲"
+msgstr "F 아네모네"
+
+#: src/utils.py:392
+msgid "F 阿尔博里斯"
+msgstr "F 아르보리스"
+
+#: src/utils.py:393
+msgid "F 雅蓓妮斯"
+msgstr "F 아베니우스"
+
+#: src/utils.py:394
+msgid "G 亚沙"
+msgstr "G 야샤"
+
+#: src/utils.py:395
+msgid "G 克拉丽莎"
+msgstr "G 클라리사"
+
+#: src/utils.py:396
+msgid "G 克洛艾"
+msgstr "G 클로에"
+
+#: src/utils.py:397
+msgid "G 切羽"
+msgstr "G 키리하바"
+
+#: src/utils.py:398
+msgid "G 加斯顿"
+msgstr "G 가스톤"
+
+#: src/utils.py:399
+msgid "G 奥利芙"
+msgstr "G 올리브"
+
+#: src/utils.py:400
+msgid "G 奥菲莉亚"
+msgstr "G 오필리아"
+
+#: src/utils.py:401
+msgid "G 本杰明"
+msgstr "G 벤자민"
+
+#: src/utils.py:402
+msgid "G 海因里科"
+msgstr "G 하인리코"
+
+#: src/utils.py:403
+msgid "G 玛丽安娜"
+msgstr "G 마리아나"
+
+#: src/utils.py:404
+msgid "G 甘道夫"
+msgstr "G 간달프"
+
+#: src/utils.py:405
+msgid "G 米拉娜"
+msgstr "G 미라나"
+
+#: src/utils.py:406
+msgid "G 艾莉赛"
+msgstr "G 엘리세"
+
+#: src/utils.py:407
+msgid "G 芙尔特"
+msgstr "G 포르테"
+
+#: src/utils.py:408
+msgid "G 阿米莉娅"
+msgstr "G 아멜리아"
+
+#: src/utils.py:409
+msgid "P 亚当"
+msgstr "P 아담"
+
+#: src/utils.py:410
+msgid "P 叶卡捷琳娜"
+msgstr "P 예카테리나"
+
+#: src/utils.py:411
+msgid "P 哲鲁夫"
+msgstr "P 게를루프"
+
+#: src/utils.py:412
+msgid "P 拉纳维尔"
+msgstr "P 라나뷔유"
+
+#: src/utils.py:413
+msgid "P 爱丽丝"
+msgstr "P 앨리스"
+
+#: src/utils.py:414
+msgid "P 黛波拉"
+msgstr "P 데보라"
+
+#~ msgid ""
+#~ "cmd命令返回:{a}\n"
+#~ " cmd命令错误:{b}"
+#~ msgstr ""
+#~ "cmd 반환: {a}\n"
+#~ " cmd 오류: {b}"
+
+#: src/script.py:1522
+msgid "卡死检测耗时: {a}秒"
+msgstr "프리징 감지 소요시간: {a}초"
+
+#: src/script.py:1523
+msgid "卡死检测结果: {a}"
+msgstr "프리징 감지 결과: {a}"
+
+#: src/script.py:2076 src/script.py:2580
+msgid "粗略统计: 宝箱{a}秒, 战斗{b}秒."
+msgstr "대략 통계: 상자 {a}초, 전투 {b}초."
+
+#: src/script.py:1168
+msgid ""
+"箱子效率{a}秒/箱.\n"
+"累计开箱{b}次,开箱平均耗时{c}秒.\n"
+msgstr ""
+"상자 효율 {a}초/상자.\n"
+"누적 개봉 {b}회, 평균 개봉 소요시간 {c}초.\n"
+
+#: src/script.py:1624
+msgid "没有检测到任务详情界面. 疑似法力不足, 使用自动战斗."
+msgstr "스킬 상세 화면이 감지되지 않았습니다. 마력 부족으로 추정, 자동 전투를 사용합니다."
+
+msgid "战斗方案会在每次重启游戏, 以及任意角色死亡后重置."
+msgstr "전투 전략 세트는 게임 재시작 및 캐릭터 사망 시 초기화됩니다."
+
+msgid "你也可以增加额外的重置:"
+msgstr "추가 초기화 설정:"
+
+msgid "不需要"
+msgstr "안 함"
+
+msgid "每场战斗前"
+msgstr "매 전투 전"
+
+msgid "每次副本开始"
+msgstr "매 던전 시작 시"
+
+msgid "停止"
 msgstr "정지"
 
 msgid "等级"
@@ -1800,3 +1995,45 @@ msgstr "레벨"
 
 msgid "检测到恢复/状态画面，正在尝试返回以关闭。"
 msgstr "회복/상태 화면이 감지되었습니다. 닫기 위해 뒤로 가기를 실행합니다."
+
+msgid "没有检测到任务详情界面. 疑似法力不足, 使用自动战斗."
+msgstr "퀘스트 상세 화면이 감지되지 않았습니다. 마나가 부족한 것으로 추정되어 자동 전투를 사용합니다."
+
+msgid "错误: 设定了高于1级的技能, 但并未检测到技能等级.\n 使用默认技能."
+msgstr "오류: 1단계보다 높은 레벨의 스킬을 설정했으나 스킬 레벨이 감지되지 않았습니다.\n 기본 스킬을 사용합니다."
+
+msgid "错误: 未检测到目标等级\n 使用1级技能."
+msgstr "오류: 대상 레벨이 감지되지 않았습니다.\n 1단계 스킬을 사용합니다."
+
+msgid "错误: 我认为不可能发生这种情况. 请务必告诉我."
+msgstr "오류: 이런 상황은 발생할 수 없다고 생각합니다. 반드시 저에게 알려주세요."
+
+msgid "左上角色"
+msgstr "좌상단 캐릭터"
+
+msgid "中上角色"
+msgstr "중상단 캐릭터"
+
+msgid "右上角色"
+msgstr "우상단 캐릭터"
+
+msgid "左下角色"
+msgstr "좌하단 캐릭터"
+
+msgid "中下角色"
+msgstr "중하단 캐릭터"
+
+msgid "右下角色"
+msgstr "우하단 캐릭터"
+
+msgid "左上技能"
+msgstr "좌상단 스킬"
+
+msgid "右上技能"
+msgstr "우상단 스킬"
+
+msgid "左下技能"
+msgstr "좌하단 스킬"
+
+msgid "右下技能"
+msgstr "우하단 스킬"
