@@ -1377,7 +1377,7 @@ class ConfigPanelApp(tk.Toplevel):
 
         ttk.Label(frame_row, text=_("你也可以增加额外的重置:")).grid(row=0, column=0, sticky=tk.W, pady=5)
         self.reload_strategy_combobox = ttk.Combobox(frame_row, textvariable=self.RELOAD_STRATEGY_WHEN,
-                                                     values=[_("不需要"), _("每场战斗前"), _("每次副本开始")],
+                                                     values=[_("不需要"), _("每场战斗前"), _("每次副本开始"), _("每次副本开始(自动)")],
                                                      state="readonly", width=12)
         self.reload_strategy_combobox.grid(row=0, column=1, sticky=tk.W, pady=5)
         self.reload_strategy_combobox.bind("<<ComboboxSelected>>", lambda e: self.save_config())

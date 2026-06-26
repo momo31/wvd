@@ -1624,6 +1624,15 @@ def Factory():
             ActiveAutoCombat()
             return
 
+        # 2.5 신규 옵션인 "매 던전 시작시(자동전투)"가 활성화되어 있고 전략 스킬이 아직 남아있다면, 수동 스킬 시전을 위해 자동전투를 끕니다.
+        if setting.RELOAD_STRATEGY_WHEN == _("每次副本开始(自动)") and skill_settings != []:
+            scn = ScreenShot()
+            # CombatAutoDisable이 감지되지 않으면 자동전투가 켜져 있는 상태입니다.
+            if not CheckIf(scn, "spellskill/CombatAutoDisable", [[842, 1124-42, 35, 13]]):
+                logger.info(_("남은 전략 스킬이 있어 자동전투를 비활성화합니다..."))
+                Press([850, 1100])
+                Sleep(1)
+
         # 3. 非全自动模式：点击任意键直到出现“flee”图片
         [pos_x, pos_y] = FindCoordsOrElseExecuteFallbackAndWait(["flee","chestFlag","dungFlag", "someonedead","multipeopledead","RiseAgain"],[1,1],1)
         if (pos_x>=735)and(pos_x<=735+126)and(pos_y>=1158)and(pos_y<=1158+68):
@@ -1913,7 +1922,7 @@ def Factory():
         
         runtimeContext.NEED_RECOVER_WHEN_BEGINNING = True
 
-        if setting.RELOAD_STRATEGY_WHEN == _("每次副本开始"):
+        if setting.RELOAD_STRATEGY_WHEN in [_("每次副本开始"), _("每次副本开始(自动)")]:
             ReloadStrategy()
         
         ##############################################

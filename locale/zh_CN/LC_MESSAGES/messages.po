@@ -1533,9 +1533,206 @@ msgstr ""
 #: c:/Users/Arnold/Desktop/andsimscripts/src/utils.py:197
 msgid "配置已保存。"
 msgstr ""
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2505
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2567
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2634
+msgid "第一步: 重置因果"
+msgstr ""
+
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2510
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2639
+msgid "第二步: 返回要塞"
+msgstr ""
+
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2514
+msgid "第三步: 前往王城"
+msgstr ""
+
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2520
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2649
+msgid "第四步: 领取任务"
+msgstr ""
+
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2524
+msgid "第五步: 进入牛洞"
+msgstr ""
+
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2534
+msgid "第六步: 击杀一牛"
+msgstr ""
+
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2538
+msgid "第七步: 回去睡觉"
+msgstr ""
+
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2542
+msgid "第八步: 再入牛洞"
+msgstr ""
+
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2546
+msgid "第九步: 击杀二牛"
+msgstr ""
+
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2552
+msgid "第六步: 连杀三牛"
+msgstr ""
+
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2562
+msgid "第{a}次忍洞完成. 本次用时:{b}秒. 累计开箱子{c}, 累计战斗{d}, 累计用时{e}秒."
+msgstr ""
+
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2574
+msgid "第二步: 前往王城"
+msgstr ""
+
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2597
+msgid "第三步: 领取任务"
+msgstr ""
+
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2602
+msgid "第四步: 进入忍洞"
+msgstr ""
+
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2606
+msgid "第五步: 关闭陷阱"
+msgstr ""
+
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2612
+msgid "第六步: 第一个箱子"
+msgstr ""
+
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2629
+msgid "第{a}次约定之剑完成. 本次用时:{b}秒. 累计开箱子{c}, 累计战斗{d}, 累计用时{e}秒."
+msgstr ""
+
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2643
+msgid "第三步: 前往王城)"
+msgstr ""
+
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2656
+msgid "第五步: 进入洞窟"
+msgstr ""
+
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2667
+msgid "第六步: 1层找人"
+msgstr ""
+
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2677
+msgid "第七步: 2层找人"
+msgstr ""
+
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2688
+msgid "第八步: 3层找人"
+msgstr ""
+
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2704
+msgid "第九步: 离开洞穴"
+msgstr ""
+
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2717
+msgid "第{a}次巨人完成. 本次用时:{b}秒. 累计开箱子{c}, 累计战斗{d}, 累计用时{e}秒."
+msgstr ""
+
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2729
+msgid "跳过了巨人检测环节. 现在默认总是击杀灯怪."
+msgstr ""
+
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2751
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2766
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2778
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2832
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2847
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2859
+msgid "第一步: 时空跳跃..."
+msgstr ""
+
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2784
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2865
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2982
+msgid "第四步: 悬赏揭榜"
+msgstr ""
+
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2791
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2872
+msgid "第五步: 击杀蝎女"
+msgstr ""
+
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2800
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2896
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2999
+msgid "第六步: 提交悬赏"
+msgstr ""
+
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2811
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2911
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:3010
+msgid "第七步: 休息"
+msgstr ""
+
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2819
+msgid ""
+"第{a}次\"悬赏:蝎女\"完成. \n"
+"该次花费时间{b:.2f}s.\n"
+"总计用时{c:.2f}s.\n"
+"平均用时{d:.2f}"
+msgstr ""
+
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2884
+msgid "第5.5步: 击杀风暴六手"
+msgstr ""
+
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2919
+msgid ""
+"第{a}次\"悬赏:蝎女+六手\"完成. \n"
+"该次花费时间{b:.2f}s.\n"
+"总计用时{c:.2f}s.\n"
+"平均用时{d:.2f}"
+msgstr ""
+
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2954
+msgid ""
+"第{a}次\"钢试炼\"完成. \n"
+"该次花费时间{b:.2f}s.\n"
+"总计用时{c:.2f}s.\n"
+"平均用时{d:.2f}"
+msgstr ""
+
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:2989
+msgid "第五步: 和吉尔说再见吧"
+msgstr ""
+
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:3018
+msgid ""
+"第{a}次\"悬赏:吉尔\"完成. \n"
+"该次花费时间{b:.2f}s.\n"
+"总计用时{c:.2f}s.\n"
+"平均用时{d:.2f}"
+msgstr ""
+
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:3021
+msgid "开始睡觉."
+msgstr ""
+
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:3031
+msgid ""
+"完成了{a}次旅店休息.\n"
+"总计用时{c:.2f}s.\n"
+"平均用时{d:.2f}s."
+msgstr ""
+
+#: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:3127
+msgid "第{a}次要塞小精灵完成. 本次用时:{b}秒. 累计开箱子{c}, 累计战斗{d}, 累计用时{e}秒."
+msgstr ""
+
+#: c:/Users/Arnold/Desktop/andsimscripts/src/utils.py:197
+msgid "配置已保存。"
+msgstr ""
 
 #: c:/Users/Arnold/Desktop/andsimscripts/src/utils.py:226
-msgid "更新日志"
+msgid "每场战斗前"
+msgstr ""
+
+msgid "每次副本开始(自动)"
 msgstr ""
 
 msgid "检测到恢复/状态画面，正在尝试返回以关闭。"

@@ -1646,7 +1646,10 @@ msgid "不需要"
 msgstr "None"
 
 msgid "每场战斗前"
-msgstr "Before every combat"
+msgstr "Before combat"
+
+msgid "每次副本开始(自动)"
+msgstr "Before every dungeon(Auto)"
 
 msgid "每次副本开始"
 msgstr "Before every dungeon"

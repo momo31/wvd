@@ -1984,6 +1984,9 @@ msgstr "안 함"
 msgid "每场战斗前"
 msgstr "매 전투 전"
 
+msgid "每次副本开始(自动)"
+msgstr "매 던전 시작시(자동전투)"
+
 msgid "每次副本开始"
 msgstr "매 던전 시작 시"
 
