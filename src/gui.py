@@ -732,7 +732,8 @@ class ConfigPanelApp(tk.Toplevel):
                 reverse_map = {
                     _("不需要"): "不需要",
                     _("每场战斗前"): "每场战斗前",
-                    _("每次副本开始"): "每次副本开始"
+                    _("每次副本开始"): "每次副本开始",
+                    _("不需要(自动)"): "不需要(自动)"
                 }
                 value = reverse_map.get(value, value)
             elif attr_name == "TASK_POINT_STRATEGY" and isinstance(value, dict):
@@ -1377,7 +1378,7 @@ class ConfigPanelApp(tk.Toplevel):
 
         ttk.Label(frame_row, text=_("你也可以增加额外的重置:")).grid(row=0, column=0, sticky=tk.W, pady=5)
         self.reload_strategy_combobox = ttk.Combobox(frame_row, textvariable=self.RELOAD_STRATEGY_WHEN,
-                                                     values=[_("不需要"), _("每场战斗前"), _("每次副本开始"), _("每次副本开始(自动)")],
+                                                     values=[_("不需要"), _("每场战斗前"), _("每次副本开始"), _("不需要(自动)")],
                                                      state="readonly", width=12)
         self.reload_strategy_combobox.grid(row=0, column=1, sticky=tk.W, pady=5)
         self.reload_strategy_combobox.bind("<<ComboboxSelected>>", lambda e: self.save_config())
