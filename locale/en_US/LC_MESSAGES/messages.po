@@ -1665,3 +1665,123 @@ msgstr "Try to bypass invisible wall after restart"
 
 msgid "检测到恢复/状态画面，正在尝试返回以关闭。"
 msgstr "Detected recovery/status screen, trying to press back to close."
+
+msgid "0 面具"
+msgstr "0 Mask"
+
+msgid "F 伊亚玛斯"
+msgstr "F Iamas"
+
+msgid "F 凛音"
+msgstr "F Rinne"
+
+msgid "F 吉拉德"
+msgstr "F Jirard"
+
+msgid "F 夏莉莉妮雅"
+msgstr "F Sharilinya"
+
+msgid "F 奥尔德里科"
+msgstr "F Aldrico"
+
+msgid "F 尤尔萨"
+msgstr "F Yursa"
+
+msgid "F 影狼"
+msgstr "F Kagerou"
+
+msgid "F 狮樱"
+msgstr "F Shio"
+
+msgid "F 艾妮琪"
+msgstr "F Einikki"
+
+msgid "F 艾尔文"
+msgstr "F Elvin"
+
+msgid "F 莉娜莉亚"
+msgstr "F Linalia"
+
+msgid "F 莉瓦娜"
+msgstr "F Rivana"
+
+msgid "F 萨维亚"
+msgstr "F Savia"
+
+msgid "F 贝卡南"
+msgstr "F Belkanan"
+
+msgid "F 迦鲁巴多斯"
+msgstr "F Galbadus"
+
+msgid "F 银莲"
+msgstr "F Anemone"
+
+msgid "F 阿尔博里斯"
+msgstr "F Arboris"
+
+msgid "F 雅蓓妮斯"
+msgstr "F Abenius"
+
+msgid "G 亚沙"
+msgstr "G Yasha"
+
+msgid "G 克拉丽莎"
+msgstr "G Clarissa"
+
+msgid "G 克洛艾"
+msgstr "G Chloe"
+
+msgid "G 切羽"
+msgstr "G Kirihaba"
+
+msgid "G 加斯顿"
+msgstr "G Gaston"
+
+msgid "G 奥利芙"
+msgstr "G Olive"
+
+msgid "G 奥菲莉亚"
+msgstr "G Ophelia"
+
+msgid "G 本杰明"
+msgstr "G Benjamin"
+
+msgid "G 海因里科"
+msgstr "G Heinrich"
+
+msgid "G 玛丽安娜"
+msgstr "G Marianna"
+
+msgid "G 甘道夫"
+msgstr "G Gandalf"
+
+msgid "G 米拉娜"
+msgstr "G Mirana"
+
+msgid "G 艾莉赛"
+msgstr "G Elise"
+
+msgid "G 芙尔特"
+msgstr "G Forte"
+
+msgid "G 阿米莉娅"
+msgstr "G Amelia"
+
+msgid "P 亚当"
+msgstr "P Adam"
+
+msgid "P 叶卡捷琳娜"
+msgstr "P Ekaterina"
+
+msgid "P 哲鲁夫"
+msgstr "P Gerruf"
+
+msgid "P 拉纳维尔"
+msgstr "P Lanouille"
+
+msgid "P 爱丽丝"
+msgstr "P Alice"
+
+msgid "P 黛波拉"
+msgstr "P Deborah"

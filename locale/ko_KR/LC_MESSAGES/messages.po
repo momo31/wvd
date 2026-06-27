@@ -2040,3 +2040,9 @@ msgstr "좌하단 스킬"
 
 msgid "右下技能"
 msgstr "우하단 스킬"
+
+msgid "F 奥尔德里科"
+msgstr "F 올드리코"
+
+msgid "F 影狼"
+msgstr "F 카게로우"

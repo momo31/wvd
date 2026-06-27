@@ -523,7 +523,7 @@ msgstr ""
 
 #: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:36
 msgid "F 柚奈壬姬"
-msgstr ""
+msgstr "F 柚奈壬姬"
 
 #: c:/Users/Arnold/Desktop/andsimscripts/src/script.py:84
 #, python-format
@@ -1737,3 +1737,123 @@ msgstr ""
 
 msgid "检测到恢复/状态画面，正在尝试返回以关闭。"
 msgstr "检测到恢复/状态画面，正在尝试返回以关闭。"
+
+msgid "0 面具"
+msgstr "0 面具"
+
+msgid "F 伊亚玛斯"
+msgstr "F 伊亚玛斯"
+
+msgid "F 凛音"
+msgstr "F 凛音"
+
+msgid "F 吉拉德"
+msgstr "F 吉拉德"
+
+msgid "F 夏莉莉妮雅"
+msgstr "F 夏莉莉妮雅"
+
+msgid "F 奥尔德里科"
+msgstr "F 奥尔德里科"
+
+msgid "F 尤尔萨"
+msgstr "F 尤尔萨"
+
+msgid "F 影狼"
+msgstr "F 影狼"
+
+msgid "F 狮樱"
+msgstr "F 狮樱"
+
+msgid "F 艾妮琪"
+msgstr "F 艾妮琪"
+
+msgid "F 艾尔文"
+msgstr "F 艾尔文"
+
+msgid "F 莉娜莉亚"
+msgstr "F 莉娜莉亚"
+
+msgid "F 莉瓦娜"
+msgstr "F 莉瓦娜"
+
+msgid "F 萨维亚"
+msgstr "F 萨维亚"
+
+msgid "F 贝卡南"
+msgstr "F 贝卡南"
+
+msgid "F 迦鲁巴多斯"
+msgstr "F 迦鲁巴多斯"
+
+msgid "F 银莲"
+msgstr "F 银莲"
+
+msgid "F 阿尔博里斯"
+msgstr "F 阿尔博里斯"
+
+msgid "F 雅蓓妮斯"
+msgstr "F 雅蓓妮斯"
+
+msgid "G 亚沙"
+msgstr "G 亚沙"
+
+msgid "G 克拉丽莎"
+msgstr "G 克拉丽莎"
+
+msgid "G 克洛艾"
+msgstr "G 克洛艾"
+
+msgid "G 切羽"
+msgstr "G 切羽"
+
+msgid "G 加斯顿"
+msgstr "G 加斯顿"
+
+msgid "G 奥利芙"
+msgstr "G 奥利芙"
+
+msgid "G 奥菲莉亚"
+msgstr "G 奥菲莉亚"
+
+msgid "G 本杰明"
+msgstr "G 本杰明"
+
+msgid "G 海因里科"
+msgstr "G 海因里科"
+
+msgid "G 玛丽安娜"
+msgstr "G 玛丽安娜"
+
+msgid "G 甘道夫"
+msgstr "G 甘道夫"
+
+msgid "G 米拉娜"
+msgstr "G 米拉娜"
+
+msgid "G 艾莉赛"
+msgstr "G 艾莉赛"
+
+msgid "G 芙尔特"
+msgstr "G 芙尔特"
+
+msgid "G 阿米莉娅"
+msgstr "G 阿米莉娅"
+
+msgid "P 亚当"
+msgstr "P 亚当"
+
+msgid "P 叶卡捷琳娜"
+msgstr "P 叶卡捷琳娜"
+
+msgid "P 哲鲁夫"
+msgstr "P 哲鲁夫"
+
+msgid "P 拉纳维尔"
+msgstr "P 拉纳维尔"
+
+msgid "P 爱丽丝"
+msgstr "P 爱丽丝"
+
+msgid "P 黛波拉"
+msgstr "P 黛波拉"
