@@ -1261,6 +1261,7 @@ def Factory():
         nonlocal setting # 修改因果
         counter = 0
         while 1:
+            t_start = time.time()
             screen = ScreenShot()
             logger.info(_("状态检查中...(第{a}次)").format(a=counter+1))
 
@@ -1362,6 +1363,13 @@ def Factory():
 
             if counter>=4:
                 logger.info(_("看起来遇到了一些不太寻常的情况..."))
+                try:
+                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                    file_path = os.path.join(LOGS_FOLDER_NAME, f"anomaly_{timestamp}.png")
+                    cv2.imwrite(file_path, screen)
+                    logger.info(_("已保存异常屏幕截图至 {a}").format(a=file_path))
+                except Exception as e:
+                    logger.error(f"Failed to save anomaly screenshot: {e}")
                 if Press(CheckIf(screen,"RiseAgain")):
                     RiseAgainReset(reason = "combat")
                     return IdentifyState()
@@ -1424,6 +1432,8 @@ def Factory():
                 PressReturn()
                 Sleep(0.5)
                 PressReturn()
+            logger.debug(_("状态检查第{a}次耗时: {b}秒").format(a=counter+1, b=round(time.time()-t_start, 2)))
+            
             if counter>= setting.MAX_TRY_LIMIT:
                 logger.info(_("看起来遇到了一些非同寻常的情况...重启游戏."))
                 restartGame()
@@ -1530,6 +1540,7 @@ def Factory():
             Sleep(5)
             return
         def SkillLvlSelectAndDoubleCheck(skillPos,skilllvl, supportTarget):
+            t_start = time.time()
             skillPosDict = { _("左上技能"):[266,965], _("右上技能"):[640,965], _("左下技能"):[266,1054], _("右下技能"):[640,1054]}
             supportTargetDict = {_("左上角色"): [200,1200], _("中上角色"): [450,1200], _("右上角色"): [700,1200], _("左下角色"):[200,1400], _("中下角色"):[450,1400], _("右下角色"):[700,1400]}
             
@@ -1542,7 +1553,7 @@ def Factory():
                     into_detail = True
                     break
             if not into_detail:
-                logger.info(_("没有检测到任务详情界面. 疑似法力不足, 使用自动战斗."))
+                logger.info(_("没有检测到任务详情界面. 疑似法力不足, 使用自动战斗. (耗时: {a}秒)").format(a=round(time.time()-t_start, 2)))
                 for underscore in range(3):
                     PressReturn()
                     Sleep(0.2)
@@ -1550,8 +1561,11 @@ def Factory():
                 AutoThisChar()
                 return
 
+            logger.info(_("已成功打开技能详情界面。 (耗时: {a}秒)").format(a=round(time.time()-t_start, 2)))
+
             # 设置等级
             Sleep(1)
+            t_lv_start = time.time()
             scn = ScreenShot()
             has_lv_1 = (CheckIf(scn,f"spellskill\skillLvl\lv1")) or (CheckIf(scn,f"spellskill\skillLvl\s_lv1"))
             if (not has_lv_1):
@@ -1570,6 +1584,8 @@ def Factory():
                     if not Press(CheckIf(scn,f"spellskill\skillLvl\s_lv{skilllvl}")):
                         logger.error(_("错误: 我认为不可能发生这种情况. 请务必告诉我."))
 
+            logger.info(_("技能等级设置完成。 (等级: {a}, 耗时: {b}秒)").format(a=skilllvl, b=round(time.time()-t_lv_start, 2)))
+
             # 辅助技能
             if CheckIf(ScreenShot(),"supportSkillCheck",[[677,1475,189,80]]):
                 if supportTarget in supportTargetDict.keys():
@@ -1577,19 +1593,22 @@ def Factory():
                     logger.info(_("释放了位于\"{a}\"的辅助技能, 技能等级为{b}, 释放对象为{c}").format(a=skillPos, b=skilllvl, c=supportTarget))
 
             # 确认
+            t_cast_start = time.time()
             scn = ScreenShot()
             if Press(CheckIf(scn,"OK")):
-                logger.info(_("释放了位于\"{a}\"的全体技能, 技能等级为{b}.").format(a=skillPos, b=skilllvl))
+                logger.info(_("释放了位于\"{a}\"的全体技能, 技能等级为{b}. (耗时: {c}秒)").format(a=skillPos, b=skilllvl, c=round(time.time()-t_cast_start, 2)))
                 Sleep(2)
             elif pos:=(CheckIf(scn,"next")):
                 Press([pos[0]-15+random.randint(0,30),pos[1]+150+random.randint(0,30)])
-                logger.info(_("释放了位于\"{a}\"的单体技能, 技能等级为{b}. 选择next作为敌方目标.").format(a=skillPos, b=skilllvl))
+                logger.info(_("释放了位于\"{a}\"的单体技能, 技能等级为{b}. 选择next作为敌方目标. (耗时: {c}秒)").format(a=skillPos, b=skilllvl, c=round(time.time()-t_cast_start, 2)))
             else:
                 for t in range(24):
                     Press([75+random.random()*827,296+random.random()*600])
                     Sleep(0.05)
-                logger.info(_("释放了位于\"{a}\"的单体技能, 技能等级为{b}. 随机选择敌方目标.").format(a=skillPos, b=skilllvl))
+                logger.info(_("释放了位于\"{a}\"的单体技能, 技能等级为{b}. 随机选择敌方目标. (耗时: {c}秒)").format(a=skillPos, b=skilllvl, c=round(time.time()-t_cast_start, 2)))
                 Sleep(2)
+
+            logger.info(_("技能施放总计耗时: {a}秒").format(a=round(time.time()-t_start, 2)))
 
             # 资源不足
             Sleep(1)
