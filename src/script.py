@@ -1260,6 +1260,7 @@ def Factory():
     def IdentifyState():
         nonlocal setting # 修改因果
         counter = 0
+        anomaly_saved = False
         while 1:
             t_start = time.time()
             screen = ScreenShot()
@@ -1361,15 +1362,17 @@ def Factory():
                     if Press(CheckIf(screen,option)):
                         return IdentifyState()
 
-            if counter>=4:
-                logger.info(_("看起来遇到了一些不太寻常的情况..."))
-                try:
-                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                    file_path = os.path.join(LOGS_FOLDER_NAME, f"anomaly_{timestamp}.png")
-                    cv2.imwrite(file_path, screen)
-                    logger.info(_("已保存异常屏幕截图至 {a}").format(a=file_path))
-                except Exception as e:
-                    logger.error(f"Failed to save anomaly screenshot: {e}")
+            if counter>=10:
+                if not anomaly_saved:
+                    logger.info(_("看起来遇到了一些不太寻常的情况..."))
+                    try:
+                        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                        file_path = os.path.join(LOGS_FOLDER_NAME, f"anomaly_{timestamp}.png")
+                        cv2.imwrite(file_path, screen)
+                        logger.info(_("已保存异常屏幕截图至 {a}").format(a=file_path))
+                        anomaly_saved = True
+                    except Exception as e:
+                        logger.error(f"Failed to save anomaly screenshot: {e}")
                 if Press(CheckIf(screen,"RiseAgain")):
                     RiseAgainReset(reason = "combat")
                     return IdentifyState()
@@ -1438,7 +1441,7 @@ def Factory():
                 logger.info(_("看起来遇到了一些非同寻常的情况...重启游戏."))
                 restartGame()
                 counter = 0
-            if counter>=4:
+            if counter>=10:
                 Press([1,1])
                 Sleep(0.25)
                 Press([1,1])
@@ -2080,6 +2083,7 @@ def Factory():
                     not_moving = False
                     if runtimeContext._RESUMEAVAILABLE and Press(CheckIf(ScreenShot(),"resume")):
                         logger.info(_("resume可用. 使用resume."))
+                        Sleep(6)
                         lastscreen = ScreenShot()
                         for counter in range(30):
                             Sleep(3)
