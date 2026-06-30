@@ -1,5 +1,10 @@
 from ppadb.client import Client as AdbClient
-from win10toast import ToastNotifier
+try:
+    from win10toast import ToastNotifier
+except Exception:
+    # win10toast는 방치된 패키지로 Python 3.12+/신버전 setuptools(pkg_resources 제거) 환경에서 import 실패.
+    # 현재 toaster는 show_toast 호출 없이 생성만 되는 사실상 미사용 코드이므로 없어도 동작에 지장 없음.
+    ToastNotifier = None
 from scipy.optimize import curve_fit
 from scipy.signal import find_peaks
 from enum import Enum
@@ -13,6 +18,7 @@ from pathlib import Path
 import numpy as np
 import copy
 import struct
+from smart_disarm import SmartDisarm, DisarmConfig
 class TaskStoppedException(Exception):
     pass
 
@@ -54,6 +60,8 @@ CONFIG_VAR_LIST = [
 
             ["TEMPLATE",   "TASK_POINT_STRATEGY",     dict,          {}],
             ["TEMPLATE",   "QUICK_DISARM_CHEST",      tk.BooleanVar, False],
+            ["TEMPLATE",   "SMART_DISARM_CHEST",      tk.BooleanVar, False],
+            ["TEMPLATE",   "BYPASS_FAST_GAME",        tk.BooleanVar, False],
             ["TEMPLATE",   "WHO_WILL_OPEN_IT",        tk.IntVar,     0],
             ["TEMPLATE",   "SKIP_COMBAT_RECOVER",     tk.BooleanVar, False],
             ["TEMPLATE",   "SKIP_CHEST_RECOVER",      tk.BooleanVar, False],
@@ -541,7 +549,7 @@ def CutRoI(screenshot, roi):
     return main_img
 ##################################################################
 def Factory():
-    toaster = ToastNotifier()
+    toaster = ToastNotifier() if ToastNotifier else None
     setting =  None
     quest = None
     runtimeContext = RuntimeContext()
@@ -1859,7 +1867,7 @@ def Factory():
         if runtimeContext._TIME_CHEST==0:
             runtimeContext._TIME_CHEST = time.time()
         
-        if setting.QUICK_DISARM_CHEST:
+        if setting.QUICK_DISARM_CHEST and not setting.SMART_DISARM_CHEST:
             if Press(CheckIf(ScreenShot(),"chestFlag")):
                 Sleep(1)
                 whowillopenit = setting.WHO_WILL_OPEN_IT - 1
@@ -1899,25 +1907,46 @@ def Factory():
                     else:
                         Press(pos)
                         Sleep(1.5)
-                        # if not setting._SMARTDISARMCHEST:
-                        for underscore in range(8):
-                            t = time.time()
-                            Press(disarm)
-                            if time.time()-t<0.3:
-                                Sleep(0.3-(time.time()-t))
-                                
+                        if not setting.SMART_DISARM_CHEST:
+                            for underscore in range(8):
+                                t = time.time()
+                                Press(disarm)
+                                if time.time()-t<0.3:
+                                    Sleep(0.3-(time.time()-t))
                         break
                 if not haveBeenTried:
                     haveBeenTried = True
 
             if CheckIf(scn,"chestOpening"):
                 Sleep(1)
-                # if setting._SMARTDISARMCHEST:
-                #     ChestOpen()
-                FindCoordsOrElseExecuteFallbackAndWait(
-                    ["dungFlag","combatActive","chestFlag","RiseAgain"], # 如果这个fallback重启了, 战斗箱子会直接消失, 固有箱子会是chestFlag
-                    [disarm,disarm,disarm,disarm,disarm,disarm,disarm,disarm],
-                    1)
+                if setting.SMART_DISARM_CHEST:
+                    cfg = DisarmConfig()
+                    cfg.bypass_fast_game = setting.BYPASS_FAST_GAME
+                    cfg.disarm_button = tuple(disarm)
+                    def _disarm_fallback():
+                        for underscore in range(8):
+                            t = time.time()
+                            Press(disarm)
+                            if time.time()-t<0.3:
+                                Sleep(0.3-(time.time()-t))
+                    auditor = None
+                    try:
+                        # audit 모듈(개발용). 이 파일을 삭제하면 auditor=None -> audit 미동작.
+                        from smart_disarm_audit import make_auditor
+                        auditor = make_auditor(logger, _=_)
+                    except Exception:
+                        auditor = None
+                    SmartDisarm(
+                        ScreenShot, Press, time.time, logger,
+                        is_done_fn=lambda im: bool(CheckIf(im,"dungFlag")) or (not CheckIf(im,"chestOpening")),
+                        fallback_fn=_disarm_fallback,
+                        config=cfg, _=_, auditor=auditor,
+                    ).run()
+                else:
+                    FindCoordsOrElseExecuteFallbackAndWait(
+                        ["dungFlag","combatActive","chestFlag","RiseAgain"], # 如果这个fallback重启了, 战斗箱子会直接消失, 固有箱子会是chestFlag
+                        [disarm,disarm,disarm,disarm,disarm,disarm,disarm,disarm],
+                        1)
             
             if CheckIf(scn,"RiseAgain"):
                 RiseAgainReset(reason = "chest")

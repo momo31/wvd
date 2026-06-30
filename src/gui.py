@@ -1053,9 +1053,31 @@ class ConfigPanelApp(tk.Toplevel):
 
         ttk.Label(frame_row, text=" | ").grid(row=0, column=2, sticky=tk.W, pady=5)
 
+        # 빠른 개봉 / 스마트 개봉은 상호배타 (하나를 켜면 다른 하나는 해제).
+        # 고난도 건너뛰기는 스마트의 하위 옵션이므로 스마트를 끄면 함께 해제.
+        def _on_quick_chest_toggle():
+            if self.QUICK_DISARM_CHEST.get():
+                self.SMART_DISARM_CHEST.set(False)
+                self.BYPASS_FAST_GAME.set(False)
+            self.save_config()
+        def _on_smart_chest_toggle():
+            if self.SMART_DISARM_CHEST.get():
+                self.QUICK_DISARM_CHEST.set(False)
+            else:
+                self.BYPASS_FAST_GAME.set(False)
+            self.save_config()
+
         self.random_chest_check = ttk.Checkbutton(frame_row, text=_("快速开箱"), variable=self.QUICK_DISARM_CHEST,
-                                                  command=self.save_config, style="Custom.TCheckbutton")
+                                                  command=_on_quick_chest_toggle, style="Custom.TCheckbutton")
         self.random_chest_check.grid(row=0, column=3, sticky=tk.W, pady=5)
+
+        self.smart_chest_check = ttk.Checkbutton(frame_row, text=_("智能开箱"), variable=self.SMART_DISARM_CHEST,
+                                                 command=_on_smart_chest_toggle, style="Custom.TCheckbutton")
+        self.smart_chest_check.grid(row=0, column=4, sticky=tk.W, pady=5)
+
+        self.bypass_fast_check = ttk.Checkbutton(frame_row, text=_("跳过高难度"), variable=self.BYPASS_FAST_GAME,
+                                                 command=self.save_config, style="Custom.TCheckbutton")
+        self.bypass_fast_check.grid(row=0, column=5, sticky=tk.W, pady=5)
 
         # 跳过恢复
         row_counter += 1
@@ -1919,6 +1941,8 @@ class ConfigPanelApp(tk.Toplevel):
         Button_and_Entry = [
             self.adb_path_change_button,
             self.random_chest_check,
+            self.smart_chest_check,
+            self.bypass_fast_check,
             self.who_will_open_combobox,
             self.skip_recover_check,
             self.skip_chest_recover_check,
