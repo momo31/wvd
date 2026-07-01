@@ -1,0 +1,13 @@
+2026-07-01 00:21:18 - INFO - [gui:__init__:684] - **********************************
+2026-07-01 00:21:18 - INFO - [gui:__init__:685] - 현재 버전: 2.3.8
+2026-07-01 00:21:18 - INFO - [gui:__init__:686] - 문제가 발생했나요? 방문해주세요:
+https://github.com/arnold2957/wvd
+2026-07-01 00:21:18 - INFO - [gui:__init__:687] - **********************************
+2026-07-01 00:21:18 - DEBUG - [script:LoadQuest:190] - 读取任务AWD-noGorgon
+2026-07-01 00:21:18 - DEBUG - [script:LoadQuest:190] - 读取任务AWD-noGorgon
+2026-07-01 00:21:18 - INFO - [gui:create_task_point_ui:1337] - 작업 지점 UI가 새로 고쳐졌습니다. 작업 포인트 수: 3
+2026-07-01 00:21:18 - INFO - [utils:SaveConfigToFile:220] - 구성 파일이 저장되었습니다.
+2026-07-01 00:21:18 - INFO - [utils:SaveConfigToFile:220] - 구성 파일이 저장되었습니다.
+2026-07-01 00:21:36 - INFO - [utils:SaveConfigToFile:220] - 구성 파일이 저장되었습니다.
+2026-07-01 00:21:37 - INFO - [utils:SaveConfigToFile:220] - 구성 파일이 저장되었습니다.
+2026-07-01 00:21:38 - INFO - [utils:SaveConfigToFile:220] - 구성 파일이 저장되었습니다.

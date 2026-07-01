@@ -614,23 +614,52 @@ def Factory():
     def ScreenShot():
         t = time.time()
 
-        
         while True:
             try:
-                # 获取设备序列号，用于构造 adb 命令
                 serial = setting._ADBDEVICE.serial 
+                raw_data = None
 
-                process_result = subprocess.run(
-                    [GetADBPathFromEmuPath(setting.EMU_PATH), "-s", serial, "exec-out", "screencap"],
-                    capture_output=True, # 捕获输出
-                    timeout=5            # 设置超时
-                )
-                
-                if process_result.stderr:
-                    logger.error(_("截图命令报错: {a}").format(a=process_result.stderr.decode('utf-8', errors='ignore')))
-                    raise RuntimeError(_("截图命令报错"))
+                # 1단계: 순수 소켓 통신을 이용한 고속 캡처 시도
+                try:
+                    import socket
+                    adb_host = getattr(setting._ADBDEVICE.client, "host", "127.0.0.1")
+                    adb_port = getattr(setting._ADBDEVICE.client, "port", 5037)
+                    
+                    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    s.settimeout(3.0)
+                    s.connect((adb_host, adb_port))
+                    
+                    # transport 선택
+                    cmd_transport = f"host:transport:{serial}"
+                    s.sendall(f"{len(cmd_transport):04x}{cmd_transport}".encode('utf-8'))
+                    if s.recv(4) == b"OKAY":
+                        # exec:screencap 실행
+                        cmd_screencap = "exec:screencap"
+                        s.sendall(f"{len(cmd_screencap):04x}{cmd_screencap}".encode('utf-8'))
+                        if s.recv(4) == b"OKAY":
+                            chunks = []
+                            while True:
+                                chunk = s.recv(65536)
+                                if not chunk:
+                                    break
+                                chunks.append(chunk)
+                            raw_data = b"".join(chunks)
+                    s.close()
+                except Exception as se:
+                    logger.warning(_("소켓 기반 고속 캡처 실패: {a}. subprocess 방식으로 복구 시도합니다.").format(a=str(se)))
+                    raw_data = None
 
-                raw_data = process_result.stdout
+                # 2단계: 소켓 캡처 실패 시 기존 subprocess.run 방식으로 폴백
+                if raw_data is None:
+                    process_result = subprocess.run(
+                        [GetADBPathFromEmuPath(setting.EMU_PATH), "-s", serial, "exec-out", "screencap"],
+                        capture_output=True,
+                        timeout=5
+                    )
+                    if process_result.stderr:
+                        logger.error(_("截图命令报错: {a}").format(a=process_result.stderr.decode('utf-8', errors='ignore')))
+                        raise RuntimeError(_("截图命令报错"))
+                    raw_data = process_result.stdout
                 
                 # 解析头部信息 (前12个字节)
                 if len(raw_data) < 12:
@@ -674,13 +703,13 @@ def Factory():
 
             except subprocess.TimeoutExpired:
                 logger.warning(_("截图超时 (Subprocess)"))
-                logger.info(_("ADB操作失败, 尝试重启ADB或模拟器程序..."))
+                logger.info(_("ADB操作失败, 尝试重启ADB or 模拟器程序..."))
                 ResetDevice(force_restart_adb=True)
                 
             except Exception as e:
                 logger.debug(_("截图发生异常: {a}").format(a=e))
-                if isinstance(e, (AttributeError, RuntimeError, ConnectionResetError, cv2.error)):
-                    logger.info(_("ADB操作失败/数据错误, 尝试重启ADB或模拟器程序..."))
+                if isinstance(e, (AttributeError, RuntimeError, ConnectionResetError, cv2.error, socket.error)):
+                    logger.info(_("ADB操作失败/数据错误, 尝试重启ADB or 模拟器程序..."))
                     ResetDevice()
                 time.sleep(1)
     def _check(screenImage, template, roi = None, outputMatchResult = False):
@@ -1924,7 +1953,8 @@ def Factory():
                 Sleep(1)
                 if setting.SMART_DISARM_CHEST:
                     cfg = DisarmConfig()
-                    cfg.bypass_fast_game = setting.BYPASS_FAST_GAME
+                    cfg.bypass_fast_game = getattr(setting, "BYPASS_FAST_GAME", True)
+                    cfg.fast_game_k = 1.3
                     cfg.disarm_button = tuple(disarm)
                     def _disarm_fallback():
                         for underscore in range(8):
