@@ -97,10 +97,8 @@ _STOP_LEAD = {"adj": 0.0}
 def note_press_duration(dur, alpha=0.35):
     """press(adb input tap) 실측 소요를 EMA 에 공급. script.py 의 일반 Press() 가
     상시 호출해 미니게임 첫 탭 전에 지연 추정을 예열(pre-seed)한다."""
-    if dur <= 0 or dur > 3.0:   # 타임아웃/복구가 섞인 이상치는 제외
-        return
-    ema = _PRESS_LAT["ema"]
-    _PRESS_LAT["ema"] = dur if ema is None else (1 - alpha) * ema + alpha * dur
+    # CPU 연산 속도(30ms)로 인한 물리 입력 지연(input_delay) 오염 차단을 위해 비활성화
+    pass
 
 
 class SmartDisarm:
@@ -518,7 +516,8 @@ class SmartDisarm:
 
     def _press_latency(self):
         """press 명령 발행~실제 탭 주입까지 예상 지연(s). 실측 EMA 우선, 없으면 초기값."""
-        base = _PRESS_LAT["ema"] if _PRESS_LAT["ema"] is not None else self.cfg.input_delay
+        # 하드웨어 입력 지연 고정 적용 (오염 방지)
+        base = self.cfg.input_delay
         return max(0.05, base - self.cfg.press_inject_lead)
 
     def _stop_lead(self):
