@@ -55,7 +55,7 @@ class DisarmConfig:
                                # 정지 리드 때문에 가까운 후보가 자주 탈락하므로 한 주기(≈3.3s) 안에서
                                # 다음 교차가 항상 창에 들어오도록 1.5→2.6 상향.
     # --- 감속-정지 (판정은 '정지 위치' 기준: 사용자 확인) ---
-    stop_time = 0.80           # 탭 주입~정지까지 시간 추정(s). 관찰값 '약 1초 이내'. 0이면 기능 비활성.
+    stop_time = 0.0            # 탭 주입~정지까지 시간 추정(s). 0이면 비활성(즉시 정지 판정 기준).
     stop_lead_alpha = 0.30     # 정지위치 오프셋 EMA 로 리드를 자동 보정하는 계수
     stop_adj_step_max = 0.08   # 1회 보정 한도(s)
     stop_adj_total_max = 0.35  # 누적 보정 한도(s, 초기 리드 대비 ±)
@@ -71,7 +71,7 @@ class DisarmConfig:
     # --- 추정 견고화 ---
     eps = 2.0                  # 방향/데드존 임계(px). 노이즈로 인한 거짓반전 차단.
     straightness_tol = 12.0    # 등속 3점 직선성 검증 허용 잔차(px). 초과 시 폐기.
-    est_verify_tol = 28.0      # 4번째 샘플 fold 역예측 검증 허용 잔차(px). 초과 시 추정 폐기.
+    est_verify_tol = 80.0      # 4번째 샘플 fold 역예측 검증 허용 잔차(px). 초과 시 추정 폐기.
     # --- 안전/폴백 ---
     max_total_samples = 40     # 전체 캡처 상한(무한루프 방지)
     max_consecutive_miss = 6   # (막대를 한 번이라도 본 뒤) 연속 검출 실패 허용
@@ -607,7 +607,7 @@ if __name__ == "__main__":
     # 오른쪽 이동 중 3점
     smp = [(0.0, 300.0), (0.25, 425.0), (0.50, 550.0)]
     est = sd.estimate(smp, xmin, xmax)
-    print(f"  등속 추정: {est}  (기대 speed≈500 dir=+1)")
+    print(f"  등속 추정: {est}  (기대 speed~500 dir=+1)")
     if est:
         plan = sd.plan_tap(est, safes, xmin, xmax, 0.25)
         print(f"  탭 계획: {plan}")
