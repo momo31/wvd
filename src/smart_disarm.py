@@ -10,6 +10,30 @@
 - 안전구간 폭 가변(138~283px) → margin 은 폭 비례.
 - 약점은 빠른 게임(시뮬 성공률↓) → '어려운 게임 우회'를 설정 옵션으로 제공.
 
+운영 audit 개정 (26.07 실측 232탭 + 로그 3,145호출 분석 반영):
+- 막대가 없는 화면(상자 UI 잔류 등)에서 호출되면 즉시 반환해야 한다.
+  기존엔 7회 캡처(~5.6s)+폴백 스팸을 무한 반복해 한 상자에서 약 8시간 연속 스턱 발생
+  (01:24~09:32, 3,119회 연속 미검출 후 자연 해소).
+  → bar 미확인 상태의 미검출 허용을 nobar_max_miss 로 축소, 폴백 스팸 금지.
+- 탭 적중률 27%의 주범은 계통 지연 미보정: (a) 샘플 시각을 캡처 '종료'로 기록,
+  (b) audit 캡처가 sleep~press 사이에 끼어 실제 탭을 캡처 1회분(~0.8s) 지연,
+  (c) input_delay 0.10s 는 adb input tap 실측 지연 대비 과소.
+  → (a) capture_grab_frac 로 프레임 취득 시점 추정, (b) audit 캡처를 press 이후로
+  이동, (c) press 소요를 실측 EMA 로 자동 보정(_PRESS_LAT).
+- dt~0.8s 로 반주기(1.4~2.1s)에 근접해 3점 외삽이 앨리어싱에 취약
+  → 4번째 샘플로 fold 역예측 검증(est_verify_tol) 후 불합격 추정 폐기.
+
+감속-정지 역학 (26.07 사용자 확인):
+- Disarm 탭 후 커서는 즉시 멈추지 않고 약 1초 이내 감속하며 정지하고,
+  판정은 '정지 위치'가 안전구간 안인지로 결정된다.
+- 따라서 조준은 주입 순간이 아니라 정지 위치가 중심에 오도록 해야 한다.
+  선형 감속 가정 시 정지거리 D = v*stop_time/2 → 리드 = stop_time/2 (속도 무관 상수).
+- 리드만큼 가까운 구간이 실행 불가가 되므로 plan_tap 은 '실행 가능한' 후보 중
+  최선을 고르고, 없으면 한 주기 뒤 후보까지 본다(pw_thresh 상향과 세트).
+- 탭 직후 프레임을 감속 모델로 역산해 정지 위치를 추정하고, 목표중심과의
+  오프셋을 EMA(_STOP_LEAD)로 되먹여 리드를 자동 보정한다. 이 신호는 press 지연
+  오차·프레임 취득 시점 오차·감속 편차를 한 관측치로 흡수한다.
+
 운영하며 보완할 값은 DisarmConfig 에 모아두었다(실측 재수집 후 튜닝).
 """
 import time
@@ -21,8 +45,20 @@ class DisarmConfig:
     """운영 튜닝 파라미터 (실데이터 확보 후 조정). 인스턴스로 복제해 덮어쓰기 가능."""
     # --- 타이밍 ---
     sample_interval = 0.0      # 샘플 간 추가 대기(s). 0=캡처 속도대로(권장, Δt=캡처비용)
-    input_delay = 0.10         # 탭 명령~실제 입력 지연(s). 운영 측정 후 보정.
-    pw_thresh = 1.5            # 이 시간 이내 도달하는 안전구간만 노림(s)
+    input_delay = 0.35         # press(adb input tap) 소요 초기 추정(s). 첫 탭 이후 실측 EMA 로 대체.
+    press_inject_lead = 0.05   # input 명령 완료 직전에 실제 탭이 주입된다고 보는 리드(s)
+    press_ema_alpha = 0.35     # press 소요 실측 EMA 계수
+    capture_grab_frac = 0.6    # 캡처 시간창에서 프레임 취득 시점 추정 비율(0=시작, 1=종료)
+    capture_dt_prior = 0.8     # 첫 샘플 전 캡처 주기 사전값(s). 실측 median 0.81 기반.
+                               # (기존 0.25는 2번째 샘플의 연속성 필터 반경을 과소하게 만들었음)
+    pw_thresh = 2.6            # 실행가능 최소시점부터 이 시간 이내 도달하는 후보만 노림(s).
+                               # 정지 리드 때문에 가까운 후보가 자주 탈락하므로 한 주기(≈3.3s) 안에서
+                               # 다음 교차가 항상 창에 들어오도록 1.5→2.6 상향.
+    # --- 감속-정지 (판정은 '정지 위치' 기준: 사용자 확인) ---
+    stop_time = 0.80           # 탭 주입~정지까지 시간 추정(s). 관찰값 '약 1초 이내'. 0이면 기능 비활성.
+    stop_lead_alpha = 0.30     # 정지위치 오프셋 EMA 로 리드를 자동 보정하는 계수
+    stop_adj_step_max = 0.08   # 1회 보정 한도(s)
+    stop_adj_total_max = 0.35  # 누적 보정 한도(s, 초기 리드 대비 ±)
     # --- margin ---
     margin_ratio = 0.10        # 안전구간 폭의 비율 (시뮬 최적 ~0.10)
     margin_speed_k = 0.0       # 속도 의존 가산: margin += k*v*Δt (빠른게임 여유). 0=비활성
@@ -35,9 +71,11 @@ class DisarmConfig:
     # --- 추정 견고화 ---
     eps = 2.0                  # 방향/데드존 임계(px). 노이즈로 인한 거짓반전 차단.
     straightness_tol = 12.0    # 등속 3점 직선성 검증 허용 잔차(px). 초과 시 폐기.
+    est_verify_tol = 28.0      # 4번째 샘플 fold 역예측 검증 허용 잔차(px). 초과 시 추정 폐기.
     # --- 안전/폴백 ---
     max_total_samples = 40     # 전체 캡처 상한(무한루프 방지)
-    max_consecutive_miss = 6   # 연속 검출 실패 허용
+    max_consecutive_miss = 6   # (막대를 한 번이라도 본 뒤) 연속 검출 실패 허용
+    nobar_max_miss = 2         # 막대를 한 번도 못 본 상태의 미검출 허용. 초과 시 비게임 화면으로 보고 즉시 반환.
     bypass_fast_game = False   # [옵션] 빠른(어려운) 게임은 폴백으로 우회 (사용자 선택)
     fast_game_k = 2.5          # 반주기 < fast_game_k*Δt 이면 '빠른 게임'으로 판정
     fast_game_fail_limit = 3   # 빠른게임 판정/실패가 이만큼 누적되면 폴백 트리거
@@ -45,6 +83,24 @@ class DisarmConfig:
     # 입력 좌표: 게임은 막대가 아니라 고정 'Disarm' 버튼을 누른다(기존 script.py disarm=[515,934]).
     # 커서 x는 '언제 누를지' 타이밍 판단용일 뿐, 실제 탭은 이 버튼. 통합 시 오버라이드.
     disarm_button = (515, 934)
+
+
+# press(adb input tap) 소요 실측 EMA. 세션(프로세스) 단위로 유지되어
+# 상자마다 새 SmartDisarm 인스턴스를 만들어도 보정값이 승계된다.
+_PRESS_LAT = {"ema": None}
+
+# 정지 리드(stop_time/2)에 대한 세션 보정치(s). 탭 직후 프레임에서 역산한
+# '정지 위치 - 목표중심' 오프셋을 되먹여 계통 잔차를 자동 흡수한다.
+_STOP_LEAD = {"adj": 0.0}
+
+
+def note_press_duration(dur, alpha=0.35):
+    """press(adb input tap) 실측 소요를 EMA 에 공급. script.py 의 일반 Press() 가
+    상시 호출해 미니게임 첫 탭 전에 지연 추정을 예열(pre-seed)한다."""
+    if dur <= 0 or dur > 3.0:   # 타임아웃/복구가 섞인 이상치는 제외
+        return
+    ema = _PRESS_LAT["ema"]
+    _PRESS_LAT["ema"] = dur if ema is None else (1 - alpha) * ema + alpha * dur
 
 
 class SmartDisarm:
@@ -162,6 +218,41 @@ class SmartDisarm:
             return None
         return {"x": x3, "speed": speed, "dir": direction}
 
+    @staticmethod
+    def _propagate(x, v, d, dt, xmin, xmax):
+        """(x, 속도v, 방향d)에서 dt초 후(음수면 과거) 위치와 그 시점의 진행 방향.
+        끝점 반사(triangle fold) 반영. 반환: (pos, dir).
+        시간 역행(dt<0)은 방향 반전 재생과 같으므로 결과 방향을 되반전해 돌려준다."""
+        rev = dt < 0
+        if rev:
+            d, dt = -d, -dt
+        span = float(xmax - xmin)
+        if span <= 0 or v <= 0 or d == 0:
+            return float(x), (-d if rev else d)
+        p0 = float(x) - xmin
+        if d < 0:                      # 왼쪽 진행은 거울 변환으로 오른쪽 진행에 귀결
+            p0 = span - p0
+        u = (p0 + v * dt) % (2.0 * span)
+        if u < 0:
+            u += 2.0 * span
+        if u > span:
+            pos, dend = 2.0 * span - u, -1
+        else:
+            pos, dend = u, +1
+        if d < 0:                      # 거울 복원
+            pos, dend = span - pos, -dend
+        if rev:
+            dend = -dend
+        return xmin + pos, dend
+
+    def _est_consistent(self, est, samples, xmin, xmax):
+        """dt가 반주기에 근접하면 3점 외삽이 앨리어싱으로 오염될 수 있다.
+        직전(4번째) 샘플을 fold 역예측해 잔차가 크면 추정을 폐기한다."""
+        t_prev, x_prev = samples[-4]
+        dt_back = t_prev - samples[-1][0]
+        pred, _d = self._propagate(est["x"], est["speed"], est["dir"], dt_back, xmin, xmax)
+        return abs(pred - x_prev) <= self.cfg.est_verify_tol
+
     def reach_time(self, x, v, d, c, xmin, xmax):
         """현재(x,방향d,속도v)에서 목표 c 도달까지 시간. 끝점 반전 고려(전역 예측)."""
         if d > 0:
@@ -169,18 +260,26 @@ class SmartDisarm:
         else:
             return (x - c) / v if c <= x else ((x - xmin) + (c - xmin)) / v
 
-    def plan_tap(self, est, safes, xmin, xmax, dt):
-        """두 안전구간 중 가장 이른 도달을 선택, press_wait·목표·margin 반환."""
+    def plan_tap(self, est, safes, xmin, xmax, dt, min_reach=0.0):
+        """실행 가능한(reach >= min_reach) 후보 중 가장 이른 도달을 선택.
+        정지 리드 때문에 가까운 교차가 실행 불가면 다음 주기 후보까지 본다.
+        반환: 목표·margin·reach 또는 None."""
         x, v, d = est["x"], est["speed"], est["dir"]
+        period = 2.0 * (xmax - xmin) / v
         best = None
-        for (a, b) in safes:
-            c = (a + b) / 2
-            half = (b - a) / 2
-            margin = max(self.cfg.margin_min, half * self.cfg.margin_ratio
-                         + self.cfg.margin_speed_k * v * dt)
-            tt = self.reach_time(x, v, d, c, xmin, xmax)
-            if best is None or tt < best["reach"]:
-                best = {"reach": tt, "center": c, "half": half, "margin": margin}
+        for k in (0, 1):
+            for (a, b) in safes:
+                c = (a + b) / 2
+                half = (b - a) / 2
+                margin = max(self.cfg.margin_min, half * self.cfg.margin_ratio
+                             + self.cfg.margin_speed_k * v * dt)
+                tt = self.reach_time(x, v, d, c, xmin, xmax) + k * period
+                if tt < min_reach or tt > min_reach + self.cfg.pw_thresh:
+                    continue
+                if best is None or tt < best["reach"]:
+                    best = {"reach": tt, "center": c, "half": half, "margin": margin}
+            if best is not None:
+                break
         return best
 
     # ===================== 메인 루프 =====================
@@ -189,19 +288,28 @@ class SmartDisarm:
         samples = []          # [(t, x)] 검출 성공만
         prev_x = None
         v_est = 0.0
-        last_dt = cfg.sample_interval or 0.25
+        last_dt = cfg.sample_interval or cfg.capture_dt_prior
         shots = 0
         miss = 0
         fast_hits = 0
+        bar_seen = False      # 이번 실행에서 막대/안전구간을 한 번이라도 검출했는가
         last_safes = None
         last_range = None
         self.log.info(self._t("스마트 개봉 시작..."))
+        # 평가용 보정 상태 스냅숏: 이 상자의 첫 탭이 어떤 보정값으로 조준되는지 기록
+        self.log.debug(self._t("보정 상태: press EMA={a}, 정지리드={b:.3f}s(adj {c:+.3f}), grab_frac={d}, stop_time={e}s")
+                       .format(a=(("%.3f s" % _PRESS_LAT["ema"]) if _PRESS_LAT["ema"] is not None else "미실측"),
+                               b=self._stop_lead(), c=_STOP_LEAD["adj"],
+                               d=cfg.capture_grab_frac, e=cfg.stop_time))
         if self.audit: self.audit.on_start()
 
         while shots < cfg.max_total_samples:
             t0 = self.now()
             img = self.cap()
-            t = self.now()                     # 캡처 직후 시각(시각 동기화: 측정 x의 시각)
+            t1 = self.now()
+            # 프레임 취득은 캡처 시간창의 중후반(프로세스 기동 후, 전송 전)에 일어난다.
+            # 종료 시각을 그대로 쓰면 측정 시각이 계통적으로 늦어져 탭이 통째로 늦는다.
+            t = t0 + cfg.capture_grab_frac * (t1 - t0)
             shots += 1
 
             if img is None:
@@ -210,18 +318,36 @@ class SmartDisarm:
                     return self._give_up("캡처 연속 실패")
                 continue
 
-            # 게임 종료 판정
-            if self.is_done and self.is_done(img):
+            # 게임 종료 판정: 첫 캡처(오호출 즉시 반환)에서만 무조건 확인한다.
+            # 미니게임은 우리 탭 없이는 끝나지 않으므로 정상 샘플링 중에는 검사하지 않고
+            # (전체 화면 매칭 2회 = 루프당 ~0.2s 절약), 막대가 소실됐을 때만 재확인한다.
+            if shots == 1 and self.is_done and self.is_done(img):
                 self.log.info(self._t("개봉 완료/화면 전환 감지. 종료."))
-                if self.audit: self.audit.on_result(self._t("성공(즉시종료)"))
+                if self.audit:
+                    self.audit.on_result(self._t("종료(즉시)"))
+                self._audit_end_frame(img)
                 return True
 
             d = self.detect(img)
             if not d or len(d["safes"]) == 0:
+                if shots > 1 and self.is_done and self.is_done(img):
+                    self.log.info(self._t("막대 소실 + 화면 전환 감지. 종료."))
+                    if self.audit:
+                        self.audit.on_result(self._t("종료(막대 소실)"))
+                    self._audit_end_frame(img)
+                    return True
                 miss += 1
-                if miss > cfg.max_consecutive_miss:
+                # 막대를 한 번도 못 봤다면 미니게임 화면이 아닐 공산이 크다(상자 UI 잔류 등).
+                # 이 경우 빠르게 반환해야 상위(StateChest)가 복구를 진행할 수 있다.
+                # (실측: 미검출 7회 대기+폴백 스팸을 반복하다 한 상자에서 약 8시간 연속 스턱)
+                limit = cfg.max_consecutive_miss if bar_seen else cfg.nobar_max_miss
+                if miss > limit:
+                    if not bar_seen:
+                        self.press(list(cfg.disarm_button))   # 게이지 시작/진행 유도 1회만
+                        return self._give_up("막대 미검출(비게임 화면 추정)", allow_fallback=False)
                     return self._give_up("막대/안전구간 미검출")
                 continue
+            bar_seen = True
             last_safes = d["safes"]
             xmin, xmax = d["bar"]
             last_range = (xmin, xmax)
@@ -244,6 +370,9 @@ class SmartDisarm:
                 continue
 
             est = self.estimate(samples, xmin, xmax)
+            if est is not None and len(samples) >= 4 and not self._est_consistent(est, samples, xmin, xmax):
+                self.log.debug(self._t("추정 검증 실패(4점 fold 잔차 초과). 재측정."))
+                est = None
             if est is None:
                 self._pace(t0)
                 continue
@@ -262,44 +391,123 @@ class SmartDisarm:
                 self._pace(t0)
                 continue
 
-            plan = self.plan_tap(est, last_safes, xmin, xmax, last_dt)
+            # 판정은 '정지 위치' 기준: 주입 후에도 커서가 v*stop_time/2 만큼 미끄러지므로
+            # 그만큼(정지 리드) 이르게 탭해야 한다. 리드 때문에 실행 불가해진 가까운 후보는
+            # plan_tap 이 걸러내고 다음 주기 후보로 대체한다.
+            elapsed_now = self.now() - t
+            min_reach = elapsed_now + self._press_latency() + self._stop_lead() + 0.05
+            plan = self.plan_tap(est, last_safes, xmin, xmax, last_dt, min_reach=min_reach)
             if plan is None:
                 self._pace(t0)
                 continue
 
-            # press_wait: 마지막 측정(t) 기준. 측정~지금 경과 + 입력지연 보정.
+            # press_wait: 마지막 측정(t) 기준. 경과 + press 지연(실측 EMA) + 정지 리드 보정.
             elapsed_since_meas = self.now() - t
-            press_wait = plan["reach"] - elapsed_since_meas - cfg.input_delay
+            press_wait = plan["reach"] - elapsed_since_meas - self._press_latency() - self._stop_lead()
             if press_wait <= 0:
                 self._pace(t0)                  # 이미 지남 → 다음 기회
                 continue
-            if press_wait > cfg.pw_thresh:
-                self._pace(t0)                  # 아직 멀음 → 더 가까운 기회 대기
+            if press_wait > cfg.pw_thresh + 0.1:
+                self._pace(t0)                  # 계획 오차 방어선(정상적으론 도달하지 않음)
                 continue
 
-            # 탭 실행
-            if press_wait > 0:
-                time.sleep(press_wait)
-            if self.audit:
-                _aimg = self.cap()
-                _ad = self.detect(_aimg)
-                _acur = self.pick_cursor(_ad["cursors"], est["x"], v_est, last_dt) if _ad else None
-                self.audit.on_tap(_aimg, _acur, plan, est, last_safes, (xmin, xmax))
-            ok = self.press(list(self.cfg.disarm_button))   # 타이밍 맞춰 고정 Disarm 버튼 탭
-            self.log.info(self._t("개봉 탭: 목표구간중심x={a:.0f} margin={b:.0f} pw={c:.3f}s 속도={d:.0f}px/s")
-                          .format(a=plan["center"], b=plan["margin"], c=press_wait, d=est["speed"]))
-            time.sleep(cfg.settle_after_tap)
+            # 탭 실행. press 앞에는 어떤 작업(캡처 등)도 끼우지 않는다 — 전부 탭 지연이 된다.
+            time.sleep(press_wait)
+            p0 = self.now()
+            self.press(list(self.cfg.disarm_button))   # 타이밍 맞춰 고정 Disarm 버튼 탭
+            p1 = self.now()
+            self._update_press_latency(p1 - p0)
+            self.log.info(self._t("개봉 탭: 목표구간중심x={a:.0f} margin={b:.0f} pw={c:.3f}s 속도={d:.0f}px/s press={e:.3f}s 리드={f:.3f}s")
+                          .format(a=plan["center"], b=plan["margin"], c=press_wait, d=est["speed"],
+                                  e=p1 - p0, f=self._stop_lead()))
 
-            # 결과 확인
+            # 탭 직후 프레임: 정지위치 역산(리드 자동보정) + audit + 조기 종료판정 겸용
+            aimg = None
+            a_content = None
+            if self.audit or self.is_done:
+                a0 = self.now()
+                aimg = self.cap()
+                a1 = self.now()
+                a_content = a0 + cfg.capture_grab_frac * (a1 - a0)
+            meas = self._measure_after_tap(aimg, a_content, p0, p1, samples[-1][0],
+                                           est, last_safes, (xmin, xmax))
+            if meas is not None:
+                self._update_stop_lead(meas, plan)
+            if self.audit:
+                try:
+                    self.audit.on_tap(aimg, (meas["measured"] if meas else None), plan, est,
+                                      last_safes, (xmin, xmax),
+                                      backcast_x=(meas["settle"] if meas else None))
+                except Exception as e:
+                    self.log.warning(self._t("[audit] 탭 기록 실패: {a}").format(a=e))
+            if self.is_done and aimg is not None and self.is_done(aimg):
+                # 주의: '종료'는 함정 발동으로 끝난 경우도 포함한다(실제 회피 여부는 종료 프레임으로 판별).
+                self.log.info(self._t("개봉 종료 감지."))
+                if self.audit: self.audit.on_result(self._t("종료"))
+                self._audit_end_frame(aimg)
+                return True
+
+            rest = cfg.settle_after_tap - (self.now() - p1)
+            if rest > 0:
+                time.sleep(rest)
             after = self.cap()
             if self.is_done and after is not None and self.is_done(after):
-                self.log.info(self._t("개봉 성공/종료 감지."))
-                if self.audit: self.audit.on_result(self._t("성공"))
+                self.log.info(self._t("개봉 종료 감지."))
+                if self.audit: self.audit.on_result(self._t("종료"))
+                self._audit_end_frame(after)
                 return True
             # 아직 진행 중이면 상태 리셋하고 계속 (함정이 여러 단계일 수 있음)
             samples.clear(); prev_x = None; v_est = 0.0
 
         return self._give_up("샘플 상한 초과")
+
+    def _measure_after_tap(self, aimg, a_content, p0, p1, t_meas, est, safes, rng):
+        """탭 직후 프레임에서 커서를 측정하고, 감속 모델(선형, stop_time)로
+        '주입 시점 위치'와 '정지 위치'를 추정. 반환 dict(measured, inject, settle, dir_tap, v) 또는 None."""
+        try:
+            if aimg is None or a_content is None:
+                self.log.debug(self._t("[측정] 탭 후 프레임 없음 → 보정 생략."))
+                return None
+            d = self.detect(aimg)
+            if not d:
+                self.log.debug(self._t("[측정] 탭 후 막대 미검출(화면 전환 중 추정) → 보정 생략."))
+                return None
+            # 자물쇠가 이미 넘어가 구간 배치가 달라졌다면 이 프레임은 비교 불가
+            if len(d["safes"]) != len(safes) or any(
+                    abs(na - oa) > 12 or abs(nb - ob) > 12
+                    for (na, nb), (oa, ob) in zip(d["safes"], safes)):
+                self.log.debug(self._t("[측정] 안전구간 배치 변화(다음 자물쇠 추정) → 보정 생략."))
+                return None
+            # 막대 범위 안의 폭 필터 통과 후보가 정확히 1개일 때만 채택.
+            # (범위 밖 흰 UI 거짓양성/다중 후보로 인한 오염 방지. 애매하면 측정 포기.)
+            bx0, bx1 = d["bar"]
+            cand = [x for (x, w) in d["cursors"]
+                    if self.cfg.cursor_w_min <= w <= self.cfg.cursor_w_max and bx0 <= x <= bx1]
+            if len(cand) != 1:
+                self.log.debug(self._t("[측정] 커서 후보 {a}개(1개 아님) → 보정 생략.").format(a=len(cand)))
+                return None
+            measured = int(cand[0])
+            v = est["speed"]
+            Ts = max(1e-3, self.cfg.stop_time)
+            tap_time = p0 + max(0.0, (p1 - p0) - self.cfg.press_inject_lead)
+            # est 방향은 마지막 샘플 시점 기준 → 주입 시점 방향을 전방 전파로 구한다
+            # (반사 홀수 회 개입 시 방향 반전. 감속 중에는 방향이 유지된다고 가정.)
+            _px, dir_tap = self._propagate(est["x"], v, est["dir"],
+                                           tap_time - t_meas, rng[0], rng[1])
+            # 주입 후 경과 t_rel 동안의 감속 이동거리(선형 감속: 속도 v → 0, 소요 Ts)
+            t_rel = max(0.0, a_content - tap_time)
+            tt = min(t_rel, Ts)
+            travel = v * (tt - tt * tt / (2.0 * Ts))     # 주입~프레임 이동거리(px)
+            total = v * Ts / 2.0                         # 주입~정지 총 이동거리(px)
+            # _propagate 로 fold 유지 이동: speed=거리, dt=±1s 로 '거리만큼' 전/후진
+            inject, _d1 = self._propagate(measured, travel, dir_tap, -1.0, rng[0], rng[1])
+            settle, _d2 = self._propagate(measured, max(0.0, total - travel), dir_tap, 1.0,
+                                          rng[0], rng[1])
+            return {"measured": measured, "inject": inject, "settle": settle,
+                    "dir_tap": dir_tap, "v": v}
+        except Exception as e:
+            self.log.warning(self._t("[audit] 탭 후 측정 실패: {a}").format(a=e))
+            return None
 
     # ===================== 보조 =====================
     def _pace(self, t0):
@@ -307,6 +515,49 @@ class SmartDisarm:
             rest = self.cfg.sample_interval - (self.now() - t0)
             if rest > 0:
                 time.sleep(rest)
+
+    def _press_latency(self):
+        """press 명령 발행~실제 탭 주입까지 예상 지연(s). 실측 EMA 우선, 없으면 초기값."""
+        base = _PRESS_LAT["ema"] if _PRESS_LAT["ema"] is not None else self.cfg.input_delay
+        return max(0.05, base - self.cfg.press_inject_lead)
+
+    def _stop_lead(self):
+        """정지 리드(s): 주입 후 정지까지 커서가 더 미끄러지는 시간거리 보상.
+        선형 감속 가정 시 stop_time/2. 세션 보정치(_STOP_LEAD)로 계통 잔차를 흡수한다."""
+        if self.cfg.stop_time <= 0:
+            return 0.0
+        return max(0.0, self.cfg.stop_time / 2.0 + _STOP_LEAD["adj"])
+
+    def _update_stop_lead(self, meas, plan):
+        """정지 위치 추정 - 목표중심 오프셋(진행방향 부호)을 EMA 로 되먹여 리드 자동 보정.
+        (+)면 목표를 지나 멈춤 = 탭이 늦음 → 리드 증가. press 지연 오차·프레임 시점
+        오차·감속 편차가 모두 이 한 관측치로 흡수된다."""
+        if self.cfg.stop_time <= 0:
+            return
+        err_px = (meas["settle"] - plan["center"]) * meas["dir_tap"]
+        if abs(err_px) > plan["half"] + 150:     # 반사/오검출 개연성이 큰 대편차는 제외
+            return
+        step = self.cfg.stop_lead_alpha * err_px / max(1.0, meas["v"])
+        step = max(-self.cfg.stop_adj_step_max, min(self.cfg.stop_adj_step_max, step))
+        adj = max(-self.cfg.stop_adj_total_max,
+                  min(self.cfg.stop_adj_total_max, _STOP_LEAD["adj"] + step))
+        _STOP_LEAD["adj"] = adj
+        self.log.debug(self._t("정지위치 오프셋 {a:+.0f}px → 리드 보정 {b:+.3f}s (누적 {c:+.3f}s)")
+                       .format(a=err_px, b=step, c=adj))
+
+    def _update_press_latency(self, dur):
+        note_press_duration(dur, self.cfg.press_ema_alpha)
+        if _PRESS_LAT["ema"] is not None:
+            self.log.debug(self._t("press 지연 실측 {a:.3f}s (EMA {b:.3f}s)")
+                           .format(a=dur, b=_PRESS_LAT["ema"]))
+
+    def _audit_end_frame(self, img):
+        """종료(결과/전환) 프레임을 audit 에 저장 - 실제 함정 발동 여부의 라벨링 근거."""
+        try:
+            if self.audit and hasattr(self.audit, "on_end_frame"):
+                self.audit.on_end_frame(img)
+        except Exception:
+            pass
 
     def _do_fallback(self, reason):
         self.log.info(self._t("폴백 실행({a}).").format(a=reason))
@@ -316,10 +567,10 @@ class SmartDisarm:
             return True
         return self._give_up(reason + self._t(" (폴백 미설정)"))
 
-    def _give_up(self, reason):
+    def _give_up(self, reason, allow_fallback=True):
         self.log.warning(self._t("스마트 개봉 중단: {a}").format(a=reason))
         if self.audit: self.audit.on_result(self._t("중단: ") + reason)
-        if self.cfg.bypass_fast_game and self.fallback:
+        if allow_fallback and self.cfg.bypass_fast_game and self.fallback:
             self.fallback()
         return False
 

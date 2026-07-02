@@ -18,7 +18,7 @@ from pathlib import Path
 import numpy as np
 import copy
 import struct
-from smart_disarm import SmartDisarm, DisarmConfig
+from smart_disarm import SmartDisarm, DisarmConfig, note_press_duration
 class TaskStoppedException(Exception):
     pass
 
@@ -117,6 +117,8 @@ class RuntimeContext:
     _IMPORTANTINFO = ""
     _RESUMEAVAILABLE = False
     _BYPASSAFTERRESTART = True
+    _CHEST_STUCK_RESTARTS = 0      # 상자 스턱 가드(300초/연속 실패)로 재시작한 연속 횟수
+    _SMARTDISARM_DEGRADED = False  # 스턱 반복 시 스마트 개봉을 구식 연타 방식으로 강등
     CURRENT_STRATEGY = {}
     NEED_RECOVER_WHEN_BEGINNING = True
     TASK_STEP_INDEX = 0
@@ -616,8 +618,9 @@ def Factory():
 
         while True:
             try:
-                serial = setting._ADBDEVICE.serial 
+                serial = setting._ADBDEVICE.serial
                 raw_data = None
+                cap_t0 = time.time()   # [cap-timing] 개발용 캡처시간 측정 (제거 시 이 마커 라인들 삭제)
 
                 # 1단계: 순수 소켓 통신을 이용한 고속 캡처 시도
                 try:
@@ -648,9 +651,11 @@ def Factory():
                 except Exception as se:
                     logger.warning(_("소켓 기반 고속 캡처 실패: {a}. subprocess 방식으로 복구 시도합니다.").format(a=str(se)))
                     raw_data = None
+                _sock_dt = time.time() - cap_t0   # [cap-timing]
 
                 # 2단계: 소켓 캡처 실패 시 기존 subprocess.run 방식으로 폴백
                 if raw_data is None:
+                    _sub_t0 = time.time()   # [cap-timing]
                     process_result = subprocess.run(
                         [GetADBPathFromEmuPath(setting.EMU_PATH), "-s", serial, "exec-out", "screencap"],
                         capture_output=True,
@@ -660,6 +665,9 @@ def Factory():
                         logger.error(_("截图命令报错: {a}").format(a=process_result.stderr.decode('utf-8', errors='ignore')))
                         raise RuntimeError(_("截图命令报错"))
                     raw_data = process_result.stdout
+                    logger.debug(f"[cap] subprocess {time.time()-_sub_t0:.3f}s (socket 실패 {_sock_dt:.3f}s)")   # [cap-timing]
+                else:
+                    logger.debug(f"[cap] socket {_sock_dt:.3f}s")   # [cap-timing]
                 
                 # 解析头部信息 (前12个字节)
                 if len(raw_data) < 12:
@@ -915,7 +923,10 @@ def Factory():
         return None
     def Press(pos):
         if pos!=None:
+            _pt0 = time.time()
             DeviceShell(f"input tap {pos[0]} {pos[1]}")
+            # 스마트 개봉의 press 지연 EMA 를 평시 탭으로 예열(첫 탭부터 보정 수렴)
+            note_press_duration(time.time() - _pt0)
             return True
         return False
     def PressReturn():
@@ -1901,11 +1912,22 @@ def Factory():
         availableChar = [0, 1, 2, 3, 4, 5]
         disarm = [515,934]  # 527,920会按到接受死亡 450 1000会按到技能 445,1050还是会按到技能
         haveBeenTried = False
+        smartFailStreak = 0            # 스마트 개봉 연속 실패 횟수 (스턱 감지용)
+        chestGuardTimer = time.time()  # 상자 처리 전체 시간 가드 (실측: 가드 부재로 약 8시간 연속 스턱 사례)
+
+        def _noteStuckRestart():
+            # 재시작 후 같은 상자에서 또 가드가 발동하는 순환(해체 불가 미니게임 변종 등)을
+            # 감지해, 2회부터는 이번 실행 동안 구식 연타 방식으로 강등한다.
+            runtimeContext._CHEST_STUCK_RESTARTS += 1
+            if (not runtimeContext._SMARTDISARM_DEGRADED) and runtimeContext._CHEST_STUCK_RESTARTS >= 2:
+                runtimeContext._SMARTDISARM_DEGRADED = True
+                logger.warning(_("상자 스턱 재시작이 {a}회 반복되어 스마트 개봉을 이번 실행 동안 구식 연타 방식으로 전환합니다.").format(a=runtimeContext._CHEST_STUCK_RESTARTS),
+                               extra={"summary": True})
 
         if runtimeContext._TIME_CHEST==0:
             runtimeContext._TIME_CHEST = time.time()
         
-        if setting.QUICK_DISARM_CHEST and not setting.SMART_DISARM_CHEST:
+        if setting.QUICK_DISARM_CHEST and ((not setting.SMART_DISARM_CHEST) or runtimeContext._SMARTDISARM_DEGRADED):
             if Press(CheckIf(ScreenShot(),"chestFlag")):
                 Sleep(1)
                 whowillopenit = setting.WHO_WILL_OPEN_IT - 1
@@ -1924,6 +1946,11 @@ def Factory():
                     Press(disarm)
 
         while 1:
+            if time.time() - chestGuardTimer > 300:
+                logger.warning(_("상자 처리 300초 초과, 스턱으로 판단해 게임을 재시작합니다."))
+                _noteStuckRestart()
+                restartGame()
+                return None
             FindCoordsOrElseExecuteFallbackAndWait(
                 ["dungFlag","combatActive","chestOpening","whowillopenit","RiseAgain", "ambush"],
                 [[1,1],[1,1],"chestFlag"],
@@ -1932,6 +1959,11 @@ def Factory():
 
             if CheckIf(scn,"whowillopenit"):
                 while 1:
+                    if not availableChar:
+                        logger.warning(_("개봉 가능한 캐릭터가 없습니다(전원 공포 등). 상자를 포기합니다."))
+                        PressReturn()
+                        Sleep(1)
+                        return None
                     pointSomeone = setting.WHO_WILL_OPEN_IT - 1
                     if (pointSomeone != -1) and (pointSomeone in availableChar) and (not haveBeenTried):
                         whowillopenit = pointSomeone # 如果指定了一个角色并且该角色可用并且没尝试过, 使用它
@@ -1945,7 +1977,7 @@ def Factory():
                     else:
                         Press(pos)
                         Sleep(1.5)
-                        if not setting.SMART_DISARM_CHEST:
+                        if (not setting.SMART_DISARM_CHEST) or runtimeContext._SMARTDISARM_DEGRADED:
                             for underscore in range(8):
                                 t = time.time()
                                 Press(disarm)
@@ -1957,7 +1989,7 @@ def Factory():
 
             if CheckIf(scn,"chestOpening"):
                 Sleep(1)
-                if setting.SMART_DISARM_CHEST:
+                if setting.SMART_DISARM_CHEST and not runtimeContext._SMARTDISARM_DEGRADED:
                     cfg = DisarmConfig()
                     cfg.bypass_fast_game = getattr(setting, "BYPASS_FAST_GAME", True)
                     cfg.fast_game_k = 1.3
@@ -1975,12 +2007,25 @@ def Factory():
                         auditor = make_auditor(logger, _=_)
                     except Exception:
                         auditor = None
-                    SmartDisarm(
+                    ok = SmartDisarm(
                         ScreenShot, Press, time.time, logger,
                         is_done_fn=lambda im: bool(CheckIf(im,"dungFlag")) or (not CheckIf(im,"chestOpening")),
                         fallback_fn=_disarm_fallback,
                         config=cfg, _=_, auditor=auditor,
                     ).run()
+                    if ok:
+                        smartFailStreak = 0
+                    else:
+                        smartFailStreak += 1
+                        # 결과/대화 오버레이가 상자 UI를 덮은 경우 스킵을 먼저 시도
+                        if Press(CheckIf(ScreenShot(), "dialogueNext")):
+                            logger.info(_("대화/결과창 감지, 클릭하여 스킵 시도."))
+                            Sleep(1)
+                        if smartFailStreak >= 3:
+                            logger.warning(_("스마트 개봉 연속 {a}회 실패, 스턱으로 판단해 게임을 재시작합니다.").format(a=smartFailStreak))
+                            _noteStuckRestart()
+                            restartGame()
+                            return None
                 else:
                     FindCoordsOrElseExecuteFallbackAndWait(
                         ["dungFlag","combatActive","chestFlag","RiseAgain"], # 如果这个fallback重启了, 战斗箱子会直接消失, 固有箱子会是chestFlag
@@ -1994,6 +2039,7 @@ def Factory():
             # 在图像识别的时候保持截图是最新的
             scn = ScreenShot()
             if CheckIf(scn,"dungFlag"):
+                runtimeContext._CHEST_STUCK_RESTARTS = 0   # 상자 정상 종료 → 스턱 연속 카운터 해제
                 return DungeonState.Dungeon
             if CheckIf(scn, "ambush"):
                 logger.info("开箱子然后遇到怪物还是善恶, 你这什么运气啊.")
@@ -2533,6 +2579,14 @@ def Factory():
                 shouldRecover = False
                 needRecoverBecauseCombat = False
                 needRecoverBecauseChest = False
+                def dl_restart():
+                    # darkLight 루프는 RestartableSequenceExecution 밖이라 RestartSignal 이
+                    # Farm 까지 전파되어 작업이 종료된다. 여기서 소화하면 루프 선두의
+                    # IdentifyState 가 다음 반복에서 상태를 재식별해 파밍이 이어진다.
+                    try:
+                        restartGame()
+                    except RestartSignal:
+                        pass
                 while 1:
                     underscore, dungState,underscore = IdentifyState()
                     logger.info(dungState)
@@ -2544,14 +2598,14 @@ def Factory():
                             gameFrozen_StateNoneScreenHistory, result = GameFrozenCheck(gameFrozen_StateNoneScreenHistory,scn)
                             if result:
                                 logger.info(_("由于画面卡死, 在state:None中重启."))
-                                restartGame()
+                                dl_restart()
                             MAXTIMEOUT = 400
                             if (runtimeContext._TIME_CHEST != 0 ) and (time.time()-runtimeContext._TIME_CHEST > MAXTIMEOUT):
                                 logger.info(_("由于宝箱用时过久, 在state:None中重启."))
-                                restartGame()
+                                dl_restart()
                             if (runtimeContext._TIME_COMBAT != 0) and (time.time()-runtimeContext._TIME_COMBAT > MAXTIMEOUT):
                                 logger.info(_("由于战斗用时过久, 在state:None中重启."))
-                                restartGame()
+                                dl_restart()
                         case DungeonState.Dungeon:
                             Press([1,1])
                             ########### TIMER
@@ -2623,7 +2677,12 @@ def Factory():
                             Press(FindCoordsOrElseExecuteFallbackAndWait("darklight_lightIt","darkLight",1))
                         case DungeonState.Chest:
                             needRecoverBecauseChest = True
-                            dungState = StateChest()
+                            try:
+                                dungState = StateChest()
+                            except RestartSignal:
+                                # StateChest 내부 스턱 가드가 게임을 재시작한 경우: 상태 재식별로 복귀
+                                logger.info(_("상자 처리 중 게임을 재시작했습니다. 상태를 재식별합니다."))
+                                dungState = None
                         case DungeonState.Combat:
                             needRecoverBecauseCombat =True
                             StateCombat()
@@ -3329,5 +3388,10 @@ def Factory():
                 setting._FINISHINGCALLBACK()
         except TaskStoppedException:
             logger.info(_("任务已停止."))
+            setting._FINISHINGCALLBACK()
+        except RestartSignal:
+            # 복구 래퍼(RestartableSequenceExecution 등) 밖으로 전파된 재시작 신호의 최후 방어선.
+            # 잡지 않으면 작업 스레드가 죽고 _FINISHINGCALLBACK 미호출로 GUI가 실행 중 상태로 고착된다.
+            logger.warning(_("게임 재시작 신호가 복구 범위 밖으로 전파되었습니다. 작업을 종료합니다."))
             setting._FINISHINGCALLBACK()
     return Farm

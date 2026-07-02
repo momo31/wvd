@@ -323,10 +323,17 @@ def BuildQuestReflection():
         raise FileNotFoundError(f"{e}")
 ###########################################
 IMAGE_FOLDER = fr'resources/images/'
+_TEMPLATE_CACHE = {}
 def LoadTemplateImage(shortPathOfTarget):
-    logger.debug(f"加载{shortPathOfTarget}")
-    pathOfTarget = ResourcePath(os.path.join(IMAGE_FOLDER + f"{shortPathOfTarget}.png"))
-    return LoadImage(pathOfTarget)
+    # 매 호출마다 디스크에서 PNG 를 다시 읽던 것을 캐싱. 호출부는 모두 matchTemplate
+    # 입력(읽기 전용)으로만 사용하므로 안전하며, CheckIf 가 도는 모든 루프가 빨라진다.
+    img = _TEMPLATE_CACHE.get(shortPathOfTarget)
+    if img is None:
+        logger.debug(f"加载{shortPathOfTarget}")
+        pathOfTarget = ResourcePath(os.path.join(IMAGE_FOLDER + f"{shortPathOfTarget}.png"))
+        img = LoadImage(pathOfTarget)
+        _TEMPLATE_CACHE[shortPathOfTarget] = img
+    return img
 def reflectImage(folder):
     # 构建dialogueChoices文件夹的模式匹配路径
     pattern = os.path.join(IMAGE_FOLDER, folder, '*.png')
