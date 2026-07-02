@@ -1328,13 +1328,15 @@ def Factory():
                 logger.info(_("检测到恢复/状态画面，正在尝试返回以关闭。"))
                 PressReturn()
                 Sleep(1.5)
+                counter += 1
                 continue
 
-            if pos := CheckIf(screen, "dialogueNext"):
-                logger.info(_("대화/결과창 감지, 클릭하여 스킵 시도."))
-                Press(pos)
-                Sleep(1.0)
-                continue
+            # [개선] 본인 사망 및 복구 상태 매 루프마다 조기 감지 및 즉시 복구
+            if Press(CheckIf(screen, "RiseAgain")):
+                RiseAgainReset(reason="combat")
+                return IdentifyState()
+            if Press(CheckIf(screen, "sandman_recover")):
+                return IdentifyState()
 
             identifyConfig = [
                 ("dungFlag",      DungeonState.Dungeon),
@@ -1348,6 +1350,14 @@ def Factory():
                 
             if StateCombatCheck(screen):
                 return State.Dungeon, DungeonState.Combat, screen
+
+            # 핵심 상태가 모두 아닐 때만 대화/결과창 스킵 진행 (상자 열기 가로채기 방지)
+            if pos := CheckIf(screen, "dialogueNext", [[750, 1400, 150, 200]]):
+                logger.info(_("대화/결과창 감지, 클릭하여 스킵 시도."))
+                Press(pos)
+                Sleep(1.0)
+                counter += 1
+                continue
 
             screen = ScreenShot()
 
@@ -1427,11 +1437,6 @@ def Factory():
                         anomaly_saved = True
                     except Exception as e:
                         logger.error(f"Failed to save anomaly screenshot: {e}")
-                if Press(CheckIf(screen,"RiseAgain")):
-                    RiseAgainReset(reason = "combat")
-                    return IdentifyState()
-                if Press(CheckIf(screen, "sandman_recover")):
-                    return IdentifyState()
                 if (CheckIf(screen,"cursedWheel_timeLeap")):
                     if (setting.ACTIVE_BEG_MONEY):
                         setting._MSGQUEUE.put(("turn_to_7000G",""))
