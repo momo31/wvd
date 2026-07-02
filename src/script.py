@@ -1319,6 +1319,12 @@ def Factory():
                 Sleep(1.5)
                 continue
 
+            if pos := CheckIf(screen, "dialogueNext"):
+                logger.info(_("대화/결과창 감지, 클릭하여 스킵 시도."))
+                Press(pos)
+                Sleep(1.0)
+                continue
+
             identifyConfig = [
                 ("dungFlag",      DungeonState.Dungeon),
                 ("chestFlag",     DungeonState.Chest),
