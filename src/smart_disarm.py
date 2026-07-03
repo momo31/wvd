@@ -45,7 +45,8 @@ class DisarmConfig:
     """운영 튜닝 파라미터 (실데이터 확보 후 조정). 인스턴스로 복제해 덮어쓰기 가능."""
     # --- 타이밍 ---
     sample_interval = 0.0      # 샘플 간 추가 대기(s). 0=캡처 속도대로(권장, Δt=캡처비용)
-    input_delay = 0.35         # press(adb input tap) 소요 초기 추정(s). 첫 탭 이후 실측 EMA 로 대체.
+    input_delay = 0.10         # press(adb input tap) 소요 초기 추정(s). 첫 탭 이후 실측 EMA 로 대체.
+                               # (기존 0.35는 실측 p1-p0 중간값 0.029s 대비 0.32s 과대 → 계통 지연 유발)
     press_inject_lead = 0.05   # input 명령 완료 직전에 실제 탭이 주입된다고 보는 리드(s)
     press_ema_alpha = 0.35     # press 소요 실측 EMA 계수
     capture_grab_frac = 0.6    # 캡처 시간창에서 프레임 취득 시점 추정 비율(0=시작, 1=종료)
@@ -56,7 +57,7 @@ class DisarmConfig:
                                # 다음 교차가 항상 창에 들어오도록 1.5→2.6 상향.
     # --- 감속-정지 (판정은 '정지 위치' 기준: 사용자 확인) ---
     stop_time = 1.0            # 탭 주입~정지까지 시간 추정(s). 유저 실측에 의해 정확히 1.0초로 반영.
-    stop_lead_alpha = 0.30     # 정지위치 오프셋 EMA 로 리드를 자동 보정하는 계수
+    stop_lead_alpha = 0.20     # 정지위치 오프셋 EMA 로 리드를 자동 보정하는 계수 (기존 0.30 → 극단값 민감도 감소)
     stop_adj_step_max = 0.08   # 1회 보정 한도(s)
     stop_adj_total_max = 0.35  # 누적 보정 한도(s, 초기 리드 대비 ±)
     # --- margin ---
@@ -73,13 +74,17 @@ class DisarmConfig:
     straightness_tol = 12.0    # 등속 3점 직선성 검증 허용 잔차(px). 초과 시 폐기.
     est_verify_tol = 80.0      # 4번째 샘플 fold 역예측 검증 허용 잔차(px). 초과 시 추정 폐기.
     # --- 안전/폴백 ---
-    max_total_samples = 40     # 전체 캡처 상한(무한루프 방지)
+    max_total_samples = 40     # 전체 캡처 상한(무한루프 방지). 탭 경험 시 동적 확장(아래 tap_extend 참조).
+    max_total_samples_extended = 60  # 탭 실행 경험이 있는 세션에서의 확장 상한 (다중 자물쇠 대응)
     max_consecutive_miss = 6   # (막대를 한 번이라도 본 뒤) 연속 검출 실패 허용
     nobar_max_miss = 2         # 막대를 한 번도 못 본 상태의 미검출 허용. 초과 시 비게임 화면으로 보고 즉시 반환.
     bypass_fast_game = False   # [옵션] 빠른(어려운) 게임은 폴백으로 우회 (사용자 선택)
     fast_game_k = 2.5          # 반주기 < fast_game_k*Δt 이면 '빠른 게임'으로 판정
+    fast_game_min_half = 0.8   # 빠른 게임 판정 절대값 하한(s). 반주기가 이 값 이상이면 빠른 게임 아님.
     fast_game_fail_limit = 3   # 빠른게임 판정/실패가 이만큼 누적되면 폴백 트리거
     settle_after_tap = 1.0     # 탭 후 결과 안정 대기(s)
+    settle_extra_checks = 2    # settle_after_tap 후 종료 미감지 시 추가 종료 체크 횟수
+    settle_extra_interval = 0.5  # 추가 종료 체크 간격(s)
     # 입력 좌표: 게임은 막대가 아니라 고정 'Disarm' 버튼을 누른다(기존 script.py disarm=[515,934]).
     # 커서 x는 '언제 누를지' 타이밍 판단용일 뿐, 실제 탭은 이 버튼. 통합 시 오버라이드.
     disarm_button = (515, 934)
@@ -289,6 +294,7 @@ class SmartDisarm:
         last_dt = cfg.sample_interval or cfg.capture_dt_prior
         shots = 0
         miss = 0
+        tapped = False         # 이번 세션에서 탭을 한 번이라도 실행했는가 (동적 상한 확장용)
         fast_hits = 0
         bar_seen = False      # 이번 실행에서 막대/안전구간을 한 번이라도 검출했는가
         last_safes = None
@@ -301,7 +307,8 @@ class SmartDisarm:
                                d=cfg.capture_grab_frac, e=cfg.stop_time))
         if self.audit: self.audit.on_start()
 
-        while shots < cfg.max_total_samples:
+        sample_limit = cfg.max_total_samples
+        while shots < sample_limit:
             t0 = self.now()
             img = self.cap()
             t1 = self.now()
@@ -379,7 +386,8 @@ class SmartDisarm:
 
             # aliasing / 빠른 게임 판정
             half_period = (xmax - xmin) / est["speed"]
-            if half_period < cfg.fast_game_k * last_dt:
+            # 절대값 하한(fast_game_min_half) 도입: 반주기가 충분히 길면 Δt에 의한 오판 방지
+            if half_period < cfg.fast_game_min_half and half_period < cfg.fast_game_k * last_dt:
                 fast_hits += 1
                 self.log.debug(self._t("빠른 게임 의심(반주기 {a:.2f}s, Δt {b:.2f}s)")
                                .format(a=half_period, b=last_dt))
@@ -415,6 +423,9 @@ class SmartDisarm:
             self.press(list(self.cfg.disarm_button))   # 타이밍 맞춰 고정 Disarm 버튼 탭
             p1 = self.now()
             self._update_press_latency(p1 - p0)
+            tapped = True
+            # 탭 경험 발생 시 캡처 상한을 확장 (다중 자물쇠/재시도 여유)
+            sample_limit = max(sample_limit, cfg.max_total_samples_extended)
             self.log.info(self._t("개봉 탭: 목표구간중심x={a:.0f} margin={b:.0f} pw={c:.3f}s 속도={d:.0f}px/s press={e:.3f}s 리드={f:.3f}s")
                           .format(a=plan["center"], b=plan["margin"], c=press_wait, d=est["speed"],
                                   e=p1 - p0, f=self._stop_lead()))
@@ -454,6 +465,15 @@ class SmartDisarm:
                 if self.audit: self.audit.on_result(self._t("종료"))
                 self._audit_end_frame(after)
                 return True
+            # 추가 종료 재시도: 전환 애니메이션이 settle_after_tap을 초과하는 경우 대비
+            for _retry in range(cfg.settle_extra_checks):
+                time.sleep(cfg.settle_extra_interval)
+                extra = self.cap()
+                if self.is_done and extra is not None and self.is_done(extra):
+                    self.log.info(self._t("개봉 종료 감지(추가 체크 {a}회차).").format(a=_retry + 1))
+                    if self.audit: self.audit.on_result(self._t("종료(추가체크)"))
+                    self._audit_end_frame(extra)
+                    return True
             # 아직 진행 중이면 상태 리셋하고 계속 (함정이 여러 단계일 수 있음)
             samples.clear(); prev_x = None; v_est = 0.0
 
@@ -516,9 +536,10 @@ class SmartDisarm:
 
     def _press_latency(self):
         """press 명령 발행~실제 탭 주입까지 예상 지연(s). 실측 EMA 우선, 없으면 초기값."""
-        # 하드웨어 입력 지연 고정 적용 (오염 방지)
+        if _PRESS_LAT["ema"] is not None:
+            return max(0.01, _PRESS_LAT["ema"] - self.cfg.press_inject_lead)
         base = self.cfg.input_delay
-        return max(0.05, base - self.cfg.press_inject_lead)
+        return max(0.01, base - self.cfg.press_inject_lead)
 
     def _stop_lead(self):
         """정지 리드(s): 주입 후 정지까지 커서가 더 미끄러지는 시간거리 보상.
@@ -534,7 +555,7 @@ class SmartDisarm:
         if self.cfg.stop_time <= 0:
             return
         err_px = (meas["settle"] - plan["center"]) * meas["dir_tap"]
-        if abs(err_px) > plan["half"] + 150:     # 반사/오검출 개연성이 큰 대편차는 제외
+        if abs(err_px) > plan["half"] + 80:      # 반사/오검출 개연성이 큰 대편차는 제외 (기존 150→80 강화)
             return
         step = self.cfg.stop_lead_alpha * err_px / max(1.0, meas["v"])
         step = max(-self.cfg.stop_adj_step_max, min(self.cfg.stop_adj_step_max, step))
@@ -545,7 +566,12 @@ class SmartDisarm:
                        .format(a=err_px, b=step, c=adj))
 
     def _update_press_latency(self, dur):
-        note_press_duration(dur, self.cfg.press_ema_alpha)
+        # SmartDisarm 내부 실측만으로 EMA 갱신 (외부 note_press_duration은 오염 방지로 비활성)
+        alpha = self.cfg.press_ema_alpha
+        if _PRESS_LAT["ema"] is None:
+            _PRESS_LAT["ema"] = dur
+        else:
+            _PRESS_LAT["ema"] = alpha * dur + (1 - alpha) * _PRESS_LAT["ema"]
         if _PRESS_LAT["ema"] is not None:
             self.log.debug(self._t("press 지연 실측 {a:.3f}s (EMA {b:.3f}s)")
                            .format(a=dur, b=_PRESS_LAT["ema"]))

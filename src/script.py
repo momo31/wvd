@@ -2014,7 +2014,7 @@ def Factory():
                         auditor = None
                     ok = SmartDisarm(
                         ScreenShot, Press, time.time, logger,
-                        is_done_fn=lambda im: bool(CheckIf(im,"dungFlag")) or (not CheckIf(im,"chestOpening")),
+                        is_done_fn=lambda im: bool(CheckIf(im,"dungFlag")) or bool(CheckIf(im,"dialogueNext")) or (not CheckIf(im,"chestOpening")),
                         fallback_fn=_disarm_fallback,
                         config=cfg, _=_, auditor=auditor,
                     ).run()
