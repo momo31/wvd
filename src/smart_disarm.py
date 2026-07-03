@@ -370,7 +370,7 @@ class SmartDisarm:
                 last_dt = max(1e-3, t - samples[-2][0]) if len(samples) >= 2 else last_dt
             prev_x = cx
 
-            if len(samples) < 3:
+            if len(samples) < 4:
                 self._pace(t0)
                 continue
 
