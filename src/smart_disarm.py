@@ -90,23 +90,13 @@ class DisarmConfig:
     disarm_button = (515, 934)
 
 
-import utils
-
 # press(adb input tap) 소요 실측 EMA. 세션(프로세스) 단위로 유지되어
 # 상자마다 새 SmartDisarm 인스턴스를 만들어도 보정값이 승계된다.
-try:
-    val = utils.GetOneVarInGeneralConfig('SMART_DISARM_PRESS_LAT_EMA', None)
-    _PRESS_LAT = {"ema": val}
-except Exception:
-    _PRESS_LAT = {"ema": None}
+_PRESS_LAT = {"ema": None}
 
 # 정지 리드(stop_time/2)에 대한 세션 보정치(s). 탭 직후 프레임에서 역산한
 # '정지 위치 - 목표중심' 오프셋을 되먹여 계통 잔차를 자동 흡수한다.
-try:
-    val = utils.GetOneVarInGeneralConfig('SMART_DISARM_STOP_LEAD_ADJ', 0.0)
-    _STOP_LEAD = {"adj": val if val is not None else 0.0}
-except Exception:
-    _STOP_LEAD = {"adj": 0.0}
+_STOP_LEAD = {"adj": 0.0}
 
 
 def note_press_duration(dur, alpha=0.35):
@@ -572,10 +562,7 @@ class SmartDisarm:
         adj = max(-self.cfg.stop_adj_total_max,
                   min(self.cfg.stop_adj_total_max, _STOP_LEAD["adj"] + step))
         _STOP_LEAD["adj"] = adj
-        try:
-            utils.SetOneVarInGeneralConfig('SMART_DISARM_STOP_LEAD_ADJ', adj)
-        except Exception:
-            pass
+
         self.log.debug(self._t("정지위치 오프셋 {a:+.0f}px → 리드 보정 {b:+.3f}s (누적 {c:+.3f}s)")
                        .format(a=err_px, b=step, c=adj))
 
@@ -586,10 +573,7 @@ class SmartDisarm:
             _PRESS_LAT["ema"] = dur
         else:
             _PRESS_LAT["ema"] = alpha * dur + (1 - alpha) * _PRESS_LAT["ema"]
-        try:
-            utils.SetOneVarInGeneralConfig('SMART_DISARM_PRESS_LAT_EMA', _PRESS_LAT["ema"])
-        except Exception:
-            pass
+
         if _PRESS_LAT["ema"] is not None:
             self.log.debug(self._t("press 지연 실측 {a:.3f}s (EMA {b:.3f}s)")
                            .format(a=dur, b=_PRESS_LAT["ema"]))

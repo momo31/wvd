@@ -611,12 +611,9 @@ def Factory():
                 logger.error(_("非预期的ADB异常({a}): {b}").format(a=type(e).__name__, b=e))
                 raise
     
-    _LANDSCAPE_DETECT_COUNT = 0
-
     def Sleep(t=1):
         time.sleep(t)
     def ScreenShot():
-        global _LANDSCAPE_DETECT_COUNT
         t = time.time()
 
         while True:
@@ -701,20 +698,14 @@ def Factory():
                
                 if (current_h, current_w) != (1600, 900):
                     if (current_h, current_w) == (900, 1600):
-                        _LANDSCAPE_DETECT_COUNT += 1
-                        logger.warning(_("일시적인 가로 화면 감지 ({a}회): 현재{b}. 세로 모드 복구 대기...").format(a=_LANDSCAPE_DETECT_COUNT, b=image.shape))
-                        if _LANDSCAPE_DETECT_COUNT >= 10:
-                            _LANDSCAPE_DETECT_COUNT = 0
-                            logger.error(_("지속적인 가로 화면 상태로 인해 게임을 재시작합니다."))
-                            restartGame(skip_screenshot=True)
-                        else:
-                            time.sleep(3.0)
-                            continue
+                        logger.error(_("截图尺寸错误: 当前{a}, 检测为横屏.").format(a=image.shape))  
+                        # 不能截图, 截图就爆栈了.
+                        restartGame(skip_screenshot=True)
                     else:
                         logger.error(_("截图尺寸错误: 期望(1600,900), 实际({a},{b}).").format(a=current_h,b=current_w))
                         raise RuntimeError(_("分辨率异常: {a}x{b}").format(a=current_w, b=current_h))
 
-                _LANDSCAPE_DETECT_COUNT = 0
+
                 # logger.info(f"{time.time()-t}")
 
                 return image
@@ -1967,15 +1958,11 @@ def Factory():
                 restartGame()
                 return None
             FindCoordsOrElseExecuteFallbackAndWait(
-                ["dungFlag","combatActive","chestOpening","whowillopenit","RiseAgain", "ambush", "dialogueNext"],
+                ["dungFlag","combatActive","chestOpening","whowillopenit","RiseAgain", "ambush"],
                 [[1,1],[1,1],"chestFlag"],
                 1)
             scn = ScreenShot()
 
-            if pos := CheckIf(scn, "dialogueNext", [[600, 1300, 300, 300]]):
-                Press(pos)
-                Sleep(0.2)
-                continue
 
             if CheckIf(scn,"whowillopenit"):
                 while 1:
@@ -2035,23 +2022,7 @@ def Factory():
                     ).run()
                     if ok:
                         smartFailStreak = 0
-                        # 1단계: 5개 이상의 보상창을 대비해 0.05초 간격으로 무조건 8회 고속 선제 연타
-                        logger.info(_("상자 개봉 성공. 보상 수령 초고속 연타 시작."))
-                        for _loot_tap in range(8):
-                            Press([1, 1])
-                            Sleep(0.05)
-                        
-                        # 2단계: 잔여 결과창 및 대화 스킵 감시 루프
-                        for _skip_loop in range(15):
-                            scn = ScreenShot()
-                            if CheckIf(scn, "dungFlag") or StateCombatCheck(scn) or CheckIf(scn, "RiseAgain"):
-                                break
-                            if pos := CheckIf(scn, "dialogueNext", [[600, 1300, 300, 300]]):
-                                Press(pos)
-                                Sleep(0.1)
-                            else:
-                                Press([1, 1])
-                                Sleep(0.1)
+
                     else:
                         smartFailStreak += 1
                         # 결과/대화 오버레이가 상자 UI를 덮은 경우 스킵을 먼저 시도
