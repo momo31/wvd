@@ -1740,7 +1740,7 @@ def Factory():
         elif skill_settings == []:
             logger.info(_("当前战斗技能列表内容为空, 因此使用全自动战斗."))
             aac = True
-        elif setting.RELOAD_STRATEGY_WHEN == _("不需要(自动)") and runtimeContext.COMBAT_COUNT_SINCE_RELOAD > 0:
+        elif setting.RELOAD_STRATEGY_WHEN in [_("不需要(自动)"), _("每次副本开始(自动)")] and runtimeContext.COMBAT_COUNT_SINCE_RELOAD > 0:
             logger.info(_("已执行过首次战斗，已切换至自动战斗。"))
             aac = True
         
@@ -1749,7 +1749,7 @@ def Factory():
             return
 
         # 2.5 신규 옵션인 "게임 시작 및 캐릭터 사망시(자동전투)"가 활성화되어 있고 전략 스킬이 아직 남아있다면, 수동 스킬 시전을 위해 자동전투를 끕니다.
-        if setting.RELOAD_STRATEGY_WHEN == _("不需要(自动)") and skill_settings != []:
+        if setting.RELOAD_STRATEGY_WHEN in [_("不需要(自动)"), _("每次副本开始(自动)")] and skill_settings != []:
             logger.info(_("检测到首次战斗。将尝试手动施放技能。"))
             scn = ScreenShot()
             # CombatAutoDisable이 감지되지 않으면 자동전투가 켜져 있는 상태입니다.
@@ -2109,7 +2109,7 @@ def Factory():
         
         runtimeContext.NEED_RECOVER_WHEN_BEGINNING = True
 
-        if setting.RELOAD_STRATEGY_WHEN in [_("每次副本开始")]:
+        if setting.RELOAD_STRATEGY_WHEN in [_("每次副本开始"), _("每次副本开始(自动)")]:
             ReloadStrategy()
         
         ##############################################
