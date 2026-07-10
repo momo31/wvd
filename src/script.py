@@ -507,7 +507,7 @@ def CheckAndRecoverDevice(setting : FarmConfig, runtimeContext: RuntimeContext, 
                 return device
     except Exception as e:
         logger.error(_("创建ADB设备时出错: {a}").format(a=e))
-    
+
     return None
 ##################################################################
 def CutRoI(screenshot, roi):
@@ -565,6 +565,9 @@ def Factory():
             logger.info(_("ADB服务成功启动，设备已连接."))
     def DeviceShell(cmdStr):
         while True:
+            if setting._FORCESTOPING.is_set():
+                logger.info(_("DeviceShell 중단 요청으로 인한 강제 종료..."))
+                raise TaskStoppedException()
             logger.debug(_("DeviceShell {a}").format(a=cmdStr))
             exception = None
             result = None
@@ -598,25 +601,36 @@ def Factory():
                 logger.info(_("ADB操作失败, 尝试重启ADB或模拟器程序..."))
                 ResetDevice()
                 time.sleep(1)
-
+                if setting._FORCESTOPING.is_set():
+                    logger.info(_("DeviceShell 중단 요청으로 인한 강제 종료..."))
+                    raise TaskStoppedException()
                 continue
             except TimeoutError as e:
                 logger.info(_("ADB超时, 尝试重启ADB或模拟器程序..."))             
                 ResetDevice(force_restart_adb=True)
                 time.sleep(1)
-
+                if setting._FORCESTOPING.is_set():
+                    logger.info(_("DeviceShell 중단 요청으로 인한 강제 종료..."))
+                    raise TaskStoppedException()
                 continue
             except Exception as e:
                 # 非预期异常直接抛出
                 logger.error(_("非预期的ADB异常({a}): {b}").format(a=type(e).__name__, b=e))
                 raise
     
+    consecutive_failures = 0
+    MAX_SCREENSHOT_RETRIES = 5
+
     def Sleep(t=1):
         time.sleep(t)
     def ScreenShot():
+        nonlocal consecutive_failures
         t = time.time()
 
         while True:
+            if setting._FORCESTOPING.is_set():
+                logger.info(_("스크린샷 중단 요청으로 인한 강제 종료..."))
+                raise TaskStoppedException()
             try:
                 serial = setting._ADBDEVICE.serial
                 raw_data = None
@@ -708,18 +722,37 @@ def Factory():
 
                 # logger.info(f"{time.time()-t}")
 
+                consecutive_failures = 0
                 return image
 
             except subprocess.TimeoutExpired:
-                logger.warning(_("截图超时 (Subprocess)"))
-                logger.info(_("ADB操作失败, 尝试重启ADB or 模拟器程序..."))
-                ResetDevice(force_restart_adb=True)
+                consecutive_failures += 1
+                logger.warning(_("스크린샷超时 (Subprocess) [연속 실패: {a}/{b}]").format(a=consecutive_failures, b=MAX_SCREENSHOT_RETRIES))
+                if setting._FORCESTOPING.is_set():
+                    logger.info(_("스크린샷 중단 요청으로 인한 강제 종료..."))
+                    raise TaskStoppedException()
+                if consecutive_failures >= MAX_SCREENSHOT_RETRIES:
+                    logger.warning(_("스크린샷 연속 실패 {a}회 도달. 에뮬레이터를 강제 재시작합니다.").format(a=MAX_SCREENSHOT_RETRIES))
+                    consecutive_failures = 0
+                    ResetDevice(force_restart_emu=True)
+                else:
+                    logger.info(_("ADB操作失败, 尝试重启ADB or 模拟器程序..."))
+                    ResetDevice(force_restart_adb=True)
                 
             except Exception as e:
                 logger.debug(_("截图发生异常: {a}").format(a=e))
+                if setting._FORCESTOPING.is_set():
+                    logger.info(_("스크린샷 중단 요청으로 인한 강제 종료..."))
+                    raise TaskStoppedException()
                 if isinstance(e, (AttributeError, RuntimeError, ConnectionResetError, cv2.error, socket.error)):
-                    logger.info(_("ADB操作失败/数据错误, 尝试重启ADB or 模拟器程序..."))
-                    ResetDevice()
+                    consecutive_failures += 1
+                    logger.info(_("ADB操作失败/数据错误, 尝试重启ADB or 模拟器程序... [연속 실패: {a}/{b}]").format(a=consecutive_failures, b=MAX_SCREENSHOT_RETRIES))
+                    if consecutive_failures >= MAX_SCREENSHOT_RETRIES:
+                        logger.warning(_("스크린샷 연속 실패 {a}회 도달. 에뮬레이터를 강제 재시작합니다.").format(a=MAX_SCREENSHOT_RETRIES))
+                        consecutive_failures = 0
+                        ResetDevice(force_restart_emu=True)
+                    else:
+                        ResetDevice()
                 time.sleep(1)
     def _check(screenImage, template, roi = None, outputMatchResult = False):
         if screenImage is None or template is None:
