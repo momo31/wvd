@@ -48,7 +48,15 @@ for /f %%i in ('powershell -Command "Get-Date -Format 'yyyyMMddHHmm'"') do set t
 
 :: 打包并添加时间戳到文件名
 :: pyinstaller --onefile --noconsole --add-data "resources;resources/" src/main.py -n wvd
-pyinstaller --onedir --add-data "resources;resources/" src/main.py -n wvd
+echo Compiling translations...
+pybabel compile -d locale
+if errorlevel 1 (
+    echo Failed to compile translations.
+    pause
+    exit /b 1
+)
+pyinstaller --onedir --noconfirm --add-data "resources;resources/" --add-data "locale;locale/" src/main.py -n wvd
+
 
 if errorlevel 1 (
     echo Failed to run pyinstaller.
