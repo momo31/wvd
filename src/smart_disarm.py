@@ -67,7 +67,7 @@ class DisarmConfig:
     # --- 커서 검출 필터 (거짓양성 방어) ---
     cursor_w_min = 6
     cursor_w_max = 22
-    white_thr = 185            # 흰 커서 min(R,G,B) 임계 (실측: 150~215에서 둔감)
+    white_thr = 165            # 흰 커서 min(R,G,B) 임계 (실측: 150~215에서 둔감)
     continuity_pad = 60.0      # 직전 위치 연속성 허용 = v*Δt + 이 여유(px)
     # --- 추정 견고화 ---
     eps = 2.0                  # 방향/데드존 임계(px). 노이즈로 인한 거짓반전 차단.
@@ -82,9 +82,9 @@ class DisarmConfig:
     fast_game_k = 2.5          # 반주기 < fast_game_k*Δt 이면 '빠른 게임'으로 판정
     fast_game_min_half = 0.8   # 빠른 게임 판정 절대값 하한(s). 반주기가 이 값 이상이면 빠른 게임 아님.
     fast_game_fail_limit = 3   # 빠른게임 판정/실패가 이만큼 누적되면 폴백 트리거
-    settle_after_tap = 1.0     # 탭 후 결과 안정 대기(s)
+    settle_after_tap = 0.5     # 탭 후 결과 안정 대기(s)
     settle_extra_checks = 2    # settle_after_tap 후 종료 미감지 시 추가 종료 체크 횟수
-    settle_extra_interval = 0.5  # 추가 종료 체크 간격(s)
+    settle_extra_interval = 0.2  # 추가 종료 체크 간격(s)
     # 입력 좌표: 게임은 막대가 아니라 고정 'Disarm' 버튼을 누른다(기존 script.py disarm=[515,934]).
     # 커서 x는 '언제 누를지' 타이밍 판단용일 뿐, 실제 탭은 이 버튼. 통합 시 오버라이드.
     disarm_button = (515, 934)
@@ -161,7 +161,7 @@ class SmartDisarm:
         wc = white.sum(axis=0)
         yc = yellow.sum(axis=0)
 
-        cursors = self._clusters(np.where(wc > barh * 0.45)[0], gap=12, as_center=True)
+        cursors = self._clusters(np.where(wc > barh * 0.30)[0], gap=12, as_center=True)
         safes_raw = self._clusters(np.where(yc > barh * 0.40)[0], gap=20, as_center=False)
         safes = [(a, b2) for (a, b2) in safes_raw if (b2 - a) >= 25]  # 너무 좁은 노이즈 제외
         return {"bar": (bar_x0, bar_x1), "y": (y0, y1), "cursors": cursors, "safes": safes}
@@ -377,6 +377,9 @@ class SmartDisarm:
             est = self.estimate(samples, xmin, xmax)
             if est is not None and len(samples) >= 4 and not self._est_consistent(est, samples, xmin, xmax):
                 self.log.debug(self._t("추정 검증 실패(4점 fold 잔차 초과). 재측정."))
+                samples.clear()  # 지연으로 오염된 이전 샘플들을 완전 폐기
+                prev_x = None    # 이전 x 좌표 초기화
+                v_est = 0.0      # 속도 추정값 초기화
                 est = None
             if est is None:
                 self._pace(t0)

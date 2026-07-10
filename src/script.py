@@ -2055,7 +2055,16 @@ def Factory():
                     ).run()
                     if ok:
                         smartFailStreak = 0
-
+                        # 전리품/결과 화면 고속 스킵 파이프라인
+                        for skip_idx in range(5):
+                            Sleep(0.2)
+                            scn = ScreenShot()
+                            next_btn = CheckIf(scn, "dialogueNext")
+                            if next_btn:
+                                Press(next_btn)
+                                logger.info(_("[스마트 개봉] 전리품 결과 화면 즉시 스킵"))
+                            elif CheckIf(scn, "dungFlag") or CheckIf(scn, "ambush") or StateCombatCheck(scn):
+                                break
                     else:
                         smartFailStreak += 1
                         # 결과/대화 오버레이가 상자 UI를 덮은 경우 스킵을 먼저 시도
