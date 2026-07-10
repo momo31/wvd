@@ -24,6 +24,9 @@ class SmartDisarmAuditor:
     def __init__(self, logger, out_dir="audit/smart_disarm",
                  capture=True, sample_log=True, _=None):
         self.log = logger
+        if not os.path.isabs(out_dir):
+            project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            out_dir = os.path.join(project_root, out_dir)
         self.out_dir = out_dir
         self.capture = capture
         self.sample_log = sample_log
