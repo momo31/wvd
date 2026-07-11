@@ -620,13 +620,11 @@ def Factory():
     
     consecutive_failures = 0
     MAX_SCREENSHOT_RETRIES = 5
-    _LAST_CAP_HASH = {"hash": None, "count": 0}
 
     def Sleep(t=1):
         time.sleep(t)
     def ScreenShot():
         nonlocal consecutive_failures
-        nonlocal _LAST_CAP_HASH
         t = time.time()
 
         while True:
@@ -708,23 +706,6 @@ def Factory():
                 image = np.frombuffer(pixels_data, dtype=np.uint8)
                 image = image.reshape((h, w, 4))
                 image = cv2.cvtColor(image, cv2.COLOR_RGBA2BGR)
-
-                # 동일 캡처 버퍼 감지 및 자동 복구
-                import hashlib
-                cap_hash = hashlib.md5(pixels_data).hexdigest()
-                if _LAST_CAP_HASH["hash"] == cap_hash:
-                    _LAST_CAP_HASH["count"] += 1
-                    logger.debug(f"[ScreenShot] 동일 캡처 버퍼 감지 누적: {_LAST_CAP_HASH['count']}회")
-                    if _LAST_CAP_HASH["count"] == 5:
-                        logger.warning(_("동일한 캡처 버퍼가 연속 5회 감지되어 ADB를 재시작합니다."))
-                        ResetDevice(force_restart_adb=True)
-                    elif _LAST_CAP_HASH["count"] >= 10:
-                        logger.warning(_("동일한 캡처 버퍼가 연속 10회 감지되어 에뮬레이터를 강제 재시작합니다."))
-                        _LAST_CAP_HASH["count"] = 0
-                        ResetDevice(force_restart_emu=True)
-                else:
-                    _LAST_CAP_HASH["hash"] = cap_hash
-                    _LAST_CAP_HASH["count"] = 0
 
                 # 注意：现在的 image.shape 已经是 (h, w, 3)
                 current_h, current_w = image.shape[:2]
@@ -1362,17 +1343,9 @@ def Factory():
         nonlocal setting # 修改因果
         counter = 0
         anomaly_saved = False
-        frozen_history = []
         while 1:
             t_start = time.time()
             screen = ScreenShot()
-            
-            # 상태 판독 중 화면 멈춤(Frozen) 감지 시 조기 에뮬레이터 강제 재부팅
-            frozen_history, is_frozen = GameFrozenCheck(frozen_history, screen)
-            if is_frozen:
-                logger.warning(_("상태 확인 중 화면 멈춤(Frozen) 감지! 에뮬레이터를 강제 재시작합니다."))
-                restartGame(force_restart_EMU=True)
-
             logger.info(_("状态检查中...(第{a}次)").format(a=counter+1))
 
             if setting._FORCESTOPING.is_set():
@@ -1562,8 +1535,11 @@ def Factory():
                 restartGame()
                 counter = 0
             if counter>=10:
-                PressReturn()
-                Sleep(0.5)
+                Press([1,1])
+                Sleep(0.25)
+                Press([1,1])
+                Sleep(0.25)
+                Press([1,1])
 
             Sleep(1)
             counter += 1
