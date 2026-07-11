@@ -407,15 +407,19 @@ class SmartDisarm:
             # 그만큼(정지 리드) 이르게 탭해야 한다. 리드 때문에 실행 불가해진 가까운 후보는
             # plan_tap 이 걸러내고 다음 주기 후보로 대체한다.
             elapsed_now = self.now() - t
-            min_reach = elapsed_now + self._press_latency() + self._stop_lead() + 0.05
+            # 캡처 주기 지터 연동 동적 렉 보상 (Lag Compensation)
+            # 캡처 간격(last_dt)이 느려진 만큼 탭 주입 지연도 늘어난다고 판단하여 리드를 선제적으로 당김
+            lag_comp = max(0.0, min(0.25, last_dt - 0.45))
+
+            min_reach = elapsed_now + self._press_latency() + self._stop_lead() + lag_comp + 0.05
             plan = self.plan_tap(est, last_safes, xmin, xmax, last_dt, min_reach=min_reach)
             if plan is None:
                 self._pace(t0)
                 continue
 
-            # press_wait: 마지막 측정(t) 기준. 경과 + press 지연(실측 EMA) + 정지 리드 보정.
+            # press_wait: 마지막 측정(t) 기준. 경과 + press 지연(실측 EMA) + 정지 리드 보정 + 렉 보상.
             elapsed_since_meas = self.now() - t
-            press_wait = plan["reach"] - elapsed_since_meas - self._press_latency() - self._stop_lead()
+            press_wait = plan["reach"] - elapsed_since_meas - self._press_latency() - (self._stop_lead() + lag_comp)
             if press_wait <= 0:
                 self._pace(t0)                  # 이미 지남 → 다음 기회
                 continue
@@ -585,8 +589,13 @@ class SmartDisarm:
         err_px = (meas["settle"] - plan["center"]) * meas["dir_tap"]
         if abs(err_px) > plan["half"] + 250:      # 반사/오검출 개연성이 큰 대편차는 제외 (250px로 대폭 완화)
             return
-        step = self.cfg.stop_lead_alpha * err_px / max(1.0, meas["v"])
-        step = max(-self.cfg.stop_adj_step_max, min(self.cfg.stop_adj_step_max, step))
+        # 빠른 게임(렉 지터 극대화) 시 비례제어 반응성(P-Control) 상향
+        is_fast_game = (meas["v"] >= 800)
+        alpha = 0.85 if is_fast_game else self.cfg.stop_lead_alpha
+        step_max = 0.15 if is_fast_game else self.cfg.stop_adj_step_max
+
+        step = alpha * err_px / max(1.0, meas["v"])
+        step = max(-step_max, min(step_max, step))
         adj = max(-self.cfg.stop_adj_total_max,
                   min(self.cfg.stop_adj_total_max, _STOP_LEAD["adj"] + step))
         _STOP_LEAD["adj"] = adj
