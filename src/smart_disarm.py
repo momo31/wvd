@@ -49,7 +49,7 @@ class DisarmConfig:
                                # (기존 0.35는 실측 p1-p0 중간값 0.029s 대비 0.32s 과대 → 계통 지연 유발)
     press_inject_lead = 0.05   # input 명령 완료 직전에 실제 탭이 주입된다고 보는 리드(s)
     press_ema_alpha = 0.35     # press 소요 실측 EMA 계수
-    capture_grab_frac = 0.6    # 캡처 시간창에서 프레임 취득 시점 추정 비율(0=시작, 1=종료)
+    capture_grab_frac = 0.45   # 캡처 시간창에서 프레임 취득 시점 추정 비율(0=시작, 1=종료)
     capture_dt_prior = 0.8     # 첫 샘플 전 캡처 주기 사전값(s). 실측 median 0.81 기반.
                                # (기존 0.25는 2번째 샘플의 연속성 필터 반경을 과소하게 만들었음)
     pw_thresh = 2.6            # 실행가능 최소시점부터 이 시간 이내 도달하는 후보만 노림(s).
@@ -290,6 +290,7 @@ class SmartDisarm:
         cfg = self.cfg
         samples = []          # [(t, x)] 검출 성공만
         prev_x = None
+        img_before = None     # 탭 전 도전 횟수 영역 캡처 본 보관용
         v_est = 0.0
         last_dt = cfg.sample_interval or cfg.capture_dt_prior
         shots = 0
@@ -356,6 +357,8 @@ class SmartDisarm:
             last_safes = d["safes"]
             xmin, xmax = d["bar"]
             last_range = (xmin, xmax)
+            # 탭 전 도전 횟수 영역 백업
+            img_before = img[440:560, 200:700].copy() if img is not None else None
 
             cx = self.pick_cursor(d["cursors"], prev_x, v_est, last_dt)
             if cx is None:
@@ -463,6 +466,28 @@ class SmartDisarm:
             if rest > 0:
                 time.sleep(rest)
             after = self.cap()
+
+            # 도전 횟수 차감 감지 및 리드 강제 피드백 루프 연계
+            if img_before is not None and after is not None:
+                is_transition = False
+                if self.is_done and self.is_done(after):
+                    is_transition = True
+                
+                # safes 개수가 변했는지 확인하여 성공적 자물쇠 전환 시 예외처리
+                after_detect = self.detect(after)
+                if after_detect is not None and last_safes is not None:
+                    if len(after_detect["safes"]) != len(last_safes):
+                        is_transition = True
+
+                if not is_transition:
+                    img_after = after[440:560, 200:700]
+                    diff_val = cv2.absdiff(img_before, img_after).mean()
+                    self.log.debug(f"[ChallengeCheck] 탭 전후 횟수 영역 absdiff 편차: {diff_val:.3f}")
+                    
+                    if diff_val >= 3.0:
+                        self.log.warning(self._t("[ChallengeCheck] 탭 실패(도전 횟수 감소 감지)! 리드 보정치를 강제 상향합니다."))
+                        # 리드를 0.05초 앞당기기 위해 누적 adj 값을 강제로 상향 보정
+                        _STOP_LEAD["adj"] = min(cfg.stop_adj_total_max, _STOP_LEAD["adj"] + 0.05)
             if self.is_done and after is not None and self.is_done(after):
                 self.log.info(self._t("개봉 종료 감지."))
                 if self.audit: self.audit.on_result(self._t("종료"))
@@ -558,7 +583,7 @@ class SmartDisarm:
         if self.cfg.stop_time <= 0:
             return
         err_px = (meas["settle"] - plan["center"]) * meas["dir_tap"]
-        if abs(err_px) > plan["half"] + 80:      # 반사/오검출 개연성이 큰 대편차는 제외 (기존 150→80 강화)
+        if abs(err_px) > plan["half"] + 250:      # 반사/오검출 개연성이 큰 대편차는 제외 (250px로 대폭 완화)
             return
         step = self.cfg.stop_lead_alpha * err_px / max(1.0, meas["v"])
         step = max(-self.cfg.stop_adj_step_max, min(self.cfg.stop_adj_step_max, step))

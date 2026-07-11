@@ -83,8 +83,8 @@ class SmartDisarmAuditor:
         hit = None
         c, half, margin = plan["center"], plan["half"], plan["margin"]
         judge_x = backcast_x if backcast_x is not None else actual_cursor_x
-        if judge_x is not None:
-            hit = abs(judge_x - c) <= max(2.0, half - margin)
+        if judge_x is not None and safes is not None:
+            hit = any(a <= judge_x <= b for (a, b) in safes)
         self.log.info(self._t("[audit] 탭 #{a}: 목표x={b:.0f} 정지추정x={c} 실측커서x={e} 적중={d}")
                       .format(a=self.tap_count, b=c,
                               c=(round(backcast_x) if backcast_x is not None else "?"),
