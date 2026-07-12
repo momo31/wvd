@@ -494,11 +494,14 @@ class SmartDisarm:
                         is_transition = True
 
                 # 탭 적중 성공 시 성공 전환 애니메이션으로 인한 오판 방지
-                is_hit = False
-                if meas is not None and last_safes is not None:
-                    is_hit = any(a <= meas["settle"] <= b for (a, b) in last_safes)
-                if is_hit:
-                    is_transition = True
+                # [개선안 1] 탭 적중 성공 여부(is_hit)와 무관하게, 실제 화면 전환이 발생하지 않았다면 
+                # is_transition을 True로 만들지 않습니다. (1회차 실패 시 ChallengeCheck가 무조건 작동하게 보장)
+                # is_hit = False
+                # if meas is not None and last_safes is not None:
+                #     is_hit = any(a <= meas["settle"] <= b for (a, b) in last_safes)
+                # 
+                # if is_hit:
+                #     is_transition = True
 
                 if not is_transition:
                     img_after = after[440:560, 200:700]
@@ -604,7 +607,13 @@ class SmartDisarm:
         if self.cfg.stop_time <= 0:
             return
         err_px = (meas["settle"] - plan["center"]) * meas["dir_tap"]
-        if abs(err_px) > plan["half"] + 250:      # 반사/오검출 개연성이 큰 대편차는 제외 (250px로 대폭 완화)
+        if abs(err_px) > plan["half"] + 250:      # [개선안 2] 대편차 발생 시 오검출 노이즈 영향을 억제하며 최소치 보정 반영
+            step = 0.015 * np.sign(err_px)
+            adj = max(-self.cfg.stop_adj_total_max,
+                      min(self.cfg.stop_adj_total_max, _STOP_LEAD["adj"] + step))
+            _STOP_LEAD["adj"] = adj
+            self.log.warning(self._t("[Warning] 정지위치 대편차({a:+.0f}px) 감지. 최소 보정 {b:+.3f}s 반영 (누적 {c:+.3f}s)")
+                           .format(a=err_px, b=step, c=adj))
             return
         # 빠른 게임(렉 지터 극대화) 시 비례제어 반응성(P-Control) 상향
         is_fast_game = (meas["v"] >= 800)
