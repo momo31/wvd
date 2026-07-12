@@ -45,11 +45,11 @@ class DisarmConfig:
     """운영 튜닝 파라미터 (실데이터 확보 후 조정). 인스턴스로 복제해 덮어쓰기 가능."""
     # --- 타이밍 ---
     sample_interval = 0.0      # 샘플 간 추가 대기(s). 0=캡처 속도대로(권장, Δt=캡처비용)
-    input_delay = 0.10         # press(adb input tap) 소요 초기 추정(s). 첫 탭 이후 실측 EMA 로 대체.
+    input_delay = 0.12         # press(adb input tap) 소요 초기 추정(s). 첫 탭 이후 실측 EMA 로 대체.
                                # (기존 0.35는 실측 p1-p0 중간값 0.029s 대비 0.32s 과대 → 계통 지연 유발)
     press_inject_lead = 0.05   # input 명령 완료 직전에 실제 탭이 주입된다고 보는 리드(s)
     press_ema_alpha = 0.35     # press 소요 실측 EMA 계수
-    capture_grab_frac = 0.45   # 캡처 시간창에서 프레임 취득 시점 추정 비율(0=시작, 1=종료)
+    capture_grab_frac = 0.65   # 캡처 시간창에서 프레임 취득 시점 추정 비율(0=시작, 1=종료)
     capture_dt_prior = 0.8     # 첫 샘플 전 캡처 주기 사전값(s). 실측 median 0.81 기반.
                                # (기존 0.25는 2번째 샘플의 연속성 필터 반경을 과소하게 만들었음)
     pw_thresh = 2.6            # 실행가능 최소시점부터 이 시간 이내 도달하는 후보만 노림(s).
@@ -81,6 +81,7 @@ class DisarmConfig:
     bypass_fast_game = False   # [옵션] 빠른(어려운) 게임은 폴백으로 우회 (사용자 선택)
     fast_game_k = 2.5          # 반주기 < fast_game_k*Δt 이면 '빠른 게임'으로 판정
     fast_game_min_half = 0.8   # 빠른 게임 판정 절대값 하한(s). 반주기가 이 값 이상이면 빠른 게임 아님.
+    fast_game_min_safe_width = 134  # 안전구간 크기 하한(px). 이 값 이하이면 빠른게임(고난도) 판정.
     fast_game_fail_limit = 3   # 빠른게임 판정/실패가 이만큼 누적되면 폴백 트리거
     settle_after_tap = 0.5     # 탭 후 결과 안정 대기(s)
     settle_extra_checks = 2    # settle_after_tap 후 종료 미감지 시 추가 종료 체크 횟수
@@ -353,7 +354,16 @@ class SmartDisarm:
                         return self._give_up("막대 미검출(비게임 화면 추정)", allow_fallback=False)
                     return self._give_up("막대/안전구간 미검출")
                 continue
-            bar_seen = True
+            # 최초 감지 시점에 안전구간 넓이 판정 (우회 조건 만족 시 즉시 폴백)
+            if not bar_seen:
+                bar_seen = True
+                if cfg.bypass_fast_game and len(d["safes"]) > 0:
+                    min_safe_width = min(b2 - a2 for (a2, b2) in d["safes"])
+                    if min_safe_width <= cfg.fast_game_min_safe_width:
+                        self.log.info(self._t("최초 감지 안전구간 협소({a}px <= {b}px). 즉시 우회 진행.")
+                                       .format(a=min_safe_width, b=cfg.fast_game_min_safe_width))
+                        return self._do_fallback("안전구간 협소 우회(최초 판단)")
+
             last_safes = d["safes"]
             xmin, xmax = d["bar"]
             last_range = (xmin, xmax)
@@ -482,6 +492,13 @@ class SmartDisarm:
                 if after_detect is not None and last_safes is not None:
                     if len(after_detect["safes"]) != len(last_safes):
                         is_transition = True
+
+                # 탭 적중 성공 시 성공 전환 애니메이션으로 인한 오판 방지
+                is_hit = False
+                if meas is not None and last_safes is not None:
+                    is_hit = any(a <= meas["settle"] <= b for (a, b) in last_safes)
+                if is_hit:
+                    is_transition = True
 
                 if not is_transition:
                     img_after = after[440:560, 200:700]
