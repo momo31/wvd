@@ -1990,10 +1990,47 @@ def Factory():
                 _noteStuckRestart()
                 restartGame()
                 return None
-            FindCoordsOrElseExecuteFallbackAndWait(
-                ["dungFlag","combatActive","chestOpening","whowillopenit","RiseAgain", "ambush"],
-                [[1,1],[1,1],"chestFlag"],
-                1)
+            # --- 자체 스턱 가드 대기 루프 ---
+            scn = ScreenShot()
+            found_target = False
+            for pattern in ["dungFlag", "combatActive", "chestOpening", "whowillopenit", "RiseAgain", "ambush"]:
+                if (pattern.startswith("combatActive") and StateCombatCheck(scn)) or CheckIf(scn, pattern):
+                    found_target = True
+                    break
+
+            if not found_target:
+                # 공통 시스템 복구 (재시도 및 배속 확인)
+                if TryPressRetry(scn):
+                    Sleep(1)
+                    continue
+                if Press(CheckIf_fastForwardOff(scn)):
+                    Sleep(1)
+                    continue
+
+                elapsed = time.time() - chestGuardTimer
+                
+                # [Audit] 60초 이상 대기 시 현재 화면 캡처 저장 (30초 주기)
+                if elapsed > 60:
+                    if int(elapsed) % 30 < 2:
+                        import cv2
+                        from datetime import datetime
+                        time_str = datetime.now().strftime("%H%M%S")
+                        cv2.imwrite(f"logs/anomaly_chest_stuck_{time_str}.png", scn)
+                        logger.warning(_("[Audit] 상자 열기 {a:.0f}초 초과 지연 중. 디버그 이미지 저장 완료.").format(a=elapsed))
+                
+                # [복구력 제고] 80초/150초 경과 시 스마트 탭 주입
+                if elapsed > 150:
+                    Press([845, 1501])  # dialogueNext 영역 강제 터치
+                    Sleep(1)
+                elif elapsed > 80:
+                    PressReturn()       # 안드로이드 백버튼 좌표 터치
+                    Sleep(1)
+
+                if CheckIf(scn, "chestFlag"):
+                    Press([1, 1])
+                    Sleep(1)
+                continue
+
             scn = ScreenShot()
 
 
