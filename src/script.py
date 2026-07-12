@@ -2026,7 +2026,11 @@ def Factory():
                     PressReturn()       # 안드로이드 백버튼 좌표 터치
                     Sleep(1)
 
-                if CheckIf(scn, "chestFlag"):
+                chest_pos = CheckIf(scn, "chestFlag")
+                if chest_pos:
+                    Press(chest_pos)     # Open 버튼 매칭 좌표 클릭
+                    Sleep(1)
+                else:
                     Press([1, 1])
                     Sleep(1)
                 continue
