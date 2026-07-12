@@ -2029,6 +2029,7 @@ def Factory():
                 chest_pos = CheckIf(scn, "chestFlag")
                 if chest_pos:
                     Press(chest_pos)     # Open 버튼 매칭 좌표 클릭
+                    chestGuardTimer = time.time()  # 액션 진행 시 가드 타이머 리셋
                     Sleep(1)
                 else:
                     Press([1, 1])
@@ -2057,6 +2058,7 @@ def Factory():
                             availableChar.remove(whowillopenit) # 如果发现了恐惧, 删除这个角色.
                     else:
                         Press(pos)
+                        chestGuardTimer = time.time()  # 액션 진행 시 가드 타이머 리셋
                         Sleep(1.5)
                         if (not setting.SMART_DISARM_CHEST) or runtimeContext._SMARTDISARM_DEGRADED:
                             for underscore in range(8):
@@ -2096,6 +2098,7 @@ def Factory():
                     ).run()
                     if ok:
                         smartFailStreak = 0
+                        chestGuardTimer = time.time()  # 개봉 성공 완료 시 가드 타이머 리셋
                         # 전리품/결과 화면 고속 스킵 파이프라인
                         for skip_idx in range(5):
                             Sleep(0.2)
