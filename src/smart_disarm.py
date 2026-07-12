@@ -489,7 +489,10 @@ class SmartDisarm:
                 
                 # safes 개수가 변했는지 확인하여 성공적 자물쇠 전환 시 예외처리
                 after_detect = self.detect(after)
-                if after_detect is not None and last_safes is not None:
+                if after_detect is None:
+                    # 성공하여 미니게임 화면이 닫히거나 다음 스테이지로 전환 중이라 막대 검출 불가한 상태
+                    is_transition = True
+                elif last_safes is not None:
                     if len(after_detect["safes"]) != len(last_safes):
                         is_transition = True
 
