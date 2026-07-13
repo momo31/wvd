@@ -37,6 +37,7 @@
 운영하며 보완할 값은 DisarmConfig 에 모아두었다(실측 재수집 후 튜닝).
 """
 import time
+import os
 import numpy as np
 import cv2
 
@@ -194,6 +195,30 @@ class SmartDisarm:
                 cand = near
             cand.sort(key=lambda c: abs(c[0] - prev_x))
         return int(cand[0][0])
+
+    def detect_remaining_chances(self, img_roi):
+        """img_roi (440:560, 200:700) 영역에서 템플릿 이미지를 이용해 남은 기회(4, 3, 2, 1) 정수 검출.
+        발견 시 정수 반환, 미발견 시 None 반환."""
+        if img_roi is None:
+            return None
+        best_val = -1
+        detected_chance = None
+        for val in [4, 3, 2, 1]:
+            path = rf"resources/images/smallgame_{val}.png"
+            if os.path.exists(path):
+                try:
+                    # 유니코드 경로 파일 로드
+                    temp = cv2.imdecode(np.fromfile(path, dtype=np.uint8), cv2.IMREAD_COLOR)
+                    if temp is not None:
+                        res = cv2.matchTemplate(img_roi, temp, cv2.TM_CCOEFF_NORMED)
+                        _, max_val, _, _ = cv2.minMaxLoc(res)
+                        # 임계값 0.85 이상 매치 시
+                        if max_val >= 0.85 and max_val > best_val:
+                            best_val = max_val
+                            detected_chance = val
+                except Exception as e:
+                    self.log.error(f"[ChallengeCheck] MatchTemplate error for value {val}: {e}")
+        return detected_chance
 
     # ===================== 추정 =====================
     def estimate(self, samples, xmin, xmax):
@@ -511,7 +536,67 @@ class SmartDisarm:
                     diff_val = cv2.absdiff(img_before, img_after).mean()
                     self.log.debug(f"[ChallengeCheck] 탭 전후 횟수 영역 absdiff 편차: {diff_val:.3f}")
                     
-                    if diff_val >= 3.0:
+                    # 템플릿 매칭을 통한 남은 기회 판독
+                    before_chance = self.detect_remaining_chances(img_before)
+                    after_chance = self.detect_remaining_chances(img_after)
+                    
+                    is_failed = False
+                    
+                    # 1) 템플릿 정보가 모두 존재하는 경우: 정수값 비교
+                    if before_chance is not None and after_chance is not None:
+                        self.log.info(f"[ChallengeCheck] 기회 인식 결과: 탭 전 {before_chance}회 -> 탭 후 {after_chance}회")
+                        if after_chance < before_chance:
+                            is_failed = True
+                    # 2) 템플릿이 미구비되어 식별 불가한 경우: 기존 픽셀 차분 편차 방식(Fallback) + 자가 학습(Auto-capture)
+                    else:
+                        if diff_val >= 3.0:
+                            is_failed = True
+                            
+                            # 자가 학습(Auto-capture): 템플릿 이미지 동적 생성 및 영구 보관
+                            os.makedirs("resources/images", exist_ok=True)
+                            
+                            path_4 = r"resources/images/smallgame_4.png"
+                            path_3 = r"resources/images/smallgame_3.png"
+                            path_2 = r"resources/images/smallgame_2.png"
+                            path_1 = r"resources/images/smallgame_1.png"
+
+                            # 4회 템플릿 미존재 시: 탭 전 이미지(img_before) 저장 (첫 진입 4회 기회)
+                            if not os.path.exists(path_4):
+                                try:
+                                    _, buf = cv2.imencode('.png', img_before)
+                                    buf.tofile(path_4)
+                                    self.log.info(f"[ChallengeCheck] 자가 학습: 4회 기회 템플릿 자동 수집 완료 -> {path_4}")
+                                except Exception as e:
+                                    self.log.error(f"[ChallengeCheck] Failed to save smallgame_4 template: {e}")
+                                    
+                            # 3회 템플릿 미존재 시 (4회는 확보됨): 탭 후 이미지(img_after) 저장 (4->3 차감 시점)
+                            if os.path.exists(path_4) and not os.path.exists(path_3):
+                                try:
+                                    _, buf = cv2.imencode('.png', img_after)
+                                    buf.tofile(path_3)
+                                    self.log.info(f"[ChallengeCheck] 자가 학습: 3회 기회 템플릿 자동 수집 완료 -> {path_3}")
+                                except Exception as e:
+                                    self.log.error(f"[ChallengeCheck] Failed to save smallgame_3 template: {e}")
+                                    
+                            # 2회 템플릿 미존재 시 (3회 확보됨): 탭 후 이미지(img_after) 저장 (3->2 차감 시점)
+                            if os.path.exists(path_3) and not os.path.exists(path_2):
+                                try:
+                                    _, buf = cv2.imencode('.png', img_after)
+                                    buf.tofile(path_2)
+                                    self.log.info(f"[ChallengeCheck] 자가 학습: 2회 기회 템플릿 자동 수집 완료 -> {path_2}")
+                                except Exception as e:
+                                    self.log.error(f"[ChallengeCheck] Failed to save smallgame_2 template: {e}")
+                                    
+                            # 1회 템플릿 미존재 시 (2회 확보됨): 탭 후 이미지(img_after) 저장 (2->1 차감 시점)
+                            if os.path.exists(path_2) and not os.path.exists(path_1):
+                                try:
+                                    _, buf = cv2.imencode('.png', img_after)
+                                    buf.tofile(path_1)
+                                    self.log.info(f"[ChallengeCheck] 자가 학습: 1회 기회 템플릿 자동 수집 완료 -> {path_1}")
+                                except Exception as e:
+                                    self.log.error(f"[ChallengeCheck] Failed to save smallgame_1 template: {e}")
+
+                    if is_failed:
                         self.log.warning(self._t("[ChallengeCheck] 탭 실패(도전 횟수 감소 감지)! 리드 보정치를 강제 상향합니다."))
                         # 리드를 0.05초 앞당기기 위해 누적 adj 값을 강제로 상향 보정
                         _STOP_LEAD["adj"] = min(cfg.stop_adj_total_max, _STOP_LEAD["adj"] + 0.05)
