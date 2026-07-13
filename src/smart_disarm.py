@@ -382,6 +382,18 @@ class SmartDisarm:
             # 최초 감지 시점에 안전구간 넓이 판정 (우회 조건 만족 시 즉시 폴백)
             if not bar_seen:
                 bar_seen = True
+                # [안전장치] 자가 학습 모드일 때 최초 진입(기회 4회 가득 참) 시점 4회 템플릿 선제 캡처
+                path_4 = r"resources/images/smallgame_4.png"
+                if not os.path.exists(path_4):
+                    try:
+                        os.makedirs("resources/images", exist_ok=True)
+                        img_roi_4 = img[440:560, 200:700]
+                        _, buf = cv2.imencode('.png', img_roi_4)
+                        buf.tofile(path_4)
+                        self.log.info(f"[ChallengeCheck] 자가 학습: 최초 진입 시점 4회 기회 템플릿 자동 수집 완료 -> {path_4}")
+                    except Exception as e:
+                        self.log.error(f"[ChallengeCheck] Failed to save smallgame_4 template: {e}")
+
                 if cfg.bypass_fast_game and len(d["safes"]) > 0:
                     min_safe_width = min(b2 - a2 for (a2, b2) in d["safes"])
                     if min_safe_width <= cfg.fast_game_min_safe_width:
@@ -560,15 +572,6 @@ class SmartDisarm:
                             path_2 = r"resources/images/smallgame_2.png"
                             path_1 = r"resources/images/smallgame_1.png"
 
-                            # 4회 템플릿 미존재 시: 탭 전 이미지(img_before) 저장 (첫 진입 4회 기회)
-                            if not os.path.exists(path_4):
-                                try:
-                                    _, buf = cv2.imencode('.png', img_before)
-                                    buf.tofile(path_4)
-                                    self.log.info(f"[ChallengeCheck] 자가 학습: 4회 기회 템플릿 자동 수집 완료 -> {path_4}")
-                                except Exception as e:
-                                    self.log.error(f"[ChallengeCheck] Failed to save smallgame_4 template: {e}")
-                                    
                             # 3회 템플릿 미존재 시 (4회는 확보됨): 탭 후 이미지(img_after) 저장 (4->3 차감 시점)
                             if os.path.exists(path_4) and not os.path.exists(path_3):
                                 try:
