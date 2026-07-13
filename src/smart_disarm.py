@@ -197,7 +197,7 @@ class SmartDisarm:
         return int(cand[0][0])
 
     def detect_remaining_chances(self, img_roi):
-        """img_roi (440:560, 200:700) 영역에서 템플릿 이미지를 이용해 남은 기회(4, 3, 2, 1) 정수 검출.
+        """img_roi (170:250, 20:150) 영역에서 템플릿 이미지를 이용해 남은 기회(4, 3, 2, 1) 정수 검출.
         발견 시 정수 반환, 미발견 시 None 반환."""
         if img_roi is None:
             return None
@@ -387,7 +387,7 @@ class SmartDisarm:
                 if not os.path.exists(path_4):
                     try:
                         os.makedirs("resources/images", exist_ok=True)
-                        img_roi_4 = img[440:560, 200:700]
+                        img_roi_4 = img[170:250, 20:150]
                         _, buf = cv2.imencode('.png', img_roi_4)
                         buf.tofile(path_4)
                         self.log.info(f"[ChallengeCheck] 자가 학습: 최초 진입 시점 4회 기회 템플릿 자동 수집 완료 -> {path_4}")
@@ -405,7 +405,7 @@ class SmartDisarm:
             xmin, xmax = d["bar"]
             last_range = (xmin, xmax)
             # 탭 전 도전 횟수 영역 백업
-            img_before = img[440:560, 200:700].copy() if img is not None else None
+            img_before = img[170:250, 20:150].copy() if img is not None else None
 
             cx = self.pick_cursor(d["cursors"], prev_x, v_est, last_dt)
             if cx is None:
@@ -544,7 +544,7 @@ class SmartDisarm:
                 #     is_transition = True
 
                 if not is_transition:
-                    img_after = after[440:560, 200:700]
+                    img_after = after[170:250, 20:150]
                     diff_val = cv2.absdiff(img_before, img_after).mean()
                     self.log.debug(f"[ChallengeCheck] 탭 전후 횟수 영역 absdiff 편차: {diff_val:.3f}")
                     
