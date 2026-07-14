@@ -42,3 +42,6 @@ python-3.11.9-amd64.exe
 scratch_chinese_lines.txt
 chinese_in_gui.txt
 
+# Audit results
+/audit/
+
