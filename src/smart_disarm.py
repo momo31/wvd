@@ -350,17 +350,14 @@ class SmartDisarm:
                     return self._give_up("캡처 연속 실패")
                 continue
 
-            # 게임 종료 판정: 첫 캡처(오호출 즉시 반환)에서만 무조건 확인한다.
-            # 미니게임은 우리 탭 없이는 끝나지 않으므로 정상 샘플링 중에는 검사하지 않고
-            # (전체 화면 매칭 2회 = 루프당 ~0.2s 절약), 막대가 소실됐을 때만 재확인한다.
-            if shots == 1 and self.is_done and self.is_done(img):
+            d = self.detect(img)
+            # 게임 종료 판정: 첫 캡처(오호출 즉시 반환) 시점에 막대가 보이지 않으면서(비게임 화면) is_done인 경우에만 즉시 종료
+            if shots == 1 and (not d or len(d["safes"]) == 0) and self.is_done and self.is_done(img):
                 self.log.info(self._t("개봉 완료/화면 전환 감지. 종료."))
                 if self.audit:
                     self.audit.on_result(self._t("종료(즉시)"))
                 self._audit_end_frame(img)
                 return True
-
-            d = self.detect(img)
             if not d or len(d["safes"]) == 0:
                 if shots > 1 and self.is_done and self.is_done(img):
                     self.log.info(self._t("막대 소실 + 화면 전환 감지. 종료."))
@@ -565,39 +562,51 @@ class SmartDisarm:
                             is_failed = True
                             
                             # 자가 학습(Auto-capture): 템플릿 이미지 동적 생성 및 영구 보관
-                            os.makedirs("resources/images", exist_ok=True)
-                            
-                            path_4 = r"resources/images/smallgame_4.png"
-                            path_3 = r"resources/images/smallgame_3.png"
-                            path_2 = r"resources/images/smallgame_2.png"
-                            path_1 = r"resources/images/smallgame_1.png"
+                            is_genuine_change = True
+                            if img_before is not None and img_after is not None:
+                                try:
+                                    sim_res = cv2.matchTemplate(img_before, img_after, cv2.TM_CCOEFF_NORMED)
+                                    _, sim_max_val, _, _ = cv2.minMaxLoc(sim_res)
+                                    if sim_max_val >= 0.92:
+                                        is_genuine_change = False
+                                        self.log.debug(f"[ChallengeCheck] 자가 학습 필터링: 전후 유사도 {sim_max_val:.3f} >= 0.92 -> 횟수 차감 없음으로 간주해 템플릿 저장 스킵")
+                                except Exception as e:
+                                    self.log.error(f"[ChallengeCheck] 자가 학습 필터링 연산 오류: {e}")
 
-                            # 3회 템플릿 미존재 시 (4회는 확보됨): 탭 후 이미지(img_after) 저장 (4->3 차감 시점)
-                            if os.path.exists(path_4) and not os.path.exists(path_3):
-                                try:
-                                    _, buf = cv2.imencode('.png', img_after)
-                                    buf.tofile(path_3)
-                                    self.log.info(f"[ChallengeCheck] 자가 학습: 3회 기회 템플릿 자동 수집 완료 -> {path_3}")
-                                except Exception as e:
-                                    self.log.error(f"[ChallengeCheck] Failed to save smallgame_3 template: {e}")
-                                    
-                            # 2회 템플릿 미존재 시 (3회 확보됨): 탭 후 이미지(img_after) 저장 (3->2 차감 시점)
-                            if os.path.exists(path_3) and not os.path.exists(path_2):
-                                try:
-                                    _, buf = cv2.imencode('.png', img_after)
-                                    buf.tofile(path_2)
-                                    self.log.info(f"[ChallengeCheck] 자가 학습: 2회 기회 템플릿 자동 수집 완료 -> {path_2}")
-                                except Exception as e:
-                                    self.log.error(f"[ChallengeCheck] Failed to save smallgame_2 template: {e}")
-                                    
-                            # 1회 템플릿 미존재 시 (2회 확보됨): 탭 후 이미지(img_after) 저장 (2->1 차감 시점)
-                            if os.path.exists(path_2) and not os.path.exists(path_1):
-                                try:
-                                    _, buf = cv2.imencode('.png', img_after)
-                                    buf.tofile(path_1)
-                                    self.log.info(f"[ChallengeCheck] 자가 학습: 1회 기회 템플릿 자동 수집 완료 -> {path_1}")
-                                except Exception as e:
-                                    self.log.error(f"[ChallengeCheck] Failed to save smallgame_1 template: {e}")
+                            if is_genuine_change:
+                                os.makedirs("resources/images", exist_ok=True)
+                                
+                                path_4 = r"resources/images/smallgame_4.png"
+                                path_3 = r"resources/images/smallgame_3.png"
+                                path_2 = r"resources/images/smallgame_2.png"
+                                path_1 = r"resources/images/smallgame_1.png"
+
+                                # 3회 템플릿 미존재 시 (4회는 확보됨): 탭 후 이미지(img_after) 저장 (4->3 차감 시점)
+                                if os.path.exists(path_4) and not os.path.exists(path_3):
+                                    try:
+                                        _, buf = cv2.imencode('.png', img_after)
+                                        buf.tofile(path_3)
+                                        self.log.info(f"[ChallengeCheck] 자가 학습: 3회 기회 템플릿 자동 수집 완료 -> {path_3}")
+                                    except Exception as e:
+                                        self.log.error(f"[ChallengeCheck] Failed to save smallgame_3 template: {e}")
+                                        
+                                # 2회 템플릿 미존재 시 (3회 확보됨): 탭 후 이미지(img_after) 저장 (3->2 차감 시점)
+                                if os.path.exists(path_3) and not os.path.exists(path_2):
+                                    try:
+                                        _, buf = cv2.imencode('.png', img_after)
+                                        buf.tofile(path_2)
+                                        self.log.info(f"[ChallengeCheck] 자가 학습: 2회 기회 템플릿 자동 수집 완료 -> {path_2}")
+                                    except Exception as e:
+                                        self.log.error(f"[ChallengeCheck] Failed to save smallgame_2 template: {e}")
+                                        
+                                # 1회 템플릿 미존재 시 (2회 확보됨): 탭 후 이미지(img_after) 저장 (2->1 차감 시점)
+                                if os.path.exists(path_2) and not os.path.exists(path_1):
+                                    try:
+                                        _, buf = cv2.imencode('.png', img_after)
+                                        buf.tofile(path_1)
+                                        self.log.info(f"[ChallengeCheck] 자가 학습: 1회 기회 템플릿 자동 수집 완료 -> {path_1}")
+                                    except Exception as e:
+                                        self.log.error(f"[ChallengeCheck] Failed to save smallgame_1 template: {e}")
 
                     if is_failed:
                         self.log.warning(self._t("[ChallengeCheck] 탭 실패(도전 횟수 감소 감지)! 리드 보정치를 강제 상향합니다."))
