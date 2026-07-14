@@ -1660,7 +1660,7 @@ def Factory():
             logger.info(_("已成功打开技能详情界面。 (耗时: {a}秒)").format(a=round(time.time()-t_start, 2)))
 
             # 设置等级
-            Sleep(1)
+            Sleep(1.5)
             t_lv_start = time.time()
             scn = ScreenShot()
             has_lv_1 = (CheckIf(scn,f"spellskill\skillLvl\lv1")) or (CheckIf(scn,f"spellskill\skillLvl\s_lv1"))
@@ -1716,6 +1716,16 @@ def Factory():
 
                 SkillLvlSelectAndDoubleCheck(skillPos,1,supportTarget)
                 return
+
+            # [안전장치] 수동 스킬 시전이 끝난 후에도 렉/오탐으로 스킬창이 닫히지 않고 남아있다면 강제 폐쇄 및 자동전투로 안전 복구
+            Sleep(1)
+            scn = ScreenShot()
+            if CheckIf(scn, "spellskill/skillDetail"):
+                logger.warning(_("[안전장치] 수동 스킬 시전 완료 후에도 스킬창이 닫히지 않았습니다. 강제 복구를 진행합니다."))
+                for underscore in range(3):
+                    PressReturn()
+                    Sleep(0.2)
+                ActiveAutoCombat()
 
         ###################################################################################
         # 主逻辑开始
