@@ -38,8 +38,18 @@
 """
 import time
 import os
+import sys
 import numpy as np
 import cv2
+
+# smallgame 템플릿 디렉터리(절대 경로). CWD 상대가 아니라 PyInstaller 번들(_MEIPASS) 또는
+# 저장소 루트(__file__ 기준)로 해석한다 — CWD 상대 경로는 패키징 실행이나 다른 작업 디렉터리에서
+# 번들 템플릿을 못 찾아 "미구비"로 판정하고 자가 학습을 처음부터 재시작하는 문제가 있었다.
+# (utils.ResourcePath 와 동일 규약. 이 모듈은 무의존 원칙을 지키기 위해 자체 해석한다.)
+try:
+    _SMALLGAME_DIR = os.path.join(sys._MEIPASS, "resources", "images")
+except Exception:
+    _SMALLGAME_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "resources", "images"))
 
 
 class DisarmConfig:
@@ -204,7 +214,7 @@ class SmartDisarm:
         best_val = -1
         detected_chance = None
         for val in [4, 3, 2, 1]:
-            path = rf"resources/images/smallgame_{val}.png"
+            path = os.path.join(_SMALLGAME_DIR, f"smallgame_{val}.png")
             if os.path.exists(path):
                 try:
                     # 유니코드 경로 파일 로드
@@ -380,10 +390,10 @@ class SmartDisarm:
             if not bar_seen:
                 bar_seen = True
                 # [안전장치] 자가 학습 모드일 때 최초 진입(기회 4회 가득 참) 시점 4회 템플릿 선제 캡처
-                path_4 = r"resources/images/smallgame_4.png"
+                path_4 = os.path.join(_SMALLGAME_DIR, "smallgame_4.png")
                 if not os.path.exists(path_4):
                     try:
-                        os.makedirs("resources/images", exist_ok=True)
+                        os.makedirs(_SMALLGAME_DIR, exist_ok=True)
                         img_roi_4 = img[170:250, 20:150]
                         _, buf = cv2.imencode('.png', img_roi_4)
                         buf.tofile(path_4)
@@ -569,18 +579,28 @@ class SmartDisarm:
                                     _, sim_max_val, _, _ = cv2.minMaxLoc(sim_res)
                                     if sim_max_val >= 0.92:
                                         is_genuine_change = False
-                                        self.log.debug(f"[ChallengeCheck] 자가 학습 필터링: 전후 유사도 {sim_max_val:.3f} >= 0.92 -> 횟수 차감 없음으로 간주해 템플릿 저장 스킵")
+                                        # 차감 없음으로 간주했으므로 실패 판정도 함께 해제한다.
+                                        # (기존엔 템플릿 저장만 스킵하고 is_failed 는 유지되어, 배경 셰이딩 등
+                                        # 무변화 화면에서도 리드가 +0.05 오보정되는 자기모순이 있었음.
+                                        # absdiff 는 밝기 오프셋에 민감하고 TM_CCOEFF_NORMED 는 불변이라
+                                        # diff>=3.0 이면서 sim>=0.92 인 영역이 구조적으로 존재한다.)
+                                        is_failed = False
+                                        self.log.debug(f"[ChallengeCheck] 자가 학습 필터링: 전후 유사도 {sim_max_val:.3f} >= 0.92 -> 횟수 차감 없음으로 간주 (실패 판정·템플릿 저장 모두 스킵)")
                                 except Exception as e:
                                     self.log.error(f"[ChallengeCheck] 자가 학습 필터링 연산 오류: {e}")
 
                             if is_genuine_change:
-                                os.makedirs("resources/images", exist_ok=True)
-                                
-                                path_4 = r"resources/images/smallgame_4.png"
-                                path_3 = r"resources/images/smallgame_3.png"
-                                path_2 = r"resources/images/smallgame_2.png"
-                                path_1 = r"resources/images/smallgame_1.png"
+                                os.makedirs(_SMALLGAME_DIR, exist_ok=True)
 
+                                path_4 = os.path.join(_SMALLGAME_DIR, "smallgame_4.png")
+                                path_3 = os.path.join(_SMALLGAME_DIR, "smallgame_3.png")
+                                path_2 = os.path.join(_SMALLGAME_DIR, "smallgame_2.png")
+                                path_1 = os.path.join(_SMALLGAME_DIR, "smallgame_1.png")
+
+                                # 실패 탭 1회의 차감은 정확히 한 단계이므로 템플릿도 한 장만 저장한다.
+                                # 반드시 elif 체인이어야 한다: 독립 if 였을 때 방금 저장한 파일이 바로 다음
+                                # 조건을 충족시켜 같은 이미지가 3/2/1 에 연쇄 저장되는 버그가 있었다
+                                # (커밋 653a169 의 smallgame_1/2/3 동일 blob 이 실기 발동 흔적).
                                 # 3회 템플릿 미존재 시 (4회는 확보됨): 탭 후 이미지(img_after) 저장 (4->3 차감 시점)
                                 if os.path.exists(path_4) and not os.path.exists(path_3):
                                     try:
@@ -591,7 +611,7 @@ class SmartDisarm:
                                         self.log.error(f"[ChallengeCheck] Failed to save smallgame_3 template: {e}")
                                         
                                 # 2회 템플릿 미존재 시 (3회 확보됨): 탭 후 이미지(img_after) 저장 (3->2 차감 시점)
-                                if os.path.exists(path_3) and not os.path.exists(path_2):
+                                elif os.path.exists(path_3) and not os.path.exists(path_2):
                                     try:
                                         _, buf = cv2.imencode('.png', img_after)
                                         buf.tofile(path_2)
@@ -600,7 +620,7 @@ class SmartDisarm:
                                         self.log.error(f"[ChallengeCheck] Failed to save smallgame_2 template: {e}")
                                         
                                 # 1회 템플릿 미존재 시 (2회 확보됨): 탭 후 이미지(img_after) 저장 (2->1 차감 시점)
-                                if os.path.exists(path_2) and not os.path.exists(path_1):
+                                elif os.path.exists(path_2) and not os.path.exists(path_1):
                                     try:
                                         _, buf = cv2.imencode('.png', img_after)
                                         buf.tofile(path_1)
@@ -609,9 +629,17 @@ class SmartDisarm:
                                         self.log.error(f"[ChallengeCheck] Failed to save smallgame_1 template: {e}")
 
                     if is_failed:
-                        self.log.warning(self._t("[ChallengeCheck] 탭 실패(도전 횟수 감소 감지)! 리드 보정치를 강제 상향합니다."))
-                        # 리드를 0.05초 앞당기기 위해 누적 adj 값을 강제로 상향 보정
-                        _STOP_LEAD["adj"] = min(cfg.stop_adj_total_max, _STOP_LEAD["adj"] + 0.05)
+                        if meas is None:
+                            # 무부호 실패 신호(도전 횟수 차감)는 정지위치 역산(부호 있는 보정)이
+                            # 불가했던 탭에서만 보조 보정으로 쓴다. meas 가 있으면 _update_stop_lead 가
+                            # 이미 방향까지 반영했으므로, 여기서 또 올리면 같은 실패에 이중 보정이 된다.
+                            # (실패 신호에는 방향 정보가 없어 '이른 탭' 실패에도 리드를 늘리게 되므로,
+                            # 무조건 적용 시 상한까지 한 방향으로 발산할 수 있는 문제도 함께 완화)
+                            self.log.warning(self._t("[ChallengeCheck] 탭 실패(도전 횟수 감소 감지)! 리드 보정치를 강제 상향합니다."))
+                            # 리드를 0.05초 앞당기기 위해 누적 adj 값을 강제로 상향 보정
+                            _STOP_LEAD["adj"] = min(cfg.stop_adj_total_max, _STOP_LEAD["adj"] + 0.05)
+                        else:
+                            self.log.info(self._t("[ChallengeCheck] 탭 실패(도전 횟수 감소 감지). 정지위치 보정이 이미 반영되어 강제 상향은 생략합니다."))
             if self.is_done and after is not None and self.is_done(after):
                 self.log.info(self._t("개봉 종료 감지."))
                 if self.audit: self.audit.on_result(self._t("종료"))
