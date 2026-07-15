@@ -1534,6 +1534,12 @@ def Factory():
                 logger.info(_("看起来遇到了一些非同寻常的情况...重启游戏."))
                 restartGame()
                 counter = 0
+            if counter>=5:
+                # [안전장치] 초기 경고화면, 주의사항(Attention), 미성년자 경고(To Minors) 및 타이틀 화면(Tap to Start)을 넘기기 위해 화면 중앙 터치
+                Press([450, 800])
+                Sleep(0.25)
+                Press([450, 800])
+                Sleep(0.25)
             if counter>=10:
                 Press([1,1])
                 Sleep(0.25)
@@ -1621,6 +1627,15 @@ def Factory():
     def StateCombat():
         if runtimeContext._TIME_COMBAT==0:
             runtimeContext._TIME_COMBAT = time.time()
+        
+        # [안전장치] 전투 상태 진입 시 혹시라도 스킬 상세 창이 닫히지 않고 남아있다면 강제 폐쇄
+        scn = ScreenShot()
+        if CheckIf(scn, "spellskill/skillDetail"):
+            logger.warning(_("[안전장치] 전투 상태 진입 시 스킬 상세창이 감지되어 강제 폐쇄합니다."))
+            for underscore in range(3):
+                PressReturn()
+                Sleep(0.2)
+
         # 内部函数：复制策略到 runtime.CURRENT_STRATEGY
 
         def AutoThisChar():
@@ -1631,6 +1646,13 @@ def Factory():
             return
         def ActiveAutoCombat():
             scn = ScreenShot()
+            # [안전장치] 스킬창이 열려 있으면 닫고 자동전투를 누른다.
+            if CheckIf(scn, "spellskill/skillDetail"):
+                logger.warning(_("[안전장치] 자동전투 활성화 시도 중 스킬창이 감지되었습니다. 닫기를 진행합니다."))
+                for underscore in range(3):
+                    PressReturn()
+                    Sleep(0.2)
+                scn = ScreenShot()
             if CheckIf(scn,"spellskill/CombatAutoDisable",[[842, 1124-42, 35, 13]]):
                 Press([850,1100])
             Sleep(5)
