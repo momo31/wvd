@@ -1639,9 +1639,17 @@ def Factory():
         # 内部函数：复制策略到 runtime.CURRENT_STRATEGY
 
         def AutoThisChar():
-            Press([850,1100])
-            Sleep(0.5)
-            Press([850,1100])
+            # [수정] 자동 토글([850,1100]) 무가드 2연타는 렉 시 두 탭이 모두 토글로 등록되어
+            # 자동이 다시 꺼진 채 종료되는 레이스가 있었다(스킬 선택 화면 정지 원인 후보).
+            # ActiveAutoCombat과 동일하게 OFF 상태(CombatAutoDisable 표시)를 확인했을 때만 누르고,
+            # 탭 유실(렉) 대비 재확인 후에만 한 번 더 누른다.
+            scn = ScreenShot()
+            if CheckIf(scn, "spellskill/CombatAutoDisable", [[842, 1124-42, 35, 13]]):
+                Press([850,1100])
+                Sleep(1.5)
+                scn = ScreenShot()
+                if CheckIf(scn, "spellskill/CombatAutoDisable", [[842, 1124-42, 35, 13]]):
+                    Press([850,1100])
             Sleep(2)
             return
         def ActiveAutoCombat():
@@ -1709,16 +1717,56 @@ def Factory():
                 if supportTarget in supportTargetDict.keys():
                     Press(supportTargetDict[supportTarget])
                     logger.info(_("释放了位于\"{a}\"的辅助技能, 技能等级为{b}, 释放对象为{c}").format(a=skillPos, b=skilllvl, c=supportTarget))
+                else:
+                    # [수정] 보조 스킬인데 대상이 미설정/미매칭이면 기존엔 아무것도 누르지 않고
+                    # 조용히 통과했다. 이후 폴백 랜덤 탭은 적 영역(y 296~896)만 노리므로
+                    # 아군 선택 화면(y 1200~1400)에서 영구 정지했다. 취소 후 자동으로 행동시킨다.
+                    logger.warning(_("보조 스킬의 대상(\"{a}\")이 설정되지 않았거나 매칭되지 않습니다. 스킬을 취소하고 이 캐릭터를 자동으로 행동시킵니다.").format(a=supportTarget))
+                    for underscore in range(3):
+                        PressReturn()
+                        Sleep(0.2)
+                    AutoThisChar()
+                    return
 
             # 确认
             t_cast_start = time.time()
-            scn = ScreenShot()
-            if Press(CheckIf(scn,"OK")):
+            # [수정] 레벨 탭 직후에는 상세창에서 시전확인/대상선택으로의 전환이 끝나지 않았을 수
+            # 있다. 기존엔 첫 촬영에서 OK/next가 안 잡히면 곧바로 랜덤 24연타를 발사해 전환 중인
+            # 화면을 두드렸다. 전환 완료를 짧게 기다리며 최대 3회 재판정한다.
+            ok_pos = None
+            next_pos = None
+            for underscore in range(3):
+                scn = ScreenShot()
+                if ok_pos := CheckIf(scn, "OK"):
+                    break
+                if next_pos := CheckIf(scn, "next"):
+                    break
+                Sleep(0.5)
+            if Press(ok_pos):
                 logger.info(_("释放了位于\"{a}\"的全体技能, 技能等级为{b}. (耗时: {c}秒)").format(a=skillPos, b=skilllvl, c=round(time.time()-t_cast_start, 2)))
                 Sleep(2)
-            elif pos:=(CheckIf(scn,"next")):
-                Press([pos[0]-15+random.randint(0,30),pos[1]+150+random.randint(0,30)])
+            elif next_pos:
                 logger.info(_("释放了位于\"{a}\"的单体技能, 技能等级为{b}. 选择next作为敌方目标. (耗时: {c}秒)").format(a=skillPos, b=skilllvl, c=round(time.time()-t_cast_start, 2)))
+                # [수정] 단일 대상 탭은 빗나가면 게임이 대상 선택 화면에서 입력을 기다리며 영구
+                # 정지했다(무검증 단발이 원인). 탭 후 next 소실로 성공을 확인하고, 잔존 시
+                # 위치를 재검출해 최대 2회 재탭한다. 끝내 실패하면 취소 후 자동으로 행동시킨다.
+                target_selected = False
+                for underscore in range(3):
+                    Press([next_pos[0]-15+random.randint(0,30),next_pos[1]+150+random.randint(0,30)])
+                    Sleep(1)
+                    fresh_next = CheckIf(ScreenShot(), "next")
+                    if not fresh_next:
+                        target_selected = True
+                        break
+                    next_pos = fresh_next
+                    logger.warning(_("적 대상 탭이 반영되지 않았습니다(next 잔존). 재탭합니다."))
+                if not target_selected:
+                    logger.warning(_("적 대상 선택이 계속 실패하여 스킬을 취소하고 이 캐릭터를 자동으로 행동시킵니다."))
+                    for underscore in range(3):
+                        PressReturn()
+                        Sleep(0.2)
+                    AutoThisChar()
+                    return
             else:
                 for t in range(24):
                     Press([75+random.random()*827,296+random.random()*600])
