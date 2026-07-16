@@ -9,18 +9,25 @@ ChallengeCheck 경로까지 도달시켜 아래 4개 수정의 동작을 검증�
   2. sim>=0.92 필터가 is_failed 도 해제 - 무변화 화면에서의 +0.05 오보정 차단
   3. +0.05 강제 상향은 meas(정지위치 역산) 실패 탭에만 - 이중 보정 차단
   4. smallgame 경로 절대화(_SMALLGAME_DIR) - 하니스는 이 변수를 임시 폴더로 패치
+  5. (26-07-16) 무측정 실패 보정 3중 제한 - 고정 +0.05 를
+     (1) 측정 공백 연속일 때만 (2) 방향 근거(press RTT 이상/잔차 EWMA) 있을 때만
+     (3) 축소 폭 ±blind_fail_step(0.025) 으로만 개입하도록 교체
 
 사용법 (저장소 루트에서):
   python tools/test_smart_disarm_fixes.py
-      현재 작업트리 코드로 S1~S3 검증.
+      현재 작업트리 코드로 S1~S4 검증.
   python tools/test_smart_disarm_fixes.py --old-ref 95b47d2
       수정 전 코드(git ref)를 같은 시나리오로 실행해 버그 재현까지 A/B 확인.
-      (수정 전 커밋을 지정해야 재현 검증이 의미가 있다. 예: 95b47d2)
+      (수정 1~3 재현은 95b47d2, 수정 5 재현은 14ad773~b6572f6 도 동일하게 유효)
 
 시나리오:
   S1 genuine+meas   : 탭 후 ROI 실제 변화 + 탭 직후 커서 검출(meas 성공)
   S2 brightness     : 탭 후 ROI 밝기 +12 (diff>=3, sim>=0.92) - 무변화로 간주해야 함
-  S3 genuine+nomeas : ROI 변화 + 탭 직후 커서 미검출(meas 실패) - +0.05 보조 보정 대상
+  S3 genuine+nomeas : ROI 변화 + 탭 직후 커서 미검출(meas 실패), 세션 첫 탭
+                      - 신코드: 공백 연속 아님 → 맹목 보정 생략 / 구코드: +0.05
+  S4a~d             : 측정 공백 연속(_PREV_TAP_MEAS=False 시드) 상태의 무측정 실패
+                      a) 잔차 EWMA +60px → +0.025  b) -60px → -0.025
+                      c) 근거 없음(+10px) → 생략   d) press RTT 이상 → +0.025
 
 의존: numpy, opencv-python (requirements.txt 와 동일).
 실행 시간: 시나리오당 약 5~10초 (탭 타이밍을 실시간으로 시뮬레이션).
@@ -64,13 +71,14 @@ def make_pattern(kind):
 
 class World:
     """합성 게임 화면. 커서는 실시간 삼각파로 움직인다."""
-    def __init__(self, roi_after, cursor_after_press=True):
+    def __init__(self, roi_after, cursor_after_press=True, press_delay=0.0):
         self.t0 = time.monotonic()
         self.pressed_at = None
         self.press_count = 0
         self.press_pos = None
         self.roi_after = roi_after
         self.cursor_after_press = cursor_after_press
+        self.press_delay = press_delay   # press RTT 이상(늦은 주입) 시뮬레이션용
         self.frame_idx = 0
 
     def _ended(self):
@@ -85,6 +93,8 @@ class World:
         return self._ended()
 
     def press(self, pos):
+        if self.press_delay:
+            time.sleep(self.press_delay)   # 주입 지연: p1-p0 를 부풀린다
         self.press_count += 1
         self.press_pos = pos
         if self.pressed_at is None:
@@ -152,7 +162,10 @@ def load_old_module(ref):
     return load_module("old", path)
 
 
-def run_scenario(mod, name, roi_after_kind, cursor_after_press, verbose=False):
+def run_scenario(mod, name, roi_after_kind, cursor_after_press, verbose=False,
+                 press_delay=0.0, seed=None):
+    """seed: 세션 전역 상태 사전 주입(dict). 지원 키:
+       press_ema(press EMA 초기값) / resid(잔차 EWMA) / prev_meas(직전 탭 측정 여부)"""
     tmp = tempfile.mkdtemp(prefix="sdtest_")
     res_dir = os.path.join(tmp, "resources", "images")
     cwd0 = os.getcwd()
@@ -162,18 +175,30 @@ def run_scenario(mod, name, roi_after_kind, cursor_after_press, verbose=False):
             mod._SMALLGAME_DIR = res_dir
         mod._PRESS_LAT["ema"] = None
         mod._STOP_LEAD["adj"] = 0.0
+        if hasattr(mod, "_RESID"):
+            mod._RESID["ewma"] = None
+        if hasattr(mod, "_PREV_TAP_MEAS"):
+            mod._PREV_TAP_MEAS["ok"] = True
+        seed = seed or {}
+        if "press_ema" in seed:
+            mod._PRESS_LAT["ema"] = seed["press_ema"]
+        if "resid" in seed and hasattr(mod, "_RESID"):
+            mod._RESID["ewma"] = seed["resid"]
+        if "prev_meas" in seed and hasattr(mod, "_PREV_TAP_MEAS"):
+            mod._PREV_TAP_MEAS["ok"] = seed["prev_meas"]
 
         cfg = mod.DisarmConfig()
         cfg.sample_interval = 0.25   # 합성 캡처는 즉답이므로 실측 캡처 주기를 흉내
-        w = World(make_pattern(roi_after_kind), cursor_after_press)
+        w = World(make_pattern(roi_after_kind), cursor_after_press, press_delay)
         log = RecLogger(verbose)
         ok = mod.SmartDisarm(w.cap, w.press, time.monotonic, log,
                              is_done_fn=w.is_done, config=cfg).run()
         files = sorted(os.path.basename(f)
                        for f in glob.glob(os.path.join(res_dir, "smallgame_*.png")))
         adj = mod._STOP_LEAD["adj"]
+        resid = mod._RESID["ewma"] if hasattr(mod, "_RESID") else None
         print(f"  {name}: ok={ok} taps={w.press_count} adj={adj:+.3f} files={files}")
-        return dict(ok=ok, taps=w.press_count, adj=adj, files=files, log=log)
+        return dict(ok=ok, taps=w.press_count, adj=adj, files=files, log=log, resid=resid)
     finally:
         os.chdir(cwd0)
         shutil.rmtree(tmp, ignore_errors=True)
@@ -201,9 +226,11 @@ def main():
     check("smallgame_3.png" in r["files"], "smallgame_3 저장됨", fails)
     check("smallgame_2.png" not in r["files"] and "smallgame_1.png" not in r["files"],
           "연쇄 저장 없음 (2/1 미생성)", fails)
-    check(r["log"].has("강제 상향은 생략"), "meas 존재 시 +0.05 생략 로그", fails)
-    check(not r["log"].has("강제 상향합니다"), "+0.05 강제 상향 미적용", fails)
+    check(r["log"].has("강제 상향은 생략"), "meas 존재 시 무부호 보정 생략 로그", fails)
+    check(not r["log"].has("강제 상향합니다") and not r["log"].has("측정 공백 연속)!"),
+          "무부호 보정 미적용", fails)
     check(abs(r["adj"]) <= 0.081, "adj 는 부호 있는 보정 1스텝 이내", fails)
+    check(r["resid"] is not None, "측정 잔차 EWMA 갱신됨", fails)
 
     print("== [현행 코드] S2 brightness(sim>=0.92): 실패 판정 해제 ==")
     r = run_scenario(new, "S2", "P0b", True, args.verbose)
@@ -211,10 +238,36 @@ def main():
     check(not r["log"].has("탭 실패(도전 횟수 감소 감지)"), "실패 경고 없음", fails)
     check("smallgame_3.png" not in r["files"], "템플릿 미저장", fails)
 
-    print("== [현행 코드] S3 genuine+meas없음: 무부호 +0.05 보조 보정 1회 ==")
+    print("== [현행 코드] S3 genuine+meas없음(세션 첫 탭): 공백 연속 아님 → 생략 ==")
     r = run_scenario(new, "S3", "P1", False, args.verbose)
-    check(r["log"].has("강제 상향합니다"), "+0.05 강제 상향 적용", fails)
-    check(abs(r["adj"] - 0.05) < 1e-9, f"adj == +0.05 정확히 (실측 {r['adj']:+.3f})", fails)
+    check(r["log"].has("측정 공백 연속이 아니므로"), "공백 연속 아님 → 생략 로그", fails)
+    check(not r["log"].has("리드 보정치를 강제 상향"), "구식 +0.05 미적용", fails)
+    check(abs(r["adj"]) < 1e-9, f"adj == 0 (실측 {r['adj']:+.3f})", fails)
+
+    print("== [현행 코드] S4a 공백 연속+잔차 +60px: +0.025 적용 ==")
+    r = run_scenario(new, "S4a", "P1", False, args.verbose,
+                     seed=dict(prev_meas=False, resid=60.0))
+    check(r["log"].has("리드 보정 +0.025s 적용") and r["log"].has("잔차 추이"),
+          "+0.025 적용(근거: 잔차 추이)", fails)
+    check(abs(r["adj"] - 0.025) < 1e-9, f"adj == +0.025 (실측 {r['adj']:+.3f})", fails)
+
+    print("== [현행 코드] S4b 공백 연속+잔차 -60px: -0.025 적용 ==")
+    r = run_scenario(new, "S4b", "P1", False, args.verbose,
+                     seed=dict(prev_meas=False, resid=-60.0))
+    check(r["log"].has("리드 보정 -0.025s 적용"), "-0.025 적용(음의 방향 보정 가능)", fails)
+    check(abs(r["adj"] + 0.025) < 1e-9, f"adj == -0.025 (실측 {r['adj']:+.3f})", fails)
+
+    print("== [현행 코드] S4c 공백 연속+근거 없음(잔차 +10px): 생략 ==")
+    r = run_scenario(new, "S4c", "P1", False, args.verbose,
+                     seed=dict(prev_meas=False, resid=10.0))
+    check(r["log"].has("보정 방향 근거가 없어"), "방향 근거 없음 → 생략 로그", fails)
+    check(abs(r["adj"]) < 1e-9, f"adj == 0 (실측 {r['adj']:+.3f})", fails)
+
+    print("== [현행 코드] S4d 공백 연속+press 지연 이상(0.12s): +0.025 적용 ==")
+    r = run_scenario(new, "S4d", "P1", False, args.verbose, press_delay=0.12,
+                     seed=dict(prev_meas=False, press_ema=0.001))
+    check(r["log"].has("press 지연 이상"), "RTT 이상 근거 로그", fails)
+    check(abs(r["adj"] - 0.025) < 1e-9, f"adj == +0.025 (실측 {r['adj']:+.3f})", fails)
 
     if args.old_ref:
         old = load_old_module(args.old_ref)
@@ -229,6 +282,11 @@ def main():
         r = run_scenario(old, "S2(old)", "P0b", True, args.verbose)
         check(r["log"].has("횟수 차감 없음으로 간주") and r["log"].has("강제 상향합니다"),
               "구코드는 '차감 없음 간주'하면서 +0.05 적용(자기모순) 재현", fails)
+
+        print(f"== [구코드 {args.old_ref}] S3: 첫 무측정 실패에도 무조건 +0.05 재현 ==")
+        r = run_scenario(old, "S3(old)", "P1", False, args.verbose)
+        check(r["log"].has("강제 상향합니다"), "구코드는 조건 없이 +0.05 적용 재현", fails)
+        check(abs(r["adj"] - 0.05) < 1e-9, f"구코드 adj == +0.05 (실측 {r['adj']:+.3f})", fails)
 
     print()
     if fails:

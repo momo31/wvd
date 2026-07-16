@@ -71,6 +71,14 @@ class DisarmConfig:
     stop_lead_alpha = 0.20     # 정지위치 오프셋 EMA 로 리드를 자동 보정하는 계수 (기존 0.30 → 극단값 민감도 감소)
     stop_adj_step_max = 0.08   # 1회 보정 한도(s)
     stop_adj_total_max = 0.35  # 누적 보정 한도(s, 초기 리드 대비 ±)
+    # --- 무측정 실패 보조 보정 (26.07-16 로그 판독 반영: 고정 +0.05 는 직전 측정 탭의
+    #     부호 보정과 이중 개입해 과보정(직후 -52~-262px 이른 미스)을 유발 →
+    #     조건·부호·크기 3중 제한으로 교체) ---
+    blind_fail_step = 0.025      # 무측정 실패 보정 크기(s). 기존 고정 +0.05 의 절반.
+    blind_fail_resid_min = 25.0  # 잔차 EWMA 부호를 신뢰할 최소 크기(px). 미만이면 중앙 정렬로 보고 생략.
+    blind_fail_rtt_excess = 0.05 # press RTT-EMA 가 이 값 이상이면 '늦은 주입' 확정 힌트(s).
+                                 # (EMA 에 당회 표본이 이미 반영된 뒤 비교되므로 실제 이상 Δ≈0.077s 부터 감지)
+    resid_ewma_alpha = 0.3       # 측정 잔차(err_px) EWMA 계수
     # --- margin ---
     margin_ratio = 0.10        # 안전구간 폭의 비율 (시뮬 최적 ~0.10)
     margin_speed_k = 0.0       # 속도 의존 가산: margin += k*v*Δt (빠른게임 여유). 0=비활성
@@ -109,6 +117,14 @@ _PRESS_LAT = {"ema": None}
 # 정지 리드(stop_time/2)에 대한 세션 보정치(s). 탭 직후 프레임에서 역산한
 # '정지 위치 - 목표중심' 오프셋을 되먹여 계통 잔차를 자동 흡수한다.
 _STOP_LEAD = {"adj": 0.0}
+
+# 측정 잔차(err_px, 부호 있음)의 세션 EWMA. 무측정 실패 탭에서 보정 '방향'을
+# 추정하는 사전 정보로 쓴다(대편차 이상치는 제외하고 갱신).
+_RESID = {"ewma": None}
+
+# 직전 탭의 정지위치 측정(meas) 성공 여부. 무측정 실패가 '연속'일 때만
+# (= 부호 있는 P-제어가 눈을 감은 구간) 맹목 보정 개입을 허용한다.
+_PREV_TAP_MEAS = {"ok": True}
 
 
 def note_press_duration(dur, alpha=0.35):
@@ -504,6 +520,8 @@ class SmartDisarm:
                 a_content = a0 + cfg.capture_grab_frac * (a1 - a0)
             meas = self._measure_after_tap(aimg, a_content, p0, p1, samples[-1][0],
                                            est, last_safes, (xmin, xmax))
+            prev_tap_had_meas = _PREV_TAP_MEAS["ok"]   # 이번 탭 반영 전 = '직전 탭' 기준
+            _PREV_TAP_MEAS["ok"] = meas is not None
             if meas is not None:
                 self._update_stop_lead(meas, plan)
             if self.audit:
@@ -630,14 +648,24 @@ class SmartDisarm:
 
                     if is_failed:
                         if meas is None:
-                            # 무부호 실패 신호(도전 횟수 차감)는 정지위치 역산(부호 있는 보정)이
-                            # 불가했던 탭에서만 보조 보정으로 쓴다. meas 가 있으면 _update_stop_lead 가
-                            # 이미 방향까지 반영했으므로, 여기서 또 올리면 같은 실패에 이중 보정이 된다.
-                            # (실패 신호에는 방향 정보가 없어 '이른 탭' 실패에도 리드를 늘리게 되므로,
-                            # 무조건 적용 시 상한까지 한 방향으로 발산할 수 있는 문제도 함께 완화)
-                            self.log.warning(self._t("[ChallengeCheck] 탭 실패(도전 횟수 감소 감지)! 리드 보정치를 강제 상향합니다."))
-                            # 리드를 0.05초 앞당기기 위해 누적 adj 값을 강제로 상향 보정
-                            _STOP_LEAD["adj"] = min(cfg.stop_adj_total_max, _STOP_LEAD["adj"] + 0.05)
+                            # 무부호 실패 신호(도전 횟수 차감)에는 방향 정보가 없다. 07-16 로그
+                            # 판독 결과, 고정 +0.05 는 직전 측정 탭의 부호 보정과 이중 개입해
+                            # 중앙을 지나치는 과보정(직후 -52~-262px 이른 미스, 7건 중 4~5건)을
+                            # 유발했다. → 3중 제한으로 교체:
+                            #   (1) 직전 탭도 무측정(제어 공백 연속)일 때만
+                            #   (2) 방향 근거(press 지연 이상 / 잔차 EWMA)가 있을 때만
+                            #   (3) 축소 폭(blind_fail_step, 부호 포함)으로만 개입
+                            if prev_tap_had_meas:
+                                self.log.info(self._t("[ChallengeCheck] 탭 실패(도전 횟수 감소 감지). 측정 공백 연속이 아니므로 맹목 보정은 생략합니다."))
+                            else:
+                                step, why = self._blind_fail_step(p1 - p0)
+                                if step:
+                                    _STOP_LEAD["adj"] = max(-cfg.stop_adj_total_max,
+                                                            min(cfg.stop_adj_total_max, _STOP_LEAD["adj"] + step))
+                                    self.log.warning(self._t("[ChallengeCheck] 탭 실패(측정 공백 연속)! 리드 보정 {a:+.3f}s 적용 (근거: {b}, 누적 {c:+.3f}s)")
+                                                     .format(a=step, b=why, c=_STOP_LEAD["adj"]))
+                                else:
+                                    self.log.info(self._t("[ChallengeCheck] 탭 실패(측정 공백 연속). 보정 방향 근거가 없어 맹목 보정은 생략합니다."))
                         else:
                             self.log.info(self._t("[ChallengeCheck] 탭 실패(도전 횟수 감소 감지). 정지위치 보정이 이미 반영되어 강제 상향은 생략합니다."))
             if self.is_done and after is not None and self.is_done(after):
@@ -743,6 +771,11 @@ class SmartDisarm:
             self.log.warning(self._t("[Warning] 정지위치 대편차({a:+.0f}px) 감지. 최소 보정 {b:+.3f}s 반영 (누적 {c:+.3f}s)")
                            .format(a=err_px, b=step, c=adj))
             return
+        # 무측정 실패 보정의 방향 사전정보(잔차 EWMA). 대편차 가드를 통과한 관측만 반영.
+        a_r = self.cfg.resid_ewma_alpha
+        ew = _RESID["ewma"]
+        _RESID["ewma"] = err_px if ew is None else (1.0 - a_r) * ew + a_r * err_px
+
         # 빠른 게임(렉 지터 극대화) 시 비례제어 반응성(P-Control) 상향
         is_fast_game = (meas["v"] >= 800)
         alpha = 0.85 if is_fast_game else self.cfg.stop_lead_alpha
@@ -756,6 +789,20 @@ class SmartDisarm:
 
         self.log.debug(self._t("정지위치 오프셋 {a:+.0f}px → 리드 보정 {b:+.3f}s (누적 {c:+.3f}s)")
                        .format(a=err_px, b=step, c=adj))
+
+    def _blind_fail_step(self, press_rtt):
+        """무측정 실패 탭의 리드 보정량(부호 포함, s)과 근거 문자열. (0.0, None)=생략.
+        부호 근거 우선순위: (1) 이번 탭 press RTT 이상 → 주입이 늦었다는 직접 증거 → (+)
+                           (2) 최근 측정 잔차 EWMA 부호 → 세션이 늦는/이른 추세를 따름.
+        둘 다 없으면(중앙 정렬 추정) 맹목 보정은 기대값이 음수이므로 걸지 않는다."""
+        ema = _PRESS_LAT["ema"]
+        if ema is not None and press_rtt - ema >= self.cfg.blind_fail_rtt_excess:
+            return self.cfg.blind_fail_step, self._t("press 지연 이상 {a:.3f}s").format(a=press_rtt)
+        ew = _RESID["ewma"]
+        if ew is not None and abs(ew) >= self.cfg.blind_fail_resid_min:
+            step = self.cfg.blind_fail_step if ew > 0 else -self.cfg.blind_fail_step
+            return step, self._t("잔차 추이 {a:+.0f}px").format(a=ew)
+        return 0.0, None
 
     def _update_press_latency(self, dur):
         # SmartDisarm 내부 실측만으로 EMA 갱신 (외부 note_press_duration은 오염 방지로 비활성)
