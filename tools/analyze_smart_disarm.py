@@ -59,6 +59,17 @@ COUNT_KEYS = [
     ("측정 공백 연속이 아니므로",         "무측정 실패 보정 생략(공백 연속 아님)"),
     ("보정 방향 근거가 없어",            "무측정 실패 보정 생략(방향 근거 없음)"),
     ("정지위치 보정이 이미 반영되어",      "실패 탭에 측정 보정 반영(강제 상향 생략)"),
+    # 2프레임 정지 실측 + 실패 확정 재조준 (26.07-16 저녁 세션 판독 반영)
+    ("2프레임 정지 확정",               "2프레임 정지 확정(실측 채택)"),
+    ("2프레임 감속 실측",               "2프레임 감속시간 역산"),
+    ("2프레임 역행",                    "2프레임 폐기(역행: 신규 커서)"),
+    ("감속시간 해 없음",                "2프레임 폐기(감속 해 없음)"),
+    ("후프레임 커서 불특정",             "2프레임 폐기(후프레임 커서 불특정)"),
+    ("반사 개입 가능 구간",              "2프레임 폐기(반사 가드)"),
+    ("후프레임 사용 불가",               "2프레임 불가(단일 외삽 유지)"),
+    ("전프레임 사용 불가",               "2프레임 불가(후프레임 외삽)"),
+    ("정지 실측 확정 → 재조준",          "실패 확정 재조준 적용"),
+    ("추가 재조준은 생략",               "실패 확정 재조준 생략(이미 수렴)"),
 ]
 
 
@@ -83,6 +94,11 @@ def parse_logs(log_dir):
             continue
         with fh:
             for line in fh:
+                # 마커 카운트는 어떤 정규식 continue 보다 먼저 수행한다
+                # (예: "보정 생략" 계열은 RE_SKIP 이 continue 하므로 뒤에 두면 도달 불가).
+                for key, label in COUNT_KEYS:
+                    if key in line:
+                        data["counts"][label] += 1
                 m = RE_START.search(line)
                 if m:
                     cur_tag, prev_t = m.group(1), None
@@ -136,7 +152,9 @@ def parse_logs(log_dir):
                     continue
                 m = RE_SKIP.search(line)
                 if m:
-                    r = m.group(1).strip()
+                    # 사유 문자열의 가변 수치(Δpx, 시간 범위, 후보 개수)를 정규화해
+                    # 발생 건별 고유 키로 단편화되는 것을 막는다.
+                    r = re.sub(r"[-+]?\d+(?:\.\d+)?", "N", m.group(1).strip())
                     data["skips"][r] = data["skips"].get(r, 0) + 1
                     continue
                 m = RE_RESULT.search(line)
@@ -144,9 +162,6 @@ def parse_logs(log_dir):
                     data["results"].append(dict(result=m.group(1),
                                                 taps=int(m.group(4)), tag=m.group(5)))
                     cur_tag, prev_t = None, None
-                for key, label in COUNT_KEYS:
-                    if key in line:
-                        data["counts"][label] += 1
     return data
 
 

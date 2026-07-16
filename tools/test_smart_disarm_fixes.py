@@ -28,6 +28,20 @@ ChallengeCheck 경로까지 도달시켜 아래 4개 수정의 동작을 검증�
   S4a~d             : 측정 공백 연속(_PREV_TAP_MEAS=False 시드) 상태의 무측정 실패
                       a) 잔차 EWMA +60px → +0.025  b) -60px → -0.025
                       c) 근거 없음(+10px) → 생략   d) press RTT 이상 → +0.025
+  S5a~d (26-07-16)  : 2프레임 정지 실측 + 실패 확정 재조준 (DecelWorld: 감속-정지 +
+                      라운드 재도전 물리)
+                      a) 감속 0.35s 개체(모델 1.0 과 편차): 탭1 미스 → 감속시간
+                         역산/정지 실측 → 재조준 → 탭2 명중 (동일 조준 반복 미스 제거)
+                      b) 감속 1.0s 개체(모델 일치): 탭1 명중, Ts 역산 ≈1.0, 재조준
+                         미발동 (회귀 없음)
+                      c) 실패 후 커서 조기 리셋: 후프레임의 신규 커서 → 역행/해 없음
+                         → 측정 폐기 (오염 방어)
+                      d) 성공 탭 + ChallengeCheck diff 오탐: 실측 err≈0 → 재조준
+                         자기제한 (오탐 무해화)
+  S5e               : 반사 가드 유닛 — 감속 중 끝점 반사가 낄 수 있는 주입(벽거리 <
+                      최대주행)은 허구 Ts 해를 막기 위해 측정 폐기, 반사 불가능 확정
+                      주입은 감속시간(1.0s/0.3s) 정확 역산 유지 (_measure_after_tap
+                      직접 구동)
 
 의존: numpy, opencv-python (requirements.txt 와 동일).
 실행 시간: 시나리오당 약 5~10초 (탭 타이밍을 실시간으로 시뮬레이션).
@@ -69,9 +83,29 @@ def make_pattern(kind):
     return p
 
 
+def fold_x(x):
+    """막대 끝점 반사(triangle fold) 좌표."""
+    span = SPAN[1] - SPAN[0]
+    u = (x - SPAN[0]) % (2 * span)
+    return SPAN[0] + (u if u <= span else 2 * span - u)
+
+
+def round_pattern(n):
+    """라운드별 도전횟수 ROI 패턴(차감 흉내). 주기·색을 바꿔 상호 상관을 낮게 유지."""
+    p = np.zeros((80, 130, 3), np.uint8)
+    yy, xx = np.mgrid[0:80, 0:130]
+    k = 5 + 3 * (n % 5)
+    color = [(40, 200, 60), (200, 200, 80), (60, 80, 220), (180, 60, 180),
+             (80, 220, 200)][n % 5]
+    p[((yy // k + xx // k) % 2) == 0] = color
+    return p
+
+
 class World:
-    """합성 게임 화면. 커서는 실시간 삼각파로 움직인다."""
-    def __init__(self, roi_after, cursor_after_press=True, press_delay=0.0):
+    """합성 게임 화면. 커서는 실시간 삼각파로 움직이고, press 주입 후에는
+    선형 감속(decel_time)으로 미끄러지다 정지한다(실게임 감속-정지 역학)."""
+    def __init__(self, roi_after, cursor_after_press=True, press_delay=0.0,
+                 decel_time=1.0):
         self.t0 = time.monotonic()
         self.pressed_at = None
         self.press_count = 0
@@ -79,6 +113,7 @@ class World:
         self.roi_after = roi_after
         self.cursor_after_press = cursor_after_press
         self.press_delay = press_delay   # press RTT 이상(늦은 주입) 시뮬레이션용
+        self.decel_time = decel_time     # 주입~정지 감속 시간(s)
         self.frame_idx = 0
 
     def _ended(self):
@@ -88,6 +123,23 @@ class World:
         span = SPAN[1] - SPAN[0]
         u = (V * t) % (2 * span)
         return SPAN[0] + (u if u <= span else 2 * span - u)
+
+    def cursor_free(self, t):
+        """자유 주행 위치와 진행 방향."""
+        span = SPAN[1] - SPAN[0]
+        u = (V * t) % (2 * span)
+        if u <= span:
+            return SPAN[0] + u, +1
+        return SPAN[0] + (2 * span - u), -1
+
+    def cursor_decel(self, t):
+        """press 주입 이후: 주입 시점 위치/방향에서 선형 감속 이동."""
+        tp = self.pressed_at - self.t0
+        x0, d = self.cursor_free(tp)
+        Td = self.decel_time
+        tt = min(max(t - tp, 0.0), Td)
+        travel = V * (tt - tt * tt / (2.0 * Td)) if Td > 0 else 0.0
+        return fold_x(x0 + d * travel)
 
     def is_done(self, img):
         return self._ended()
@@ -109,9 +161,12 @@ class World:
             img[BAR_Y[0]:BAR_Y[1], SPAN[0]:SPAN[1]] = (0, 0, 200)      # 빨강 막대
             for a, b in SAFES:
                 img[BAR_Y[0]:BAR_Y[1], a:b] = (0, 220, 220)            # 노랑 안전구간
-            if self.pressed_at is None or self.cursor_after_press:
+            if self.pressed_at is None:
                 cx = int(self.cursor_x(t))
                 img[BAR_Y[0]:BAR_Y[1], max(0, cx - 7):cx + 7] = (240, 240, 240)  # 흰 커서
+            elif self.cursor_after_press:
+                cx = int(self.cursor_decel(t))
+                img[BAR_Y[0]:BAR_Y[1], max(0, cx - 7):cx + 7] = (240, 240, 240)
             # 도전 횟수 ROI: 1프레임=T(진입, 4회 템플릿), 탭 전=P0, 탭 후=시나리오별
             if self.frame_idx == 1:
                 roi = make_pattern("T")
@@ -120,6 +175,103 @@ class World:
             else:
                 roi = self.roi_after
             img[170:250, 20:150] = roi
+        return img
+
+
+class DecelWorld:
+    """감속-정지 + 라운드(재도전) 상태 기계를 갖춘 합성 게임 (S5 시나리오용).
+
+    press 주입 → 커서 선형 감속(decel_time) 정지 → 정지 위치가 안전구간 안이면
+    성공(hold_hit 뒤 화면 전환=종료), 밖이면 실패(hold_miss 동안 정지 표시 후
+    커서를 왼쪽 끝에서 재주행 = 같은 자물쇠 재도전). ROI 는 라운드 인덱스별
+    패턴으로 도전 횟수 차감을 흉내 낸다(실패 시 항상, 성공 시 roi_change_on_hit)."""
+    def __init__(self, decel_time, hold_miss=1.2, hold_hit=0.4,
+                 roi_change_on_hit=False, max_rounds=6):
+        self.t0 = time.monotonic()
+        self.decel_time = decel_time
+        self.hold_miss = hold_miss
+        self.hold_hit = hold_hit
+        self.roi_change_on_hit = roi_change_on_hit
+        self.max_rounds = max_rounds
+        self.press_count = 0
+        self.roi_idx = 0
+        self.run_start = 0.0      # 현재 라운드 주행 시작(월드 시각)
+        self.phase = "run"        # run / tapped / ended
+        self.press_t = None       # 주입 시각(월드 시각)
+        self.inject = None        # 주입 시점 (위치, 방향)
+        self.stop_x = None
+        self.hits = []            # 탭별 명중 여부
+
+    def _now(self):
+        return time.monotonic() - self.t0
+
+    def _free(self, t):
+        span = SPAN[1] - SPAN[0]
+        u = (V * (t - self.run_start)) % (2 * span)
+        if u <= span:
+            return SPAN[0] + u, +1
+        return SPAN[0] + (2 * span - u), -1
+
+    def _advance(self, t):
+        """정지 유지 시간이 끝나면 라운드 전이(lazy 상태 기계)."""
+        if self.phase != "tapped":
+            return
+        dwell = t - (self.press_t + self.decel_time)
+        if dwell < 0:
+            return
+        if self.hits[-1]:
+            if dwell >= self.hold_hit:
+                self.phase = "ended"                  # 성공: 화면 전환
+        elif dwell >= self.hold_miss:
+            if len(self.hits) >= self.max_rounds:
+                self.phase = "ended"                  # 기회 소진(함정) 흉내
+            else:
+                self.phase = "run"                    # 같은 자물쇠 재도전
+                self.run_start = t
+                self.press_t = None
+
+    def _cursor(self, t):
+        if self.phase == "run":
+            return self._free(t)[0]
+        x0, d = self.inject
+        Td = self.decel_time
+        tt = min(max(t - self.press_t, 0.0), Td)
+        travel = V * (tt - tt * tt / (2.0 * Td)) if Td > 0 else 0.0
+        return fold_x(x0 + d * travel)
+
+    def is_done(self, img):
+        self._advance(self._now())
+        return self.phase == "ended"
+
+    def press(self, pos):
+        t = self._now()
+        self._advance(t)
+        self.press_count += 1
+        if self.phase != "run":
+            return True                               # 정지/전환 중 탭은 무시
+        x0, d = self._free(t)
+        self.inject = (x0, d)
+        self.press_t = t
+        self.stop_x = fold_x(x0 + d * (V * self.decel_time / 2.0))
+        hit = any(a <= self.stop_x <= b for (a, b) in SAFES)
+        self.hits.append(hit)
+        if (not hit) or self.roi_change_on_hit:
+            self.roi_idx += 1                         # 도전 횟수 차감 표시(패턴 교체)
+        self.phase = "tapped"
+        return True
+
+    def cap(self):
+        t = self._now()
+        self._advance(t)
+        img = np.zeros((1600, 900, 3), np.uint8)
+        if self.phase == "ended":
+            return img                                # 전환: 막대/커서/ROI 소실
+        img[BAR_Y[0]:BAR_Y[1], SPAN[0]:SPAN[1]] = (0, 0, 200)
+        for a, b in SAFES:
+            img[BAR_Y[0]:BAR_Y[1], a:b] = (0, 220, 220)
+        cx = int(self._cursor(t))
+        img[BAR_Y[0]:BAR_Y[1], max(0, cx - 7):cx + 7] = (240, 240, 240)
+        img[170:250, 20:150] = round_pattern(self.roi_idx)
         return img
 
 
@@ -163,9 +315,10 @@ def load_old_module(ref):
 
 
 def run_scenario(mod, name, roi_after_kind, cursor_after_press, verbose=False,
-                 press_delay=0.0, seed=None):
+                 press_delay=0.0, seed=None, world=None):
     """seed: 세션 전역 상태 사전 주입(dict). 지원 키:
-       press_ema(press EMA 초기값) / resid(잔차 EWMA) / prev_meas(직전 탭 측정 여부)"""
+       press_ema(press EMA 초기값) / resid(잔차 EWMA) / prev_meas(직전 탭 측정 여부)
+       world: World 대신 사용할 합성 게임(예: DecelWorld). None 이면 기본 World."""
     tmp = tempfile.mkdtemp(prefix="sdtest_")
     res_dir = os.path.join(tmp, "resources", "images")
     cwd0 = os.getcwd()
@@ -189,7 +342,8 @@ def run_scenario(mod, name, roi_after_kind, cursor_after_press, verbose=False,
 
         cfg = mod.DisarmConfig()
         cfg.sample_interval = 0.25   # 합성 캡처는 즉답이므로 실측 캡처 주기를 흉내
-        w = World(make_pattern(roi_after_kind), cursor_after_press, press_delay)
+        w = world if world is not None else World(
+            make_pattern(roi_after_kind), cursor_after_press, press_delay)
         log = RecLogger(verbose)
         ok = mod.SmartDisarm(w.cap, w.press, time.monotonic, log,
                              is_done_fn=w.is_done, config=cfg).run()
@@ -198,10 +352,32 @@ def run_scenario(mod, name, roi_after_kind, cursor_after_press, verbose=False,
         adj = mod._STOP_LEAD["adj"]
         resid = mod._RESID["ewma"] if hasattr(mod, "_RESID") else None
         print(f"  {name}: ok={ok} taps={w.press_count} adj={adj:+.3f} files={files}")
-        return dict(ok=ok, taps=w.press_count, adj=adj, files=files, log=log, resid=resid)
+        return dict(ok=ok, taps=w.press_count, adj=adj, files=files, log=log,
+                    resid=resid, world=w)
     finally:
         os.chdir(cwd0)
         shutil.rmtree(tmp, ignore_errors=True)
+
+
+def run_measure_unit(mod, name, est_x, x1, x2, verbose=False):
+    """_measure_after_tap 를 detect 스텁으로 직접 구동하는 마이크로 검증.
+    프레임 자리에 detect 결과 dict 를 그대로 전달한다(detect=identity 몽키패치).
+    타이밍: 주입 t=100.0, 전프레임 +0.22s, 후프레임 +0.72s (실기 캡처 시점 근사)."""
+    log = RecLogger(verbose)
+    cfg = mod.DisarmConfig()
+    sd = mod.SmartDisarm(lambda: None, lambda p: True, time.monotonic, log, config=cfg)
+    sd.detect = lambda img: img
+    rng, safes = (16, 896), [(605, 745)]
+    mkframe = lambda cx: dict(bar=rng, y=(40, 140), cursors=[(cx, 10)], safes=safes)
+    est = {"x": float(est_x), "speed": 1165.0, "dir": +1}
+    p0 = 100.0
+    meas = sd._measure_after_tap(mkframe(x1), p0 + 0.22, p0, p0 + 0.05, p0,
+                                 est, safes, rng,
+                                 frame2=(mkframe(x2), p0 + 0.72, None))
+    shown = "None" if meas is None else {
+        k: (round(v, 3) if isinstance(v, float) else v) for k, v in meas.items()}
+    print(f"  {name}: meas={shown}")
+    return meas, log
 
 
 def check(cond, desc, fails):
@@ -226,10 +402,12 @@ def main():
     check("smallgame_3.png" in r["files"], "smallgame_3 저장됨", fails)
     check("smallgame_2.png" not in r["files"] and "smallgame_1.png" not in r["files"],
           "연쇄 저장 없음 (2/1 미생성)", fails)
-    check(r["log"].has("강제 상향은 생략"), "meas 존재 시 무부호 보정 생략 로그", fails)
+    check(r["log"].has("강제 상향은 생략") or r["log"].has("추가 재조준은 생략")
+          or r["log"].has("정지 실측 확정 → 재조준"),
+          "meas 존재 시 무부호 보정 대신 측정 기반 경로", fails)
     check(not r["log"].has("강제 상향합니다") and not r["log"].has("측정 공백 연속)!"),
           "무부호 보정 미적용", fails)
-    check(abs(r["adj"]) <= 0.081, "adj 는 부호 있는 보정 1스텝 이내", fails)
+    check(abs(r["adj"]) <= 0.1, "adj 는 측정 기반 소보정 이내", fails)
     check(r["resid"] is not None, "측정 잔차 EWMA 갱신됨", fails)
 
     print("== [현행 코드] S2 brightness(sim>=0.92): 실패 판정 해제 ==")
@@ -268,6 +446,66 @@ def main():
                      seed=dict(prev_meas=False, press_ema=0.001))
     check(r["log"].has("press 지연 이상"), "RTT 이상 근거 로그", fails)
     check(abs(r["adj"] - 0.025) < 1e-9, f"adj == +0.025 (실측 {r['adj']:+.3f})", fails)
+
+    print("== [현행 코드] S5a 감속 0.35s 개체: 실측 재조준 후 재도전 명중 ==")
+    r = run_scenario(new, "S5a", None, True, args.verbose,
+                     world=DecelWorld(decel_time=0.35, hold_miss=1.2))
+    w = r["world"]
+    check(len(w.hits) >= 2 and not w.hits[0], "탭1 은 미스(모델-개체 감속 편차 재현)", fails)
+    check(w.hits[-1] and r["ok"], "재조준 후 명중으로 종료", fails)
+    check(len(w.hits) <= 3, f"수렴 3탭 이내 (실측 {len(w.hits)}탭)", fails)
+    check(r["log"].has("2프레임 감속 실측") or r["log"].has("2프레임 정지 확정"),
+          "2프레임 실측 경로 사용", fails)
+    check(r["log"].has("정지 실측 확정 → 재조준"), "실패 확정 재조준 발동", fails)
+    check(r["adj"] <= -0.2, f"리드가 실측만큼 당겨짐 (실측 {r['adj']:+.3f})", fails)
+
+    print("== [현행 코드] S5b 감속 1.0s 개체(모델 일치): 탭1 명중, 재조준 미발동 ==")
+    r = run_scenario(new, "S5b", None, True, args.verbose,
+                     world=DecelWorld(decel_time=1.0, hold_miss=1.2))
+    w = r["world"]
+    check(w.hits and w.hits[0] and r["ok"], "탭1 명중(회귀 없음)", fails)
+    check(len(w.hits) == 1, f"탭 1회로 종료 (실측 {len(w.hits)}탭)", fails)
+    check(r["log"].has("2프레임 감속 실측"), "감속시간 역산 경로 사용(Ts≈1.0 재현)", fails)
+    check(not r["log"].has("정지 실측 확정 → 재조준"), "재조준 미발동", fails)
+    check(abs(r["adj"]) <= 0.1, f"adj 소보정 이내 (실측 {r['adj']:+.3f})", fails)
+
+    print("== [현행 코드] S5c 실패 후 커서 조기 리셋: 신규 커서 측정 폐기 ==")
+    # hold_miss=0.05: 후프레임(+0.5s) 시점에 확실히 리셋 이후(경계 레이스 방지).
+    # 리셋 커서는 끝점 재출발이라 역행(검출 시) 또는 커서 불특정(끝점 미검출)으로
+    # 나타난다 — 어느 쪽이든 전프레임 단일 외삽(자기기만)이 되살아나면 안 된다.
+    # 마지막 탭은 종료 전환을 만나 무해한 단일 외삽 EMA 소보정(<=1스텝)만 남는다.
+    r = run_scenario(new, "S5c", None, True, args.verbose,
+                     world=DecelWorld(decel_time=0.35, hold_miss=0.05, max_rounds=2))
+    check(r["log"].has("신규 커서 의심") or r["log"].has("후프레임 커서 불특정"),
+          "리셋 커서 → 측정 폐기 로그", fails)
+    check(not r["log"].has("정지 실측 확정 → 재조준"), "오염 재조준 없음", fails)
+    check(abs(r["adj"]) <= 0.03, f"adj 오염 없음(EMA 1스텝 이내, 실측 {r['adj']:+.3f})", fails)
+
+    print("== [현행 코드] S5d 성공 탭 + diff 오탐: 실측 err≈0 → 재조준 자기제한 ==")
+    r = run_scenario(new, "S5d", None, True, args.verbose,
+                     world=DecelWorld(decel_time=1.0, hold_hit=1.5,
+                                      roi_change_on_hit=True))
+    w = r["world"]
+    check(w.hits and w.hits[0] and r["ok"], "탭1 실제로는 명중", fails)
+    check(r["log"].has("탭 실패"), "ChallengeCheck 는 오탐(실패 판정) 발생", fails)
+    check(abs(r["adj"]) <= 0.1, f"오탐에도 리드 오염 자기제한 (실측 {r['adj']:+.3f})", fails)
+
+    print("== [현행 코드] S5e 반사 가드 유닛: 반사 창 폐기 / 안전 창 실측 유지 ==")
+    # 반사 창(v=1165, 주입 450, 벽거리 446 < 최대주행 650): 실제 감속 1.0s 커서가
+    # 벽 반사 후 x2=805 로 복귀 — 가드 없으면 허구 Ts=0.574 가 trusted 로 수용된다.
+    m, lg = run_measure_unit(new, "S5e-1(반사창)", 450, 678, 805, args.verbose)
+    check(m is None and lg.has("반사 개입 가능"), "반사 개입 가능 구간 → 측정 폐기", fails)
+    # 안전 창(주입 92, 벽거리 804): 실제 감속 1.0s 프레임 값 → Ts·정지 정확 역산
+    m, lg = run_measure_unit(new, "S5e-2(정상감속)", 92, 320, 629, args.verbose)
+    check(m is not None and m.get("trusted") and m.get("ts")
+          and abs(m["ts"] - 1.0) < 0.05, "안전 창: 감속 1.0s 정확 역산", fails)
+    check(m is not None and abs(m["settle"] - 675) < 8,
+          f"정지 추정 675±8 (실측 {m and round(m['settle'])})", fails)
+    # 안전 창 + 짧은 감속 개체(0.30s, 195139 유형): 후프레임 전에 이미 정지
+    m, lg = run_measure_unit(new, "S5e-3(짧은감속)", 92, 254, 267, args.verbose)
+    check(m is not None and m.get("trusted") and m.get("ts")
+          and abs(m["ts"] - 0.30) < 0.03, "안전 창: 감속 0.30s 정확 역산", fails)
+    check(m is not None and abs(m["settle"] - 267) < 2, "정지 위치 실측(=후프레임)", fails)
 
     if args.old_ref:
         old = load_old_module(args.old_ref)

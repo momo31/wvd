@@ -33,6 +33,14 @@
 - 탭 직후 프레임을 감속 모델로 역산해 정지 위치를 추정하고, 목표중심과의
   오프셋을 EMA(_STOP_LEAD)로 되먹여 리드를 자동 보정한다. 이 신호는 press 지연
   오차·프레임 취득 시점 오차·감속 편차를 한 관측치로 흡수한다.
+- (26.07-16 개정) 단일 프레임 모델 외삽은 감속이 짧은 자물쇠 개체에서 이미 멈춘
+  커서를 감속 중으로 오해석해 +350~400px 를 허구로 더하고, 그 결과 미스를
+  "잘 맞았다"고 자기확인하는 결함이 있었다(저녁 세션 게임 판정 성공률 43%,
+  동일 조준 4연속 미스). → 탭 후 전/후 2프레임(후프레임은 ChallengeCheck 용
+  캡처 재사용)의 커서 이동량으로 (1) 정지 확정(이동 없음 → 실측 채택)
+  (2) 감속시간 역산(이동 있음 → 개체 Ts) (3) 역행/물리 불가(신규 커서 의심 →
+  측정 폐기) 를 판별하고, 실패 확정(도전 횟수 차감) + 실측 신뢰(trusted) 시
+  잔여 오차를 EMA 스텝 한도와 무관하게 즉시 재조준한다.
 
 운영하며 보완할 값은 DisarmConfig 에 모아두었다(실측 재수집 후 튜닝).
 """
@@ -79,6 +87,15 @@ class DisarmConfig:
     blind_fail_rtt_excess = 0.05 # press RTT-EMA 가 이 값 이상이면 '늦은 주입' 확정 힌트(s).
                                  # (EMA 에 당회 표본이 이미 반영된 뒤 비교되므로 실제 이상 Δ≈0.077s 부터 감지)
     resid_ewma_alpha = 0.3       # 측정 잔차(err_px) EWMA 계수
+    # --- 2프레임 정지 실측 (26.07-16 저녁 세션 판독: 자물쇠 개체별 감속 편차가
+    #     단일 프레임 모델 외삽을 오염 → 전/후 프레임 이동량으로 실측 판별) ---
+    stop_confirm_tol = 8.0       # 전/후 프레임 커서 일치 허용(px). 이내면 '정지 확정'
+    ts_solve_min = 0.08          # 감속시간 역산 해의 하한(s). 미만이면 측정 불신
+    ts_solve_max = 1.6           # 상한(s). 초과면 등속(탭 미반영/신규 커서) 의심 → 측정 폐기.
+                                 # 반사 가드의 최대 주행거리 산정에도 쓰므로 현실 상한(~1.2s)에
+                                 # 여유만 두고 낮게 유지한다(높이면 가드가 과보수화).
+    reflect_guard_pad = 60.0     # 반사 가드의 주입 위치 추정 오차 여유(px, est 외삽 오차 흡수)
+    reaim_min_extra = 0.008      # 실패 확정 + 실측 신뢰 시 재조준 잔여 보정 최소 크기(s)
     # --- margin ---
     margin_ratio = 0.10        # 안전구간 폭의 비율 (시뮬 최적 ~0.10)
     margin_speed_k = 0.0       # 속도 의존 가산: margin += k*v*Δt (빠른게임 여유). 0=비활성
@@ -156,6 +173,7 @@ class SmartDisarm:
         self.cfg = config or DisarmConfig()
         self._t = _ or (lambda s: s)
         self.audit = auditor   # audit 모듈 주입(없으면 None -> 모든 audit hook no-op)
+        self._lead_fb = None   # 직전 탭의 리드 되먹임 기록(실패 확정 재조준 판단용)
 
     # ===================== 화면 분석 =====================
     def detect(self, img):
@@ -510,7 +528,7 @@ class SmartDisarm:
                           .format(a=plan["center"], b=plan["margin"], c=press_wait, d=est["speed"],
                                   e=p1 - p0, f=self._stop_lead()))
 
-            # 탭 직후 프레임: 정지위치 역산(리드 자동보정) + audit + 조기 종료판정 겸용
+            # 탭 직후 전프레임: 정지위치 실측/역산 + audit + 조기 종료판정 겸용
             aimg = None
             a_content = None
             if self.audit or self.is_done:
@@ -518,8 +536,29 @@ class SmartDisarm:
                 aimg = self.cap()
                 a1 = self.now()
                 a_content = a0 + cfg.capture_grab_frac * (a1 - a0)
-            meas = self._measure_after_tap(aimg, a_content, p0, p1, samples[-1][0],
-                                           est, last_safes, (xmin, xmax))
+            self._lead_fb = None   # 이번 탭의 리드 되먹임 기록(실패 확정 재조준 판단용)
+
+            # 전프레임에서 이미 화면 전환이면 후프레임 없이 즉시 마감(기존 조기 종료 경로 유지).
+            done_now = bool(self.is_done and aimg is not None and self.is_done(aimg))
+            after = None
+            d_after = None
+            if done_now:
+                meas = self._measure_after_tap(aimg, a_content, p0, p1, samples[-1][0],
+                                               est, last_safes, (xmin, xmax))
+            else:
+                # 후프레임: settle_after_tap 대기 후 캡처. ChallengeCheck 와 공유하며,
+                # 전/후 프레임 커서 이동량으로 '정지 확정/감속시간 실측'을 판별한다.
+                rest = cfg.settle_after_tap - (self.now() - p1)
+                if rest > 0:
+                    time.sleep(rest)
+                b0 = self.now()
+                after = self.cap()
+                b1 = self.now()
+                b_content = b0 + cfg.capture_grab_frac * (b1 - b0)
+                d_after = self.detect(after) if after is not None else None
+                meas = self._measure_after_tap(aimg, a_content, p0, p1, samples[-1][0],
+                                               est, last_safes, (xmin, xmax),
+                                               frame2=(after, b_content, d_after))
             prev_tap_had_meas = _PREV_TAP_MEAS["ok"]   # 이번 탭 반영 전 = '직전 탭' 기준
             _PREV_TAP_MEAS["ok"] = meas is not None
             if meas is not None:
@@ -531,17 +570,12 @@ class SmartDisarm:
                                       backcast_x=(meas["settle"] if meas else None))
                 except Exception as e:
                     self.log.warning(self._t("[audit] 탭 기록 실패: {a}").format(a=e))
-            if self.is_done and aimg is not None and self.is_done(aimg):
+            if done_now:
                 # 주의: '종료'는 함정 발동으로 끝난 경우도 포함한다(실제 회피 여부는 종료 프레임으로 판별).
                 self.log.info(self._t("개봉 종료 감지."))
                 if self.audit: self.audit.on_result(self._t("종료"))
                 self._audit_end_frame(aimg)
                 return True
-
-            rest = cfg.settle_after_tap - (self.now() - p1)
-            if rest > 0:
-                time.sleep(rest)
-            after = self.cap()
 
             # 도전 횟수 차감 감지 및 리드 강제 피드백 루프 연계
             if img_before is not None and after is not None:
@@ -550,7 +584,7 @@ class SmartDisarm:
                     is_transition = True
                 
                 # safes 개수가 변했는지 확인하여 성공적 자물쇠 전환 시 예외처리
-                after_detect = self.detect(after)
+                after_detect = d_after
                 if after_detect is None:
                     # 성공하여 미니게임 화면이 닫히거나 다음 스테이지로 전환 중이라 막대 검출 불가한 상태
                     is_transition = True
@@ -666,6 +700,21 @@ class SmartDisarm:
                                                      .format(a=step, b=why, c=_STOP_LEAD["adj"]))
                                 else:
                                     self.log.info(self._t("[ChallengeCheck] 탭 실패(측정 공백 연속). 보정 방향 근거가 없어 맹목 보정은 생략합니다."))
+                        elif self._lead_fb is not None and self._lead_fb.get("trusted"):
+                            # [재조준] 실패 확정 + 정지 위치 실측 신뢰 → EMA 스텝 한도에 잘린
+                            # 잔여 오차를 즉시 반영해 같은 자물쇠 재도전에서 곧바로 재조준한다.
+                            # (26.07-16: 동일 조준 4연속 미스 — 스텝 상한 때문에 수렴에 3~5탭 소요)
+                            # 성공 탭의 diff 오탐이어도 실측 err 가 작으므로 자기제한된다.
+                            extra = self._lead_fb["err_t"] - self._lead_fb["applied"]
+                            new_adj = max(-cfg.stop_adj_total_max,
+                                          min(cfg.stop_adj_total_max, _STOP_LEAD["adj"] + extra))
+                            extra_eff = new_adj - _STOP_LEAD["adj"]
+                            if abs(extra_eff) >= cfg.reaim_min_extra:
+                                _STOP_LEAD["adj"] = new_adj
+                                self.log.warning(self._t("[ChallengeCheck] 탭 실패 + 정지 실측 확정 → 재조준 {a:+.3f}s 적용 (누적 {b:+.3f}s)")
+                                                 .format(a=extra_eff, b=new_adj))
+                            else:
+                                self.log.info(self._t("[ChallengeCheck] 탭 실패(도전 횟수 감소 감지). 정지 실측 보정이 이미 반영되어 추가 재조준은 생략합니다."))
                         else:
                             self.log.info(self._t("[ChallengeCheck] 탭 실패(도전 횟수 감소 감지). 정지위치 보정이 이미 반영되어 강제 상향은 생략합니다."))
             if self.is_done and after is not None and self.is_done(after):
@@ -687,50 +736,150 @@ class SmartDisarm:
 
         return self._give_up("샘플 상한 초과")
 
-    def _measure_after_tap(self, aimg, a_content, p0, p1, t_meas, est, safes, rng):
-        """탭 직후 프레임에서 커서를 측정하고, 감속 모델(선형, stop_time)로
-        '주입 시점 위치'와 '정지 위치'를 추정. 반환 dict(measured, inject, settle, dir_tap, v) 또는 None."""
+    def _frame_cursor(self, img, content_t, safes, d):
+        """단일 프레임에서 신뢰 가능한 커서 x 추출. 반환 (x, 사유, 커서만불특정).
+        막대 범위 안의 폭 필터 통과 후보가 정확히 1개일 때만 채택
+        (범위 밖 흰 UI 거짓양성/다중 후보로 인한 오염 방지. 애매하면 측정 포기).
+        커서만불특정=True 는 막대/구간은 정상인데 커서 후보만 0/복수인 상태 —
+        실패 리셋 커서(끝점 정지·소실)의 전형이라 별도 취급한다."""
+        if img is None or content_t is None:
+            return None, self._t("탭 후 프레임 없음"), False
+        if d is None:
+            d = self.detect(img)
+        if not d:
+            return None, self._t("탭 후 막대 미검출(화면 전환 중 추정)"), False
+        # 자물쇠가 이미 넘어가 구간 배치가 달라졌다면 이 프레임은 비교 불가
+        if len(d["safes"]) != len(safes) or any(
+                abs(na - oa) > 12 or abs(nb - ob) > 12
+                for (na, nb), (oa, ob) in zip(d["safes"], safes)):
+            return None, self._t("안전구간 배치 변화(다음 자물쇠 추정)"), False
+        bx0, bx1 = d["bar"]
+        cand = [x for (x, w) in d["cursors"]
+                if self.cfg.cursor_w_min <= w <= self.cfg.cursor_w_max and bx0 <= x <= bx1]
+        if len(cand) != 1:
+            return None, self._t("커서 후보 {a}개(1개 아님)").format(a=len(cand)), True
+        return int(cand[0]), None, False
+
+    def _solve_stop_time(self, v, delta, t1, t2):
+        """전/후 프레임 사이 진행방향 이동량(delta, px)으로 선형 감속시간 Ts 를 역산.
+        전제: 주입 순간 속도 v 에서 선형 감속, 구간 내 반사 없음.
+          Ts >= t2   : delta = v[(t2-t1) - (t2²-t1²)/(2Ts)]
+          t1 < Ts < t2: delta = (v/(2Ts))(Ts-t1)²   (후프레임 전에 이미 정지)
+        물리 불가(등속 이상 이동)이거나 해가 신뢰 범위 밖이면 None(측정 불신)."""
+        if v <= 1.0 or delta <= 0 or t2 <= t1:
+            return None
+        if delta >= v * (t2 - t1) - 1e-6:      # 감속 없이도 불가능한 이동량 = 신규 커서/오검출
+            return None
+        den = (t2 - t1) - delta / v
+        if den > 1e-9:
+            ts = (t2 * t2 - t1 * t1) / (2.0 * den)
+            if ts >= t2 and self.cfg.ts_solve_min <= ts <= self.cfg.ts_solve_max:
+                return ts
+        # t1 < Ts < t2 가지: v·Ts² - 2(v·t1 + delta)·Ts + v·t1² = 0 의 큰 근
+        b = v * t1 + delta
+        disc = b * b - (v * v) * (t1 * t1)
+        if disc < 0:
+            return None
+        root = (b + disc ** 0.5) / v
+        if t1 < root < t2 and self.cfg.ts_solve_min <= root <= self.cfg.ts_solve_max:
+            return root
+        return None
+
+    def _measure_after_tap(self, aimg, a_content, p0, p1, t_meas, est, safes, rng, frame2=None):
+        """탭 후 전/후 프레임에서 커서를 측정해 '정지 위치'를 구한다.
+        frame2=(img, content_t, detect결과) 가 주어지면 두 프레임 이동량으로
+          (1) 정지 확정: 이동 없음 → 정지 위치 실측 채택 (모델 외삽 제거)
+          (2) 감속 실측: 이동 있음 → 개체 감속시간 역산 후 잔여만 외삽
+          (3) 역행/물리 불가: 실패 리셋된 신규 커서 의심 → 측정 폐기
+        를 우선 시도하고, 한쪽 프레임만 유효하면 감속 모델(stop_time) 외삽으로 폴백.
+        반환 dict(measured, inject, settle, dir_tap, v, trusted, ts) 또는 None.
+        trusted=True 는 settle 이 실측(2프레임 근거) 기반임을 뜻한다."""
         try:
-            if aimg is None or a_content is None:
-                self.log.debug(self._t("[측정] 탭 후 프레임 없음 → 보정 생략."))
-                return None
-            d = self.detect(aimg)
-            if not d:
-                self.log.debug(self._t("[측정] 탭 후 막대 미검출(화면 전환 중 추정) → 보정 생략."))
-                return None
-            # 자물쇠가 이미 넘어가 구간 배치가 달라졌다면 이 프레임은 비교 불가
-            if len(d["safes"]) != len(safes) or any(
-                    abs(na - oa) > 12 or abs(nb - ob) > 12
-                    for (na, nb), (oa, ob) in zip(d["safes"], safes)):
-                self.log.debug(self._t("[측정] 안전구간 배치 변화(다음 자물쇠 추정) → 보정 생략."))
-                return None
-            # 막대 범위 안의 폭 필터 통과 후보가 정확히 1개일 때만 채택.
-            # (범위 밖 흰 UI 거짓양성/다중 후보로 인한 오염 방지. 애매하면 측정 포기.)
-            bx0, bx1 = d["bar"]
-            cand = [x for (x, w) in d["cursors"]
-                    if self.cfg.cursor_w_min <= w <= self.cfg.cursor_w_max and bx0 <= x <= bx1]
-            if len(cand) != 1:
-                self.log.debug(self._t("[측정] 커서 후보 {a}개(1개 아님) → 보정 생략.").format(a=len(cand)))
-                return None
-            measured = int(cand[0])
             v = est["speed"]
             Ts = max(1e-3, self.cfg.stop_time)
             tap_time = p0 + max(0.0, (p1 - p0) - self.cfg.press_inject_lead)
-            # est 방향은 마지막 샘플 시점 기준 → 주입 시점 방향을 전방 전파로 구한다
+            # est 방향은 마지막 샘플 시점 기준 → 주입 시점 위치/방향을 전방 전파로 구한다
             # (반사 홀수 회 개입 시 방향 반전. 감속 중에는 방향이 유지된다고 가정.)
-            _px, dir_tap = self._propagate(est["x"], v, est["dir"],
-                                           tap_time - t_meas, rng[0], rng[1])
+            x_inj, dir_tap = self._propagate(est["x"], v, est["dir"],
+                                             tap_time - t_meas, rng[0], rng[1])
+
+            d1 = self.detect(aimg) if aimg is not None else None
+            x1, why1, _amb1 = self._frame_cursor(aimg, a_content, safes, d1)
+            x2, why2, amb2, b_content = None, self._t("후프레임 없음"), False, None
+            if frame2 is not None:
+                f2img, b_content, d2 = frame2
+                x2, why2, amb2 = self._frame_cursor(f2img, b_content, safes, d2)
+
+            if x1 is None and x2 is None:
+                self.log.debug(self._t("[측정] {a} → 보정 생략.").format(a=why1))
+                return None
+
+            # --- 2프레임 경로: 정지 확정 / 감속시간 실측 / 신규 커서 방어 ---
+            if x1 is not None and x2 is not None and b_content is not None:
+                delta = (x2 - x1) * dir_tap          # 주입 시점 진행방향 기준 이동량(px)
+                t1 = max(0.0, a_content - tap_time)
+                t2 = max(t1 + 1e-3, b_content - tap_time)
+                # [반사 가드] 전/후 프레임 사이에 끝점 반사가 끼면 delta 가 '반사로 축소된
+                # 양의 값'이 되어 허구의 짧은 Ts 해가 모든 가드를 통과한다(가짜 해가 자기
+                # 일관적이라 관측만으로는 판별 불가). 주행거리는 어떤 Ts 에서도
+                # s(t2) <= v·(t2 - t2²/(2·ts_solve_max)) 이므로, 주입 위치에서 진행방향
+                # 벽까지 거리 q 가 이 상한보다 크면 반사가 불가능함이 확정된다.
+                # 불가능 확정이 아니면 2프레임 판별 자체가 모호 → 측정 폐기(오염 방지 우선).
+                q = (rng[1] - x_inj) if dir_tap > 0 else (x_inj - rng[0])
+                tm = min(t2, self.cfg.ts_solve_max)
+                s_max = v * (tm - tm * tm / (2.0 * self.cfg.ts_solve_max))
+                if q - self.cfg.reflect_guard_pad < s_max:
+                    self.log.debug(self._t("[측정] 반사 개입 가능 구간(벽거리 {a:.0f}px, 최대주행 {b:.0f}px) → 보정 생략.")
+                                   .format(a=q, b=s_max))
+                    return None
+                if delta < -self.cfg.stop_confirm_tol:
+                    # 진행방향 역행: 실패 후 리셋된 신규 커서(또는 감속 중 반사) 의심 → 측정 불신
+                    self.log.debug(self._t("[측정] 2프레임 역행(Δ{a:+.0f}px, 신규 커서 의심) → 보정 생략.")
+                                   .format(a=delta))
+                    return None
+                if delta <= self.cfg.stop_confirm_tol:
+                    # 두 프레임이 같은 자리 = 커서는 이미 정지 → 모델 외삽 없이 실측 채택
+                    self.log.debug(self._t("[측정] 2프레임 정지 확정(x={a}, Δ{b:+.0f}px) → 정지 위치 실측 채택.")
+                                   .format(a=x2, b=delta))
+                    return {"measured": x1, "inject": None, "settle": float(x2),
+                            "dir_tap": dir_tap, "v": v, "trusted": True, "ts": None}
+                ts = self._solve_stop_time(v, delta, t1, t2)
+                if ts is None:
+                    self.log.debug(self._t("[측정] 감속시간 해 없음(Δ{a:+.0f}px, {b:.2f}~{c:.2f}s, 신규 커서 의심) → 보정 생략.")
+                                   .format(a=delta, b=t1, c=t2))
+                    return None
+                remain = (v / (2.0 * ts)) * (ts - t2) ** 2 if t2 < ts else 0.0
+                settle, _d2 = self._propagate(x2, remain, dir_tap, 1.0, rng[0], rng[1])
+                self.log.debug(self._t("[측정] 2프레임 감속 실측: Δ{a:+.0f}px → 감속시간 {b:.2f}s, 정지 추정 {c:.0f}.")
+                               .format(a=delta, b=ts, c=settle))
+                return {"measured": x1, "inject": None, "settle": settle,
+                        "dir_tap": dir_tap, "v": v, "trusted": True, "ts": ts}
+
+            # --- 단일 프레임 폴백: 감속 모델(stop_time) 외삽 (기존 동작) ---
+            if x1 is not None:
+                if amb2:
+                    # 후프레임 막대는 정상인데 커서만 불특정: 실패 리셋 커서(끝점 정지·
+                    # 재출발)의 전형. 이때 전프레임 단일 외삽은 미스를 명중으로 재생산
+                    # 하는 자기기만 경로이므로 측정을 폐기한다.
+                    self.log.debug(self._t("[측정] 후프레임 커서 불특정({a}) → 보정 생략.").format(a=why2))
+                    return None
+                mx, mt = x1, a_content
+                if frame2 is not None:
+                    self.log.debug(self._t("[측정] 후프레임 사용 불가({a}) → 단일 프레임 외삽 유지.").format(a=why2))
+            else:
+                mx, mt = x2, b_content
+                self.log.debug(self._t("[측정] 전프레임 사용 불가({a}) → 후프레임 외삽.").format(a=why1))
             # 주입 후 경과 t_rel 동안의 감속 이동거리(선형 감속: 속도 v → 0, 소요 Ts)
-            t_rel = max(0.0, a_content - tap_time)
+            t_rel = max(0.0, mt - tap_time)
             tt = min(t_rel, Ts)
             travel = v * (tt - tt * tt / (2.0 * Ts))     # 주입~프레임 이동거리(px)
             total = v * Ts / 2.0                         # 주입~정지 총 이동거리(px)
             # _propagate 로 fold 유지 이동: speed=거리, dt=±1s 로 '거리만큼' 전/후진
-            inject, _d1 = self._propagate(measured, travel, dir_tap, -1.0, rng[0], rng[1])
-            settle, _d2 = self._propagate(measured, max(0.0, total - travel), dir_tap, 1.0,
+            inject, _d1 = self._propagate(mx, travel, dir_tap, -1.0, rng[0], rng[1])
+            settle, _d2 = self._propagate(mx, max(0.0, total - travel), dir_tap, 1.0,
                                           rng[0], rng[1])
-            return {"measured": measured, "inject": inject, "settle": settle,
-                    "dir_tap": dir_tap, "v": v}
+            return {"measured": mx, "inject": inject, "settle": settle,
+                    "dir_tap": dir_tap, "v": v, "trusted": False, "ts": None}
         except Exception as e:
             self.log.warning(self._t("[audit] 탭 후 측정 실패: {a}").format(a=e))
             return None
@@ -763,13 +912,18 @@ class SmartDisarm:
         if self.cfg.stop_time <= 0:
             return
         err_px = (meas["settle"] - plan["center"]) * meas["dir_tap"]
-        if abs(err_px) > plan["half"] + 250:      # [개선안 2] 대편차 발생 시 오검출 노이즈 영향을 억제하며 최소치 보정 반영
+        trusted = bool(meas.get("trusted"))
+        if not trusted and abs(err_px) > plan["half"] + 250:
+            # [개선안 2] 대편차 가드: 단일 프레임 외삽의 오검출 노이즈 억제.
+            # 2프레임 실측(trusted)은 대편차 자체가 진짜 신호(개체 감속 편차)이므로 우회한다.
             step = 0.015 * np.sign(err_px)
             adj = max(-self.cfg.stop_adj_total_max,
                       min(self.cfg.stop_adj_total_max, _STOP_LEAD["adj"] + step))
             _STOP_LEAD["adj"] = adj
             self.log.warning(self._t("[Warning] 정지위치 대편차({a:+.0f}px) 감지. 최소 보정 {b:+.3f}s 반영 (누적 {c:+.3f}s)")
                            .format(a=err_px, b=step, c=adj))
+            self._lead_fb = {"err_t": err_px / max(1.0, meas["v"]), "applied": step,
+                             "trusted": False}
             return
         # 무측정 실패 보정의 방향 사전정보(잔차 EWMA). 대편차 가드를 통과한 관측만 반영.
         a_r = self.cfg.resid_ewma_alpha
@@ -786,6 +940,9 @@ class SmartDisarm:
         adj = max(-self.cfg.stop_adj_total_max,
                   min(self.cfg.stop_adj_total_max, _STOP_LEAD["adj"] + step))
         _STOP_LEAD["adj"] = adj
+        # 실패 확정 재조준(run 의 ChallengeCheck)이 참조할 이번 탭 되먹임 기록
+        self._lead_fb = {"err_t": err_px / max(1.0, meas["v"]), "applied": step,
+                         "trusted": trusted}
 
         self.log.debug(self._t("정지위치 오프셋 {a:+.0f}px → 리드 보정 {b:+.3f}s (누적 {c:+.3f}s)")
                        .format(a=err_px, b=step, c=adj))
