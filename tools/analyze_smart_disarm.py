@@ -45,6 +45,7 @@ RE_PRESS   = re.compile(r"press 지연 실측 ([\d.]+)s \(EMA ([\d.]+)s\)")
 RE_CAP_S   = re.compile(r"\[cap\] socket ([\d.]+)s")
 RE_CAP_P   = re.compile(r"\[cap\] subprocess ([\d.]+)s")
 RE_SKIP    = re.compile(r"\[측정\] (.+?)(?:→| -) 보정 생략")
+RE_CHANCE  = re.compile(r"기회 매칭 점수: (.+?) → 판독")
 
 COUNT_KEYS = [
     ("상자 처리 300초 초과",            "상자 300초 가드 재시작"),
@@ -84,6 +85,7 @@ def q(vals, p):
 def parse_logs(log_dir):
     data = dict(results=[], taps_new=[], taps_old=[], taplogs=[], offsets=[],
                 snaps=[], press=[], cap_s=[], cap_p=[], dts=[], skips={},
+                chance_scores={},
                 counts={label: 0 for _, label in COUNT_KEYS})
     files = sorted(glob.glob(os.path.join(log_dir, "log_*.txt")))
     cur_tag, prev_t, last_speed = None, None, None
@@ -156,6 +158,15 @@ def parse_logs(log_dir):
                     # 발생 건별 고유 키로 단편화되는 것을 막는다.
                     r = re.sub(r"[-+]?\d+(?:\.\d+)?", "N", m.group(1).strip())
                     data["skips"][r] = data["skips"].get(r, 0) + 1
+                    continue
+                m = RE_CHANCE.search(line)
+                if m:
+                    for pair in m.group(1).split():
+                        k, _, sv = pair.partition("=")
+                        try:
+                            data["chance_scores"].setdefault(k, []).append(float(sv))
+                        except ValueError:
+                            pass
                     continue
                 m = RE_RESULT.search(line)
                 if m:
@@ -253,6 +264,13 @@ def main():
     if errs:
         print(f"  이미지 |판정선-목표| 오차: median {q(errs,0.5):.0f}px"
               f" (p25 {q(errs,0.25):.0f} / p75 {q(errs,0.75):.0f}, n={len(errs)})")
+    if d["chance_scores"]:
+        parts = []
+        for k in ["4", "3", "2", "1"]:
+            vs = d["chance_scores"].get(k)
+            if vs:
+                parts.append(f"{k}: med {q(vs,0.5):.2f} max {max(vs):.2f} (n={len(vs)})")
+        print("  기회 템플릿 매칭 최고점(문턱 0.85): " + " | ".join(parts))
 
     print("\n[3] 보정 궤적")
     if d["snaps"]:

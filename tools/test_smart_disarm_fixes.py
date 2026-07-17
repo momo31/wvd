@@ -506,6 +506,16 @@ def main():
     check(m is not None and m.get("trusted") and m.get("ts")
           and abs(m["ts"] - 0.30) < 0.03, "안전 창: 감속 0.30s 정확 역산", fails)
     check(m is not None and abs(m["settle"] - 267) < 2, "정지 위치 실측(=후프레임)", fails)
+    # 반사 창이어도 '정지 확정'(두 프레임 동일)은 가드보다 먼저 실측 채택되어야 한다
+    # (26.07-17 실전에서 가드 선행 배치가 정지 확정을 차단해 커버리지 19% 급락).
+    m, lg = run_measure_unit(new, "S5e-4(반사창+정지)", 450, 283, 284, args.verbose)
+    check(m is not None and m.get("trusted") and m.get("ts") is None
+          and abs(m["settle"] - 284) < 1, "반사 창에서도 정지 확정은 실측 채택", fails)
+    check(not lg.has("반사 개입 가능"), "정지 확정이 가드에 선행", fails)
+    # 반사 창 + 역행(신규 커서): 가드가 아닌 '역행' 사유로 폐기(더 정확한 진단)
+    m, lg = run_measure_unit(new, "S5e-5(반사창+역행)", 450, 500, 300, args.verbose)
+    check(m is None and lg.has("신규 커서 의심") and not lg.has("반사 개입 가능"),
+          "역행 폐기가 가드에 선행", fails)
 
     if args.old_ref:
         old = load_old_module(args.old_ref)

@@ -247,6 +247,7 @@ class SmartDisarm:
             return None
         best_val = -1
         detected_chance = None
+        scores = {}
         for val in [4, 3, 2, 1]:
             path = os.path.join(_SMALLGAME_DIR, f"smallgame_{val}.png")
             if os.path.exists(path):
@@ -256,12 +257,19 @@ class SmartDisarm:
                     if temp is not None:
                         res = cv2.matchTemplate(img_roi, temp, cv2.TM_CCOEFF_NORMED)
                         _, max_val, _, _ = cv2.minMaxLoc(res)
+                        scores[val] = max_val
                         # 임계값 0.85 이상 매치 시
                         if max_val >= 0.85 and max_val > best_val:
                             best_val = max_val
                             detected_chance = val
                 except Exception as e:
                     self.log.error(f"[ChallengeCheck] MatchTemplate error for value {val}: {e}")
+        if scores:
+            # 템플릿별 최고점 기록: 3/1 이 '아깝게 미달(재크롭으로 해결)'인지
+            # '완전 불일치(실기 표시가 다른 모습)'인지 세션 로그만으로 판별하기 위함.
+            self.log.debug("[ChallengeCheck] 기회 매칭 점수: "
+                           + " ".join(f"{v}={scores[v]:.2f}" for v in [4, 3, 2, 1] if v in scores)
+                           + f" → 판독 {detected_chance if detected_chance is not None else '미달'}")
         return detected_chance
 
     # ===================== 추정 =====================
@@ -819,12 +827,27 @@ class SmartDisarm:
                 delta = (x2 - x1) * dir_tap          # 주입 시점 진행방향 기준 이동량(px)
                 t1 = max(0.0, a_content - tap_time)
                 t2 = max(t1 + 1e-3, b_content - tap_time)
-                # [반사 가드] 전/후 프레임 사이에 끝점 반사가 끼면 delta 가 '반사로 축소된
-                # 양의 값'이 되어 허구의 짧은 Ts 해가 모든 가드를 통과한다(가짜 해가 자기
-                # 일관적이라 관측만으로는 판별 불가). 주행거리는 어떤 Ts 에서도
-                # s(t2) <= v·(t2 - t2²/(2·ts_solve_max)) 이므로, 주입 위치에서 진행방향
-                # 벽까지 거리 q 가 이 상한보다 크면 반사가 불가능함이 확정된다.
-                # 불가능 확정이 아니면 2프레임 판별 자체가 모호 → 측정 폐기(오염 방지 우선).
+                if delta < -self.cfg.stop_confirm_tol:
+                    # 진행방향 역행: 실패 후 리셋된 신규 커서(또는 감속 중 반사) 의심 → 측정 불신
+                    self.log.debug(self._t("[측정] 2프레임 역행(Δ{a:+.0f}px, 신규 커서 의심) → 보정 생략.")
+                                   .format(a=delta))
+                    return None
+                if delta <= self.cfg.stop_confirm_tol:
+                    # 두 프레임이 같은 자리 = 커서는 이미 정지 → 모델 외삽 없이 실측 채택.
+                    # 반사 가드보다 먼저 판정한다: 반사 왕복이 우연히 x1 근처로 복귀하는
+                    # 오판 대역은 ±tol/복귀속도 ≈ 수십 ms 로 좁고, 짧은 감속 개체의 정지
+                    # 실측(재조준의 핵심 신호)을 가드가 차단하는 손실이 훨씬 크다
+                    # (26.07-17 실전: 가드 선행 배치로 정지 확정 0회, 커버리지 74%→19%).
+                    self.log.debug(self._t("[측정] 2프레임 정지 확정(x={a}, Δ{b:+.0f}px) → 정지 위치 실측 채택.")
+                                   .format(a=x2, b=delta))
+                    return {"measured": x1, "inject": None, "settle": float(x2),
+                            "dir_tap": dir_tap, "v": v, "trusted": True, "ts": None}
+                # [반사 가드] 감속시간 역산에만 적용. 전/후 프레임 사이에 끝점 반사가 끼면
+                # delta 가 '반사로 축소된 양의 값'이 되어 허구의 짧은 Ts 해가 모든 가드를
+                # 통과한다(가짜 해가 자기일관적이라 관측만으로는 판별 불가). 주행거리는
+                # 어떤 Ts 에서도 s(t2) <= v·(t2 - t2²/(2·ts_solve_max)) 이므로, 주입
+                # 위치에서 진행방향 벽까지 거리 q 가 이 상한보다 크면 반사 불가능이 확정된다.
+                # 불가능 확정이 아니면 역산은 모호 → 측정 폐기(오염 방지 우선).
                 q = (rng[1] - x_inj) if dir_tap > 0 else (x_inj - rng[0])
                 tm = min(t2, self.cfg.ts_solve_max)
                 s_max = v * (tm - tm * tm / (2.0 * self.cfg.ts_solve_max))
@@ -832,17 +855,6 @@ class SmartDisarm:
                     self.log.debug(self._t("[측정] 반사 개입 가능 구간(벽거리 {a:.0f}px, 최대주행 {b:.0f}px) → 보정 생략.")
                                    .format(a=q, b=s_max))
                     return None
-                if delta < -self.cfg.stop_confirm_tol:
-                    # 진행방향 역행: 실패 후 리셋된 신규 커서(또는 감속 중 반사) 의심 → 측정 불신
-                    self.log.debug(self._t("[측정] 2프레임 역행(Δ{a:+.0f}px, 신규 커서 의심) → 보정 생략.")
-                                   .format(a=delta))
-                    return None
-                if delta <= self.cfg.stop_confirm_tol:
-                    # 두 프레임이 같은 자리 = 커서는 이미 정지 → 모델 외삽 없이 실측 채택
-                    self.log.debug(self._t("[측정] 2프레임 정지 확정(x={a}, Δ{b:+.0f}px) → 정지 위치 실측 채택.")
-                                   .format(a=x2, b=delta))
-                    return {"measured": x1, "inject": None, "settle": float(x2),
-                            "dir_tap": dir_tap, "v": v, "trusted": True, "ts": None}
                 ts = self._solve_stop_time(v, delta, t1, t2)
                 if ts is None:
                     self.log.debug(self._t("[측정] 감속시간 해 없음(Δ{a:+.0f}px, {b:.2f}~{c:.2f}s, 신규 커서 의심) → 보정 생략.")
