@@ -199,6 +199,9 @@ def analyze_images(img_dir):
         img = cv2.imread(f)
         if img is None:
             continue
+        # 오버레이 선은 상단 180px 에만 그어진다(신형 260px 저장본은 하단 80px 이
+        # 기회 표시 원본). 판정선 검출은 상단 180px 기준으로 신구 저장본 모두 호환.
+        img = img[0:180]
         b = img[:, :, 0].astype(int); g = img[:, :, 1].astype(int); r = img[:, :, 2].astype(int)
         H = img.shape[0]
 

@@ -428,12 +428,16 @@ def main():
     check(r["log"].has("리드 보정 +0.025s 적용") and r["log"].has("잔차 추이"),
           "+0.025 적용(근거: 잔차 추이)", fails)
     check(abs(r["adj"] - 0.025) < 1e-9, f"adj == +0.025 (실측 {r['adj']:+.3f})", fails)
+    check(r["resid"] is not None and abs(r["resid"] - 30.0) < 1e-6,
+          f"EWMA 근거 소비 감쇠 60→30 (실측 {r['resid']})", fails)
 
     print("== [현행 코드] S4b 공백 연속+잔차 -60px: -0.025 적용 ==")
     r = run_scenario(new, "S4b", "P1", False, args.verbose,
                      seed=dict(prev_meas=False, resid=-60.0))
     check(r["log"].has("리드 보정 -0.025s 적용"), "-0.025 적용(음의 방향 보정 가능)", fails)
     check(abs(r["adj"] + 0.025) < 1e-9, f"adj == -0.025 (실측 {r['adj']:+.3f})", fails)
+    check(r["resid"] is not None and abs(r["resid"] + 30.0) < 1e-6,
+          f"EWMA 근거 소비 감쇠 -60→-30 (실측 {r['resid']})", fails)
 
     print("== [현행 코드] S4c 공백 연속+근거 없음(잔차 +10px): 생략 ==")
     r = run_scenario(new, "S4c", "P1", False, args.verbose,
@@ -446,6 +450,18 @@ def main():
                      seed=dict(prev_meas=False, press_ema=0.001))
     check(r["log"].has("press 지연 이상"), "RTT 이상 근거 로그", fails)
     check(abs(r["adj"] - 0.025) < 1e-9, f"adj == +0.025 (실측 {r['adj']:+.3f})", fails)
+
+    print("== [현행 코드] S4e blind 근거 소비 감쇠: 동결 EWMA 반복 소비 시 자연 정지 ==")
+    # 26-07-17 실전 재현: 측정 기아로 EWMA -268px 동결 → blind 14연속 -0.025 표류.
+    # 감쇠 적용 후에는 4회 발동(-268→-134→-67→-33.5→-16.75) 뒤 근거 소진으로 생략.
+    new._RESID["ewma"] = -268.0
+    new._PRESS_LAT["ema"] = 0.02
+    sd_unit = new.SmartDisarm(lambda: None, lambda p: True, time.monotonic, RecLogger())
+    steps = [round(sd_unit._blind_fail_step(0.02)[0], 3) for _ in range(6)]
+    check(steps == [-0.025] * 4 + [0.0, 0.0],
+          f"4회 발동 후 근거 소진으로 자연 정지 (실측 {steps})", fails)
+    check(abs(new._RESID["ewma"] + 16.75) < 0.01,
+          f"EWMA -268 → -16.75 (실측 {new._RESID['ewma']:+.2f})", fails)
 
     print("== [현행 코드] S5a 감속 0.35s 개체: 실측 재조준 후 재도전 명중 ==")
     r = run_scenario(new, "S5a", None, True, args.verbose,

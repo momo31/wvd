@@ -84,6 +84,8 @@ class DisarmConfig:
     #     조건·부호·크기 3중 제한으로 교체) ---
     blind_fail_step = 0.025      # 무측정 실패 보정 크기(s). 기존 고정 +0.05 의 절반.
     blind_fail_resid_min = 25.0  # 잔차 EWMA 부호를 신뢰할 최소 크기(px). 미만이면 중앙 정렬로 보고 생략.
+    blind_resid_decay = 0.5      # blind 가 잔차 EWMA 근거를 소비할 때마다 곱하는 감쇠(신뢰 소모).
+                                 # 측정 기아 상태에서 동결된 EWMA 가 한 방향 표류를 만드는 것을 차단.
     blind_fail_rtt_excess = 0.05 # press RTT-EMA 가 이 값 이상이면 '늦은 주입' 확정 힌트(s).
                                  # (EMA 에 당회 표본이 이미 반영된 뒤 비교되므로 실제 이상 Δ≈0.077s 부터 감지)
     resid_ewma_alpha = 0.3       # 측정 잔차(err_px) EWMA 계수
@@ -970,6 +972,11 @@ class SmartDisarm:
         ew = _RESID["ewma"]
         if ew is not None and abs(ew) >= self.cfg.blind_fail_resid_min:
             step = self.cfg.blind_fail_step if ew > 0 else -self.cfg.blind_fail_step
+            # 근거 소비 감쇠: 실측 갱신 없이 같은 EWMA 를 반복 소비하면 신뢰를 반감시킨다.
+            # (26.07-17 실전: 측정 기아 상태에서 EWMA 가 -268px 로 동결된 채 blind 가
+            #  14연속 같은 방향으로 발동해 리드 0.500→0.217 단조 표류 → 성공률 급락.
+            #  감쇠로 4~5회 후 자연 정지하고, 실측이 들어오면 EWMA 는 다시 채워진다.)
+            _RESID["ewma"] = ew * self.cfg.blind_resid_decay
             return step, self._t("잔차 추이 {a:+.0f}px").format(a=ew)
         return 0.0, None
 

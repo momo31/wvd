@@ -110,7 +110,10 @@ class SmartDisarmAuditor:
     # --- 오버레이 그리기 ---
     def _save_overlay(self, img, cur_x, plan, est, safes, rng, hit, backcast_x=None):
         try:
-            vis = img[0:180].copy()
+            # 상단 180px(막대·검출 오버레이)에 더해 하단 80px(도전 횟수 표시 170:250)까지 담는다.
+            # 하단은 선을 긋지 않고 원본을 보존한다 — smallgame 템플릿의 실기 렌더 재수집 소재
+            # (26.07-17: smallgame_3/1 매칭 최고점 0.64/0.57 로 완전 미스매치 확정, 실기 표본 필요).
+            vis = img[0:260].copy()
             c = int(plan["center"]); half = plan["half"]; margin = plan["margin"]
             for (a, b) in safes:                                   # 안전구간(분홍)
                 cv2.rectangle(vis, (int(a), 5), (int(b), 170), (255, 0, 255), 1)
