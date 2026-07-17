@@ -76,6 +76,7 @@ CONFIG_VAR_LIST = [
             ["TEMPLATE",   "REST_INTERVEL",           tk.IntVar,     1],
             ["TEMPLATE",   "ACTIVE_CSC",              tk.BooleanVar, True],
             ["TEMPLATE",   "BYPASS_THE_WALL",         tk.BooleanVar, False],
+            ["TEMPLATE",   "RE_ASSEMBLE_PARTY",       tk.BooleanVar, False],
             ]
 class FarmConfig:
     for attr_name, var_type, var_config_name, var_default_value in CONFIG_VAR_LIST:
@@ -123,6 +124,7 @@ class RuntimeContext:
     NEED_RECOVER_WHEN_BEGINNING = True
     TASK_STEP_INDEX = 0
     COMBAT_COUNT_SINCE_RELOAD = 0
+    _LAST_BAGCLEAR = 0
 class FarmQuest:
     _TARGETINFOLIST = None
     _EOT = None
@@ -187,11 +189,9 @@ class TargetInfo:
         self._roi = value
 ##################################################################
 def LoadQuest(farmtarget):
-    # 构建文件路径
-    jsondict = LoadJson(ResourcePath(QUEST_FILE))
     logger.debug(f"读取任务{farmtarget}")
-    if farmtarget in jsondict:
-        data = jsondict[farmtarget]
+    if farmtarget in QUEST_DATA:
+        data = QUEST_DATA[farmtarget]
     else:
         logger.error(_("任务列表已更新.请重新手动选择地下城任务."))
         return None
@@ -999,6 +999,7 @@ def Factory():
                 DeviceShell(target)
             else:
                 Press(CheckIf(scn, target))
+                Sleep(0.2)
         def checkPattern(scn, pattern):
             if pattern.startswith("combatActive"):
                 return StateCombatCheck(scn)
@@ -1167,6 +1168,40 @@ def Factory():
         Combat = "combat"
         Quit = "quit"
 
+    def BagClear_Item():
+        Press([847,1174])
+        Sleep(1)
+        if not CheckIf(ScreenShot(), "itemList"):
+            return
+        for i in range(6):
+            Press([350+(i%3)*200, 1290+(i//3)*70])
+            Sleep(1)
+            while 1:
+                if not Press(CheckIf(ScreenShot(),"itemIcon", [[67,871,94,288]])):
+                    break
+                Press(CheckIf(ScreenShot(),"putinstorage"))
+                Sleep(1)
+        
+        while 1:
+            if Press(CheckIf(ScreenShot(), "close")):
+                Sleep(1)
+            else:
+                break
+    def BagClear_Equipment():
+        period = int(runtimeContext._TOTALTIME // (6 * 3600))
+        if runtimeContext._LAST_BAGCLEAR == period:
+            return
+
+        logger.info(_("必须重新集结队伍..."))
+        RestartableSequenceExecution(
+                    lambda: Press(FindCoordsOrElseExecuteFallbackAndWait("Edit",["guild",[1,1]],1)),
+                    lambda: Press(FindCoordsOrElseExecuteFallbackAndWait("PartyManagement",["Edit",[1,1]],1)),
+                    lambda: FindCoordsOrElseExecuteFallbackAndWait("AdventurerGuild",["PartyManagement",[1,1]],1),
+                    lambda: Press(FindCoordsOrElseExecuteFallbackAndWait("ok",[[137,290],"AssembleParty"],1)),
+                    lambda: FindCoordsOrElseExecuteFallbackAndWait("Inn","return",1)
+            )
+        runtimeContext._LAST_BAGCLEAR = period
+
     def DungeonCompletionCounter():
         nonlocal runtimeContext
         # 如果发生了开箱或者战斗那么+1
@@ -1184,7 +1219,6 @@ def Factory():
             logger.info("{a}{b}".format(a=runtimeContext._IMPORTANTINFO, b=summary_text),extra={"summary": True})
         # 圈数计时器
         runtimeContext._LAPTIME = time.time()
-
 
     def TeleportFromCityToWorldLocation(target, swipe, press_any_key = [550,1]):
         nonlocal runtimeContext
@@ -1408,7 +1442,14 @@ def Factory():
                 return IdentifyState()
 
             if CheckIf(screen,"returntoTown"):
-                if setting.ACTIVE_REST and runtimeContext._MEET_CHEST_OR_COMBAT and ((runtimeContext._COUNTERDUNG-1) % (max(setting.REST_INTERVEL,1)) == 0):
+                if  (
+                        setting.ACTIVE_REST and                             # 激活休息
+                        runtimeContext._MEET_CHEST_OR_COMBAT and            # 遇到宝箱或战斗
+                        ((runtimeContext._COUNTERDUNG - 1) % (max(setting.REST_INTERVEL, 1)) == 0)              # 每隔 REST_INTERVEL 次触发
+                    ) or (
+                        setting.RE_ASSEMBLE_PARTY and                       # 重新集结队伍
+                        (int(runtimeContext._TOTALTIME // (6 * 3600)) != runtimeContext._LAST_BAGCLEAR)         # 每 6 小时清包检查
+                    ):
                     FindCoordsOrElseExecuteFallbackAndWait("Inn",["return",[1,1]],1)
                     return State.Inn,DungeonState.Quit, screen
                 else:
@@ -2509,6 +2550,8 @@ def Factory():
                         logger.info(_("即将停止脚本..."))
                         break
                 case State.Inn:
+                    if setting.RE_ASSEMBLE_PARTY:
+                        BagClear_Equipment()
                     if not runtimeContext._MEET_CHEST_OR_COMBAT:
                         logger.info(_("因为没有遇到战斗或宝箱, 跳过住宿."))
                     elif not setting.ACTIVE_REST:

@@ -4,6 +4,7 @@ import json
 import os
 import logging
 import logging.handlers
+import copy
 import sys
 import cv2
 import time
@@ -288,10 +289,66 @@ def ShowChangesLogWindow():
         text_area.insert(tk.INSERT, f"读取文件时出错: {str(e)}")
         text_area.configure(state='disabled')
 ###########################################
-QUEST_FILE = 'resources/quest/quest.json'
+QUEST_FILE_BASE = 'resources/quest/quest.json'
+QUEST_FILE_MOD = 'mod/quest.json'
+def _build_quest_data():
+    """加载基础任务文件并合并 mod/quest.json，返回合并后的任务字典"""
+    try:
+        base_data = LoadJson(ResourcePath(QUEST_FILE_BASE))
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        logger.error(f"无法读取通用任务列表: {e}")
+        raise
+
+    # 深拷贝一份作为结果，避免修改原始数据影响后续
+    merged = copy.deepcopy(base_data)
+
+    # 如果 mod 文件存在，进行校验与合并
+    if os.path.exists(QUEST_FILE_MOD):
+        try:
+            mod_data = LoadJson(QUEST_FILE_MOD)
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            logger.warning(f"无法读取自定义任务列表: {e}, 跳过合并.")
+            mod_data = {}
+
+        for mod_key, mod_info in mod_data.items():
+            # === 校验1: _TYPE 必须存在且为 dungeon 或 quest ===
+            if "_TYPE" not in mod_info or mod_info["_TYPE"] not in ("dungeon", "quest"):
+                logger.error(f"自定义任务 '{mod_key}' 具有不合法的_TYPE值, 跳过.")
+                continue
+
+            # === 校验2: 必须有 questName 或 questName_en_US ===
+            has_local_name = "questName" in mod_info
+            has_en_name = "questName_en_US" in mod_info
+            if not has_local_name and not has_en_name:
+                logger.error(f"自定义任务 '{mod_key}' 缺少任务名或者英文任务名, 跳过.")
+                continue
+
+            # 补齐本地化名称（只提供一种时，另一种保持一致）
+            if has_local_name and not has_en_name:
+                mod_info["questName_en_US"] = mod_info["questName"]
+            elif has_en_name and not has_local_name:
+                mod_info["questName"] = mod_info["questName_en_US"]
+
+            # 强制锁定分类
+            mod_info["questCategory"] = "自定义"
+            mod_info["questCategory_en_US"] = "Custom Requests"
+
+            # 处理索引冲突
+            final_key = mod_key
+            while final_key in merged:
+                final_key += "_mod"
+                mod_info["questName"] += "_自定义"
+                mod_info["questName_en_US"] += "_mod"
+            merged[final_key] = mod_info
+            if final_key != mod_key:
+                logger.info(f"自定义任务的内部代号 '{mod_key}' 和现有任务冲突, 修改为 '{final_key}'.")
+
+    return merged
+QUEST_DATA = _build_quest_data()
+
 def BuildQuestReflection():
     try:
-        data = LoadJson(ResourcePath(QUEST_FILE))
+        data = QUEST_DATA
         
         quest_reflect_map = {}
         seen_names = set()
@@ -327,12 +384,27 @@ _TEMPLATE_CACHE = {}
 def LoadTemplateImage(shortPathOfTarget):
     # 매 호출마다 디스크에서 PNG 를 다시 읽던 것을 캐싱. 호출부는 모두 matchTemplate
     # 입력(읽기 전용)으로만 사용하므로 안전하며, CheckIf 가 도는 모든 루프가 빨라진다.
+    # (v2.4.0 병합: 캐시 미스 경로에 업스트림의 mod 디렉터리 폴백을 유지한다.
+    #  단 LoadImage 는 예외를 던지지 않고 None 을 반환하므로 — 업스트림의 try/except
+    #  폴백은 도달 불가한 죽은 코드였다 — None 판정으로 폴백을 실제 동작하게 한다.)
     img = _TEMPLATE_CACHE.get(shortPathOfTarget)
+    if img is not None:
+        return img
+    logger.debug(f"加载图片: {shortPathOfTarget}")
+    image_filename = f"{shortPathOfTarget}.png"
+
+    # 1. 优先从 ResourcePath 加载
+    img = LoadImage(ResourcePath(os.path.join(IMAGE_FOLDER, image_filename)))
+    # 2. 资源路径失败，尝试 mod 目录
     if img is None:
-        logger.debug(f"加载{shortPathOfTarget}")
-        pathOfTarget = ResourcePath(os.path.join(IMAGE_FOLDER + f"{shortPathOfTarget}.png"))
-        img = LoadImage(pathOfTarget)
-        _TEMPLATE_CACHE[shortPathOfTarget] = img
+        logger.debug(f"资源路径未找到 {image_filename}，尝试 mod 目录")
+        mod_path = os.path.join('mod', image_filename)
+        if os.path.isfile(mod_path):
+            img = LoadImage(mod_path)
+    # 3. 两处都未找到
+    if img is None:
+        raise FileNotFoundError(f"图片 {shortPathOfTarget} 不可用")
+    _TEMPLATE_CACHE[shortPathOfTarget] = img
     return img
 def reflectImage(folder):
     # 构建dialogueChoices文件夹的模式匹配路径
