@@ -46,6 +46,12 @@ RE_CAP_S   = re.compile(r"\[cap\] socket ([\d.]+)s")
 RE_CAP_P   = re.compile(r"\[cap\] subprocess ([\d.]+)s")
 RE_SKIP    = re.compile(r"\[측정\] (.+?)(?:→| -) 보정 생략")
 RE_CHANCE  = re.compile(r"기회 매칭 점수: (.+?) → 판독")
+# 게임 판정(ChallengeCheck) 기준 성공/실패 — audit 라벨(추정 기반)과 달리 실제 게임 결과.
+# 무차감 = 기회 N->N 인식 또는 sim 필터. 차감 인식(N->N-1)은 동반되는 '탭 실패' 로그로
+# 집계되므로 여기서 세지 않는다(이중 계상 방지).
+RE_CC_NC   = re.compile(r"기회 인식 결과: 탭 전 (\d)회 -> 탭 후 (\d)회")
+RE_CC_SIM  = re.compile(r"자가 학습 필터링")
+RE_CC_FAIL = re.compile(r"\[ChallengeCheck\] 탭 실패")
 
 COUNT_KEYS = [
     ("상자 처리 300초 초과",            "상자 300초 가드 재시작"),
@@ -85,7 +91,7 @@ def q(vals, p):
 def parse_logs(log_dir):
     data = dict(results=[], taps_new=[], taps_old=[], taplogs=[], offsets=[],
                 snaps=[], press=[], cap_s=[], cap_p=[], dts=[], skips={},
-                chance_scores={},
+                chance_scores={}, cc=dict(ok=0, fail=0, hours={}),
                 counts={label: 0 for _, label in COUNT_KEYS})
     files = sorted(glob.glob(os.path.join(log_dir, "log_*.txt")))
     cur_tag, prev_t, last_speed = None, None, None
@@ -167,6 +173,16 @@ def parse_logs(log_dir):
                             data["chance_scores"].setdefault(k, []).append(float(sv))
                         except ValueError:
                             pass
+                    continue
+                m = RE_CC_NC.search(line)
+                if m or RE_CC_SIM.search(line) or RE_CC_FAIL.search(line):
+                    hr = data["cc"]["hours"].setdefault(line[11:13], [0, 0])
+                    if RE_CC_FAIL.search(line):
+                        data["cc"]["fail"] += 1
+                        hr[1] += 1
+                    elif m is None or m.group(1) == m.group(2):
+                        data["cc"]["ok"] += 1
+                        hr[0] += 1
                     continue
                 m = RE_RESULT.search(line)
                 if m:
@@ -274,6 +290,14 @@ def main():
             if vs:
                 parts.append(f"{k}: med {q(vs,0.5):.2f} max {max(vs):.2f} (n={len(vs)})")
         print("  기회 템플릿 매칭 최고점(문턱 0.85): " + " | ".join(parts))
+    cc = d["cc"]
+    cc_total = cc["ok"] + cc["fail"]
+    if cc_total:
+        print(f"  게임 판정(ChallengeCheck) 기준: 성공 {cc['ok']} / 실패 {cc['fail']}"
+              f"  성공률 {100.0 * cc['ok'] / cc_total:.0f}%")
+        parts = [f"{hh}시 {100 * o // (o + x)}%({o}/{x})"
+                 for hh, (o, x) in sorted(cc["hours"].items()) if o + x]
+        print("  시간대별: " + " ".join(parts))
 
     print("\n[3] 보정 궤적")
     if d["snaps"]:
