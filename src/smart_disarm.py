@@ -120,7 +120,10 @@ class DisarmConfig:
     bypass_fast_game = False   # [옵션] 빠른(어려운) 게임은 폴백으로 우회 (사용자 선택)
     fast_game_k = 2.5          # 반주기 < fast_game_k*Δt 이면 '빠른 게임'으로 판정
     fast_game_min_half = 0.8   # 빠른 게임 판정 절대값 하한(s). 반주기가 이 값 이상이면 빠른 게임 아님.
-    fast_game_min_safe_width = 134  # 안전구간 크기 하한(px). 이 값 이하이면 빠른게임(고난도) 판정.
+    fast_game_min_safe_width = 100  # 안전구간 크기 하한(px). 이 값 이하이면 빠른게임(고난도) 판정.
+                                    # 26.07-18 실측(상자 178개): 폭 134~160 구간도 재조준 포함
+                                    # 상자 성공률 83%(연타 폴백 기대치 ~50%)라 134→100 하향.
+                                    # 100 미만은 표본 미확보 — 실측 쌓이면 추가 하향 재평가.
     fast_game_fail_limit = 3   # 빠른게임 판정/실패가 이만큼 누적되면 폴백 트리거
     settle_after_tap = 0.5     # 탭 후 결과 안정 대기(s)
     settle_extra_checks = 2    # settle_after_tap 후 종료 미감지 시 추가 종료 체크 횟수
