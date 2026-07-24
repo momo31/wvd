@@ -1750,6 +1750,9 @@ msgstr "F 凛音"
 msgid "F 吉拉德"
 msgstr "F 吉拉德"
 
+msgid "F 基利昂"
+msgstr "F 基利昂"
+
 msgid "F 夏莉莉妮雅"
 msgstr "F 夏莉莉妮雅"
 
@@ -1839,6 +1842,15 @@ msgstr "G 芙尔特"
 
 msgid "G 阿米莉娅"
 msgstr "G 阿米莉娅"
+
+msgid "N 无名人类女僧侣"
+msgstr "N 无名人类女僧侣"
+
+msgid "N 无名兽人女盗贼"
+msgstr "N 无名兽人女盗贼"
+
+msgid "N 无名妖精女法师"
+msgstr "N 无名妖精女法师"
 
 msgid "P 亚当"
 msgstr "P 亚当"

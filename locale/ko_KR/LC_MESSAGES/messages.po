@@ -1610,6 +1610,9 @@ msgstr "F 린네"
 msgid "F 吉拉德"
 msgstr "F 기리온"
 
+msgid "F 基利昂"
+msgstr "F 길리온"
+
 #: src/utils.py:380
 msgid "F 夏莉莉妮雅"
 msgstr "F 셰리리냐"
@@ -1721,6 +1724,15 @@ msgstr "G 포르테"
 #: src/utils.py:408
 msgid "G 阿米莉娅"
 msgstr "G 아멜리아"
+
+msgid "N 无名人类女僧侣"
+msgstr "N 무명 인간 여성 승려"
+
+msgid "N 无名兽人女盗贼"
+msgstr "N 무명 수인 여성 도적"
+
+msgid "N 无名妖精女法师"
+msgstr "N 무명 엘프 여성 마법사"
 
 #: src/utils.py:409
 msgid "P 亚当"

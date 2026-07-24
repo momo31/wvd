@@ -1678,6 +1678,9 @@ msgstr "F Rinne"
 msgid "F 吉拉德"
 msgstr "F Jirard"
 
+msgid "F 基利昂"
+msgstr "F Gillion"
+
 msgid "F 夏莉莉妮雅"
 msgstr "F Sharilinya"
 
@@ -1767,6 +1770,15 @@ msgstr "G Forte"
 
 msgid "G 阿米莉娅"
 msgstr "G Amelia"
+
+msgid "N 无名人类女僧侣"
+msgstr "N Nameless Human Female Priest"
+
+msgid "N 无名兽人女盗贼"
+msgstr "N Nameless Beastfolk Female Thief"
+
+msgid "N 无名妖精女法师"
+msgstr "N Nameless Elf Female Mage"
 
 msgid "P 亚当"
 msgstr "P Adam"
