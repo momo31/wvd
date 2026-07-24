@@ -30,6 +30,7 @@ screenshotwhenrestart/
 /人物截取/
 /本地化
 *.mo
+/src/.vscode
 
 # Antigravity
 .antigravityrules
@@ -44,4 +45,3 @@ chinese_in_gui.txt
 
 # Audit results
 /audit/
-
