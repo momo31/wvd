@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-24 16:10+0900\n"
+"POT-Creation-Date: 2026-07-24 16:29+0900\n"
 "PO-Revision-Date: 2026-06-25 21:13+0800\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en_US\n"
@@ -47,56 +47,58 @@ msgid "技能配置组"
 msgstr "Skill Strategy Group"
 
 #: src/gui.py:333 src/gui.py:398 src/script.py:45 src/script.py:1712
+#: src/utils.py:528
 msgid "左上技能"
 msgstr "Top-Left Skill"
 
-#: src/gui.py:333 src/script.py:1712
+#: src/gui.py:333 src/script.py:1712 src/utils.py:529
 msgid "右上技能"
 msgstr "Top-Right Skill"
 
-#: src/gui.py:333 src/script.py:1712
+#: src/gui.py:333 src/script.py:1712 src/utils.py:530
 msgid "左下技能"
 msgstr "Bottom-Left Skill"
 
-#: src/gui.py:333 src/script.py:1712
+#: src/gui.py:333 src/script.py:1712 src/utils.py:531
 msgid "右下技能"
 msgstr "Bottom-Right Skill"
 
-#: src/gui.py:333 src/gui.py:529 src/script.py:1923
+#: src/gui.py:333 src/gui.py:529 src/script.py:1923 src/utils.py:532
 msgid "防御"
 msgstr "defend"
 
-#: src/gui.py:334 src/script.py:1713
+#: src/gui.py:334 src/script.py:1713 src/utils.py:534
 msgid "左上角色"
 msgstr "Top-Left Char."
 
-#: src/gui.py:334 src/script.py:1713
+#: src/gui.py:334 src/script.py:1713 src/utils.py:535
 msgid "中上角色"
 msgstr "Top-Mid Char."
 
-#: src/gui.py:334 src/script.py:1713
+#: src/gui.py:334 src/script.py:1713 src/utils.py:536
 msgid "右上角色"
 msgstr "Top-Right Char."
 
-#: src/gui.py:334 src/script.py:1713
+#: src/gui.py:334 src/script.py:1713 src/utils.py:537
 msgid "左下角色"
 msgstr "Bottom-Left Char."
 
-#: src/gui.py:334 src/script.py:1713
+#: src/gui.py:334 src/script.py:1713 src/utils.py:538
 msgid "右下角色"
 msgstr "Bottom-Right Char."
 
-#: src/gui.py:334 src/script.py:1713
+#: src/gui.py:334 src/script.py:1713 src/utils.py:539
 msgid "中下角色"
 msgstr "Bottom-Mid Char."
 
 #: src/gui.py:334 src/gui.py:491 src/gui.py:531 src/gui.py:536 src/script.py:46
+#: src/utils.py:540
 msgid "不可用"
 msgstr "Unavailable"
 
 #: src/gui.py:342 src/gui.py:949 src/gui.py:1278 src/gui.py:1282
 #: src/gui.py:1297 src/gui.py:1335 src/script.py:52 src/script.py:55
-#: src/script.py:1859
+#: src/script.py:1859 src/utils.py:546
 msgid "全自动战斗"
 msgstr "Full Auto"
 
@@ -112,11 +114,11 @@ msgstr "🗑Delete Group"
 msgid "✎重命名"
 msgstr "✎Rename"
 
-#: src/gui.py:399 src/gui.py:537
+#: src/gui.py:399 src/gui.py:537 src/utils.py:541
 msgid "低生命值"
 msgstr "Low HP"
 
-#: src/gui.py:400
+#: src/gui.py:400 src/utils.py:545
 msgid "重复"
 msgstr "Repeat"
 
@@ -141,7 +143,7 @@ msgstr "Are you sure you want to delete [%s]?"
 msgid "默认"
 msgstr "Default"
 
-#: src/gui.py:473 src/gui.py:529 src/script.py:1928
+#: src/gui.py:473 src/gui.py:529 src/script.py:1928 src/utils.py:533
 msgid "双击自动"
 msgstr "Double Tap Auto"
 
@@ -378,7 +380,7 @@ msgid "全程"
 msgstr "Overall"
 
 #: src/gui.py:1215 src/gui.py:1280 src/gui.py:1351 src/gui.py:1371
-#: src/gui.py:1386 src/script.py:1140
+#: src/gui.py:1386 src/script.py:1140 src/utils.py:548
 msgid "自定义任务点策略"
 msgstr "Custom Task Point Strategy"
 
@@ -581,7 +583,7 @@ msgstr ""
 "\n"
 "Praise be to the Princess!\n"
 
-#: src/script.py:41
+#: src/script.py:41 src/utils.py:547
 msgid "柚子"
 msgstr "Yuzu"
 
@@ -2006,6 +2008,18 @@ msgstr "P Alice"
 #: src/utils.py:522
 msgid "P 黛波拉"
 msgstr "P Deborah"
+
+#: src/utils.py:542
+msgid "每场战斗仅一次"
+msgstr "Once per combat"
+
+#: src/utils.py:543
+msgid "每次副本仅一次"
+msgstr "Once per dungeon"
+
+#: src/utils.py:544
+msgid "每次启动仅一次"
+msgstr "Once per launch"
 
 #~ msgid "全自动战斗."
 #~ msgstr "Full Auto."
