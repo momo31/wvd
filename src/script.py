@@ -1420,12 +1420,49 @@ def Factory():
             if StateCombatCheck(screen):
                 return State.Dungeon, DungeonState.Combat, screen
 
+            # 성향(카르마) 선택 화면은 dialogueNext 스킵보다 먼저 처리한다.
+            # 이 화면에는 진행 아이콘이 함께 떠 dialogueNext에 매칭되는데, 스킵을 먼저 두면
+            # next만 계속 눌러 선택 로직(아래 counter>=10 블록)에 영영 도달하지 못하고 무한 정지에 빠진다.
+            if CheckIf(screen,"ambush") or CheckIf(screen,"ignore"):
+                if int(setting.KARMA_ADJUST) == 0:
+                    Press(CheckIf(screen,"ambush"))
+                    new_str = "+2"
+                elif setting.KARMA_ADJUST.startswith("-"):
+                    Press(CheckIf(screen,"ambush"))
+                    num = int(setting.KARMA_ADJUST)
+                    num = num + 2
+                    new_str = "{a}".format(a=num)
+                else:
+                    Press(CheckIf(screen,"ignore"))
+                    num = int(setting.KARMA_ADJUST)
+                    num = num - 1
+                    new_str = f"+{num}"
+
+                logger.info(_("即将进行善恶值调整. 剩余次数:{a}").format(a=new_str))
+                AddImportantInfo(_("新的善恶:{a}").format(a=new_str))
+                setting.KARMA_ADJUST = new_str
+                SetOneVarInGeneralConfig("KARMA_ADJUST",setting.KARMA_ADJUST)
+                Sleep(2)
+                counter += 1
+                # 선택이 반영되지 않아 화면이 넘어가지 않는 예외 상황(오탐/템플릿 불일치 등) 방지.
+                if counter >= setting.MAX_TRY_LIMIT:
+                    logger.info(_("看起来遇到了一些非同寻常的情况...重启游戏."))
+                    restartGame()
+                    counter = 0
+                continue
+
             # 핵심 상태가 모두 아닐 때만 대화/결과창 스킵 진행 (상자 열기 가로채기 방지)
             if pos := CheckIf(screen, "dialogueNext", [[750, 1400, 150, 200]]):
                 logger.info(_("대화/결과창 감지, 클릭하여 스킵 시도."))
                 Press(pos)
                 Sleep(1.0)
                 counter += 1
+                # next만 계속 눌러도 넘어가지 않는 화면(선택 필요 등)에서 무한 정지 방지.
+                # continue가 아래 재시작 안전장치(counter>=MAX_TRY_LIMIT)를 우회하므로 여기서 직접 처리한다.
+                if counter >= setting.MAX_TRY_LIMIT:
+                    logger.info(_("看起来遇到了一些非同寻常的情况...重启游戏."))
+                    restartGame()
+                    counter = 0
                 continue
 
             screen = ScreenShot()
@@ -1521,27 +1558,6 @@ def Factory():
                         logger.info(_("看起来你没有选择找王女要钱. 那么就等两个小时吧."), extra={"summary": True})
                         Sleep(7300)
                         restartGame()
-                if CheckIf(screen,"ambush") or CheckIf(screen,"ignore"):
-                    if int(setting.KARMA_ADJUST) == 0:
-                        Press(CheckIf(screen,"ambush"))
-                        new_str = "+2"
-                    elif setting.KARMA_ADJUST.startswith("-"):
-                        Press(CheckIf(screen,"ambush"))
-                        num = int(setting.KARMA_ADJUST)
-                        num = num + 2
-                        new_str = "{a}".format(a=num)
-                    else:
-                        Press(CheckIf(screen,"ignore"))
-                        num = int(setting.KARMA_ADJUST)
-                        num = num - 1
-                        new_str = f"+{num}"
-
-                    logger.info(_("即将进行善恶值调整. 剩余次数:{a}").format(a=new_str))
-                    AddImportantInfo(_("新的善恶:{a}").format(a=new_str))
-                    setting.KARMA_ADJUST = new_str
-                    SetOneVarInGeneralConfig("KARMA_ADJUST",setting.KARMA_ADJUST)
-                    Sleep(2)
-
                 for op in DIALOG_OPTION_IMAGE_LIST:
                     if Press(CheckIf(screen, "dialogueChoices/"+op)):
                         Sleep(2)
