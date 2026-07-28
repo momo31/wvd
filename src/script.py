@@ -120,6 +120,7 @@ class RuntimeContext:
     _BYPASSAFTERRESTART = True
     _CHEST_STUCK_RESTARTS = 0      # 상자 스턱 가드(300초/연속 실패)로 재시작한 연속 횟수
     _SMARTDISARM_DEGRADED = False  # 스턱 반복 시 스마트 개봉을 구식 연타 방식으로 강등
+    _RESTART_TIMES = []            # 최근 재시작 시각 목록(무한 재시작 순환 감지용)
     CURRENT_STRATEGY = {}
     NEED_RECOVER_WHEN_BEGINNING = True
     TASK_STEP_INDEX = 0
@@ -1079,7 +1080,15 @@ def Factory():
 
         runtimeContext._CRASHCOUNTER +=1
         logger.info(_("崩溃计数: {a}\n崩溃计数超过{b}次后会重启模拟器.").format(a=runtimeContext._CRASHCOUNTER, b=setting.MAX_CRASH_LIMIT))
-        if runtimeContext._CRASHCOUNTER > setting.MAX_CRASH_LIMIT:
+        # 짧은 간격 반복 재시작(같은 화면 순환 등 무한 재시작) 감지: 3분 내 4회 이상이면
+        # 게임 재시작만으로는 순환을 못 벗어난 것으로 보고 에뮬레이터 리셋을 앞당겨 상태를 완전히 되돌린다.
+        now = time.time()
+        runtimeContext._RESTART_TIMES = [t for t in runtimeContext._RESTART_TIMES if now - t < 180] + [now]
+        rapid_restart_loop = len(runtimeContext._RESTART_TIMES) >= 4
+        if rapid_restart_loop:
+            logger.warning(_("짧은 간격 재시작이 반복되어(무한 재시작 순환 추정) 에뮬레이터를 강제 재시작합니다."), extra={"summary": True})
+            runtimeContext._RESTART_TIMES = []
+        if runtimeContext._CRASHCOUNTER > setting.MAX_CRASH_LIMIT or rapid_restart_loop:
             runtimeContext._CRASHCOUNTER = 0
             force_restart_EMU = True
 
@@ -1378,6 +1387,8 @@ def Factory():
         nonlocal setting # 修改因果
         counter = 0
         anomaly_saved = False
+        loading_wait = 0            # 재시작 후 로딩 화면 대기 카운터
+        LOADING_MAX = 90            # 로딩 대기 상한(약 180초). 초과 시 무한 로딩으로 보고 재시작.
         while 1:
             t_start = time.time()
             screen = ScreenShot()
@@ -1385,6 +1396,19 @@ def Factory():
 
             if setting._FORCESTOPING.is_set():
                 raise TaskStoppedException()
+
+            # 재시작/게임 진입 직후의 로딩 화면("The Abyss is readying to open...")은 정상 대기 상태다.
+            # counter/anomaly 트리거 없이 로딩이 끝날 때까지 기다린다(무한 로딩만 상한으로 방어).
+            # 이 처리가 없으면 로딩 화면을 이상 상황으로 오판해 anomaly 이미지를 반복 저장한다.
+            if CheckIf(screen, "abyssReadying"):
+                loading_wait += 1
+                logger.info(_("로딩 화면 감지, 대기 중... ({a}/{b})").format(a=loading_wait, b=LOADING_MAX))
+                if loading_wait >= LOADING_MAX:
+                    logger.warning(_("로딩이 과도하게 지속되어 게임을 재시작합니다."))
+                    restartGame()
+                Sleep(2)
+                continue
+            loading_wait = 0
 
             if TryPressRetry(screen):
                     Sleep(2)
@@ -2137,6 +2161,15 @@ def Factory():
                     break
 
             if not found_target:
+                # 결과/대화창(골드 획득 등)의 진행 아이콘은 즉시 눌러 스킵한다.
+                # 가드의 found_target 목록엔 dialogueNext가 없어, 그대로 두면 결과창이
+                # 150초까지 방치돼 chest stuck(실측 최대 75초 지연)이 된다.
+                if Press(CheckIf(scn, "dialogueNext", [[750, 1400, 150, 200]])):
+                    logger.info(_("[상자 가드] 결과창 감지, 스킵합니다."))
+                    # 타이머는 리셋하지 않는다. 결과창이 정상 스킵되면 곧 found_target으로 탈출하고,
+                    # 혹시 넘어가지 않는 화면이면 300초 가드가 최후 안전망으로 남아야 하기 때문.
+                    Sleep(1)
+                    continue
                 # 공통 시스템 복구 (재시도 및 배속 확인)
                 if TryPressRetry(scn):
                     Sleep(1)

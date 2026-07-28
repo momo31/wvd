@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-24 16:29+0900\n"
+"POT-Creation-Date: 2026-07-28 16:59+0900\n"
 "PO-Revision-Date: 2026-06-25 21:13+0800\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en_US\n"
@@ -46,48 +46,48 @@ msgstr ""
 msgid "技能配置组"
 msgstr "Skill Strategy Group"
 
-#: src/gui.py:333 src/gui.py:398 src/script.py:45 src/script.py:1712
+#: src/gui.py:333 src/gui.py:398 src/script.py:45 src/script.py:1752
 #: src/utils.py:528
 msgid "左上技能"
 msgstr "Top-Left Skill"
 
-#: src/gui.py:333 src/script.py:1712 src/utils.py:529
+#: src/gui.py:333 src/script.py:1752 src/utils.py:529
 msgid "右上技能"
 msgstr "Top-Right Skill"
 
-#: src/gui.py:333 src/script.py:1712 src/utils.py:530
+#: src/gui.py:333 src/script.py:1752 src/utils.py:530
 msgid "左下技能"
 msgstr "Bottom-Left Skill"
 
-#: src/gui.py:333 src/script.py:1712 src/utils.py:531
+#: src/gui.py:333 src/script.py:1752 src/utils.py:531
 msgid "右下技能"
 msgstr "Bottom-Right Skill"
 
-#: src/gui.py:333 src/gui.py:529 src/script.py:1923 src/utils.py:532
+#: src/gui.py:333 src/gui.py:529 src/script.py:1963 src/utils.py:532
 msgid "防御"
 msgstr "defend"
 
-#: src/gui.py:334 src/script.py:1713 src/utils.py:534
+#: src/gui.py:334 src/script.py:1753 src/utils.py:534
 msgid "左上角色"
 msgstr "Top-Left Char."
 
-#: src/gui.py:334 src/script.py:1713 src/utils.py:535
+#: src/gui.py:334 src/script.py:1753 src/utils.py:535
 msgid "中上角色"
 msgstr "Top-Mid Char."
 
-#: src/gui.py:334 src/script.py:1713 src/utils.py:536
+#: src/gui.py:334 src/script.py:1753 src/utils.py:536
 msgid "右上角色"
 msgstr "Top-Right Char."
 
-#: src/gui.py:334 src/script.py:1713 src/utils.py:537
+#: src/gui.py:334 src/script.py:1753 src/utils.py:537
 msgid "左下角色"
 msgstr "Bottom-Left Char."
 
-#: src/gui.py:334 src/script.py:1713 src/utils.py:538
+#: src/gui.py:334 src/script.py:1753 src/utils.py:538
 msgid "右下角色"
 msgstr "Bottom-Right Char."
 
-#: src/gui.py:334 src/script.py:1713 src/utils.py:539
+#: src/gui.py:334 src/script.py:1753 src/utils.py:539
 msgid "中下角色"
 msgstr "Bottom-Mid Char."
 
@@ -98,7 +98,7 @@ msgstr "Unavailable"
 
 #: src/gui.py:342 src/gui.py:949 src/gui.py:1278 src/gui.py:1282
 #: src/gui.py:1297 src/gui.py:1335 src/script.py:52 src/script.py:55
-#: src/script.py:1859 src/utils.py:546
+#: src/script.py:1899 src/utils.py:546
 msgid "全自动战斗"
 msgstr "Full Auto"
 
@@ -143,7 +143,7 @@ msgstr "Are you sure you want to delete [%s]?"
 msgid "默认"
 msgstr "Default"
 
-#: src/gui.py:473 src/gui.py:529 src/script.py:1928 src/utils.py:533
+#: src/gui.py:473 src/gui.py:529 src/script.py:1968 src/utils.py:533
 msgid "双击自动"
 msgstr "Double Tap Auto"
 
@@ -191,15 +191,15 @@ msgstr "Current Version: %s"
 msgid "不需要"
 msgstr "Never"
 
-#: src/gui.py:734 src/gui.py:1414 src/script.py:1850
+#: src/gui.py:734 src/gui.py:1414 src/script.py:1890
 msgid "每场战斗前"
 msgstr "Before combat"
 
-#: src/gui.py:735 src/gui.py:1414 src/script.py:2287
+#: src/gui.py:735 src/gui.py:1414 src/script.py:2335
 msgid "每次副本开始"
 msgstr "Dungeon start"
 
-#: src/gui.py:736 src/gui.py:1414 src/script.py:1865 src/script.py:1874
+#: src/gui.py:736 src/gui.py:1414 src/script.py:1905 src/script.py:1914
 msgid "不需要(自动)"
 msgstr "Never(Auto)"
 
@@ -380,7 +380,7 @@ msgid "全程"
 msgstr "Overall"
 
 #: src/gui.py:1215 src/gui.py:1280 src/gui.py:1351 src/gui.py:1371
-#: src/gui.py:1386 src/script.py:1140 src/utils.py:548
+#: src/gui.py:1386 src/script.py:1149 src/utils.py:548
 msgid "自定义任务点策略"
 msgstr "Custom Task Point Strategy"
 
@@ -419,7 +419,7 @@ msgstr ""
 msgid "你也可以增加额外的重置:"
 msgstr "Trigger an additional reload:"
 
-#: src/gui.py:1414 src/script.py:1865 src/script.py:1874 src/script.py:2287
+#: src/gui.py:1414 src/script.py:1905 src/script.py:1914 src/script.py:2335
 msgid "每次副本开始(自动)"
 msgstr "Before every dungeon(Auto)"
 
@@ -596,86 +596,86 @@ msgstr "F 柚奈壬姬"
 msgid "FarmConfig对象没有属性'%s'"
 msgstr "FarmConfig object has no attribute '%s'"
 
-#: src/script.py:141
+#: src/script.py:142
 #, python-format
 msgid "FarmQuest对象没有属性'%s'"
 msgstr "FarmQuest object has no attribute '%s'"
 
-#: src/script.py:196
+#: src/script.py:197
 msgid "任务列表已更新.请重新手动选择地下城任务."
 msgstr "Task list updated. Please manually re-select the dungeon task."
 
-#: src/script.py:209
+#: src/script.py:210
 #, python-format
 msgid "'%s'并不存在于FarmQuest中."
 msgstr "'%s' does not exist in FarmQuest."
 
-#: src/script.py:214
+#: src/script.py:215
 #, python-format
 msgid "执行cmd命令: %s"
 msgstr "Executing cmd command: %s"
 
-#: src/script.py:223
+#: src/script.py:224
 msgid "cmd命令返回:{}"
 msgstr "command returns:{}"
 
-#: src/script.py:226
+#: src/script.py:227
 msgid "cmd命令错误:{}"
 msgstr "command errors: {}"
 
-#: src/script.py:237
+#: src/script.py:238
 msgid "adb程序序不存在: {a}"
 msgstr "adb executable does not exist: {a}"
 
-#: src/script.py:267
+#: src/script.py:268
 msgid "正在检查并关闭adb..."
 msgstr "Checking and closing adb..."
 
-#: src/script.py:293
+#: src/script.py:294
 msgid "已尝试终止adb"
 msgstr "Attempted to terminate adb."
 
-#: src/script.py:295 src/script.py:358
+#: src/script.py:296 src/script.py:359
 msgid "终止模拟器进程时出错: {a}"
 msgstr "Error terminating emulator process: {a}"
 
-#: src/script.py:300
+#: src/script.py:301
 msgid "正在检查并关闭已运行的模拟器实例{a}..."
 msgstr "Checking and closing running emulator instance(s) {a}..."
 
-#: src/script.py:304
+#: src/script.py:305
 msgid "使用已知进程号{a}关闭模拟器..."
 msgstr "Closing emulator using known PID {a}..."
 
-#: src/script.py:322
+#: src/script.py:323
 msgid "模拟器uid未知, 全杀了."
 msgstr "Emulator UID unknown, terminating all instances."
 
-#: src/script.py:356
+#: src/script.py:357
 msgid "已尝试终止模拟器进程: {a}"
 msgstr "Attempted to terminate emulator process: {a}"
 
-#: src/script.py:366
+#: src/script.py:367
 msgid "模拟器启动程序不存在: {a}"
 msgstr "Emulator launcher does not exist: {a}"
 
-#: src/script.py:371
+#: src/script.py:372
 msgid "启动模拟器: {a}"
 msgstr "Starting emulator: {a}"
 
-#: src/script.py:394
+#: src/script.py:395
 msgid "模拟器启动开始，进程号为{a}"
 msgstr "Emulator start initiated, PID: {a}"
 
-#: src/script.py:397
+#: src/script.py:398
 msgid "启动模拟器失败: {a}"
 msgstr "Failed to start emulator: {a}"
 
-#: src/script.py:400
+#: src/script.py:401
 msgid "等待模拟器启动..."
 msgstr "Waiting for emulator to start..."
 
-#: src/script.py:420
+#: src/script.py:421
 msgid ""
 "-----------------------\n"
 "开始尝试连接adb. 次数:{a}/{b}..."
@@ -683,27 +683,27 @@ msgstr ""
 "-----------------------\n"
 "Attempting to connect to adb. Attempt {a}/{b}..."
 
-#: src/script.py:423
+#: src/script.py:424
 msgid "失败次数过多, 尝试关闭adb."
 msgstr "Too many failures, attempting to close adb."
 
-#: src/script.py:429
+#: src/script.py:430
 msgid "检查adb服务..."
 msgstr "Checking adb service..."
 
-#: src/script.py:440
+#: src/script.py:441
 msgid "尝试连接到adb..."
 msgstr "Attempting to connect to adb..."
 
-#: src/script.py:445
+#: src/script.py:446
 msgid "成功连接到模拟器!"
 msgstr "Successfully connected to emulator!"
 
-#: src/script.py:450
+#: src/script.py:451
 msgid "模拟器进程号为{a}."
 msgstr "Emulator PID: {a}."
 
-#: src/script.py:452
+#: src/script.py:453
 msgid ""
 "\n"
 "\n"
@@ -721,11 +721,11 @@ msgstr ""
 " it automatically.\n"
 "\n"
 
-#: src/script.py:456
+#: src/script.py:457
 msgid "模拟器未运行，尝试启动..."
 msgstr "Emulator not running, attempting to start..."
 
-#: src/script.py:458
+#: src/script.py:459
 msgid ""
 "模拟器(应该)启动完毕.\n"
 " 尝试连接到模拟器..."
@@ -733,277 +733,277 @@ msgstr ""
 "Emulator (should be) started.\n"
 " Attempting to connect..."
 
-#: src/script.py:461
+#: src/script.py:462
 msgid "成功连接到模拟器"
 msgstr "Successfully connected to emulator."
 
-#: src/script.py:463
+#: src/script.py:464
 msgid "无法连接. 检查adb端口."
 msgstr "Cannot connect. Check adb port."
 
-#: src/script.py:465
+#: src/script.py:466
 msgid "连接失败: {a}"
 msgstr "Connection failed: {a}"
 
-#: src/script.py:471
+#: src/script.py:472
 msgid "重启ADB服务时出错: {a}"
 msgstr "Error restarting ADB server: {a}"
 
-#: src/script.py:478
+#: src/script.py:479
 msgid "达到最大重试次数，连接失败"
 msgstr "Max retries reached, connection failed."
 
-#: src/script.py:489
+#: src/script.py:490
 msgid "成功创建设备对象: {a}"
 msgstr "Successfully created device object: {a}"
 
-#: src/script.py:499
+#: src/script.py:500
 msgid "Android 시스템 부팅 완료 확인."
 msgstr "Android system boot completed."
 
-#: src/script.py:503
+#: src/script.py:504
 msgid "Android 시스템 부팅 대기 중..."
 msgstr "Waiting for the Android system to boot..."
 
-#: src/script.py:506
+#: src/script.py:507
 msgid "경고: Android 부팅 대기 시간이 초과되었습니다."
 msgstr "Warning: Timed out waiting for Android to boot."
 
-#: src/script.py:509
+#: src/script.py:510
 msgid "创建ADB设备时出错: {a}"
 msgstr "Error creating ADB device: {a}"
 
-#: src/script.py:565
+#: src/script.py:566
 msgid "ADB服务成功启动，设备已连接."
 msgstr "ADB server started successfully, device connected."
 
-#: src/script.py:569 src/script.py:605 src/script.py:613
+#: src/script.py:570 src/script.py:606 src/script.py:614
 msgid "DeviceShell 중단 요청으로 인한 강제 종료..."
 msgstr "DeviceShell forcibly terminated by a stop request..."
 
-#: src/script.py:571
+#: src/script.py:572
 msgid "DeviceShell {a}"
 msgstr "DeviceShell {a}"
 
-#: src/script.py:592
+#: src/script.py:593
 msgid "ADB命令执行超时: {a}"
 msgstr "ADB command execution timeout: {a}"
 
-#: src/script.py:593
+#: src/script.py:594
 msgid "ADB命令在7秒内未完成"
 msgstr "ADB command did not complete within 7 seconds."
 
-#: src/script.py:600
+#: src/script.py:601
 msgid "ADB操作失败 ({a}): {b}"
 msgstr "ADB operation failed ({a}): {b}"
 
-#: src/script.py:601
+#: src/script.py:602
 msgid "ADB操作失败, 尝试重启ADB或模拟器程序..."
 msgstr "ADB operation failed, attempting to restart ADB or emulator..."
 
-#: src/script.py:609
+#: src/script.py:610
 msgid "ADB超时, 尝试重启ADB或模拟器程序..."
 msgstr "ADB timeout, attempting to restart ADB or emulator..."
 
-#: src/script.py:618
+#: src/script.py:619
 msgid "非预期的ADB异常({a}): {b}"
 msgstr "Unexpected ADB exception ({a}): {b}"
 
-#: src/script.py:632 src/script.py:732 src/script.py:745
+#: src/script.py:633 src/script.py:733 src/script.py:746
 msgid "스크린샷 중단 요청으로 인한 강제 종료..."
 msgstr "Screenshot forcibly terminated by a stop request..."
 
-#: src/script.py:666
+#: src/script.py:667
 msgid "소켓 기반 고속 캡처 실패: {a}. subprocess 방식으로 복구 시도합니다."
 msgstr ""
 "Socket-based fast capture failed: {a}. Falling back to the subprocess "
 "method."
 
-#: src/script.py:679
+#: src/script.py:680
 msgid "截图命令报错: {a}"
 msgstr "Screenshot command error: {a}"
 
-#: src/script.py:680
+#: src/script.py:681
 msgid "截图命令报错"
 msgstr "Screenshot command error."
 
-#: src/script.py:688
+#: src/script.py:689
 msgid "截图数据不足12字节(无头信息)"
 msgstr "Screenshot data less than 12 bytes (no header)."
 
-#: src/script.py:689
+#: src/script.py:690
 msgid "截图数据异常"
 msgstr "Screenshot data abnormal."
 
-#: src/script.py:703
+#: src/script.py:704
 msgid "数据长度校验失败: 头部声明 {a}x{b}, 实际收到 {c}, 期望 {d}"
 msgstr ""
 "Data length verification failed: header claims {a}x{b}, received {c}, "
 "expected {d}."
 
-#: src/script.py:704
+#: src/script.py:705
 msgid "截图数据不完整"
 msgstr "Screenshot data incomplete."
 
-#: src/script.py:715
+#: src/script.py:716
 msgid "截图尺寸错误: 当前{a}, 检测为横屏."
 msgstr "Screenshot size error: current {a}, detected landscape orientation."
 
-#: src/script.py:719
+#: src/script.py:720
 msgid "截图尺寸错误: 期望(1600,900), 实际({a},{b})."
 msgstr "Screenshot size error: expected (1600,900), actual ({a},{b})."
 
-#: src/script.py:720
+#: src/script.py:721
 msgid "分辨率异常: {a}x{b}"
 msgstr "Resolution abnormal: {a}x{b}"
 
-#: src/script.py:730
+#: src/script.py:731
 msgid "스크린샷超时 (Subprocess) [연속 실패: {a}/{b}]"
 msgstr "Screenshot timeout (Subprocess) [consecutive failures: {a}/{b}]"
 
-#: src/script.py:735 src/script.py:751
+#: src/script.py:736 src/script.py:752
 msgid "스크린샷 연속 실패 {a}회 도달. 에뮬레이터를 강제 재시작합니다."
 msgstr "Screenshot failed {a} times in a row. Force-restarting the emulator."
 
-#: src/script.py:739
+#: src/script.py:740
 msgid "ADB操作失败, 尝试重启ADB or 模拟器程序..."
 msgstr "ADB operation failed, attempting to restart ADB or emulator..."
 
-#: src/script.py:743
+#: src/script.py:744
 msgid "截图发生异常: {a}"
 msgstr "Screenshot exception: {a}"
 
-#: src/script.py:749
+#: src/script.py:750
 msgid "ADB操作失败/数据错误, 尝试重启ADB or 模拟器程序... [연속 실패: {a}/{b}]"
 msgstr ""
 "ADB operation failed / data error, attempting to restart ADB or "
 "emulator... [consecutive failures: {a}/{b}]"
 
-#: src/script.py:759
+#: src/script.py:760
 msgid "图像匹配输入为空(screenImage or template is None)"
 msgstr "Image matching input is empty (screenImage or template is None)"
 
-#: src/script.py:771
+#: src/script.py:772
 msgid "模板尺寸{a}大于搜索区域{b}. 已调整模板尺寸为{c}."
 msgstr "Template size {a} exceeds search area {b}. Template resized to {c}."
 
-#: src/script.py:778
+#: src/script.py:779
 msgid "cv2.matchTemplate 异常: {a}"
 msgstr "cv2.matchTemplate exception: {a}"
 
-#: src/script.py:797
+#: src/script.py:798
 msgid "匹配失败: {a}的匹配程度为{b:.2f}%, 不足阈值."
 msgstr "Match failed: {a} match confidence {b:.2f}%, below threshold."
 
-#: src/script.py:800
+#: src/script.py:801
 msgid "匹配成功: {a}的匹配程度为{b:.2f}%, 位于{c}."
 msgstr "Match successful: {a} match confidence {b:.2f}%, at {c}."
 
-#: src/script.py:805
+#: src/script.py:806
 msgid "匹配检测: {a}的匹配程度为{b:.2f}%, 位于{c}."
 msgstr "Match check: {a} match confidence {b:.2f}%, at {c}."
 
-#: src/script.py:839
+#: src/script.py:840
 msgid "CheckIf_FocusCursor 异常: {a}"
 msgstr "CheckIf_FocusCursor exception: {a}"
 
-#: src/script.py:843
+#: src/script.py:844
 msgid "搜索到疑似{a}, 匹配程度:{b:.2f}%"
 msgstr "Found potential {a}, confidence: {b:.2f}%"
 
-#: src/script.py:846
+#: src/script.py:847
 msgid "警告: {a}的匹配程度超过了80%但不足90%"
 msgstr "Warning: {a} confidence is over 80% but below 90%."
 
-#: src/script.py:861
+#: src/script.py:862
 msgid "中心匹配检查:{a:.2f}"
 msgstr "Center match check: {a:.2f}"
 
-#: src/script.py:875
+#: src/script.py:876
 msgid "目标格搜索{a}, 匹配程度:{b:.2f}%"
 msgstr "Searching target tile {a}, confidence: {b:.2f}%"
 
-#: src/script.py:877
+#: src/script.py:878
 msgid "已达到检测阈值."
 msgstr "Detection threshold met."
 
-#: src/script.py:891
+#: src/script.py:892
 msgid "搜索楼层标识{a}, 匹配程度:{b:.2f}%"
 msgstr "Harken search, target {a}, confidence: {b:.2f}%"
 
-#: src/script.py:893
+#: src/script.py:894
 msgid "楼层正确, 判定为已通过"
 msgstr "Floor correct, determined as passed."
 
-#: src/script.py:900
+#: src/script.py:901
 msgid "搜索楼梯{a}, 匹配程度:{b:.2f}%"
 msgstr "Searching stairs {a}, confidence: {b:.2f}%"
 
-#: src/script.py:902
+#: src/script.py:903
 msgid "判定为楼梯存在, 尚未通过."
 msgstr "Determined that stairs exist, not yet passed."
 
-#: src/script.py:916
+#: src/script.py:917
 msgid "楼层验证中, 目标楼层标识{a}, 匹配程度:{b:.2f}%"
 msgstr "Searching floor indicator {a}, confidence: {b:.2f}%"
 
-#: src/script.py:918
+#: src/script.py:919
 msgid "楼层验证判定通过, 当前处于正确楼层."
 msgstr "Pass the floor validation. Now in the correct floor."
 
-#: src/script.py:924
+#: src/script.py:925
 msgid "目前处于错误的楼层中, 可能是由于错误点击导致的, 开始全地图搜索哈肯."
 msgstr ""
 "Now in the wrong floor. It may be caused by an accidental press. "
 "Searching Harken..."
 
-#: src/script.py:932
+#: src/script.py:933
 msgid "哈肯搜索, 目标{a}, 匹配程度:{b:.2f}%"
 msgstr "Searching floor indicator {a}, confidence: {b:.2f}%"
 
-#: src/script.py:934
+#: src/script.py:935
 msgid "哈肯搜索, 已找到哈肯."
 msgstr "Harken Found."
 
-#: src/script.py:949
+#: src/script.py:950
 msgid "CheckIf_fastForwardOff 异常: {a}"
 msgstr "CheckIf_fastForwardOff exception: {a}"
 
-#: src/script.py:956
+#: src/script.py:957
 msgid "快进未开启, 即将开启.{a}"
 msgstr "Fast-forward not enabled, enabling now. {a}"
 
-#: src/script.py:977
+#: src/script.py:978
 msgid "开始下载……"
 msgstr "Starting download..."
 
-#: src/script.py:980 src/script.py:984
+#: src/script.py:981 src/script.py:985
 msgid "发现并点击了\"重试\". 你遇到了网络波动."
 msgstr "Found and clicked \"Retry\". You encountered network instability."
 
-#: src/script.py:990
+#: src/script.py:991
 msgid "👆向上滑动查看重要信息👆\n"
 msgstr "👆Swipe up for important info👆\n"
 
-#: src/script.py:1044
+#: src/script.py:1045
 msgid "错误: 非法的目标{a}."
 msgstr "Error: Invalid target {a}."
 
-#: src/script.py:1051
+#: src/script.py:1052
 msgid "错误: 非法的目标."
 msgstr "Error: Invalid target."
 
-#: src/script.py:1056
+#: src/script.py:1057
 msgid "{a}次截图依旧没有找到目标{b}, 疑似卡死. 重启游戏."
 msgstr ""
 "Target {b} not found after {a} screenshots, possible freeze. Restarting "
 "game."
 
-#: src/script.py:1076
+#: src/script.py:1077
 msgid "重启前截图已保存在{a}中."
 msgstr "Pre-restart screenshot saved in {a}."
 
-#: src/script.py:1081
+#: src/script.py:1082
 msgid ""
 "崩溃计数: {a}\n"
 "崩溃计数超过{b}次后会重启模拟器."
@@ -1011,47 +1011,53 @@ msgstr ""
 "Crash count: {a}\n"
 "Emulator will restart after {b} crashes."
 
-#: src/script.py:1093
+#: src/script.py:1089
+msgid "짧은 간격 재시작이 반복되어(무한 재시작 순환 추정) 에뮬레이터를 강제 재시작합니다."
+msgstr ""
+"Repeated restarts in a short interval (suspected restart loop); force-"
+"restarting the emulator."
+
+#: src/script.py:1102
 msgid "기본 Activity를 확인할 수 없어, 기본값을 사용합니다."
 msgstr "Could not determine the default Activity; using the default value."
 
-#: src/script.py:1096
+#: src/script.py:1105
 msgid "巫术, 启动!"
 msgstr "Wizardry, Start!"
 
-#: src/script.py:1101
+#: src/script.py:1110
 msgid "检测到崩溃日志, 关闭模拟器重启.{a}"
 msgstr "Crash log detected, closing emulator and restarting. {a}"
 
-#: src/script.py:1109 src/script.py:1114 src/script.py:1120 src/script.py:3608
+#: src/script.py:1118 src/script.py:1123 src/script.py:1129 src/script.py:3656
 msgid "任务已停止."
 msgstr "Task stopped."
 
-#: src/script.py:1122
+#: src/script.py:1131
 msgid "任务进度重置中..."
 msgstr "Resetting task progress..."
 
-#: src/script.py:1131
+#: src/script.py:1140
 msgid "已重置首次战斗标识。"
 msgstr "First-combat flag has been reset."
 
-#: src/script.py:1133
+#: src/script.py:1142
 msgid "重置战斗策略."
 msgstr "Reload strategy."
 
-#: src/script.py:1155
+#: src/script.py:1164
 msgid "策略已重置为: {a}"
 msgstr "Reload strategy by {a}."
 
-#: src/script.py:1158
+#: src/script.py:1167
 msgid "无法获取当前策略，将降级为全自动战斗。"
 msgstr "Unable to get current strategy, downgrade to AutoCombat."
 
-#: src/script.py:1196
+#: src/script.py:1205
 msgid "必须重新集结队伍..."
 msgstr "Must reassemble the party..."
 
-#: src/script.py:1215
+#: src/script.py:1224
 msgid ""
 "已完成{a}次\"{b}\"地下城.\n"
 "总计{c}秒.上次用时:{d}秒.\n"
@@ -1059,7 +1065,7 @@ msgstr ""
 "Completed {a} runs of \"{b}\" dungeon.\n"
 "Total {c}s. Last run: {d}s.\n"
 
-#: src/script.py:1217
+#: src/script.py:1226
 msgid ""
 "箱子效率{a}秒/箱.\n"
 "累计开箱{b}次,开箱平均耗时{c}秒.\n"
@@ -1067,131 +1073,139 @@ msgstr ""
 "Chest efficiency: {a}s/chest.\n"
 "Total chests opened: {b}, avg time per chest: {c}s.\n"
 
-#: src/script.py:1219
+#: src/script.py:1228
 msgid "累计战斗{a}次.战斗平均用时{b}秒."
 msgstr "Total combats: {a}. Average combat time: {b}s."
 
-#: src/script.py:1294
+#: src/script.py:1303
 msgid "因为面板设置, 跳过了调整因果."
 msgstr "Skipped CSC adjustment due to panel setting."
 
-#: src/script.py:1297
+#: src/script.py:1306
 msgid "开始时间跳跃, 本次跳跃目标:{a}"
 msgstr "Starting time leap, target: {a}"
 
-#: src/script.py:1369
+#: src/script.py:1378
 msgid "快快请起."
 msgstr "Please rise quickly."
 
-#: src/script.py:1370
+#: src/script.py:1379
 msgid "面具死了, 但是再起."
 msgstr "Masked One died, but revived."
 
-#: src/script.py:1384
+#: src/script.py:1395
 msgid "状态检查中...(第{a}次)"
 msgstr "Checking status... (Attempt {a})"
 
-#: src/script.py:1393
+#: src/script.py:1405
+msgid "로딩 화면 감지, 대기 중... ({a}/{b})"
+msgstr "Loading screen detected, waiting... ({a}/{b})"
+
+#: src/script.py:1407
+msgid "로딩이 과도하게 지속되어 게임을 재시작합니다."
+msgstr "Loading is taking too long; restarting the game."
+
+#: src/script.py:1417
 msgid "确认, 下载, 确认."
 msgstr "Confirm, download, confirm."
 
-#: src/script.py:1397
+#: src/script.py:1421
 msgid "检测到恢复/状态画面，正在尝试返回以关闭。"
 msgstr "Detected recovery/status screen, trying to press back to close."
 
-#: src/script.py:1425 src/script.py:2238
-msgid "대화/결과창 감지, 클릭하여 스킵 시도."
-msgstr "Dialogue/result screen detected; clicking to skip."
-
-#: src/script.py:1434
-msgid "尝试复活队友..."
-msgstr "Attempting to revive ally..."
-
-#: src/script.py:1458 src/script.py:1481
-msgid "不满足回城条件, 跳过回城."
-msgstr "Conditions for returning to town not met, skipping."
-
-#: src/script.py:1507
-msgid "看起来遇到了一些不太寻常的情况..."
-msgstr "It seems we've encountered something unusual..."
-
-#: src/script.py:1512
-msgid "已保存异常屏幕截图至 {a}"
-msgstr "Anomaly screenshot saved to {a}"
-
-#: src/script.py:1521
-msgid "看起来你没有选择找王女要钱. 那么就等两个小时吧."
-msgstr "Looks like you didn't choose to beg the princess. Waiting two hours then."
-
-#: src/script.py:1539
+#: src/script.py:1465
 msgid "即将进行善恶值调整. 剩余次数:{a}"
 msgstr "About to adjust alignment. Attempts left: {a}"
 
-#: src/script.py:1540
+#: src/script.py:1466
 msgid "新的善恶:{a}"
 msgstr "New alignment: {a}"
 
-#: src/script.py:1549
-msgid "购买了骨头."
-msgstr "Purchased Bones."
-
-#: src/script.py:1551
-msgid "购买了尸油."
-msgstr "Purchased Corpse Oil."
-
-#: src/script.py:1562
-msgid "死了好几个, 惨哦"
-msgstr "Several died, that's rough."
-
-#: src/script.py:1568
-msgid "网络故障警报! 网络故障警报! 返回标题, 重复, 返回标题!"
-msgstr "Network failure alert! Returning to title, repeat, returning to title!"
-
-#: src/script.py:1573
-msgid "状态检查第{a}次耗时: {b}秒"
-msgstr "State check #{a} took: {b}s"
-
-#: src/script.py:1576
+#: src/script.py:1473 src/script.py:1487 src/script.py:1616
 msgid "看起来遇到了一些非同寻常的情况...重启游戏."
 msgstr "Seems like an extraordinary situation... restarting game."
 
-#: src/script.py:1598
+#: src/script.py:1480 src/script.py:2286
+msgid "대화/결과창 감지, 클릭하여 스킵 시도."
+msgstr "Dialogue/result screen detected; clicking to skip."
+
+#: src/script.py:1495
+msgid "尝试复活队友..."
+msgstr "Attempting to revive ally..."
+
+#: src/script.py:1519 src/script.py:1542
+msgid "不满足回城条件, 跳过回城."
+msgstr "Conditions for returning to town not met, skipping."
+
+#: src/script.py:1568
+msgid "看起来遇到了一些不太寻常的情况..."
+msgstr "It seems we've encountered something unusual..."
+
+#: src/script.py:1573
+msgid "已保存异常屏幕截图至 {a}"
+msgstr "Anomaly screenshot saved to {a}"
+
+#: src/script.py:1582
+msgid "看起来你没有选择找王女要钱. 那么就等两个小时吧."
+msgstr "Looks like you didn't choose to beg the princess. Waiting two hours then."
+
+#: src/script.py:1589
+msgid "购买了骨头."
+msgstr "Purchased Bones."
+
+#: src/script.py:1591
+msgid "购买了尸油."
+msgstr "Purchased Corpse Oil."
+
+#: src/script.py:1602
+msgid "死了好几个, 惨哦"
+msgstr "Several died, that's rough."
+
+#: src/script.py:1608
+msgid "网络故障警报! 网络故障警报! 返回标题, 重复, 返回标题!"
+msgstr "Network failure alert! Returning to title, repeat, returning to title!"
+
+#: src/script.py:1613
+msgid "状态检查第{a}次耗时: {b}秒"
+msgstr "State check #{a} took: {b}s"
+
+#: src/script.py:1638
 msgid "GameFrozenCheck被传入了一个空值."
 msgstr "GameFrozenCheck received a null value."
 
-#: src/script.py:1608
+#: src/script.py:1648
 msgid "卡死检测截图 counter={a} length={b}"
 msgstr "Freeze detection screenshot counter={a} length={b}"
 
-#: src/script.py:1618
+#: src/script.py:1658
 msgid "卡死检测耗时: {a}秒"
 msgstr "Freeze detection time: {a}s"
 
-#: src/script.py:1619
+#: src/script.py:1659
 msgid "卡死检测结果: {a}"
 msgstr "Freeze detection result: {a}"
 
-#: src/script.py:1676
+#: src/script.py:1716
 msgid "[안전장치] 전투 상태 진입 시 스킬 상세창이 감지되어 강제 폐쇄합니다."
 msgstr ""
 "[Safeguard] Skill detail window detected on entering combat; force-"
 "closing it."
 
-#: src/script.py:1701
+#: src/script.py:1741
 msgid "[안전장치] 자동전투 활성화 시도 중 스킬창이 감지되었습니다. 닫기를 진행합니다."
 msgstr "[Safeguard] Skill window detected while enabling auto combat; closing it."
 
-#: src/script.py:1724
+#: src/script.py:1764
 msgid "没有检测到任务详情界面. 疑似法力不足, 使用自动战斗. (耗时: {a}秒)"
 msgstr ""
 "Task details UI not detected. Suspected insufficient mana, using Auto "
 "Combat. (Took: {a}s)"
 
-#: src/script.py:1732
+#: src/script.py:1772
 msgid "已成功打开技能详情界面。 (耗时: {a}秒)"
 msgstr "Skill detail window opened. (Took: {a}s)"
 
-#: src/script.py:1741
+#: src/script.py:1781
 msgid ""
 "错误: 设定了高于1级的技能, 但并未检测到技能等级.\n"
 " 使用默认技能."
@@ -1199,7 +1213,7 @@ msgstr ""
 "Error: A skill above level 1 is set, but no skill level was detected.\n"
 " Using the default skill."
 
-#: src/script.py:1750
+#: src/script.py:1790
 msgid ""
 "错误: 未检测到目标等级\n"
 " 使用1级技能."
@@ -1207,157 +1221,157 @@ msgstr ""
 "Error: Target level not detected.\n"
 " Using the level 1 skill."
 
-#: src/script.py:1753
+#: src/script.py:1793
 msgid "错误: 我认为不可能发生这种情况. 请务必告诉我."
 msgstr "Error: This should never happen. Please report it."
 
-#: src/script.py:1755
+#: src/script.py:1795
 msgid "技能等级设置完成。 (等级: {a}, 耗时: {b}秒)"
 msgstr "Skill level set. (Level: {a}, took: {b}s)"
 
-#: src/script.py:1761
+#: src/script.py:1801
 msgid "释放了位于\"{a}\"的辅助技能, 技能等级为{b}, 释放对象为{c}"
 msgstr "Cast the support skill at \"{a}\", level {b}, target {c}."
 
-#: src/script.py:1766
+#: src/script.py:1806
 msgid "보조 스킬의 대상(\"{a}\")이 설정되지 않았거나 매칭되지 않습니다. 스킬을 취소하고 이 캐릭터를 자동으로 행동시킵니다."
 msgstr ""
 "Support skill target (\"{a}\") is not set or not matched. Cancelling the "
 "skill and letting this character act automatically."
 
-#: src/script.py:1788
+#: src/script.py:1828
 msgid "释放了位于\"{a}\"的全体技能, 技能等级为{b}. (耗时: {c}秒)"
 msgstr "Cast the AoE skill at \"{a}\", level {b}. (Took: {c}s)"
 
-#: src/script.py:1791
+#: src/script.py:1831
 msgid "释放了位于\"{a}\"的单体技能, 技能等级为{b}. 选择next作为敌方目标. (耗时: {c}秒)"
 msgstr ""
 "Cast the single-target skill at \"{a}\", level {b}. Selected next as the "
 "enemy target. (Took: {c}s)"
 
-#: src/script.py:1804
+#: src/script.py:1844
 msgid "적 대상 탭이 반영되지 않았습니다(next 잔존). 재탭합니다."
 msgstr "Enemy target tap not registered (next still present). Tapping again."
 
-#: src/script.py:1806
+#: src/script.py:1846
 msgid "적 대상 선택이 계속 실패하여 스킬을 취소하고 이 캐릭터를 자동으로 행동시킵니다."
 msgstr ""
 "Enemy target selection kept failing. Cancelling the skill and letting "
 "this character act automatically."
 
-#: src/script.py:1816
+#: src/script.py:1856
 msgid "释放了位于\"{a}\"的单体技能, 技能等级为{b}. 随机选择敌方目标. (耗时: {c}秒)"
 msgstr ""
 "Cast the single-target skill at \"{a}\", level {b}. Random enemy target. "
 "(Took: {c}s)"
 
-#: src/script.py:1819
+#: src/script.py:1859
 msgid "技能施放总计耗时: {a}秒"
 msgstr "Total skill casting time: {a}s"
 
-#: src/script.py:1836
+#: src/script.py:1876
 msgid "[안전장치] 수동 스킬 시전 완료 후에도 스킬창이 닫히지 않았습니다. 강제 복구를 진행합니다."
 msgstr ""
 "[Safeguard] Skill window did not close after manual skill casting. "
 "Forcing recovery."
 
-#: src/script.py:1857
+#: src/script.py:1897
 msgid "错误: 当前战斗策略内容为空. 使用全自动战斗."
 msgstr "Error: The current combat strategy is empty. Using full auto combat."
 
-#: src/script.py:1860
+#: src/script.py:1900
 msgid "当前战斗为\"全自动战斗\", 因此使用全自动战斗."
 msgstr "Current combat is \"Full Auto\" or skill list is empty, using Full Auto."
 
-#: src/script.py:1863
+#: src/script.py:1903
 msgid "当前战斗技能列表内容为空, 因此使用全自动战斗."
 msgstr "Current combat is \"Full Auto\" or skill list is empty, using Full Auto."
 
-#: src/script.py:1866
+#: src/script.py:1906
 msgid "已执行过首次战斗，已切换至自动战斗。"
 msgstr "First combat already done; switched to auto combat."
 
-#: src/script.py:1875
+#: src/script.py:1915
 msgid "检测到首次战斗。将尝试手动施放技能。"
 msgstr "First combat detected. Will try casting skills manually."
 
-#: src/script.py:1879
+#: src/script.py:1919
 msgid "남은 전략 스킬이 있어 자동전투를 비활성화합니다..."
 msgstr "Strategy skills remaining; disabling auto combat..."
 
-#: src/script.py:1888
+#: src/script.py:1928
 msgid "战斗已结束."
 msgstr "Combat ended."
 
-#: src/script.py:1890
+#: src/script.py:1930
 msgid "战斗已结束。当前已完成首次战斗。"
 msgstr "Combat ended. First combat completed."
 
-#: src/script.py:1913
+#: src/script.py:1953
 msgid "最佳 {a}, {b}"
 msgstr "Best {a}, {b}"
 
-#: src/script.py:1918
+#: src/script.py:1958
 msgid "并未设定该角色的行为, 使用自动战斗."
 msgstr "No behavior set for this character; using auto combat."
 
-#: src/script.py:1936
+#: src/script.py:1976
 msgid "技能已释放，已从当前策略队列中移除。"
 msgstr "Skill cast and removed from the current strategy queue."
 
-#: src/script.py:1947
+#: src/script.py:1987
 msgid "地图不可用."
 msgstr "Map unavailable."
 
-#: src/script.py:1958
+#: src/script.py:1998
 msgid "当前目标: 地点{a}"
 msgstr "Current target: Location {a}"
 
-#: src/script.py:1963
+#: src/script.py:2003
 msgid "当前目标: 楼梯{a}"
 msgstr "Current target: Stairs {a}"
 
-#: src/script.py:1966
+#: src/script.py:2006
 msgid "搜索{a}..."
 msgstr "Searching for {a}..."
 
-#: src/script.py:1968
+#: src/script.py:2008
 msgid "找到了 {a}! {b}"
 msgstr "Found {a}! {b}"
 
-#: src/script.py:1970
+#: src/script.py:2010
 msgid "宝箱热力图: 地图:{a} 方向:{b} 位置:{c}"
 msgstr "Chest heatmap: Map:{a} Direction:{b} Position:{c}"
 
-#: src/script.py:1980
+#: src/script.py:2020
 msgid "面具男, 移动."
 msgstr "Masked One, move."
 
-#: src/script.py:1985
+#: src/script.py:2025
 msgid "开始移动失败. 不要停下来啊面具男!"
 msgstr "Failed to start moving. Don't stop now, Masked One!"
 
-#: src/script.py:1990
+#: src/script.py:2030
 msgid "已退出移动状态. 当前状态: {a}."
 msgstr "Exited movement state. Current state: {a}."
 
-#: src/script.py:1999
+#: src/script.py:2039
 msgid "已退出移动状态. 进行状态检查..."
 msgstr "Exited movement state. Checking status..."
 
-#: src/script.py:2010
+#: src/script.py:2050
 msgid "在暴风雪中."
 msgstr "In a blizzard."
 
-#: src/script.py:2015
+#: src/script.py:2055
 msgid "没有检测到地图."
 msgstr "No map detected."
 
-#: src/script.py:2021
+#: src/script.py:2061
 msgid "错误: {a}"
 msgstr "Error: {a}"
 
-#: src/script.py:2029
+#: src/script.py:2069
 msgid ""
 "没有找到宝箱.\n"
 "停止检索宝箱."
@@ -1365,385 +1379,389 @@ msgstr ""
 "No chests found.\n"
 "Stopping chest search."
 
-#: src/script.py:2032
+#: src/script.py:2072
 msgid "已经抵达目标地点或目标楼层."
 msgstr "Already at target location or target floor."
 
-#: src/script.py:2037
+#: src/script.py:2077
 msgid "未找到目标{a}."
 msgstr "Target {a} not found."
 
-#: src/script.py:2046
+#: src/script.py:2086
 msgid "经过对比中心区域, 确认没有抵达."
 msgstr "After comparing central area, confirmed not arrived."
 
-#: src/script.py:2052
+#: src/script.py:2092
 msgid "经过对比中心区域, 判断为抵达目标地点."
 msgstr "After comparing central area, determined target location reached."
 
-#: src/script.py:2053
+#: src/script.py:2093
 msgid "无需等待, 当前目标已完成."
 msgstr "No need to wait, current target complete."
 
-#: src/script.py:2085
+#: src/script.py:2125
 msgid "상자 스턱 재시작이 {a}회 반복되어 스마트 개봉을 이번 실행 동안 구식 연타 방식으로 전환합니다."
 msgstr ""
 "Chest-stuck restart repeated {a} times; switching smart disarm to the "
 "legacy rapid-tap mode for this run."
 
-#: src/script.py:2111
+#: src/script.py:2151
 msgid "상자 처리 300초 초과, 스턱으로 판단해 게임을 재시작합니다."
 msgstr "Chest handling exceeded 300s; judged stuck, restarting the game."
 
-#: src/script.py:2141
+#: src/script.py:2168
+msgid "[상자 가드] 결과창 감지, 스킵합니다."
+msgstr "[Chest guard] Result screen detected; skipping."
+
+#: src/script.py:2189
 msgid "[Audit] 상자 열기 {a:.0f}초 초과 지연 중. 디버그 이미지 저장 완료."
 msgstr "[Audit] Chest opening delayed over {a:.0f}s. Debug images saved."
 
-#: src/script.py:2167
+#: src/script.py:2215
 msgid "개봉 가능한 캐릭터가 없습니다(전원 공포 등). 상자를 포기합니다."
 msgstr "No character can open the chest (all feared, etc.). Abandoning the chest."
 
-#: src/script.py:2231
+#: src/script.py:2279
 msgid "[스마트 개봉] 전리품 결과 화면 즉시 스킵"
 msgstr "[Smart Disarm] Skipping the loot result screen immediately"
 
-#: src/script.py:2241
+#: src/script.py:2289
 msgid "스마트 개봉 연속 {a}회 실패, 스턱으로 판단해 게임을 재시작합니다."
 msgstr "Smart disarm failed {a} times in a row; judged stuck, restarting the game."
 
-#: src/script.py:2294 src/script.py:2538 src/script.py:2551
+#: src/script.py:2342 src/script.py:2586 src/script.py:2599
 msgid "即将停止脚本..."
 msgstr "About to stop script..."
 
-#: src/script.py:2296
+#: src/script.py:2344
 msgid "当前状态(地下城): {a}"
 msgstr "Current state (Dungeon): {a}"
 
-#: src/script.py:2307 src/script.py:2818
+#: src/script.py:2355 src/script.py:2866
 msgid "由于画面卡死, 在state:None中重启."
 msgstr "Restarting due to screen freeze in state: None."
 
-#: src/script.py:2311 src/script.py:2822
+#: src/script.py:2359 src/script.py:2870
 msgid "由于宝箱用时过久, 在state:None中重启."
 msgstr "Restarting due to chest taking too long in state: None."
 
-#: src/script.py:2314 src/script.py:2825
+#: src/script.py:2362 src/script.py:2873
 msgid "由于战斗用时过久, 在state:None中重启."
 msgstr "Restarting due to combat taking too long in state: None."
 
-#: src/script.py:2331 src/script.py:2839
+#: src/script.py:2379 src/script.py:2887
 msgid "粗略统计: 宝箱{a}秒, 战斗{b}秒."
 msgstr "Summary: Chest {a}s, Combat {b}s."
 
-#: src/script.py:2344 src/script.py:2852
+#: src/script.py:2392 src/script.py:2900
 msgid "进行开启宝箱后的恢复."
 msgstr "Performing post-chest recovery."
 
-#: src/script.py:2349 src/script.py:2857
+#: src/script.py:2397 src/script.py:2905
 msgid "由于面板配置, 进行开启宝箱后恢复."
 msgstr "Performing post-chest recovery due to panel setting."
 
-#: src/script.py:2352 src/script.py:2860
+#: src/script.py:2400 src/script.py:2908
 msgid "由于面板配置, 跳过了开启宝箱后恢复."
 msgstr "Skipped post-chest recovery due to panel setting."
 
-#: src/script.py:2358 src/script.py:2866
+#: src/script.py:2406 src/script.py:2914
 msgid "由于面板配置, 进行战后恢复."
 msgstr "Performing post-combat recovery due to panel setting."
 
-#: src/script.py:2361 src/script.py:2869
+#: src/script.py:2409 src/script.py:2917
 msgid "由于面板配置, 跳过了战后恢复."
 msgstr "Skipped post-combat recovery due to panel setting."
 
-#: src/script.py:2365
+#: src/script.py:2413
 msgid "由于面板配置, 在刚进入地下城时进行恢复."
 msgstr "Performing recovery upon dungeon entry due to panel setting."
 
-#: src/script.py:2400
+#: src/script.py:2448
 msgid "自动回复异常, 中止本次回复."
 msgstr "Auto-recovery error, aborting."
 
-#: src/script.py:2416
+#: src/script.py:2464
 msgid "resume可用. 使用resume."
 msgstr "Resume available. Using resume."
 
-#: src/script.py:2423 src/script.py:2432
+#: src/script.py:2471 src/script.py:2480
 msgid "已退出移动状态. 当前状态为{a}."
 msgstr "Exited movement state. Current state: {a}."
 
-#: src/script.py:2450
+#: src/script.py:2498
 msgid "多次访问地图, 认为游戏卡死. 重启游戏."
 msgstr "Map visited repeatedly; game considered frozen. Restarting the game."
 
-#: src/script.py:2474 src/script.py:2479
+#: src/script.py:2522 src/script.py:2527
 msgid "退出自动搜索."
 msgstr "Exiting chest search."
 
-#: src/script.py:2505
+#: src/script.py:2553
 msgid "地下城目标完成. 地下城状态结束.(仅限任务模式.)"
 msgstr "Dungeon Task complete. Dungeon state ended. (Task mode only.)"
 
-#: src/script.py:2528
+#: src/script.py:2576
 msgid "奇怪, 任务怎么已经接了."
 msgstr "Strange, the task is already accepted."
 
-#: src/script.py:2540
+#: src/script.py:2588
 msgid "当前状态: {a}"
 msgstr "Current state: {a}"
 
-#: src/script.py:2549
+#: src/script.py:2597
 msgid "下一状态: {a}"
 msgstr "Next state: {a}"
 
-#: src/script.py:2557
+#: src/script.py:2605
 msgid "因为没有遇到战斗或宝箱, 跳过住宿."
 msgstr "Skipping inn due to no combat or chest encountered."
 
-#: src/script.py:2559
+#: src/script.py:2607
 msgid "因为面板设置, 跳过住宿."
 msgstr "Skipping inn due to panel setting."
 
-#: src/script.py:2561
+#: src/script.py:2609
 msgid "还有许多地下城要刷. 面具男, 现在还不能休息哦."
 msgstr "Many dungeons left to farm. Masked One, you can't rest yet."
 
-#: src/script.py:2563
+#: src/script.py:2611
 msgid "休息时间到!"
 msgstr "Time to rest!"
 
-#: src/script.py:2594
+#: src/script.py:2642
 msgid "第一步: 时间跳跃..."
 msgstr "Step 1: Time-Space Leap..."
 
-#: src/script.py:2600 src/script.py:3195 src/script.py:3276 src/script.py:3411
+#: src/script.py:2648 src/script.py:3243 src/script.py:3324 src/script.py:3459
 msgid "第二步: 返回要塞..."
 msgstr "Step 2: Return to the Stronghold..."
 
-#: src/script.py:2605 src/script.py:3200 src/script.py:3211 src/script.py:3281
-#: src/script.py:3292 src/script.py:3416
+#: src/script.py:2653 src/script.py:3248 src/script.py:3259 src/script.py:3329
+#: src/script.py:3340 src/script.py:3464
 msgid "第三步: 前往王城..."
 msgstr "Step 3: Go to the Royal Capital..."
 
-#: src/script.py:2611
+#: src/script.py:2659
 msgid "第四步: 给我!(伸手)"
 msgstr "Step 4: Give it to me! (reaches out)"
 
-#: src/script.py:2657
+#: src/script.py:2705
 msgid "第{a}次\"7000G\"完成. 该次花费时间{b:.2f}, 每秒收益:{c:.2f}Gps."
 msgstr "Run {a} of \"7000G\" completed. Time: {b:.2f}s, Profit: {c:.2f} G/s."
 
-#: src/script.py:2667
+#: src/script.py:2715
 msgid "第一步: 诅咒之旅..."
 msgstr "Step 1: Cursed Journey..."
 
-#: src/script.py:2676
+#: src/script.py:2724
 msgid "第二步: 领取任务."
 msgstr "Step 2: Accept the task."
 
-#: src/script.py:2680
+#: src/script.py:2728
 msgid "第三步: 进入地下城."
 msgstr "Step 3: Enter the dungeon."
 
-#: src/script.py:2685
+#: src/script.py:2733
 msgid "第四步: 陷阱."
 msgstr "Step 4: Trap."
 
-#: src/script.py:2702
+#: src/script.py:2750
 msgid "已完成第二个陷阱."
 msgstr "Completed second trap."
 
-#: src/script.py:2712
+#: src/script.py:2760
 msgid "已完成第三个陷阱."
 msgstr "Completed third trap."
 
-#: src/script.py:2726
+#: src/script.py:2774
 msgid "第{a}次\"鸟剑\"完成. 该次花费时间{b:.2f}."
 msgstr "Run {a} of \"Fordraig Sword\" completed. Time: {b:.2f}s."
 
-#: src/script.py:2730
+#: src/script.py:2778
 msgid "注意, \"休息间隔\"控制连续战斗多少次后回城. 当前未启用休息, 强制设置为1."
 msgstr ""
 "Note: \"Rest Interval\" controls how many combats before returning to "
 "town. Rest currently disabled, forcing to 1."
 
-#: src/script.py:2733
+#: src/script.py:2781
 msgid "注意, \"休息间隔\"控制连续战斗多少次后回城. 当前值0为无效值, 最低为1."
 msgstr ""
 "Note: \"Rest Interval\" controls how many combats before returning to "
 "town. Current value 0 is invalid, minimum is 1."
 
-#: src/script.py:2735
+#: src/script.py:2783
 msgid "注意, 该流程不包括时间跳跃和接取任务, 请确保接取任务后再开启!"
 msgstr ""
 "Note: This task does not include time leap and task acceptance, please "
 "ensure the task is accepted before starting!"
 
-#: src/script.py:2753
+#: src/script.py:2801
 msgid "已抵达目标地点, 开始战斗."
 msgstr "Arrived at target location, starting combat."
 
-#: src/script.py:2756
+#: src/script.py:2804
 msgid "第{a}轮开始."
 msgstr "Round {a} start."
 
-#: src/script.py:2773
+#: src/script.py:2821
 msgid "第1场战斗结束."
 msgstr "Combat 1 finished."
 
-#: src/script.py:2777
+#: src/script.py:2825
 msgid "第2场战斗结束."
 msgstr "Combat 2 finished."
 
-#: src/script.py:2781
+#: src/script.py:2829
 msgid "第{a}轮结束."
 msgstr "Round {a} finished."
 
-#: src/script.py:2792
+#: src/script.py:2840
 msgid "第{a}x{b}轮\"击退敌势力\"完成, 共计{c}场战斗. 该次花费时间{c:.2f}秒."
 msgstr ""
 "Round {a}x{b} of \"Repel Enemy Forces\" completed. Total combats: {c}. "
 "Time: {c:.2f}s."
 
-#: src/script.py:2902
+#: src/script.py:2950
 msgid "상자 처리 중 게임을 재시작했습니다. 상태를 재식별합니다."
 msgstr "Game restarted during chest handling. Re-identifying the state."
 
-#: src/script.py:2938
+#: src/script.py:2986
 msgid "第{a}次三牛完成. 本次用时:{b}秒. 累计开箱子{c}, 累计战斗{d}, 累计用时{e}秒."
 msgstr ""
 "Run {a} of \"Three Oxen\" completed. Time: {b}s. Total chests opened: "
 "{c}, total combats: {d}, total time: {e}s."
 
-#: src/script.py:2944 src/script.py:3006 src/script.py:3073
+#: src/script.py:2992 src/script.py:3054 src/script.py:3121
 msgid "第一步: 重置因果"
 msgstr "Step 1: Reset CSC"
 
-#: src/script.py:2949 src/script.py:3078
+#: src/script.py:2997 src/script.py:3126
 msgid "第二步: 返回要塞"
 msgstr "Step 2: Return to Stronghold"
 
-#: src/script.py:2953
+#: src/script.py:3001
 msgid "第三步: 前往王城"
 msgstr "Step 3: Go to Royal Capital"
 
-#: src/script.py:2959 src/script.py:3088
+#: src/script.py:3007 src/script.py:3136
 msgid "第四步: 领取任务"
 msgstr "Step 4: Accept Task"
 
-#: src/script.py:2963
+#: src/script.py:3011
 msgid "第五步: 进入牛洞"
 msgstr "Step 5: Enter Ox Cave"
 
-#: src/script.py:2973
+#: src/script.py:3021
 msgid "第六步: 击杀一牛"
 msgstr "Step 6: Defeat First Ox"
 
-#: src/script.py:2977
+#: src/script.py:3025
 msgid "第七步: 回去睡觉"
 msgstr "Step 7: Go back to sleep"
 
-#: src/script.py:2981
+#: src/script.py:3029
 msgid "第八步: 再入牛洞"
 msgstr "Step 8: Re-enter Ox Cave"
 
-#: src/script.py:2985
+#: src/script.py:3033
 msgid "第九步: 击杀二牛"
 msgstr "Step 9: Defeat Second Ox"
 
-#: src/script.py:2991
+#: src/script.py:3039
 msgid "第六步: 连杀三牛"
 msgstr "Step 6: Defeat Three Oxen consecutively"
 
-#: src/script.py:3001
+#: src/script.py:3049
 msgid "第{a}次忍洞完成. 本次用时:{b}秒. 累计开箱子{c}, 累计战斗{d}, 累计用时{e}秒."
 msgstr ""
 "Run {a} of \"Ninja Cave\" completed. Time: {b}s. Total chests opened: "
 "{c}, total combats: {d}, total time: {e}s."
 
-#: src/script.py:3013
+#: src/script.py:3061
 msgid "第二步: 前往王城"
 msgstr "Step 2: Go to Royal Capital"
 
-#: src/script.py:3036
+#: src/script.py:3084
 msgid "第三步: 领取任务"
 msgstr "Step 3: Accept Task"
 
-#: src/script.py:3041
+#: src/script.py:3089
 msgid "第四步: 进入忍洞"
 msgstr "Step 4: Enter Ninja Cave"
 
-#: src/script.py:3045
+#: src/script.py:3093
 msgid "第五步: 关闭陷阱"
 msgstr "Step 5: Disable traps"
 
-#: src/script.py:3051
+#: src/script.py:3099
 msgid "第六步: 第一个箱子"
 msgstr "Step 6: First chest"
 
-#: src/script.py:3068
+#: src/script.py:3116
 msgid "第{a}次约定之剑完成. 本次用时:{b}秒. 累计开箱子{c}, 累计战斗{d}, 累计用时{e}秒."
 msgstr ""
 "Run {a} of \"Sword of Promise\" completed. Time: {b}s. Total chests "
 "opened: {c}, total combats: {d}, total time: {e}s."
 
-#: src/script.py:3082
+#: src/script.py:3130
 msgid "第三步: 前往王城)"
 msgstr "Step 3: Go to Royal Capital)"
 
-#: src/script.py:3095
+#: src/script.py:3143
 msgid "第五步: 进入洞窟"
 msgstr "Step 5: Enter the Cavern"
 
-#: src/script.py:3106
+#: src/script.py:3154
 msgid "第六步: 1层找人"
 msgstr "Step 6: Find person on Floor 1"
 
-#: src/script.py:3116
+#: src/script.py:3164
 msgid "第七步: 2层找人"
 msgstr "Step 7: Find person on Floor 2"
 
-#: src/script.py:3127
+#: src/script.py:3175
 msgid "第八步: 3层找人"
 msgstr "Step 8: Find person on Floor 3"
 
-#: src/script.py:3143
+#: src/script.py:3191
 msgid "第九步: 离开洞穴"
 msgstr "Step 9: Leave the cave"
 
-#: src/script.py:3156
+#: src/script.py:3204
 msgid "第{a}次巨人完成. 本次用时:{b}秒. 累计开箱子{c}, 累计战斗{d}, 累计用时{e}秒."
 msgstr ""
 "Run {a} of \"Giant\" completed. Time: {b}s. Total chests opened: {c}, "
 "total combats: {d}, total time: {e}s."
 
-#: src/script.py:3168
+#: src/script.py:3216
 msgid "跳过了巨人检测环节. 现在默认总是击杀灯怪."
 msgstr ""
 "Skipped giant detection. Defaulting to always kill the Monster with "
 "Lantern."
 
-#: src/script.py:3190 src/script.py:3205 src/script.py:3217 src/script.py:3271
-#: src/script.py:3286 src/script.py:3298
+#: src/script.py:3238 src/script.py:3253 src/script.py:3265 src/script.py:3319
+#: src/script.py:3334 src/script.py:3346
 msgid "第一步: 时空跳跃..."
 msgstr "Step 1: Time-Space Leap..."
 
-#: src/script.py:3223 src/script.py:3304 src/script.py:3421
+#: src/script.py:3271 src/script.py:3352 src/script.py:3469
 msgid "第四步: 悬赏揭榜"
 msgstr "Step 4: Claim Bounty"
 
-#: src/script.py:3230 src/script.py:3311
+#: src/script.py:3278 src/script.py:3359
 msgid "第五步: 击杀蝎女"
 msgstr "Step 5: Defeat Scorpion Woman"
 
-#: src/script.py:3239 src/script.py:3335 src/script.py:3438
+#: src/script.py:3287 src/script.py:3383 src/script.py:3486
 msgid "第六步: 提交悬赏"
 msgstr "Step 6: Turn in Bounty"
 
-#: src/script.py:3250 src/script.py:3350 src/script.py:3449
+#: src/script.py:3298 src/script.py:3398 src/script.py:3497
 msgid "第七步: 休息"
 msgstr "Step 7: Rest"
 
-#: src/script.py:3258
+#: src/script.py:3306
 msgid ""
 "第{a}次\"悬赏:蝎女\"完成. \n"
 "该次花费时间{b:.2f}s.\n"
@@ -1755,11 +1773,11 @@ msgstr ""
 "Total time: {c:.2f}s.\n"
 "Average: {d:.2f}s"
 
-#: src/script.py:3323
+#: src/script.py:3371
 msgid "第5.5步: 击杀风暴六手"
 msgstr "Step 5.5: Defeat Storm Six-Arms"
 
-#: src/script.py:3358
+#: src/script.py:3406
 msgid ""
 "第{a}次\"悬赏:蝎女+六手\"完成. \n"
 "该次花费时间{b:.2f}s.\n"
@@ -1771,7 +1789,7 @@ msgstr ""
 "Total time: {c:.2f}s.\n"
 "Average: {d:.2f}s"
 
-#: src/script.py:3393
+#: src/script.py:3441
 msgid ""
 "第{a}次\"钢试炼\"完成. \n"
 "该次花费时间{b:.2f}s.\n"
@@ -1783,11 +1801,11 @@ msgstr ""
 "Total time: {c:.2f}s.\n"
 "Average: {d:.2f}s"
 
-#: src/script.py:3428
+#: src/script.py:3476
 msgid "第五步: 和吉尔说再见吧"
 msgstr "Step 5: Say goodbye to Jill"
 
-#: src/script.py:3457
+#: src/script.py:3505
 msgid ""
 "第{a}次\"悬赏:吉尔\"完成. \n"
 "该次花费时间{b:.2f}s.\n"
@@ -1799,11 +1817,11 @@ msgstr ""
 "Total time: {c:.2f}s.\n"
 "Average: {d:.2f}s"
 
-#: src/script.py:3460
+#: src/script.py:3508
 msgid "开始睡觉."
 msgstr "Going to sleep."
 
-#: src/script.py:3470
+#: src/script.py:3518
 msgid ""
 "完成了{a}次旅店休息.\n"
 "总计用时{c:.2f}s.\n"
@@ -1813,13 +1831,13 @@ msgstr ""
 "Total time {c:.2f}s.\n"
 "Average {d:.2f}s."
 
-#: src/script.py:3566
+#: src/script.py:3614
 msgid "第{a}次要塞小精灵完成. 本次用时:{b}秒. 累计开箱子{c}, 累计战斗{d}, 累计用时{e}秒."
 msgstr ""
 "Fortress sprite run #{a} done. This run: {b}s. Total chests: {c}, "
 "combats: {d}, time: {e}s."
 
-#: src/script.py:3613
+#: src/script.py:3661
 msgid "게임 재시작 신호가 복구 범위 밖으로 전파되었습니다. 작업을 종료합니다."
 msgstr ""
 "The game-restart signal propagated outside the recovery scope. Stopping "
