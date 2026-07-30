@@ -341,6 +341,9 @@ def run_scenario(mod, name, roi_after_kind, cursor_after_press, verbose=False,
             mod._PREV_TAP_MEAS["ok"] = seed["prev_meas"]
 
         cfg = mod.DisarmConfig()
+        cfg.stop_time = 1.0          # 시나리오 기대값(월드 감속·리드 수치)은 구 프라이어 1.0 기준으로
+                                     # 저작됨 — 필드 기본값 재튜닝(26.07-28: 0.57)과 무관하게
+                                     # 로직 회귀만 검증하도록 하니스에서 고정한다.
         cfg.sample_interval = 0.25   # 합성 캡처는 즉답이므로 실측 캡처 주기를 흉내
         w = world if world is not None else World(
             make_pattern(roi_after_kind), cursor_after_press, press_delay)
@@ -365,6 +368,7 @@ def run_measure_unit(mod, name, est_x, x1, x2, verbose=False):
     타이밍: 주입 t=100.0, 전프레임 +0.22s, 후프레임 +0.72s (실기 캡처 시점 근사)."""
     log = RecLogger(verbose)
     cfg = mod.DisarmConfig()
+    cfg.stop_time = 1.0   # 단일 외삽 폴백 기대값이 구 프라이어(1.0) 기준 — 위 run_scenario 와 동일 사유
     sd = mod.SmartDisarm(lambda: None, lambda p: True, time.monotonic, log, config=cfg)
     sd.detect = lambda img: img
     rng, safes = (16, 896), [(605, 745)]

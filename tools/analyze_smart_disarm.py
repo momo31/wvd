@@ -8,13 +8,20 @@
 
 집계 항목:
   1. 호출 결과 분포(종료/중단 사유), 스턱 가드 발동, 무막대 즉시 반환 빈도
-  2. 탭 적중률 - 신형식(정지 위치 기준)과 구형식(개선 전 기준) 분리, 이미지 라벨 대조
+  2. 탭 적중률 - 신형식(정지 위치 기준)과 구형식(개선 전 기준) 분리, 이미지 라벨 대조,
+     게임 판정(ChallengeCheck) 성공률 + 차감 인식 내역 + 구식 환산(차감 인식 제외)
+  2b. 폭별 성적 - 목표구간 폭(pw*속도) 대역별 게임 판정 성공률, 협소 우회 폭 분포
   3. 보정 궤적 - press EMA, 정지 리드 adj, 정지위치 오프셋 분포와 stop_time 조정 제안,
      측정 커버리지(보정이 실제 작동한 탭 비율)와 생략 사유
   4. 캡처 성능 - 샘플 간격 dt, [cap] 소켓/서브프로세스 캡처 시간 (개선 전 기준선 0.806s)
   5. 종료 프레임(_end.png) 인벤토리 - 실제 함정 발동 여부의 수동 라벨링 대상
 
 개선 전 기준선(2026-07-01~02 실측): 탭 적중 27%(구 기준), 샘플 dt median 0.806s.
+
+게임 판정(ChallengeCheck) 정직 기준선: 07-19 58% → 07-28 41%.
+07-18 새벽의 '81%'는 smallgame_3 미스매치로 차감(4→3, 3→2) 실패를 세지 못하던
+시기의 과대 측정이다(26.07-28 로그를 같은 척도로 재환산하면 83%). 과거 세션과의
+비교는 반드시 '구식 환산(차감 인식 제외)' 지표끼리 한다.
 """
 import os
 import re
@@ -38,6 +45,7 @@ RE_TAP_NEW = re.compile(r"\[audit\] 탭 #(\d+): 목표x=([\d.]+) 정지추정x=(
 RE_TAP_OLD = re.compile(r"\[audit\] 탭 #(\d+): 목표x=([\d.]+) 실제커서x=(\S+) 적중=(\S)")
 RE_TAPLOG  = re.compile(r"개봉 탭: 목표구간중심x=([\d.]+) margin=([\d.]+) pw=([\d.]+)s 속도=([\d.]+)px/s"
                         r"(?: press=([\d.]+)s)?(?: 리드=([\d.]+)s)?")
+RE_NARROW  = re.compile(r"안전구간 협소\((\d+(?:\.\d+)?)px <= (\d+(?:\.\d+)?)px\)")
 RE_OFFSET  = re.compile(r"정지위치 오프셋 ([+-]?\d+)px.*리드 보정 ([+-][\d.]+)s \(누적 ([+-][\d.]+)s\)")
 RE_SNAP    = re.compile(r"보정 상태: press EMA=(.+?), 정지리드=([\d.]+)s\(adj ([+-][\d.]+)\), "
                         r"grab_frac=([\d.]+), stop_time=([\d.]+)s")
@@ -91,10 +99,15 @@ def q(vals, p):
 def parse_logs(log_dir):
     data = dict(results=[], taps_new=[], taps_old=[], taplogs=[], offsets=[],
                 snaps=[], press=[], cap_s=[], cap_p=[], dts=[], skips={},
-                chance_scores={}, cc=dict(ok=0, fail=0, hours={}),
-                counts={label: 0 for _, label in COUNT_KEYS})
+                chance_scores={}, cc=dict(ok=0, fail=0, ded={}, hours={}),
+                counts={label: 0 for _, label in COUNT_KEYS},
+                narrow=[], tap_widths=[])
     files = sorted(glob.glob(os.path.join(log_dir, "log_*.txt")))
     cur_tag, prev_t, last_speed = None, None, None
+    # pending: 직전 '개봉 탭'의 목표구간 폭(pw*속도, px). 다음 게임 판정(무차감/sim/탭 실패)
+    # 이 나오면 그 폭에 성적을 귀속시킨다. 차감 인식 라인(N->N-1)은 판정 확정이 아니라
+    # 뒤따르는 '탭 실패' 라인이 확정이므로(이중 계상 방지와 동일 규약) pending 을 유지한다.
+    pending = None
     for lf in files:
         try:
             fh = open(lf, encoding="utf-8", errors="replace")
@@ -126,6 +139,13 @@ def parse_logs(log_dir):
                                lead=(float(m.group(6)) if m.group(6) else None))
                     data["taplogs"].append(rec)
                     last_speed = rec["speed"]
+                    if pending is not None:
+                        data["tap_widths"].append(dict(w=pending, outcome=None))
+                    pending = rec["pw"] * rec["speed"]
+                    continue
+                m = RE_NARROW.search(line)
+                if m:
+                    data["narrow"].append(float(m.group(1)))
                     continue
                 m = RE_TAP_NEW.search(line)
                 if m:
@@ -177,17 +197,29 @@ def parse_logs(log_dir):
                 m = RE_CC_NC.search(line)
                 if m or RE_CC_SIM.search(line) or RE_CC_FAIL.search(line):
                     hr = data["cc"]["hours"].setdefault(line[11:13], [0, 0])
+                    outcome = None
                     if RE_CC_FAIL.search(line):
                         data["cc"]["fail"] += 1
                         hr[1] += 1
+                        outcome = "fail"
                     elif m is None or m.group(1) == m.group(2):
                         data["cc"]["ok"] += 1
                         hr[0] += 1
+                        outcome = "ok"
+                    else:
+                        k = "{}->{}".format(m.group(1), m.group(2))
+                        data["cc"]["ded"][k] = data["cc"]["ded"].get(k, 0) + 1
+                    if outcome and pending is not None:
+                        data["tap_widths"].append(dict(w=pending, outcome=outcome))
+                        pending = None
                     continue
                 m = RE_RESULT.search(line)
                 if m:
                     data["results"].append(dict(result=m.group(1),
                                                 taps=int(m.group(4)), tag=m.group(5)))
+                    if pending is not None:
+                        data["tap_widths"].append(dict(w=pending, outcome=None))
+                        pending = None
                     cur_tag, prev_t = None, None
     return data
 
@@ -246,6 +278,8 @@ def main():
 
     print("=" * 62)
     print("스마트 개봉 audit 평가  (기준선: 적중 27%, dt 0.806s)")
+    print("게임 판정 정직 기준선: 07-19 58% / 07-28 41%")
+    print("('81%'는 차감 인식 불능기의 과대 측정 - 과거 비교는 구식 환산 지표로만)")
     print("=" * 62)
 
     print("\n[1] 호출 결과")
@@ -298,6 +332,40 @@ def main():
         parts = [f"{hh}시 {100 * o // (o + x)}%({o}/{x})"
                  for hh, (o, x) in sorted(cc["hours"].items()) if o + x]
         print("  시간대별: " + " ".join(parts))
+        ded_n = sum(cc["ded"].values())
+        if ded_n:
+            parts = " ".join(f"{k} {v}건" for k, v in sorted(cc["ded"].items(), reverse=True))
+            print(f"  차감 인식: {ded_n}건 ({parts})")
+        # 구식 환산: smallgame_3 미스매치로 차감을 못 세던 시절(<= 07-18 새벽 '81%')과
+        # 같은 척도. 실패에서 차감 인식분을 제외해 당시 계측을 재현한다.
+        legacy_fail = max(0, cc["fail"] - ded_n)
+        legacy_total = cc["ok"] + legacy_fail
+        if legacy_total:
+            print(f"  구식 환산(차감 인식 제외): 성공 {cc['ok']} / 실패 {legacy_fail}"
+                  f"  성공률 {100.0 * cc['ok'] / legacy_total:.0f}%"
+                  f"  <- 07-18 이전 세션('81%')과 비교는 이 값으로")
+
+    tw = [t for t in d["tap_widths"] if t["outcome"]]
+    if tw or d["narrow"]:
+        print("\n[2b] 폭별 성적(게임 판정, 목표구간 폭=pw*속도)")
+    if tw:
+        bands = [(0, 134), (134, 160), (160, 220), (220, 400), (400, float("inf"))]
+        for lo, hi in bands:
+            grp = [t for t in tw if lo <= t["w"] < hi]
+            if not grp:
+                continue
+            okn = sum(1 for t in grp if t["outcome"] == "ok")
+            label = f"{lo:.0f}~{hi:.0f}px" if hi != float("inf") else f"{lo:.0f}px+"
+            print(f"  {label}: 판정 {len(grp)}건  성공률 {100.0 * okn / len(grp):.0f}%"
+                  f" (성공 {okn} / 실패 {len(grp) - okn})")
+        unj = len(d["tap_widths"]) - len(tw)
+        if unj:
+            print(f"  판정 미연결 탭: {unj}건 (탭 후 판정 라인 없이 종료)")
+    if d["narrow"]:
+        nv = d["narrow"]
+        print(f"  협소 우회(폴백행, 판정 표본 제외): {len(nv)}건"
+              f"  {min(nv):.0f}~{max(nv):.0f}px median {q(nv, 0.5):.0f}px"
+              f"  (이산 분포가 연속화되면 게임 패치 신호)")
 
     print("\n[3] 보정 궤적")
     if d["snaps"]:
