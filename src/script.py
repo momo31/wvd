@@ -1003,10 +1003,16 @@ def Factory():
                 Press(CheckIf(scn, target))
                 Sleep(0.2)
         def checkPattern(scn, pattern):
-            if pattern.startswith("combatActive"):
-                return StateCombatCheck(scn)
-            else:
-                return CheckIf(scn,pattern)
+            if isinstance(pattern, (list, tuple)):
+                if len(pattern) == 2 and all(isinstance(x, (int, float)) for x in pattern):
+                    return pattern
+                return None
+            elif isinstance(pattern, str):
+                if pattern.startswith("combatActive"):
+                    return StateCombatCheck(scn)
+                else:
+                    return CheckIf(scn, pattern)
+            return None
 
         while True:
             for underscore in range(setting.MAX_TRY_LIMIT):
@@ -1680,6 +1686,8 @@ def Factory():
         PressReturn()
     def StateEoT():
         runtimeContext._RESUMEAVAILABLE = False
+        if getattr(quest, 'questName', '') in ["[刷怪]FF联动1F", "[몬스터] 파판콜라보 1F"] or getattr(setting, 'FARM_TARGET', '') == 'ff-collabo-dungeon1f':
+            logger.info(_("이벤트마을출발"))
         if quest._preEOTcheck:
             Press(CheckIf(ScreenShot(),quest._preEOTcheck))
 
@@ -1702,7 +1710,10 @@ def Factory():
                     ["dungFlag", "GotoDung", last[1]], [last[2], [1, 1]], 1
                 )
             )
-        Press(CheckIf(ScreenShot(), quest._EOT[-1][1]))
+        if isinstance(quest._EOT[-1][1], str):
+            Press(CheckIf(ScreenShot(), quest._EOT[-1][1]))
+        elif isinstance(quest._EOT[-1][1], (list, tuple)):
+            Press(quest._EOT[-1][1])
         Sleep(1)
         Press(CheckIf(ScreenShot(), "GotoDung"))
         return

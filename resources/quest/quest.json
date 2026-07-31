@@ -757,6 +757,24 @@
         "questCategory": "其他",
         "questCategory_en_US": "Other",
         "_TYPE":"quest"
+    },
+
+    "ff-collabo-dungeon1f":{
+        "_TYPE":"dungeon",
+        "questName":"[刷怪]FF联动1F",
+        "questName_en_US": "[Monster] FF Collabo 1F",
+        "questCategory": "其他",
+        "questCategory_en_US": "Other",
+        "_TARGETINFOLIST":[
+            ["position","左上",[125,240]],
+            ["chest_auto"],
+            ["harken"]
+        ],
+        "_EOT":[
+            ["press","intoWorldMap",["GCoN/ff_collabo_map",[1,1]],1],
+            ["press",[570,900],[1,1],1]
+        ]
     }
 
 }
+

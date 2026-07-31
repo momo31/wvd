@@ -66,7 +66,8 @@ KO_TARGET_TRANSLATIONS = {
     "[装备]半自动大恶魔": "[장비] 대악마 반자동 파밍",
     "[装备]暗灯": "[장비] 사신의 어둠 등불",
     "[刷药]喜欢睡觉": "[포션] 잠꾸러기 퀘스트",
-    "mergeBlastNumber": "Tapjoy 연동 (mergeBlastNumber)"
+    "mergeBlastNumber": "Tapjoy 연동 (mergeBlastNumber)",
+    "[刷怪]FF联动1F": "[몬스터] 파판콜라보 1F"
 }
 
 REVERSE_CATEGORY_MAP = {v: k for k, v in KO_CATEGORY_TRANSLATIONS.items()}
