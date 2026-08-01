@@ -3654,12 +3654,12 @@ def Factory():
                 while 1:
                     if setting._FORCESTOPING.is_set():
                         break
-                    logger.info("出发!")
+                    logger.info(_("出发!"))
                     RestartableSequenceExecution(
                         lambda: StateEoT()
                         )
 
-                    logger.info("前往目标地点...")
+                    logger.info(_("前往目标地点..."))
                     RestartableSequenceExecution(
                         lambda: FindCoordsOrElseExecuteFallbackAndWait("theRouteToTheDestinationCannotBeFound",[[1,1],"mark_auto","donothing"],0.5)
                     )
@@ -3669,7 +3669,7 @@ def Factory():
 
                         if CheckIf(scn, "FFXI/nothingToDig"):
                             Press(FindCoordsOrElseExecuteFallbackAndWait("ReturnText",[[1,1],"leaveDung","donothing"],1))
-                            logger.info("没东西了, 撤退")
+                            logger.info(_("没东西了, 撤退"))
                             break
 
                         Press([450,600])
