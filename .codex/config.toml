@@ -1,0 +1,11 @@
+# Project-scoped Codex permissions. Loaded only when this repository is trusted.
+# A new Codex session is required after changing this file.
+approval_policy = "never"
+default_permissions = "workspace-git-write"
+
+[permissions.workspace-git-write]
+description = "Workspace access with project-local Git metadata writes enabled."
+extends = ":workspace"
+
+[permissions.workspace-git-write.filesystem.":workspace_roots"]
+".git" = "write"
