@@ -19,6 +19,15 @@ import numpy as np
 import copy
 import struct
 from smart_disarm import SmartDisarm, DisarmConfig, note_press_duration
+from combat_strategy import (
+    SkillExecutionResult,
+    clear_skill_failure,
+    complete_strategy_skill,
+    register_skill_failure,
+    should_activate_auto_combat,
+    should_preserve_strategy_progress,
+    should_skip_dungeon_strategy_reload,
+)
 class TaskStoppedException(Exception):
     pass
 
@@ -121,7 +130,11 @@ class RuntimeContext:
     _CHEST_STUCK_RESTARTS = 0      # 상자 스턱 가드(300초/연속 실패)로 재시작한 연속 횟수
     _SMARTDISARM_DEGRADED = False  # 스턱 반복 시 스마트 개봉을 구식 연타 방식으로 강등
     _RESTART_TIMES = []            # 최근 재시작 시각 목록(무한 재시작 순환 감지용)
+    _IN_DUNGEON_STATE = False      # StateDungeon 실행 중 재시작인지 구분
+    _STRATEGY_RECOVERY_PENDING = False  # 같은 던전 재진입 시 전략 재초기화 방지
     CURRENT_STRATEGY = {}
+    _STRATEGY_FAILURE_COUNTS = {}
+    _STRATEGY_FALLBACK_ROLES = []
     NEED_RECOVER_WHEN_BEGINNING = True
     TASK_STEP_INDEX = 0
     COMBAT_COUNT_SINCE_RELOAD = 0
@@ -1088,8 +1101,13 @@ def Factory():
         runtimeContext._ZOOMWORLDMAP = False
         runtimeContext._BYPASSAFTERRESTART = False
 
-        # 重新装载战斗策略
-        ReloadStrategy()
+        # 같은 던전에서 게임만 재시작된 경우 던전 단위 전략 진행률을 보존한다.
+        # RestartSignal 뒤 StateDungeon이 다시 호출될 때의 초기 ReloadStrategy가
+        # 보존된 큐를 덮어쓰지 않도록 복구 재진입 여부도 함께 기록한다.
+        strategy_preserved = ReloadStrategy(reason="game_restart")
+        runtimeContext._STRATEGY_RECOVERY_PENDING = bool(
+            strategy_preserved and runtimeContext._IN_DUNGEON_STATE
+        )
 
         # 保存重启前截图作为备份
         if not skip_screenshot:
@@ -1153,12 +1171,29 @@ def Factory():
                 logger.info(_("任务进度重置中..."))
                 continue
     ##################################################################
-    def ReloadStrategy():
-        # 会在每次重启游戏和角色死亡后重置策略.
-        # 根据面板设置, 可以有额外的重启要求.
+    def ReloadStrategy(reason="explicit"):
+        # 默认在游戏重启/角色死亡时重置한다. 단, 던전 단위 자동 모드는 같은
+        # 던전의 복구 과정에서 이미 완료한 캐릭터 진행률을 유지한다.
         nonlocal runtimeContext, setting
 
+        if should_preserve_strategy_progress(
+            setting.RELOAD_STRATEGY_WHEN,
+            _("每次副本开始(自动)"),
+            reason,
+            runtimeContext.CURRENT_STRATEGY,
+        ):
+            remaining = len(
+                runtimeContext.CURRENT_STRATEGY.get("skill_settings", [])
+            )
+            logger.info(
+                "같은 던전의 복구이므로 전략 진행률을 유지합니다. 남은 스킬: %s개",
+                remaining,
+            )
+            return True
+
         runtimeContext.COMBAT_COUNT_SINCE_RELOAD = 0
+        runtimeContext._STRATEGY_FAILURE_COUNTS = {}
+        runtimeContext._STRATEGY_FALLBACK_ROLES = []
         logger.info(_("已重置首次战斗标识。"))
 
         logger.info(_("重置战斗策略."))
@@ -1187,6 +1222,7 @@ def Factory():
         else:
             runtimeContext.CURRENT_STRATEGY = {}
             logger.error(_("无法获取当前策略，将降级为全自动战斗。"))
+        return False
     ##################################################################
     class State(Enum):
         Dungeon = "dungeon"
@@ -1406,9 +1442,22 @@ def Factory():
         Press([450,750])
         Sleep(10)
 
-        ReloadStrategy()
+        ReloadStrategy(reason="character_death")
 
         return 
+    def HandleSessionExpiry(screen):
+        """Dismiss a session-expired modal before inspecting the UI behind it."""
+
+        pos = CheckIf(screen, "totitle", [[300, 820, 300, 170]])
+        if not pos:
+            return False
+        logger.warning(
+            "세션 종료 안내를 감지했습니다. 전투 UI보다 우선 처리해 타이틀로 돌아갑니다."
+        )
+        Press(pos)
+        Sleep(2)
+        return True
+
     def IdentifyState():
         nonlocal setting # 修改因果
         counter = 0
@@ -1422,6 +1471,13 @@ def Factory():
 
             if setting._FORCESTOPING.is_set():
                 raise TaskStoppedException()
+
+            # 모달 아래의 전투 UI도 높은 일치도로 검출된다. 먼저 닫지 않으면
+            # 자동전투 버튼을 계속 눌러도 입력이 차단되어 멈춘다.
+            if HandleSessionExpiry(screen):
+                counter = 0
+                anomaly_saved = False
+                continue
 
             # 재시작/게임 진입 직후의 로딩 화면("The Abyss is readying to open...")은 정상 대기 상태다.
             # counter/anomaly 트리거 없이 로딩이 끝날 때까지 기다린다(무한 로딩만 상한으로 방어).
@@ -1519,7 +1575,7 @@ def Factory():
 
             if CheckIf(screen,"someonedead"):
                 AddImportantInfo(_("尝试复活队友..."))
-                ReloadStrategy()
+                ReloadStrategy(reason="character_death")
                 Sleep(1)
                 for underscore in range(5):
                     Press([400+random.randint(0,100),750+random.randint(0,100)])
@@ -1630,9 +1686,6 @@ def Factory():
                     Press(CheckIf(screen,"skull"))
                     Sleep(2)
 
-                if Press(CheckIf(screen,"totitle")):
-                    logger.info(_("网络故障警报! 网络故障警报! 返回标题, 重复, 返回标题!"))
-                    return IdentifyState()
                 PressReturn()
                 Sleep(0.5)
                 PressReturn()
@@ -1740,65 +1793,146 @@ def Factory():
     def StateCombat():
         if runtimeContext._TIME_COMBAT==0:
             runtimeContext._TIME_COMBAT = time.time()
-        
-        # [안전장치] 전투 상태 진입 시 혹시라도 스킬 상세 창이 닫히지 않고 남아있다면 강제 폐쇄
-        scn = ScreenShot()
-        if CheckIf(scn, "spellskill/skillDetail"):
-            logger.warning(_("[안전장치] 전투 상태 진입 시 스킬 상세창이 감지되어 강제 폐쇄합니다."))
-            for underscore in range(3):
-                PressReturn()
-                Sleep(0.2)
 
-        # 内部函数：复制策略到 runtime.CURRENT_STRATEGY
+        auto_combat_roi = [[842, 1124-42, 35, 13]]
+        # 설정 스킬이 한 번 실패하면 같은 캐릭터의 자동 행동으로 즉시 대체한다.
+        # 실패 항목을 다음 라운드까지 붙잡아 두면 나머지 파티원이 계속 방어하게 된다.
+        max_configured_skill_attempts = 1
+
+        def DetectAutoCombatState(scn):
+            """Return True/False for enabled/disabled, or None if UI is unclear."""
+            if CheckIf(scn, "spellskill/CombatAutoDisable", auto_combat_roi):
+                return False
+            if CheckIf(scn, "spellskill/CombatAutoEnable", auto_combat_roi):
+                return True
+            return None
+
+        def SetAutoCombat(enabled, max_attempts=3):
+            """Set auto combat only after positively identifying the opposite state."""
+            for attempt in range(max_attempts):
+                scn = ScreenShot()
+                if HandleSessionExpiry(scn):
+                    logger.warning("세션 종료 처리 중이므로 자동전투 전환을 보류합니다.")
+                    return False
+                state = DetectAutoCombatState(scn)
+                if state is enabled:
+                    return True
+                if state is None:
+                    logger.warning(
+                        "자동전투 상태를 판별할 수 없습니다. "
+                        f"재확인합니다. ({attempt + 1}/{max_attempts})"
+                    )
+                    Sleep(0.5)
+                    continue
+
+                Press([850, 1100])
+                Sleep(1.2)
+
+            final_state = DetectAutoCombatState(ScreenShot())
+            if final_state is enabled:
+                return True
+            logger.warning(
+                "자동전투를 %s 상태로 전환하지 못했습니다. 다음 상태 확인 때 재시도합니다.",
+                "활성" if enabled else "비활성",
+            )
+            return False
+
+        def DefendThisChar():
+            """Advance only the current character without enabling party-wide auto."""
+            Press([513, 1200])
+            Sleep(0.1)
+            Press([513, 1200])
+            Sleep(0.5)
+
+        def CloseSkillDialog(wait_seconds=0.0):
+            """Close the combat skill panel, including panels that appear late."""
+
+            deadline = time.time() + max(0.0, wait_seconds)
+            while True:
+                scn = ScreenShot()
+                if CheckIf(scn, "spellskill/skillDetail"):
+                    close_pos = (
+                        CheckIf(scn, "combatClose")
+                        or CheckIf(scn, "close")
+                    )
+                    # Both combat close templates are centered near this point;
+                    # the coordinate is a final fallback for localized variants.
+                    Press(close_pos or [450, 1525])
+                    Sleep(0.7)
+                    if not CheckIf(ScreenShot(), "spellskill/skillDetail"):
+                        return True
+                    PressReturn()
+                    Sleep(0.4)
+                    return True
+
+                if time.time() >= deadline:
+                    return False
+                Sleep(0.4)
+
+        def CancelSkillSelection():
+            # A heavily loaded emulator can display the skill panel just after
+            # the open timeout. Wait briefly and use its visible Close control;
+            # Android Back did not close this panel in the observed failure.
+            if CloseSkillDialog(wait_seconds=1.5):
+                return
+
+            scn = ScreenShot()
+            if (
+                CheckIf(scn, "next")
+                or CheckIf(scn, "supportSkillCheck", [[677,1475,189,80]])
+                or CheckIf(scn, "notenoughsp")
+                or CheckIf(scn, "notenoughmp")
+            ):
+                PressReturn()
+                Sleep(0.5)
 
         def AutoThisChar():
-            # [수정] 자동 토글([850,1100]) 무가드 2연타는 렉 시 두 탭이 모두 토글로 등록되어
-            # 자동이 다시 꺼진 채 종료되는 레이스가 있었다(스킬 선택 화면 정지 원인 후보).
-            # ActiveAutoCombat과 동일하게 OFF 상태(CombatAutoDisable 표시)를 확인했을 때만 누르고,
-            # 탭 유실(렉) 대비 재확인 후에만 한 번 더 누른다.
-            scn = ScreenShot()
-            if CheckIf(scn, "spellskill/CombatAutoDisable", [[842, 1124-42, 35, 13]]):
-                Press([850,1100])
-                Sleep(1.5)
-                scn = ScreenShot()
-                if CheckIf(scn, "spellskill/CombatAutoDisable", [[842, 1124-42, 35, 13]]):
-                    Press([850,1100])
+            enabled = SetAutoCombat(True)
             Sleep(2)
-            return
+            return enabled
+
         def ActiveAutoCombat():
-            scn = ScreenShot()
-            # [안전장치] 스킬창이 열려 있으면 닫고 자동전투를 누른다.
-            if CheckIf(scn, "spellskill/skillDetail"):
+            if CloseSkillDialog():
                 logger.warning(_("[안전장치] 자동전투 활성화 시도 중 스킬창이 감지되었습니다. 닫기를 진행합니다."))
-                for underscore in range(3):
-                    PressReturn()
-                    Sleep(0.2)
-                scn = ScreenShot()
-            if CheckIf(scn,"spellskill/CombatAutoDisable",[[842, 1124-42, 35, 13]]):
-                Press([850,1100])
-            Sleep(5)
-            return
-        def SkillLvlSelectAndDoubleCheck(skillPos,skilllvl, supportTarget):
+            enabled = SetAutoCombat(True)
+            Sleep(2 if enabled else 0.5)
+            return enabled
+
+        def SkillLvlSelectAndDoubleCheck(skillPos, skilllvl, supportTarget, allow_level_fallback=True):
             t_start = time.time()
             skillPosDict = { _("左上技能"):[266,965], _("右上技能"):[640,965], _("左下技能"):[266,1054], _("右下技能"):[640,1054]}
             supportTargetDict = {_("左上角色"): [200,1200], _("中上角色"): [450,1200], _("右上角色"): [700,1200], _("左下角色"):[200,1400], _("中下角色"):[450,1400], _("右下角色"):[700,1400]}
+
+            if skillPos not in skillPosDict:
+                logger.error("전략에 알 수 없는 스킬 위치가 설정되어 있습니다: %s", skillPos)
+                return SkillExecutionResult.FAILED
+            try:
+                skilllvl = min(7, max(1, int(skilllvl)))
+            except (TypeError, ValueError):
+                logger.warning("잘못된 스킬 레벨(%s)을 1로 대체합니다.", skilllvl)
+                skilllvl = 1
             
-            # 打开详情界面
+            # 打开详情界面. One tap can be lost while the emulator is busy, so
+            # retry the tap but poll between taps instead of firing repeatedly.
             into_detail = False
-            for underscore in range(3):
+            for underscore in range(2):
                 Press(skillPosDict[skillPos])
-                Sleep(1)
-                if CheckIf(ScreenShot(),"spellskill/skillDetail"):
-                    into_detail = True
+                open_deadline = time.time() + 2.5
+                while time.time() < open_deadline:
+                    Sleep(0.4)
+                    if CheckIf(ScreenShot(),"spellskill/skillDetail"):
+                        into_detail = True
+                        break
+                if into_detail:
                     break
             if not into_detail:
-                logger.info(_("没有检测到任务详情界面. 疑似法力不足, 使用自动战斗. (耗时: {a}秒)").format(a=round(time.time()-t_start, 2)))
-                for underscore in range(3):
-                    PressReturn()
-                    Sleep(0.2)
-
-                AutoThisChar()
-                return
+                logger.warning(
+                    "스킬 상세 화면을 열지 못했습니다(%.2f초). "
+                    "현재 시도를 실패로 처리합니다.",
+                    round(time.time()-t_start, 2),
+                )
+                CancelSkillSelection()
+                return SkillExecutionResult.FAILED
 
             logger.info(_("已成功打开技能详情界面。 (耗时: {a}秒)").format(a=round(time.time()-t_start, 2)))
 
@@ -1826,130 +1960,143 @@ def Factory():
             logger.info(_("技能等级设置完成。 (等级: {a}, 耗时: {b}秒)").format(a=skilllvl, b=round(time.time()-t_lv_start, 2)))
 
             # 辅助技能
-            if CheckIf(ScreenShot(),"supportSkillCheck",[[677,1475,189,80]]):
-                if supportTarget in supportTargetDict.keys():
-                    Press(supportTargetDict[supportTarget])
-                    logger.info(_("释放了位于\"{a}\"的辅助技能, 技能等级为{b}, 释放对象为{c}").format(a=skillPos, b=skilllvl, c=supportTarget))
-                else:
-                    # [수정] 보조 스킬인데 대상이 미설정/미매칭이면 기존엔 아무것도 누르지 않고
-                    # 조용히 통과했다. 이후 폴백 랜덤 탭은 적 영역(y 296~896)만 노리므로
-                    # 아군 선택 화면(y 1200~1400)에서 영구 정지했다. 취소 후 자동으로 행동시킨다.
-                    logger.warning(_("보조 스킬의 대상(\"{a}\")이 설정되지 않았거나 매칭되지 않습니다. 스킬을 취소하고 이 캐릭터를 자동으로 행동시킵니다.").format(a=supportTarget))
-                    for underscore in range(3):
-                        PressReturn()
-                        Sleep(0.2)
-                    AutoThisChar()
-                    return
-
-            # 确认
+            support_roi = [[677,1475,189,80]]
+            is_support_skill = bool(CheckIf(ScreenShot(), "supportSkillCheck", support_roi))
             t_cast_start = time.time()
-            # [수정] 레벨 탭 직후에는 상세창에서 시전확인/대상선택으로의 전환이 끝나지 않았을 수
-            # 있다. 기존엔 첫 촬영에서 OK/next가 안 잡히면 곧바로 랜덤 24연타를 발사해 전환 중인
-            # 화면을 두드렸다. 전환 완료를 짧게 기다리며 최대 3회 재판정한다.
-            ok_pos = None
-            next_pos = None
-            for underscore in range(3):
-                scn = ScreenShot()
-                if ok_pos := CheckIf(scn, "OK"):
-                    break
-                if next_pos := CheckIf(scn, "next"):
-                    break
-                Sleep(0.5)
-            if Press(ok_pos):
-                logger.info(_("释放了位于\"{a}\"的全体技能, 技能等级为{b}. (耗时: {c}秒)").format(a=skillPos, b=skilllvl, c=round(time.time()-t_cast_start, 2)))
-                Sleep(2)
-            elif next_pos:
-                logger.info(_("释放了位于\"{a}\"的单体技能, 技能等级为{b}. 选择next作为敌方目标. (耗时: {c}秒)").format(a=skillPos, b=skilllvl, c=round(time.time()-t_cast_start, 2)))
-                # [수정] 단일 대상 탭은 빗나가면 게임이 대상 선택 화면에서 입력을 기다리며 영구
-                # 정지했다(무검증 단발이 원인). 탭 후 next 소실로 성공을 확인하고, 잔존 시
-                # 위치를 재검출해 최대 2회 재탭한다. 끝내 실패하면 취소 후 자동으로 행동시킨다.
-                target_selected = False
+            if is_support_skill:
+                if supportTarget not in supportTargetDict:
+                    logger.warning(
+                        "보조 스킬 대상(%s)을 확인할 수 없습니다. "
+                        "현재 시도를 실패로 처리합니다.",
+                        supportTarget,
+                    )
+                    CancelSkillSelection()
+                    return SkillExecutionResult.FAILED
+
+                support_cast = False
                 for underscore in range(3):
-                    Press([next_pos[0]-15+random.randint(0,30),next_pos[1]+150+random.randint(0,30)])
+                    Press(supportTargetDict[supportTarget])
                     Sleep(1)
-                    fresh_next = CheckIf(ScreenShot(), "next")
-                    if not fresh_next:
-                        target_selected = True
+                    if not CheckIf(ScreenShot(), "supportSkillCheck", support_roi):
+                        support_cast = True
                         break
-                    next_pos = fresh_next
-                    logger.warning(_("적 대상 탭이 반영되지 않았습니다(next 잔존). 재탭합니다."))
-                if not target_selected:
-                    logger.warning(_("적 대상 선택이 계속 실패하여 스킬을 취소하고 이 캐릭터를 자동으로 행동시킵니다."))
-                    for underscore in range(3):
-                        PressReturn()
-                        Sleep(0.2)
-                    AutoThisChar()
-                    return
+                if not support_cast:
+                    logger.warning("보조 스킬 대상 선택이 반영되지 않았습니다. 항목을 유지합니다.")
+                    CancelSkillSelection()
+                    return SkillExecutionResult.FAILED
+                logger.info(_("释放了位于\"{a}\"的辅助技能, 技能等级为{b}, 释放对象为{c}").format(a=skillPos, b=skilllvl, c=supportTarget))
+                Sleep(1)
             else:
-                for t in range(24):
-                    Press([75+random.random()*827,296+random.random()*600])
-                    Sleep(0.05)
-                logger.info(_("释放了位于\"{a}\"的单体技能, 技能等级为{b}. 随机选择敌方目标. (耗时: {c}秒)").format(a=skillPos, b=skilllvl, c=round(time.time()-t_cast_start, 2)))
-                Sleep(2)
+                # 레벨 선택 직후의 화면 전환을 기다리고, 확인 가능한 버튼이 있을 때만 입력한다.
+                ok_pos = None
+                next_pos = None
+                for underscore in range(5):
+                    scn = ScreenShot()
+                    if ok_pos := CheckIf(scn, "OK"):
+                        break
+                    if next_pos := CheckIf(scn, "next"):
+                        break
+                    Sleep(0.5)
+
+                if Press(ok_pos):
+                    logger.info(_("释放了位于\"{a}\"的全体技能, 技能等级为{b}. (耗时: {c}秒)").format(a=skillPos, b=skilllvl, c=round(time.time()-t_cast_start, 2)))
+                    Sleep(2)
+                elif next_pos:
+                    target_selected = False
+                    for underscore in range(3):
+                        Press([next_pos[0]-15+random.randint(0,30),next_pos[1]+150+random.randint(0,30)])
+                        Sleep(1)
+                        fresh_next = CheckIf(ScreenShot(), "next")
+                        if not fresh_next:
+                            target_selected = True
+                            break
+                        next_pos = fresh_next
+                        logger.warning(_("적 대상 탭이 반영되지 않았습니다(next 잔존). 재탭합니다."))
+                    if not target_selected:
+                        logger.warning("적 대상 선택에 실패했습니다. 현재 시도를 실패로 처리합니다.")
+                        CancelSkillSelection()
+                        return SkillExecutionResult.FAILED
+                    logger.info(_("释放了位于\"{a}\"的单体技能, 技能等级为{b}. 选择next作为敌方目标. (耗时: {c}秒)").format(a=skillPos, b=skilllvl, c=round(time.time()-t_cast_start, 2)))
+                else:
+                    logger.warning(
+                        "스킬 확인 또는 대상 선택 화면을 판별하지 못했습니다. "
+                        "무작위 입력을 중단하고 전략 항목을 유지합니다."
+                    )
+                    CancelSkillSelection()
+                    return SkillExecutionResult.FAILED
 
             logger.info(_("技能施放总计耗时: {a}秒").format(a=round(time.time()-t_start, 2)))
 
             # 资源不足
-            Sleep(1)
-            scn = ScreenShot()
-            if CheckIf(scn,"notenoughsp") or CheckIf(scn,"notenoughmp"):
-                for underscore in range(3):
-                    PressReturn()
-                    Sleep(0.2)
+            resource_shortage = False
+            for underscore in range(3):
+                Sleep(0.5)
+                scn = ScreenShot()
+                if CheckIf(scn,"notenoughsp") or CheckIf(scn,"notenoughmp"):
+                    resource_shortage = True
+                    break
+            if resource_shortage:
+                CancelSkillSelection()
 
-                SkillLvlSelectAndDoubleCheck(skillPos,1,supportTarget)
-                return
+                if allow_level_fallback and skilllvl > 1:
+                    logger.warning("자원이 부족하여 레벨 1로 한 번만 재시도합니다.")
+                    return SkillLvlSelectAndDoubleCheck(
+                        skillPos, 1, supportTarget, allow_level_fallback=False
+                    )
+                logger.warning("레벨 1 스킬도 사용할 수 없습니다. 현재 시도를 실패로 처리합니다.")
+                return SkillExecutionResult.FAILED
 
-            # [안전장치] 수동 스킬 시전이 끝난 후에도 렉/오탐으로 스킬창이 닫히지 않고 남아있다면 강제 폐쇄 및 자동전투로 안전 복구
+            # 스킬창이 남아 있으면 성공으로 간주하지 않는다.
             Sleep(1)
             scn = ScreenShot()
             if CheckIf(scn, "spellskill/skillDetail"):
-                logger.warning(_("[안전장치] 수동 스킬 시전 완료 후에도 스킬창이 닫히지 않았습니다. 강제 복구를 진행합니다."))
-                for underscore in range(3):
-                    PressReturn()
-                    Sleep(0.2)
-                ActiveAutoCombat()
+                logger.warning("스킬 상세창이 남아 있어 시전 실패로 처리합니다. 전략 항목을 유지합니다.")
+                CancelSkillSelection()
+                return SkillExecutionResult.FAILED
+
+            return SkillExecutionResult.SUCCESS
 
         ###################################################################################
         # 主逻辑开始
-        # 0. 开启二倍速
-        screen = ScreenShot()
-        if Press(CheckIf(screen,"combatSpd")) or Press(CheckIf(screen,"combatSpd_DHI")):
-            runtimeContext._COMBATSPD = True
-            Sleep(1)
+        def ActivateCombatSpeed():
+            screen = ScreenShot()
+            if Press(CheckIf(screen,"combatSpd")) or Press(CheckIf(screen,"combatSpd_DHI")):
+                runtimeContext._COMBATSPD = True
+                Sleep(1)
+
+        if CloseSkillDialog(wait_seconds=0.5):
+            logger.warning("전투 상태 진입 시 남아 있던 스킬창을 Close 버튼으로 닫았습니다.")
+
         # 1. 检查重置标识
         if setting.RELOAD_STRATEGY_WHEN == _("每场战斗前"):
             ReloadStrategy()
 
         # 2. 获取当前策略中的技能设置列表
         skill_settings = runtimeContext.CURRENT_STRATEGY.get("skill_settings", [])
-        aac = False
-        if runtimeContext.CURRENT_STRATEGY == {}:
+        if not runtimeContext.CURRENT_STRATEGY:
             logger.error(_("错误: 当前战斗策略内容为空. 使用全自动战斗."))
-            aac = True
         elif runtimeContext.CURRENT_STRATEGY.get("group_name","") ==_("全自动战斗"):
             logger.info(_("当前战斗为\"全自动战斗\", 因此使用全自动战斗."))
-            aac = True
         elif skill_settings == []:
             logger.info(_("当前战斗技能列表内容为空, 因此使用全自动战斗."))
-            aac = True
-        elif setting.RELOAD_STRATEGY_WHEN in [_("不需要(自动)"), _("每次副本开始(自动)")] and runtimeContext.COMBAT_COUNT_SINCE_RELOAD > 0:
-            logger.info(_("已执行过首次战斗，已切换至自动战斗。"))
-            aac = True
-        
-        if aac:
+
+        if should_activate_auto_combat(
+            runtimeContext.CURRENT_STRATEGY, _("全自动战斗")
+        ):
             ActiveAutoCombat()
+            ActivateCombatSpeed()
             return
 
-        # 2.5 신규 옵션인 "게임 시작 및 캐릭터 사망시(자동전투)"가 활성화되어 있고 전략 스킬이 아직 남아있다면, 수동 스킬 시전을 위해 자동전투를 끕니다.
-        if setting.RELOAD_STRATEGY_WHEN in [_("不需要(自动)"), _("每次副本开始(自动)")] and skill_settings != []:
-            logger.info(_("检测到首次战斗。将尝试手动施放技能。"))
-            scn = ScreenShot()
-            # CombatAutoDisable이 감지되지 않으면 자동전투가 켜져 있는 상태입니다.
-            if not CheckIf(scn, "spellskill/CombatAutoDisable", [[842, 1124-42, 35, 13]]):
-                logger.info(_("남은 전략 스킬이 있어 자동전투를 비활성화합니다..."))
-                Press([850, 1100])
-                Sleep(1)
+        # 자동 전환 모드에서는 큐가 남아 있는 동안 반드시 수동 상태를 유지한다.
+        auto_after_strategy_modes = [_("不需要(自动)"), _("每次副本开始(自动)")]
+        if setting.RELOAD_STRATEGY_WHEN in auto_after_strategy_modes:
+            logger.info("남은 전략 스킬 %s개를 수동으로 시전합니다.", len(skill_settings))
+            if not SetAutoCombat(False):
+                # 상태가 불명확할 때 토글을 추측하지 않는다. 다음 상태 루프에서 재시도한다.
+                return
+
+        # 자동전투를 먼저 끈 뒤 배속을 올려, 전투 진입 직후 자동 행동이 선행하는 시간을 줄인다.
+        ActivateCombatSpeed()
 
         # 3. 非全自动模式：点击任意键直到出现“flee”图片
         [pos_x, pos_y] = FindCoordsOrElseExecuteFallbackAndWait(["flee","chestFlag","dungFlag", "someonedead","multipeopledead","RiseAgain"],[1,1],1)
@@ -1958,7 +2105,14 @@ def Factory():
         else:
             logger.debug(_("战斗已结束."))
             runtimeContext.COMBAT_COUNT_SINCE_RELOAD += 1
-            logger.info(_("战斗已结束。当前已完成首次战斗。"))
+            remaining = len(runtimeContext.CURRENT_STRATEGY.get("skill_settings", []))
+            if remaining:
+                logger.info(
+                    "전투가 종료되었습니다. 전략 스킬 %s개가 남아 다음 전투에서 계속합니다.",
+                    remaining,
+                )
+            else:
+                logger.info("전투가 종료되었으며 모든 전략 스킬이 완료되었습니다.")
             return
 
         # 4. 进行匹配
@@ -1986,25 +2140,94 @@ def Factory():
 
         # 5. 判断匹配率是否达标
         if highest_match_rate < 0.80:
-            logger.info(_("并未设定该角色的行为, 使用自动战斗."))
-            AutoThisChar()
+            logger.info(
+                "현재 캐릭터를 전략 대기열에서 확실히 식별하지 못했습니다(%.1f%%). "
+                "전체 자동전투를 켜지 않고 방어합니다.",
+                highest_match_rate * 100,
+            )
+            DefendThisChar()
             return
 
         # 6. 按照技能等级释放技能
         if target_skill.get("skill_var") == _("防御"):
-            Press([513,1200])
-            Sleep(0.1)
-            Press([513,1200])
-            Sleep(0.1)
+            DefendThisChar()
+            action_result = SkillExecutionResult.SUCCESS
         elif target_skill.get("skill_var") == _("双击自动"):
-            AutoThisChar()
+            action_result = (
+                SkillExecutionResult.SUCCESS
+                if AutoThisChar()
+                else SkillExecutionResult.FAILED
+            )
         else:
-            SkillLvlSelectAndDoubleCheck(target_skill.get("skill_var"), target_skill.get("skill_lvl"), target_skill.get("target_var"))
+            action_result = SkillLvlSelectAndDoubleCheck(
+                target_skill.get("skill_var"),
+                target_skill.get("skill_lvl"),
+                target_skill.get("target_var"),
+            )
 
-        # 9. 释放技能后删除条目
-        if target_skill in runtimeContext.CURRENT_STRATEGY.get("skill_settings", []):
-            runtimeContext.CURRENT_STRATEGY["skill_settings"].remove(target_skill)
-            logger.debug(_("技能已释放，已从当前策略队列中移除。"))
+        if action_result is SkillExecutionResult.FAILED:
+            attempts, retry_exhausted = register_skill_failure(
+                runtimeContext._STRATEGY_FAILURE_COUNTS,
+                target_skill,
+                max_configured_skill_attempts,
+            )
+            role_name = target_skill.get("role_var", "<unknown>")
+            if retry_exhausted:
+                logger.error(
+                    "%s의 설정 스킬이 %s회 연속 실패했습니다. 전원 방어 반복을 "
+                    "막기 위해 이 캐릭터만 자동 행동으로 대체합니다.",
+                    role_name,
+                    attempts,
+                )
+                if AutoThisChar():
+                    action_result = SkillExecutionResult.FALLBACK
+                    if role_name not in runtimeContext._STRATEGY_FALLBACK_ROLES:
+                        runtimeContext._STRATEGY_FALLBACK_ROLES.append(role_name)
+                else:
+                    logger.warning("대체 자동 행동도 시작하지 못해 이번 턴은 방어합니다.")
+                    DefendThisChar()
+            else:
+                # 현재 정책의 시도 한도는 1이므로 도달하지 않는 방어적 분기다.
+                logger.warning(
+                    "%s의 설정 스킬 시전이 실패했습니다(%s/%s). 다음 턴에 재시도합니다.",
+                    role_name,
+                    attempts,
+                    max_configured_skill_attempts,
+                )
+                DefendThisChar()
+
+        # 9. 확인된 시전 또는 명시적인 자동 대체가 끝난 항목만 완료 처리한다.
+        if complete_strategy_skill(
+            runtimeContext.CURRENT_STRATEGY, target_skill, action_result
+        ):
+            clear_skill_failure(runtimeContext._STRATEGY_FAILURE_COUNTS, target_skill)
+            if action_result is SkillExecutionResult.FALLBACK:
+                logger.warning(
+                    "%s 항목을 스킬 성공이 아닌 자동 행동 대체로 완료 처리했습니다.",
+                    target_skill.get("role_var", "<unknown>"),
+                )
+            else:
+                logger.debug(_("技能已释放，已从当前策略队列中移除。"))
+            remaining = len(runtimeContext.CURRENT_STRATEGY.get("skill_settings", []))
+            if remaining == 0:
+                fallback_roles = runtimeContext._STRATEGY_FALLBACK_ROLES
+                if fallback_roles:
+                    logger.warning(
+                        "전략 대기열 처리가 끝나 자동전투로 전환합니다. "
+                        "스킬 대신 자동 행동으로 대체된 캐릭터: %s",
+                        ", ".join(fallback_roles),
+                    )
+                else:
+                    logger.info("모든 전략 스킬이 완료되어 자동전투로 전환합니다.")
+                ActiveAutoCombat()
+            elif (
+                target_skill.get("skill_var") == _("双击自动")
+                or action_result is SkillExecutionResult.FALLBACK
+            ):
+                # '이 캐릭터 자동' 항목이 다음 전략 캐릭터까지 소비하지 않도록 다시 끈다.
+                SetAutoCombat(False)
+        else:
+            logger.warning("전략 행동이 완료되지 않아 항목을 대기열에 유지합니다.")
 
         return
     def StateMap_FindSwipeClick(targetInfo : TargetInfo):
@@ -2355,6 +2578,7 @@ def Factory():
         needRecoverBecauseChest = False
 
         nonlocal runtimeContext
+        runtimeContext._IN_DUNGEON_STATE = True
         runtimeContext.TASK_STEP_INDEX = 0
         def TargetPointComplete():
             logger.info(f"任务点完成: {targetInfoList[0].target} {targetInfoList[0].roi}")
@@ -2365,7 +2589,22 @@ def Factory():
         runtimeContext.NEED_RECOVER_WHEN_BEGINNING = True
 
         if setting.RELOAD_STRATEGY_WHEN in [_("每次副本开始"), _("每次副本开始(自动)")]:
-            ReloadStrategy()
+            if should_skip_dungeon_strategy_reload(
+                setting.RELOAD_STRATEGY_WHEN,
+                _("每次副本开始(自动)"),
+                runtimeContext._STRATEGY_RECOVERY_PENDING,
+            ):
+                remaining = len(
+                    runtimeContext.CURRENT_STRATEGY.get("skill_settings", [])
+                )
+                logger.info(
+                    "게임 재시작 후 같은 던전에 재진입하여 보존된 전략 큐를 사용합니다. "
+                    "남은 스킬: %s개",
+                    remaining,
+                )
+            else:
+                ReloadStrategy()
+            runtimeContext._STRATEGY_RECOVERY_PENDING = False
         
         ##############################################
         while 1:
@@ -2594,6 +2833,8 @@ def Factory():
                     needRecoverBecauseCombat =True
                     StateCombat()
                     dungState = None
+        runtimeContext._IN_DUNGEON_STATE = False
+        runtimeContext._STRATEGY_RECOVERY_PENDING = False
     def StateAcceptRequest(request: str, pressbias:list = [0,0]):
         FindCoordsOrElseExecuteFallbackAndWait("Inn",[1,1],1)
         StateInn()

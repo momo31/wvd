@@ -739,7 +739,8 @@ class ConfigPanelApp(tk.Toplevel):
                     _("不需要"): "不需要",
                     _("每场战斗前"): "每场战斗前",
                     _("每次副本开始"): "每次副本开始",
-                    _("不需要(自动)"): "不需要(自动)"
+                    _("不需要(自动)"): "不需要(自动)",
+                    _("每次副本开始(自动)"): "每次副本开始(自动)",
                 }
                 value = reverse_map.get(value, value)
             elif attr_name == "TASK_POINT_STRATEGY" and isinstance(value, dict):
