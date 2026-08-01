@@ -638,6 +638,7 @@ def Factory():
                 cap_t0 = time.time()   # [cap-timing] 개발용 캡처시간 측정 (제거 시 이 마커 라인들 삭제)
 
                 # 1단계: 순수 소켓 통신을 이용한 고속 캡처 시도
+                s = None
                 try:
                     import socket
                     adb_host = getattr(setting._ADBDEVICE.client, "host", "127.0.0.1")
@@ -662,10 +663,15 @@ def Factory():
                                     break
                                 chunks.append(chunk)
                             raw_data = b"".join(chunks)
-                    s.close()
                 except Exception as se:
                     logger.warning(_("소켓 기반 고속 캡처 실패: {a}. subprocess 방식으로 복구 시도합니다.").format(a=str(se)))
                     raw_data = None
+                finally:
+                    if s is not None:
+                        try:
+                            s.close()
+                        except Exception:
+                            pass
                 _sock_dt = time.time() - cap_t0   # [cap-timing]
 
                 # 2단계: 소켓 캡처 실패 시 기존 subprocess.run 방식으로 폴백
@@ -728,6 +734,15 @@ def Factory():
 
             except subprocess.TimeoutExpired:
                 consecutive_failures += 1
+                # 타임아웃된 adb 프로세스를 명시적으로 종료하여 좀비 잔류 방지
+                try:
+                    subprocess.run(
+                        "taskkill /f /im adb.exe",
+                        shell=True, stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL, check=False
+                    )
+                except Exception:
+                    pass
                 logger.warning(_("스크린샷超时 (Subprocess) [연속 실패: {a}/{b}]").format(a=consecutive_failures, b=MAX_SCREENSHOT_RETRIES))
                 if setting._FORCESTOPING.is_set():
                     logger.info(_("스크린샷 중단 요청으로 인한 강제 종료..."))
@@ -739,6 +754,7 @@ def Factory():
                 else:
                     logger.info(_("ADB操作失败, 尝试重启ADB or 模拟器程序..."))
                     ResetDevice(force_restart_adb=True)
+                time.sleep(1.0)  # ADB 데몬 및 그래픽 버퍼 안정화 대기
                 
             except Exception as e:
                 logger.debug(_("截图发生异常: {a}").format(a=e))
