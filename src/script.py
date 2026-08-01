@@ -1806,21 +1806,21 @@ def Factory():
             Sleep(1.5)
             t_lv_start = time.time()
             scn = ScreenShot()
-            has_lv_1 = (CheckIf(scn,f"spellskill\skillLvl\lv1")) or (CheckIf(scn,f"spellskill\skillLvl\s_lv1"))
+            has_lv_1 = (CheckIf(scn,f"spellskill/skillLvl/lv1")) or (CheckIf(scn,f"spellskill/skillLvl/s_lv1"))
             if (not has_lv_1):
                 if (skilllvl>=2):
                     logger.error(_("错误: 设定了高于1级的技能, 但并未检测到技能等级.\n 使用默认技能."))
             else:
                 if skilllvl!=1:
-                    has_lv_x = (CheckIf(scn,f"spellskill\skillLvl\lv{skilllvl}")) or (CheckIf(scn,f"spellskill\skillLvl\s_lv{skilllvl}"))
+                    has_lv_x = (CheckIf(scn,f"spellskill/skillLvl/lv{skilllvl}")) or (CheckIf(scn,f"spellskill/skillLvl/s_lv{skilllvl}"))
                 else:
                     has_lv_x = has_lv_1
 
                 if not has_lv_x:
                     skilllvl = 1
                     logger.error(_("错误: 未检测到目标等级\n 使用1级技能."))
-                if not Press(CheckIf(scn,f"spellskill\skillLvl\lv{skilllvl}")):
-                    if not Press(CheckIf(scn,f"spellskill\skillLvl\s_lv{skilllvl}")):
+                if not Press(CheckIf(scn,f"spellskill/skillLvl/lv{skilllvl}")):
+                    if not Press(CheckIf(scn,f"spellskill/skillLvl/s_lv{skilllvl}")):
                         logger.error(_("错误: 我认为不可能发生这种情况. 请务必告诉我."))
 
             logger.info(_("技能等级设置完成。 (等级: {a}, 耗时: {b}秒)").format(a=skilllvl, b=round(time.time()-t_lv_start, 2)))
