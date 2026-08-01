@@ -20,6 +20,7 @@ KO_CATEGORY_TRANSLATIONS = {
 }
 
 KO_TARGET_TRANSLATIONS = {
+    "[矿石]FFXI挖矿": "[광석] FFXI 광석 무한 채굴",
     "[宝箱]FFXI联动2F": "[보물상자] 파판11 콜라보 2F",
     "无限刷怪": "[몬스터] 무한 사냥 (제자리)",
     "[宝箱]水路一号街": "[상자] 무역수로 1번가",
@@ -1776,7 +1777,7 @@ class ConfigPanelApp(tk.Toplevel):
                 '%P',25,self.MAX_TRY_LIMIT),
             width=3)
         self.max_try_limit_entry.grid(row=0, column=0)
-        ttk.Label(frame_row, text=_("次定位失败后重启游戏.")).grid(row=0, column=1, sticky=tk.W, pady=5)
+        self.restart_game_label = ttk.Label(frame_row, text=_("次定位失败后重启游戏.")).grid(row=0, column=1, sticky=tk.W, pady=5)
         self.button_save_max_try_limit = ttk.Button(frame_row, text=_("保存"), command=self.save_config, width=5)
         self.button_save_max_try_limit.grid(row=0, column=2)
 
@@ -1791,7 +1792,7 @@ class ConfigPanelApp(tk.Toplevel):
                 '%P',10,self.MAX_CRASH_LIMIT),
             width=3)
         self.max_crash_limit_entry.grid(row=0, column=0)
-        ttk.Label(frame_row, text=_("次重启游戏后重启模拟器.")).grid(row=0, column=1, sticky=tk.W, pady=5)
+        self.restart_emu_label = ttk.Label(frame_row, text=_("次重启游戏后重启模拟器.")).grid(row=0, column=1, sticky=tk.W, pady=5)
         self.button_save_max_crash_limit = ttk.Button(frame_row, text=_("保存"), command=self.save_config, width=5)
         self.button_save_max_crash_limit.grid(row=0, column=2)
         
