@@ -35,6 +35,10 @@ def assigned_string(path, variable_name):
     raise AssertionError(f"{variable_name} assignment was not found in {path}")
 
 
+def contains_han(text):
+    return any("\u3400" <= character <= "\u9fff" for character in text)
+
+
 class Upstream247MergeTests(unittest.TestCase):
     def test_quest_catalog_preserves_local_and_upstream_entries(self):
         quests = load_json_rejecting_duplicate_keys(
@@ -52,6 +56,38 @@ class Upstream247MergeTests(unittest.TestCase):
 
         self.assertEqual(quests["FFXI-5F-4Elite"]["_EOT"][1][1], "FFXI/zone5")
         self.assertEqual(quests["FFXI-5F-2Elite"]["_EOT"][1][1], "FFXI/zone5")
+
+    def test_korean_quest_list_does_not_expose_chinese_names(self):
+        quests = load_json_rejecting_duplicate_keys(
+            ROOT / "resources" / "quest" / "quest.json"
+        )
+        category_translations = assigned_string(
+            SRC / "gui.py", "KO_CATEGORY_TRANSLATIONS"
+        )
+        target_translations = assigned_string(
+            SRC / "gui.py", "KO_TARGET_TRANSLATIONS"
+        )
+
+        for quest_key, quest in quests.items():
+            category = quest.get(
+                "questCategory_ko_KR",
+                category_translations.get(
+                    quest["questCategory"], quest["questCategory"]
+                ),
+            )
+            target = quest.get(
+                "questName_ko_KR",
+                target_translations.get(quest["questName"], quest["questName"]),
+            )
+
+            self.assertFalse(
+                contains_han(category),
+                f"Korean category is not localized for {quest_key}: {category}",
+            )
+            self.assertFalse(
+                contains_han(target),
+                f"Korean target is not localized for {quest_key}: {target}",
+            )
 
     def test_zone5_template_exists_and_loads(self):
         image_path = ROOT / "resources" / "images" / "FFXI" / "zone5.png"
