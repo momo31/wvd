@@ -16,6 +16,120 @@ class SkillExecutionResult(Enum):
     FALLBACK = "fallback"
 
 
+class AutoCombatVisualState(Enum):
+    """What can currently be established from the auto-combat control."""
+
+    ENABLED = "enabled"
+    DISABLED = "disabled"
+    NOT_ACTIONABLE = "not_actionable"
+    UNKNOWN = "unknown"
+
+
+class AutoCombatTransitionAction(Enum):
+    """The next non-blocking action for an auto-combat state request."""
+
+    CONFIRMED = "confirmed"
+    PRESS = "press"
+    WAIT = "wait"
+    TIMED_OUT = "timed_out"
+
+
+class AutoCombatTransitionTracker:
+    """Track an auto-combat toggle across frames where its button disappears.
+
+    A character action can hide the control immediately after a successful tap.
+    The transition therefore remains pending until a later actionable frame
+    confirms the requested state.  Timeouts are emitted only once per request.
+    """
+
+    def __init__(self, retry_seconds=1.0, timeout_seconds=10.0, max_commands=2):
+        self.retry_seconds = max(0.0, float(retry_seconds))
+        self.timeout_seconds = max(0.0, float(timeout_seconds))
+        self.max_commands = max(1, int(max_commands))
+        self.reset()
+
+    def reset(self):
+        self.desired_enabled = None
+        self.started_at = 0.0
+        self.last_command_at = None
+        self.command_count = 0
+        self.opposite_observation_count = 0
+        self.warning_emitted = False
+
+    def _start(self, desired_enabled, now):
+        self.desired_enabled = bool(desired_enabled)
+        self.started_at = float(now)
+        self.last_command_at = None
+        self.command_count = 0
+        self.opposite_observation_count = 0
+        self.warning_emitted = False
+
+    def pending_seconds(self, now):
+        if self.desired_enabled is None:
+            return 0.0
+        return max(0.0, float(now) - self.started_at)
+
+    def mark_command(self, desired_enabled, now):
+        """Record a toggle sent outside :meth:`request`, such as a short pulse."""
+
+        desired_enabled = bool(desired_enabled)
+        if self.desired_enabled != desired_enabled:
+            self._start(desired_enabled, now)
+        self.command_count += 1
+        self.opposite_observation_count = 0
+        self.last_command_at = float(now)
+
+    def request(self, desired_enabled, visual_state, now):
+        """Return the next action without sleeping or guessing on a hidden UI."""
+
+        desired_enabled = bool(desired_enabled)
+        now = float(now)
+        if self.desired_enabled != desired_enabled:
+            self._start(desired_enabled, now)
+
+        target_state = (
+            AutoCombatVisualState.ENABLED
+            if desired_enabled
+            else AutoCombatVisualState.DISABLED
+        )
+        opposite_state = (
+            AutoCombatVisualState.DISABLED
+            if desired_enabled
+            else AutoCombatVisualState.ENABLED
+        )
+
+        if visual_state is target_state:
+            self.reset()
+            return AutoCombatTransitionAction.CONFIRMED
+
+        if visual_state is opposite_state:
+            first_command = self.command_count == 0
+            if not first_command:
+                self.opposite_observation_count += 1
+            retry_ready = (
+                self.command_count < self.max_commands
+                and self.last_command_at is not None
+                and now - self.last_command_at >= self.retry_seconds
+                and self.opposite_observation_count >= 2
+            )
+            if first_command or retry_ready:
+                self.command_count += 1
+                self.opposite_observation_count = 0
+                self.last_command_at = now
+                return AutoCombatTransitionAction.PRESS
+        else:
+            self.opposite_observation_count = 0
+
+        if (
+            not self.warning_emitted
+            and self.pending_seconds(now) >= self.timeout_seconds
+        ):
+            self.warning_emitted = True
+            return AutoCombatTransitionAction.TIMED_OUT
+
+        return AutoCombatTransitionAction.WAIT
+
+
 def should_activate_auto_combat(current_strategy, full_auto_group_name):
     """Return whether a strategy is ready for unrestricted auto combat."""
 

@@ -8,6 +8,9 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from combat_strategy import (  # noqa: E402
+    AutoCombatTransitionAction,
+    AutoCombatTransitionTracker,
+    AutoCombatVisualState,
     SkillExecutionResult,
     clear_skill_failure,
     complete_strategy_skill,
@@ -19,6 +22,86 @@ from combat_strategy import (  # noqa: E402
 
 
 class CombatStrategyQueueTests(unittest.TestCase):
+    def test_auto_combat_transition_survives_hidden_action_frames(self):
+        tracker = AutoCombatTransitionTracker(timeout_seconds=10)
+
+        self.assertIs(
+            tracker.request(False, AutoCombatVisualState.ENABLED, 0.0),
+            AutoCombatTransitionAction.PRESS,
+        )
+        self.assertIs(
+            tracker.request(False, AutoCombatVisualState.NOT_ACTIONABLE, 2.0),
+            AutoCombatTransitionAction.WAIT,
+        )
+        self.assertIs(
+            tracker.request(False, AutoCombatVisualState.UNKNOWN, 4.0),
+            AutoCombatTransitionAction.WAIT,
+        )
+        self.assertFalse(tracker.warning_emitted)
+        self.assertIs(
+            tracker.request(False, AutoCombatVisualState.DISABLED, 6.0),
+            AutoCombatTransitionAction.CONFIRMED,
+        )
+        self.assertIsNone(tracker.desired_enabled)
+
+    def test_auto_combat_transition_retries_at_most_once(self):
+        tracker = AutoCombatTransitionTracker(
+            retry_seconds=1.0, timeout_seconds=10.0, max_commands=2
+        )
+
+        self.assertIs(
+            tracker.request(True, AutoCombatVisualState.DISABLED, 0.0),
+            AutoCombatTransitionAction.PRESS,
+        )
+        self.assertIs(
+            tracker.request(True, AutoCombatVisualState.DISABLED, 0.5),
+            AutoCombatTransitionAction.WAIT,
+        )
+        self.assertIs(
+            tracker.request(True, AutoCombatVisualState.DISABLED, 1.0),
+            AutoCombatTransitionAction.PRESS,
+        )
+        self.assertIs(
+            tracker.request(True, AutoCombatVisualState.DISABLED, 2.0),
+            AutoCombatTransitionAction.WAIT,
+        )
+        self.assertEqual(tracker.command_count, 2)
+
+    def test_auto_combat_timeout_is_reported_only_once_per_request(self):
+        tracker = AutoCombatTransitionTracker(timeout_seconds=10)
+
+        self.assertIs(
+            tracker.request(False, AutoCombatVisualState.UNKNOWN, 0.0),
+            AutoCombatTransitionAction.WAIT,
+        )
+        self.assertIs(
+            tracker.request(False, AutoCombatVisualState.NOT_ACTIONABLE, 10.0),
+            AutoCombatTransitionAction.TIMED_OUT,
+        )
+        self.assertIs(
+            tracker.request(False, AutoCombatVisualState.UNKNOWN, 20.0),
+            AutoCombatTransitionAction.WAIT,
+        )
+        self.assertTrue(tracker.warning_emitted)
+
+    def test_auto_combat_request_never_blocks_for_reverification(self):
+        script_path = ROOT / "src" / "script.py"
+        tree = ast.parse(
+            script_path.read_text(encoding="utf-8"), filename=str(script_path)
+        )
+        set_auto_combat = next(
+            node
+            for node in ast.walk(tree)
+            if isinstance(node, ast.FunctionDef) and node.name == "SetAutoCombat"
+        )
+        calls = [node for node in ast.walk(set_auto_combat) if isinstance(node, ast.Call)]
+        call_names = {
+            call.func.id for call in calls if isinstance(call.func, ast.Name)
+        }
+
+        self.assertNotIn("Sleep", call_names)
+        self.assertFalse(any(isinstance(node, ast.For) for node in ast.walk(set_auto_combat)))
+
     def test_unmatched_character_replays_previous_action_without_defending(self):
         script_path = ROOT / "src" / "script.py"
         tree = ast.parse(
@@ -39,16 +122,51 @@ class CombatStrategyQueueTests(unittest.TestCase):
 
         self.assertIn("AutoThisChar", call_names)
         self.assertNotIn("DefendThisChar", call_names)
-        self.assertTrue(
-            any(
-                isinstance(call.func, ast.Name)
-                and call.func.id == "SetAutoCombat"
-                and len(call.args) == 1
-                and isinstance(call.args[0], ast.Constant)
-                and call.args[0].value is False
-                for call in calls
-            )
+        self.assertNotIn("SetAutoCombat", call_names)
+
+    def test_current_character_auto_pulse_turns_off_within_one_second(self):
+        script_path = ROOT / "src" / "script.py"
+        tree = ast.parse(
+            script_path.read_text(encoding="utf-8"), filename=str(script_path)
         )
+        auto_this_char = next(
+            node
+            for node in ast.walk(tree)
+            if isinstance(node, ast.FunctionDef) and node.name == "AutoThisChar"
+        )
+        calls = [node for node in ast.walk(auto_this_char) if isinstance(node, ast.Call)]
+        call_names = [
+            call.func.id for call in calls if isinstance(call.func, ast.Name)
+        ]
+        delays = [
+            call.args[0].value
+            for call in calls
+            if isinstance(call.func, ast.Name)
+            and call.func.id == "Sleep"
+            and len(call.args) == 1
+            and isinstance(call.args[0], ast.Constant)
+            and isinstance(call.args[0].value, (int, float))
+        ]
+        auto_button_presses = [
+            call
+            for call in calls
+            if isinstance(call.func, ast.Name)
+            and call.func.id == "Press"
+            and len(call.args) == 1
+            and isinstance(call.args[0], ast.List)
+            and [
+                item.value
+                for item in call.args[0].elts
+                if isinstance(item, ast.Constant)
+            ]
+            == [850, 1100]
+        ]
+
+        self.assertIn("DetectAutoCombatState", call_names)
+        self.assertNotIn("SetAutoCombat", call_names)
+        self.assertGreaterEqual(len(auto_button_presses), 2)
+        self.assertTrue(delays)
+        self.assertLess(sum(delays), 1.0)
 
     def test_pending_skills_prevent_auto_combat(self):
         strategy = {

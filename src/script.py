@@ -20,6 +20,9 @@ import copy
 import struct
 from smart_disarm import SmartDisarm, DisarmConfig, note_press_duration
 from combat_strategy import (
+    AutoCombatTransitionAction,
+    AutoCombatTransitionTracker,
+    AutoCombatVisualState,
     SkillExecutionResult,
     clear_skill_failure,
     complete_strategy_skill,
@@ -135,6 +138,7 @@ class RuntimeContext:
     _RESTART_TIMES = []            # 최근 재시작 시각 목록(무한 재시작 순환 감지용)
     _IN_DUNGEON_STATE = False      # StateDungeon 실행 중 재시작인지 구분
     _STRATEGY_RECOVERY_PENDING = False  # 같은 던전 재진입 시 전략 재초기화 방지
+    _AUTO_COMBAT_TRANSITION = None       # 프레임 사이 자동전투 전환 확인 상태
     CURRENT_STRATEGY = {}
     _STRATEGY_FAILURE_COUNTS = {}
     _STRATEGY_FALLBACK_ROLES = []
@@ -1846,47 +1850,62 @@ def Factory():
         if runtimeContext._TIME_COMBAT==0:
             runtimeContext._TIME_COMBAT = time.time()
 
-        auto_combat_roi = [[842, 1124-42, 35, 13]]
+        # 템플릿과 정확히 같은 35x13 영역만 검색하면 렌더링 위치가 몇 픽셀
+        # 흔들려도 상태를 놓친다. 버튼 전체 안에서 두 상태 템플릿을 찾는다.
+        auto_combat_roi = [[815, 1060, 85, 60]]
         # 설정 스킬이 한 번 실패하면 같은 캐릭터의 자동 행동으로 즉시 대체한다.
         # 실패 항목을 다음 라운드까지 붙잡아 두면 나머지 파티원이 계속 방어하게 된다.
         max_configured_skill_attempts = 1
 
         def DetectAutoCombatState(scn):
-            """Return True/False for enabled/disabled, or None if UI is unclear."""
+            """Classify the auto control without treating animation as failure."""
             if CheckIf(scn, "spellskill/CombatAutoDisable", auto_combat_roi):
-                return False
+                return AutoCombatVisualState.DISABLED
             if CheckIf(scn, "spellskill/CombatAutoEnable", auto_combat_roi):
+                return AutoCombatVisualState.ENABLED
+            if StateCombatCheck(scn):
+                return AutoCombatVisualState.NOT_ACTIONABLE
+            return AutoCombatVisualState.UNKNOWN
+
+        def AutoCombatTransition():
+            tracker = runtimeContext._AUTO_COMBAT_TRANSITION
+            if tracker is None:
+                tracker = AutoCombatTransitionTracker()
+                runtimeContext._AUTO_COMBAT_TRANSITION = tracker
+            return tracker
+
+        def SetAutoCombat(enabled):
+            """Request a state once and confirm it on a later actionable frame."""
+            scn = ScreenShot()
+            if HandleSessionExpiry(scn):
+                logger.warning("세션 종료 처리 중이므로 자동전투 전환을 보류합니다.")
+                return False
+
+            state = DetectAutoCombatState(scn)
+            now = time.monotonic()
+            tracker = AutoCombatTransition()
+            action = tracker.request(enabled, state, now)
+
+            if action is AutoCombatTransitionAction.CONFIRMED:
                 return True
-            return None
-
-        def SetAutoCombat(enabled, max_attempts=3):
-            """Set auto combat only after positively identifying the opposite state."""
-            for attempt in range(max_attempts):
-                scn = ScreenShot()
-                if HandleSessionExpiry(scn):
-                    logger.warning("세션 종료 처리 중이므로 자동전투 전환을 보류합니다.")
-                    return False
-                state = DetectAutoCombatState(scn)
-                if state is enabled:
-                    return True
-                if state is None:
-                    logger.warning(
-                        "자동전투 상태를 판별할 수 없습니다. "
-                        f"재확인합니다. ({attempt + 1}/{max_attempts})"
-                    )
-                    Sleep(0.5)
-                    continue
-
+            if action is AutoCombatTransitionAction.PRESS:
                 Press([850, 1100])
-                Sleep(1.2)
-
-            final_state = DetectAutoCombatState(ScreenShot())
-            if final_state is enabled:
-                return True
-            logger.warning(
-                "자동전투를 %s 상태로 전환하지 못했습니다. 다음 상태 확인 때 재시도합니다.",
-                "활성" if enabled else "비활성",
-            )
+                logger.debug(
+                    "자동전투 %s 명령을 전송했습니다(%s/%s). 다음 행동 가능 프레임에서 확인합니다.",
+                    "활성" if enabled else "비활성",
+                    tracker.command_count,
+                    tracker.max_commands,
+                )
+                return False
+            if action is AutoCombatTransitionAction.TIMED_OUT:
+                logger.warning(
+                    "자동전투 %s 요청을 %.1f초 동안 확인하지 못했습니다"
+                    "(화면=%s, 명령=%s회). 다음 행동 가능 프레임에서 계속 확인합니다.",
+                    "활성" if enabled else "비활성",
+                    tracker.pending_seconds(now),
+                    state.value,
+                    tracker.command_count,
+                )
             return False
 
         def DefendThisChar():
@@ -1939,9 +1958,43 @@ def Factory():
                 Sleep(0.5)
 
         def AutoThisChar():
-            enabled = SetAutoCombat(True)
-            Sleep(2)
-            return enabled
+            """현재 캐릭터의 자동 행동만 짧게 실행하고 즉시 수동으로 복귀한다."""
+            scn = ScreenShot()
+            if HandleSessionExpiry(scn):
+                logger.warning("세션 만료를 처리해 현재 캐릭터 자동 행동을 건너뜁니다.")
+                return False
+
+            state = DetectAutoCombatState(scn)
+            if state not in {
+                AutoCombatVisualState.ENABLED,
+                AutoCombatVisualState.DISABLED,
+            }:
+                logger.debug(
+                    "자동전투 버튼이 행동 가능한 프레임에 없어 현재 캐릭터 자동 행동을 보류합니다."
+                )
+                return False
+
+            pulse_started_at = time.monotonic()
+            if state is AutoCombatVisualState.DISABLED:
+                Press([850,1100])
+                Sleep(0.45)
+            else:
+                # 이미 켜진 상태라면 다음 캐릭터까지 넘어가기 전에 바로 끈다.
+                Sleep(0.1)
+
+            Press([850,1100])
+            AutoCombatTransition().mark_command(False, time.monotonic())
+            pulse_elapsed = time.monotonic() - pulse_started_at
+            if pulse_elapsed > 1.0:
+                logger.warning(
+                    "현재 캐릭터 자동 행동을 끄는 데 %.2f초가 걸렸습니다(목표: 1초 이내).",
+                    pulse_elapsed,
+                )
+            else:
+                logger.debug(
+                    "현재 캐릭터 자동 행동을 %.2f초 만에 해제했습니다.", pulse_elapsed
+                )
+            return True
 
         def ActiveAutoCombat():
             if CloseSkillDialog():
@@ -2135,8 +2188,8 @@ def Factory():
         if should_activate_auto_combat(
             runtimeContext.CURRENT_STRATEGY, _("全自动战斗")
         ):
-            ActiveAutoCombat()
-            ActivateCombatSpeed()
+            if ActiveAutoCombat():
+                ActivateCombatSpeed()
             return
 
         # 자동 전환 모드에서는 큐가 남아 있는 동안 반드시 수동 상태를 유지한다.
@@ -2156,6 +2209,7 @@ def Factory():
             pass
         else:
             logger.debug(_("战斗已结束."))
+            runtimeContext._AUTO_COMBAT_TRANSITION = None
             runtimeContext.COMBAT_COUNT_SINCE_RELOAD += 1
             remaining = len(runtimeContext.CURRENT_STRATEGY.get("skill_settings", []))
             if remaining:
@@ -2195,8 +2249,7 @@ def Factory():
             logger.info(_("并未设定该角色的行为, 使用自动战斗."))
             # 이미 전략 행동을 마친 캐릭터는 방어를 새 반복 행동으로 저장하지
             # 않도록 자동전투로 이전 행동을 한 번 실행한 뒤 다시 수동으로 돌린다.
-            if AutoThisChar():
-                SetAutoCombat(False)
+            AutoThisChar()
             return
 
         # 6. 按照技能等级释放技能
@@ -2271,12 +2324,6 @@ def Factory():
                 else:
                     logger.info("모든 전략 스킬이 완료되어 자동전투로 전환합니다.")
                 ActiveAutoCombat()
-            elif (
-                target_skill.get("skill_var") == _("双击自动")
-                or action_result is SkillExecutionResult.FALLBACK
-            ):
-                # '이 캐릭터 자동' 항목이 다음 전략 캐릭터까지 소비하지 않도록 다시 끈다.
-                SetAutoCombat(False)
         else:
             logger.warning("전략 행동이 완료되지 않아 항목을 대기열에 유지합니다.")
 
@@ -2906,6 +2953,7 @@ def Factory():
                         dungState = None
         runtimeContext._IN_DUNGEON_STATE = False
         runtimeContext._STRATEGY_RECOVERY_PENDING = False
+        runtimeContext._AUTO_COMBAT_TRANSITION = None
     def StateAcceptRequest(request: str, pressbias:list = [0,0]):
         FindCoordsOrElseExecuteFallbackAndWait("Inn",[1,1],1)
         StateInn()
