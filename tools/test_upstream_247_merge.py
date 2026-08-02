@@ -41,26 +41,26 @@ def contains_han(text):
 
 
 class Upstream248MergeTests(unittest.TestCase):
-    def test_quest_catalog_preserves_local_and_upstream_entries(self):
+    def test_quest_catalog_excludes_1f_and_preserves_upstream_entries(self):
         quests = load_json_rejecting_duplicate_keys(
             ROOT / "resources" / "quest" / "quest.json"
         )
 
         ffxi_quests = (
-            "ff-collabo-dungeon1f",
             "FFXI-2F",
             "FFXI-2F-elite",
             "FFXI-5F-4Elite",
             "FFXI-5F-2Elite",
             "FFXI-5F-Elite",
         )
+        self.assertNotIn("ff-collabo-dungeon1f", quests)
         for quest_key in ffxi_quests:
             self.assertIn(quest_key, quests)
 
         self.assertEqual(quests["FFXI-5F-4Elite"]["_EOT"][1][1], "FFXI/zone5")
         self.assertEqual(quests["FFXI-5F-2Elite"]["_EOT"][1][1], "FFXI/zone5")
         self.assertEqual(quests["FFXI-5F-Elite"]["_EOT"][1][1], "FFXI/zone5")
-        for quest_key in ffxi_quests[1:]:
+        for quest_key in ffxi_quests:
             self.assertEqual(
                 quests[quest_key]["_RTT"][0][2][0],
                 "FFXI/City_VNH",

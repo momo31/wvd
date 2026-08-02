@@ -1205,10 +1205,6 @@ msgstr ""
 msgid "卡死检测结果: {a}"
 msgstr ""
 
-#: src/script.py:1694
-msgid "이벤트마을출발"
-msgstr ""
-
 #: src/script.py:1731
 msgid "[안전장치] 전투 상태 진입 시 스킬 상세창이 감지되어 강제 폐쇄합니다."
 msgstr ""

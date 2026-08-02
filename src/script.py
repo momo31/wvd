@@ -1813,8 +1813,6 @@ def Factory():
         PressReturn()
     def StateEoT():
         runtimeContext._RESUMEAVAILABLE = False
-        if getattr(quest, 'questName', '') in ["[刷怪]FF联动1F", "[몬스터] 파판콜라보 1F"] or getattr(setting, 'FARM_TARGET', '') == 'ff-collabo-dungeon1f':
-            logger.info(_("이벤트마을출발"))
         if quest._preEOTcheck:
             Press(CheckIf(ScreenShot(),quest._preEOTcheck))
 
