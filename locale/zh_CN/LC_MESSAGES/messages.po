@@ -2059,6 +2059,19 @@ msgid ""
 "该任务在小村子住宿. 主要不要开\"住豪华房\"和\"6小时重置队伍\"."
 msgstr ""
 
+#: src/script.py
+msgid "战斗结束后检测到宝箱. 开箱后再恢复."
+msgstr ""
+
+#: src/script.py
+msgid "战斗结束后确认没有宝箱. 立即恢复."
+msgstr ""
+
+#: src/script.py
+#, python-brace-format
+msgid "战斗结束后的画面在{a}秒内未稳定. 重新识别状态."
+msgstr ""
+
 #~ msgid "全自动战斗."
 #~ msgstr ""
 

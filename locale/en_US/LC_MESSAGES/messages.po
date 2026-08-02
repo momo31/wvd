@@ -2170,6 +2170,19 @@ msgstr ""
 "This quest rests in the small village. Disable \"Stay in Royal Suite\" "
 "and \"Reassemble the first party at the tavern every 6 hours\"."
 
+#: src/script.py
+msgid "战斗结束后检测到宝箱. 开箱后再恢复."
+msgstr "Detected a chest after combat. Recovery will follow chest handling."
+
+#: src/script.py
+msgid "战斗结束后确认没有宝箱. 立即恢复."
+msgstr "Confirmed that no chest appeared after combat. Recovering immediately."
+
+#: src/script.py
+#, python-brace-format
+msgid "战斗结束后的画面在{a}秒内未稳定. 重新识别状态."
+msgstr "The post-combat screen did not stabilize within {a} seconds. Rechecking the state."
+
 #~ msgid "全自动战斗."
 #~ msgstr "Full Auto."
 

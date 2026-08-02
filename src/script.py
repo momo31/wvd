@@ -28,6 +28,9 @@ from combat_strategy import (
     should_preserve_strategy_progress,
     should_skip_dungeon_strategy_reload,
 )
+from post_combat import PostCombatDecision, PostCombatTracker
+
+
 class TaskStoppedException(Exception):
     pass
 
@@ -1750,6 +1753,57 @@ def Factory():
             if pos:=CheckIf(screen,combat, [[0,0,150,80]]):
                 return pos
         return None
+    def ResolvePostCombatState(max_wait_seconds=12):
+        # 실측상 상자 생성 전 dungFlag가 약 2초간 보이는 구간이 있어
+        # 2.5초 연속 유지될 때만 상자 없는 정상 던전 화면으로 확정한다.
+        tracker = PostCombatTracker(stable_dungeon_seconds=2.5)
+        deadline = time.monotonic() + max_wait_seconds
+
+        while time.monotonic() < deadline:
+            if setting._FORCESTOPING.is_set():
+                raise TaskStoppedException()
+
+            screen = ScreenShot()
+            chest_active = bool(CheckIf(screen, "chestFlag"))
+            if not chest_active:
+                chest_active = bool(CheckIf(screen, "whowillopenit"))
+
+            if chest_active:
+                logger.info(_("战斗结束后检测到宝箱. 开箱后再恢复."))
+                return DungeonState.Chest
+
+            # 결과창이 던전 UI 위에 겹쳐 보이면 dungFlag를 안정 상태로 세지 않고
+            # 즉시 넘겨 상자 유무가 드러나게 한다.
+            if Press(CheckIf(screen, "dialogueNext", [[750, 1400, 150, 200]])):
+                tracker.observe(time.monotonic())
+                Sleep(0.2)
+                continue
+            if TryPressRetry(screen):
+                tracker.observe(time.monotonic())
+                Sleep(0.5)
+                continue
+            if CheckIf(screen, "RiseAgain"):
+                return None
+
+            decision = tracker.observe(
+                time.monotonic(),
+                combat_active=bool(StateCombatCheck(screen)),
+                dungeon_active=bool(CheckIf(screen, "dungFlag")),
+            )
+            if decision is PostCombatDecision.COMBAT:
+                return DungeonState.Combat
+            if decision is PostCombatDecision.DUNGEON:
+                logger.info(_("战斗结束后确认没有宝箱. 立即恢复."))
+                return DungeonState.Dungeon
+
+            Sleep(0.2)
+
+        logger.info(
+            _("战斗结束后的画面在{a}秒内未稳定. 重新识别状态.").format(
+                a=max_wait_seconds
+            )
+        )
+        return None
     def StateInn():
         if not setting.ACTIVE_ROYALSUITE_REST:
             FindCoordsOrElseExecuteFallbackAndWait("OK",["Inn","Stay","Economy",[1,1]],2)
@@ -2113,7 +2167,7 @@ def Factory():
                 )
             else:
                 logger.info("전투가 종료되었으며 모든 전략 스킬이 완료되었습니다.")
-            return
+            return True
 
         # 4. 进行匹配
         highest_match_rate = 0
@@ -2575,6 +2629,7 @@ def Factory():
         waitTimer = time.time()
         needRecoverBecauseCombat = False
         needRecoverBecauseChest = False
+        postCombatResolutionPending = False
 
         nonlocal runtimeContext
         runtimeContext._IN_DUNGEON_STATE = True
@@ -2635,6 +2690,17 @@ def Factory():
                     logger.debug(_(f"本次地下城打开地图次数{gameFrozen_StateMapCounter}"))
                     break
                 case DungeonState.Dungeon:
+                    if postCombatResolutionPending:
+                        resolved_state = ResolvePostCombatState()
+                        if resolved_state is None:
+                            dungState = None
+                            continue
+                        if resolved_state is not DungeonState.Dungeon:
+                            dungState = resolved_state
+                            if resolved_state is DungeonState.Chest:
+                                postCombatResolutionPending = False
+                            continue
+                        postCombatResolutionPending = False
                     Press([1,1])
                     ########### TIMER
                     if (runtimeContext._TIME_CHEST !=0) or (runtimeContext._TIME_COMBAT!=0):
@@ -2701,11 +2767,9 @@ def Factory():
                                     Press([725,850])
                                 else:
                                     Press([830,850])
-                                Sleep(1)
                                 FindCoordsOrElseExecuteFallbackAndWait(["recover","combatActive",],[833,843],1)
-                                if CheckIf(ScreenShot(),"recover"):
-                                    Sleep(1.5)
-                                    Press([600,1200])
+                                if recover_pos := CheckIf(ScreenShot(),"recover"):
+                                    Press(recover_pos)
                                     Sleep(1)
                                     for underscore in range(5):
                                         t = time.time()
@@ -2826,12 +2890,22 @@ def Factory():
                         logger.info(_("地下城目标完成. 地下城状态结束.(仅限任务模式.)"))
                         break
                 case DungeonState.Chest:
+                    postCombatResolutionPending = False
                     needRecoverBecauseChest = True
                     dungState = StateChest()
                 case DungeonState.Combat:
                     needRecoverBecauseCombat =True
-                    StateCombat()
-                    dungState = None
+                    postCombatResolutionPending = True
+                    post_combat_candidate = StateCombat()
+                    if post_combat_candidate:
+                        dungState = ResolvePostCombatState()
+                        if dungState in (
+                            DungeonState.Dungeon,
+                            DungeonState.Chest,
+                        ):
+                            postCombatResolutionPending = False
+                    else:
+                        dungState = None
         runtimeContext._IN_DUNGEON_STATE = False
         runtimeContext._STRATEGY_RECOVERY_PENDING = False
     def StateAcceptRequest(request: str, pressbias:list = [0,0]):
@@ -3123,6 +3197,7 @@ def Factory():
                 shouldRecover = False
                 needRecoverBecauseCombat = False
                 needRecoverBecauseChest = False
+                postCombatResolutionPending = False
                 def dl_restart():
                     # darkLight 루프는 RestartableSequenceExecution 밖이라 RestartSignal 이
                     # Farm 까지 전파되어 작업이 종료된다. 여기서 소화하면 루프 선두의
@@ -3151,6 +3226,17 @@ def Factory():
                                 logger.info(_("由于战斗用时过久, 在state:None中重启."))
                                 dl_restart()
                         case DungeonState.Dungeon:
+                            if postCombatResolutionPending:
+                                resolved_state = ResolvePostCombatState()
+                                if resolved_state is None:
+                                    dungState = None
+                                    continue
+                                if resolved_state is not DungeonState.Dungeon:
+                                    dungState = resolved_state
+                                    if resolved_state is DungeonState.Chest:
+                                        postCombatResolutionPending = False
+                                    continue
+                                postCombatResolutionPending = False
                             Press([1,1])
                             ########### TIMER
                             if (runtimeContext._TIME_CHEST !=0) or (runtimeContext._TIME_COMBAT!=0):
@@ -3202,15 +3288,13 @@ def Factory():
                                     )
                                 if CheckIf(ScreenShot(),"trait"):
                                     Press([833,843])
-                                    Sleep(1)
                                     FindCoordsOrElseExecuteFallbackAndWait(
                                         ["recover","combatActive"],
                                         [833,843],
-                                        1
+                                        0.5
                                         )
-                                    if CheckIf(ScreenShot(),"recover"):
-                                        Sleep(1)
-                                        Press([600,1200])
+                                    if recover_pos := CheckIf(ScreenShot(),"recover"):
+                                        Press(recover_pos)
                                         for underscore in range(5):
                                             t = time.time()
                                             PressReturn()
@@ -3220,6 +3304,7 @@ def Factory():
                             ########### light the dark light
                             Press(FindCoordsOrElseExecuteFallbackAndWait("darklight_lightIt","darkLight",1))
                         case DungeonState.Chest:
+                            postCombatResolutionPending = False
                             needRecoverBecauseChest = True
                             try:
                                 dungState = StateChest()
@@ -3229,8 +3314,17 @@ def Factory():
                                 dungState = None
                         case DungeonState.Combat:
                             needRecoverBecauseCombat =True
-                            StateCombat()
-                            dungState = None
+                            postCombatResolutionPending = True
+                            post_combat_candidate = StateCombat()
+                            if post_combat_candidate:
+                                dungState = ResolvePostCombatState()
+                                if dungState in (
+                                    DungeonState.Dungeon,
+                                    DungeonState.Chest,
+                                ):
+                                    postCombatResolutionPending = False
+                            else:
+                                dungState = None
             case "manualSepDemon":
                 RestartableSequenceExecution(
                     lambda: StateDungeon([TargetInfo("stair_2","左下",[827,547]),
