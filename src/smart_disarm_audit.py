@@ -34,6 +34,8 @@ class SmartDisarmAuditor:
         self.shots = 0
         self.tap_count = 0
         self.tag = "init"
+        self._tap_paths = {}
+        self._game_outcomes = {}
         if self.capture:
             try:
                 os.makedirs(out_dir, exist_ok=True)
@@ -61,6 +63,8 @@ class SmartDisarmAuditor:
     def on_start(self):
         self.shots = 0
         self.tap_count = 0
+        self._tap_paths = {}
+        self._game_outcomes = {}
         # datetime.now()는 audit 전용 파일명 태그용 (본체는 주입된 now_fn 사용)
         self.tag = datetime.now().strftime("%Y%m%d_%H%M%S")
         self.log.info(self._t("[audit] 스마트 개봉 시작 (tag={a})").format(a=self.tag))
@@ -91,7 +95,40 @@ class SmartDisarmAuditor:
                               e=(actual_cursor_x if actual_cursor_x is not None else "?"),
                               d=("O" if hit else ("X" if hit is not None else "?"))))
         if self.capture and img is not None:
-            self._save_overlay(img, actual_cursor_x, plan, est, safes, rng, hit, backcast_x)
+            path = self._save_overlay(
+                img, actual_cursor_x, plan, est, safes, rng, hit, backcast_x
+            )
+            if path:
+                self._tap_paths[self.tap_count] = path
+
+    def on_tap_outcome(self, hit):
+        """Replace a measurement label with the later game-confirmed outcome."""
+
+        if self.tap_count <= 0 or hit is None:
+            return
+        hit = bool(hit)
+        self._game_outcomes[self.tap_count] = hit
+        label = "hit" if hit else "miss"
+        self.log.info(
+            self._t("[audit] 탭 #{a}: 게임 판정={b}, 감사 라벨={c} 확정")
+            .format(a=self.tap_count, b=("성공" if hit else "실패"), c=label)
+        )
+
+        old_path = self._tap_paths.get(self.tap_count)
+        if not old_path:
+            return
+        new_path = os.path.join(
+            self.out_dir, f"disarm_{self.tag}_{self.tap_count}_{label}.png"
+        )
+        if os.path.normcase(old_path) == os.path.normcase(new_path):
+            return
+        try:
+            os.replace(old_path, new_path)
+            self._tap_paths[self.tap_count] = new_path
+        except Exception as e:
+            self.log.warning(
+                self._t("[audit] 게임 판정 라벨 반영 실패: {a}").format(a=e)
+            )
 
     def on_result(self, result):
         self.log.info(self._t("[audit] 결과: {a} | 유효샘플 {b}건 | 탭 {c}회 (tag={d})")
@@ -128,9 +165,12 @@ class SmartDisarmAuditor:
                          (0, 255, 0) if hit else (0, 0, 255), 2)
             lab = "unk" if hit is None else ("hit" if hit else "miss")
             name = f"disarm_{self.tag}_{self.tap_count}_{lab}.png"
-            cv2.imwrite(os.path.join(self.out_dir, name), vis)
+            path = os.path.join(self.out_dir, name)
+            if cv2.imwrite(path, vis):
+                return path
         except Exception as e:
             self.log.warning(self._t("[audit] 오버레이 저장 실패: {a}").format(a=e))
+        return None
 
 
 def make_auditor(logger, _=None, **kw):

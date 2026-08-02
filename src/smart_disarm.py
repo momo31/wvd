@@ -85,6 +85,8 @@ class DisarmConfig:
     stop_lead_alpha = 0.20     # 정지위치 오프셋 EMA 로 리드를 자동 보정하는 계수 (기존 0.30 → 극단값 민감도 감소)
     stop_adj_step_max = 0.08   # 1회 보정 한도(s)
     stop_adj_total_max = 0.35  # 누적 보정 한도(s, 초기 리드 대비 ±)
+    stop_adj_carry_decay = 0.5 # 새 상자는 이전 상자 보정의 절반만 초기 힌트로 사용한다.
+    stop_adj_carry_max = 0.08  # 개체별 감속 편차가 달라도 첫 탭 오차가 과도해지지 않게 제한한다.
     # --- 무측정 실패 보조 보정 (26.07-16 로그 판독 반영: 고정 +0.05 는 직전 측정 탭의
     #     부호 보정과 이중 개입해 과보정(직후 -52~-262px 이른 미스)을 유발 →
     #     조건·부호·크기 3중 제한으로 교체) ---
@@ -147,15 +149,6 @@ _PRESS_LAT = {"ema": None}
 # '정지 위치 - 목표중심' 오프셋을 되먹여 계통 잔차를 자동 흡수한다.
 _STOP_LEAD = {"adj": 0.0}
 
-# 측정 잔차(err_px, 부호 있음)의 세션 EWMA. 무측정 실패 탭에서 보정 '방향'을
-# 추정하는 사전 정보로 쓴다(대편차 이상치는 제외하고 갱신).
-_RESID = {"ewma": None}
-
-# 직전 탭의 정지위치 측정(meas) 성공 여부. 무측정 실패가 '연속'일 때만
-# (= 부호 있는 P-제어가 눈을 감은 구간) 맹목 보정 개입을 허용한다.
-_PREV_TAP_MEAS = {"ok": True}
-
-
 def note_press_duration(dur, alpha=0.35):
     """press(adb input tap) 실측 소요를 EMA 에 공급. script.py 의 일반 Press() 가
     상시 호출해 미니게임 첫 탭 전에 지연 추정을 예열(pre-seed)한다."""
@@ -186,6 +179,21 @@ class SmartDisarm:
         self._t = _ or (lambda s: s)
         self.audit = auditor   # audit 모듈 주입(없으면 None -> 모든 audit hook no-op)
         self._lead_fb = None   # 직전 탭의 리드 되먹임 기록(실패 확정 재조준 판단용)
+        # 잔차와 직전 측정 여부는 같은 상자 안에서만 의미가 있다. 전역으로 두면
+        # 새 상자의 첫 실패가 이전 상자와 '측정 공백 연속'으로 묶여 잘못 보정된다.
+        self._resid_ewma = None
+        self._prev_tap_meas = True
+
+        # 정지 리드의 장기 경향은 약한 초기 힌트로만 승계한다. 자물쇠 개체마다
+        # 감속시간이 달라 직전 값을 그대로 쓰면 첫 탭이 수백 px 벗어날 수 있다.
+        carried_adj = float(_STOP_LEAD["adj"])
+        carry_limit = max(0.0, float(self.cfg.stop_adj_carry_max))
+        decayed_adj = carried_adj * max(
+            0.0, min(1.0, float(self.cfg.stop_adj_carry_decay))
+        )
+        decayed_adj = max(-carry_limit, min(carry_limit, decayed_adj))
+        _STOP_LEAD["adj"] = decayed_adj
+        self._carried_stop_adj = (carried_adj, decayed_adj)
 
     # ===================== 화면 분석 =====================
     def detect(self, img):
@@ -391,6 +399,12 @@ class SmartDisarm:
         last_safes = None
         last_range = None
         self.log.info(self._t("스마트 개봉 시작..."))
+        carried_adj, initial_adj = self._carried_stop_adj
+        if abs(carried_adj - initial_adj) >= 0.001:
+            self.log.debug(
+                self._t("상자 시작 정지리드 보정 감쇠: {a:+.3f}s → {b:+.3f}s")
+                .format(a=carried_adj, b=initial_adj)
+            )
         # 평가용 보정 상태 스냅숏: 이 상자의 첫 탭이 어떤 보정값으로 조준되는지 기록
         self.log.debug(self._t("보정 상태: press EMA={a}, 정지리드={b:.3f}s(adj {c:+.3f}), grab_frac={d}, stop_time={e}s")
                        .format(a=(("%.3f s" % _PRESS_LAT["ema"]) if _PRESS_LAT["ema"] is not None else "미실측"),
@@ -579,8 +593,8 @@ class SmartDisarm:
                 meas = self._measure_after_tap(aimg, a_content, p0, p1, samples[-1][0],
                                                est, last_safes, (xmin, xmax),
                                                frame2=(after, b_content, d_after))
-            prev_tap_had_meas = _PREV_TAP_MEAS["ok"]   # 이번 탭 반영 전 = '직전 탭' 기준
-            _PREV_TAP_MEAS["ok"] = meas is not None
+            prev_tap_had_meas = self._prev_tap_meas   # 이번 탭 반영 전 = 같은 상자의 직전 탭
+            self._prev_tap_meas = meas is not None
             if meas is not None:
                 self._update_stop_lead(meas, plan)
             if self.audit:
@@ -630,14 +644,18 @@ class SmartDisarm:
                     # 템플릿 매칭을 통한 남은 기회 판독
                     before_chance = self.detect_remaining_chances(img_before)
                     after_chance = self.detect_remaining_chances(img_after)
-                    
+
                     is_failed = False
-                    
+                    game_outcome = None
+
                     # 1) 템플릿 정보가 모두 존재하는 경우: 정수값 비교
                     if before_chance is not None and after_chance is not None:
                         self.log.info(f"[ChallengeCheck] 기회 인식 결과: 탭 전 {before_chance}회 -> 탭 후 {after_chance}회")
                         if after_chance < before_chance:
                             is_failed = True
+                            game_outcome = False
+                        elif after_chance == before_chance:
+                            game_outcome = True
                     # 2) 템플릿이 미구비되어 식별 불가한 경우: 기존 픽셀 차분 편차 방식(Fallback) + 자가 학습(Auto-capture)
                     else:
                         if diff_val >= 3.0:
@@ -699,6 +717,9 @@ class SmartDisarm:
                                         self.log.info(f"[ChallengeCheck] 자가 학습: 1회 기회 템플릿 자동 수집 완료 -> {path_1}")
                                     except Exception as e:
                                         self.log.error(f"[ChallengeCheck] Failed to save smallgame_1 template: {e}")
+
+                    if game_outcome is not None:
+                        self._audit_tap_outcome(game_outcome)
 
                     if is_failed:
                         if meas is None:
@@ -951,8 +972,10 @@ class SmartDisarm:
             return
         # 무측정 실패 보정의 방향 사전정보(잔차 EWMA). 대편차 가드를 통과한 관측만 반영.
         a_r = self.cfg.resid_ewma_alpha
-        ew = _RESID["ewma"]
-        _RESID["ewma"] = err_px if ew is None else (1.0 - a_r) * ew + a_r * err_px
+        ew = self._resid_ewma
+        self._resid_ewma = (
+            err_px if ew is None else (1.0 - a_r) * ew + a_r * err_px
+        )
 
         # 빠른 게임(렉 지터 극대화) 시 비례제어 반응성(P-Control) 상향
         is_fast_game = (meas["v"] >= 800)
@@ -979,14 +1002,14 @@ class SmartDisarm:
         ema = _PRESS_LAT["ema"]
         if ema is not None and press_rtt - ema >= self.cfg.blind_fail_rtt_excess:
             return self.cfg.blind_fail_step, self._t("press 지연 이상 {a:.3f}s").format(a=press_rtt)
-        ew = _RESID["ewma"]
+        ew = self._resid_ewma
         if ew is not None and abs(ew) >= self.cfg.blind_fail_resid_min:
             step = self.cfg.blind_fail_step if ew > 0 else -self.cfg.blind_fail_step
             # 근거 소비 감쇠: 실측 갱신 없이 같은 EWMA 를 반복 소비하면 신뢰를 반감시킨다.
             # (26.07-17 실전: 측정 기아 상태에서 EWMA 가 -268px 로 동결된 채 blind 가
             #  14연속 같은 방향으로 발동해 리드 0.500→0.217 단조 표류 → 성공률 급락.
             #  감쇠로 4~5회 후 자연 정지하고, 실측이 들어오면 EWMA 는 다시 채워진다.)
-            _RESID["ewma"] = ew * self.cfg.blind_resid_decay
+            self._resid_ewma = ew * self.cfg.blind_resid_decay
             return step, self._t("잔차 추이 {a:+.0f}px").format(a=ew)
         return 0.0, None
 
@@ -1009,6 +1032,16 @@ class SmartDisarm:
                 self.audit.on_end_frame(img)
         except Exception:
             pass
+
+    def _audit_tap_outcome(self, hit):
+        """Forward a challenge-count outcome to newer auditors without coupling."""
+        try:
+            if self.audit and hasattr(self.audit, "on_tap_outcome"):
+                self.audit.on_tap_outcome(hit)
+        except Exception as e:
+            self.log.warning(
+                self._t("[audit] 게임 판정 기록 실패: {a}").format(a=e)
+            )
 
     def _do_fallback(self, reason):
         self.log.info(self._t("폴백 실행({a}).").format(a=reason))

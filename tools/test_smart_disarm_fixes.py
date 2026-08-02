@@ -25,7 +25,7 @@ ChallengeCheck 경로까지 도달시켜 아래 4개 수정의 동작을 검증�
   S2 brightness     : 탭 후 ROI 밝기 +12 (diff>=3, sim>=0.92) - 무변화로 간주해야 함
   S3 genuine+nomeas : ROI 변화 + 탭 직후 커서 미검출(meas 실패), 세션 첫 탭
                       - 신코드: 공백 연속 아님 → 맹목 보정 생략 / 구코드: +0.05
-  S4a~d             : 측정 공백 연속(_PREV_TAP_MEAS=False 시드) 상태의 무측정 실패
+  S4a~d             : 같은 상자 내 측정 공백 연속 상태의 무측정 실패
                       a) 잔차 EWMA +60px → +0.025  b) -60px → -0.025
                       c) 근거 없음(+10px) → 생략   d) press RTT 이상 → +0.025
   S5a~d (26-07-16)  : 2프레임 정지 실측 + 실패 확정 재조준 (DecelWorld: 감속-정지 +
@@ -316,8 +316,8 @@ def load_old_module(ref):
 
 def run_scenario(mod, name, roi_after_kind, cursor_after_press, verbose=False,
                  press_delay=0.0, seed=None, world=None):
-    """seed: 세션 전역 상태 사전 주입(dict). 지원 키:
-       press_ema(press EMA 초기값) / resid(잔차 EWMA) / prev_meas(직전 탭 측정 여부)
+    """seed: 보정 상태 사전 주입(dict). 지원 키:
+       press_ema(세션 EMA) / resid(상자 내 잔차) / prev_meas(같은 상자 직전 탭 측정 여부)
        world: World 대신 사용할 합성 게임(예: DecelWorld). None 이면 기본 World."""
     tmp = tempfile.mkdtemp(prefix="sdtest_")
     res_dir = os.path.join(tmp, "resources", "images")
@@ -348,12 +348,23 @@ def run_scenario(mod, name, roi_after_kind, cursor_after_press, verbose=False,
         w = world if world is not None else World(
             make_pattern(roi_after_kind), cursor_after_press, press_delay)
         log = RecLogger(verbose)
-        ok = mod.SmartDisarm(w.cap, w.press, time.monotonic, log,
-                             is_done_fn=w.is_done, config=cfg).run()
+        smart_disarm = mod.SmartDisarm(
+            w.cap, w.press, time.monotonic, log,
+            is_done_fn=w.is_done, config=cfg,
+        )
+        if "resid" in seed and hasattr(smart_disarm, "_resid_ewma"):
+            smart_disarm._resid_ewma = seed["resid"]
+        if "prev_meas" in seed and hasattr(smart_disarm, "_prev_tap_meas"):
+            smart_disarm._prev_tap_meas = seed["prev_meas"]
+        ok = smart_disarm.run()
         files = sorted(os.path.basename(f)
                        for f in glob.glob(os.path.join(res_dir, "smallgame_*.png")))
         adj = mod._STOP_LEAD["adj"]
-        resid = mod._RESID["ewma"] if hasattr(mod, "_RESID") else None
+        resid = (
+            smart_disarm._resid_ewma
+            if hasattr(smart_disarm, "_resid_ewma")
+            else (mod._RESID["ewma"] if hasattr(mod, "_RESID") else None)
+        )
         print(f"  {name}: ok={ok} taps={w.press_count} adj={adj:+.3f} files={files}")
         return dict(ok=ok, taps=w.press_count, adj=adj, files=files, log=log,
                     resid=resid, world=w)
@@ -458,14 +469,14 @@ def main():
     print("== [현행 코드] S4e blind 근거 소비 감쇠: 동결 EWMA 반복 소비 시 자연 정지 ==")
     # 26-07-17 실전 재현: 측정 기아로 EWMA -268px 동결 → blind 14연속 -0.025 표류.
     # 감쇠 적용 후에는 4회 발동(-268→-134→-67→-33.5→-16.75) 뒤 근거 소진으로 생략.
-    new._RESID["ewma"] = -268.0
     new._PRESS_LAT["ema"] = 0.02
     sd_unit = new.SmartDisarm(lambda: None, lambda p: True, time.monotonic, RecLogger())
+    sd_unit._resid_ewma = -268.0
     steps = [round(sd_unit._blind_fail_step(0.02)[0], 3) for _ in range(6)]
     check(steps == [-0.025] * 4 + [0.0, 0.0],
           f"4회 발동 후 근거 소진으로 자연 정지 (실측 {steps})", fails)
-    check(abs(new._RESID["ewma"] + 16.75) < 0.01,
-          f"EWMA -268 → -16.75 (실측 {new._RESID['ewma']:+.2f})", fails)
+    check(abs(sd_unit._resid_ewma + 16.75) < 0.01,
+          f"EWMA -268 → -16.75 (실측 {sd_unit._resid_ewma:+.2f})", fails)
 
     print("== [현행 코드] S5a 감속 0.35s 개체: 실측 재조준 후 재도전 명중 ==")
     r = run_scenario(new, "S5a", None, True, args.verbose,
