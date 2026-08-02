@@ -2163,6 +2163,13 @@ msgstr "Once per dungeon"
 msgid "每次启动仅一次"
 msgstr "Once per launch"
 
+#: src/gui.py:1374
+msgid ""
+"该任务在小村子住宿. 主要不要开\"住豪华房\"和\"6小时重置队伍\"."
+msgstr ""
+"This quest rests in the small village. Disable \"Stay in Royal Suite\" "
+"and \"Reassemble the first party at the tavern every 6 hours\"."
+
 #~ msgid "全自动战斗."
 #~ msgstr "Full Auto."
 
@@ -2188,4 +2195,3 @@ msgstr "Once per launch"
 
 #~ msgid "地图卡死检测:{a}"
 #~ msgstr "Map freeze detection: {a}"
-

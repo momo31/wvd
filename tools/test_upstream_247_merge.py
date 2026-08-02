@@ -1,4 +1,5 @@
 import ast
+import gettext
 import json
 import queue
 import sys
@@ -39,23 +40,31 @@ def contains_han(text):
     return any("\u3400" <= character <= "\u9fff" for character in text)
 
 
-class Upstream247MergeTests(unittest.TestCase):
+class Upstream248MergeTests(unittest.TestCase):
     def test_quest_catalog_preserves_local_and_upstream_entries(self):
         quests = load_json_rejecting_duplicate_keys(
             ROOT / "resources" / "quest" / "quest.json"
         )
 
-        for quest_key in (
+        ffxi_quests = (
             "ff-collabo-dungeon1f",
             "FFXI-2F",
             "FFXI-2F-elite",
             "FFXI-5F-4Elite",
             "FFXI-5F-2Elite",
-        ):
+            "FFXI-5F-Elite",
+        )
+        for quest_key in ffxi_quests:
             self.assertIn(quest_key, quests)
 
         self.assertEqual(quests["FFXI-5F-4Elite"]["_EOT"][1][1], "FFXI/zone5")
         self.assertEqual(quests["FFXI-5F-2Elite"]["_EOT"][1][1], "FFXI/zone5")
+        self.assertEqual(quests["FFXI-5F-Elite"]["_EOT"][1][1], "FFXI/zone5")
+        for quest_key in ffxi_quests[1:]:
+            self.assertEqual(
+                quests[quest_key]["_RTT"][0][2][0],
+                "FFXI/City_VNH",
+            )
 
     def test_korean_quest_list_does_not_expose_chinese_names(self):
         quests = load_json_rejecting_duplicate_keys(
@@ -89,15 +98,48 @@ class Upstream247MergeTests(unittest.TestCase):
                 f"Korean target is not localized for {quest_key}: {target}",
             )
 
-    def test_zone5_template_exists_and_loads(self):
-        image_path = ROOT / "resources" / "images" / "FFXI" / "zone5.png"
-        self.assertTrue(image_path.is_file())
-
+    def test_ffxi_templates_exist_and_load(self):
         from utils import LoadTemplateImage
 
-        image = LoadTemplateImage("FFXI/zone5")
-        self.assertIsNotNone(image)
-        self.assertGreater(image.size, 0)
+        for template_name in ("FFXI/zone5", "FFXI/City_VNH"):
+            image_path = (
+                ROOT / "resources" / "images" / f"{template_name}.png"
+            )
+            self.assertTrue(image_path.is_file())
+
+            image = LoadTemplateImage(template_name)
+            self.assertIsNotNone(image)
+            self.assertGreater(image.size, 0)
+
+    def test_ffxi_tip_is_localized_in_supported_catalogs(self):
+        quests = load_json_rejecting_duplicate_keys(
+            ROOT / "resources" / "quest" / "quest.json"
+        )
+        tip = quests["FFXI-5F-Elite"]["_TIPS"]
+
+        expected_translations = {
+            "en_US": (
+                'This quest rests in the small village. Disable "Stay in '
+                'Royal Suite" and "Reassemble the first party at the tavern '
+                'every 6 hours".'
+            ),
+            "ko_KR": (
+                '이 퀘스트는 작은 마을에서 숙박합니다. "로얄 스위트룸 투숙"과 '
+                '"6시간마다 주점의 첫 번째 파티 재소집"을 비활성화하세요.'
+            ),
+            "zh_CN": tip,
+        }
+
+        for language, expected in expected_translations.items():
+            catalog_path = (
+                ROOT / "locale" / language / "LC_MESSAGES" / "messages.mo"
+            )
+            with catalog_path.open("rb") as stream:
+                translations = gettext.GNUTranslations(stream)
+            self.assertEqual(translations.gettext(tip), expected)
+
+        gui_source = (SRC / "gui.py").read_text(encoding="utf-8")
+        self.assertIn("tip = _(tip)", gui_source)
 
     def test_missing_language_key_returns_default(self):
         utils_path = SRC / "utils.py"
@@ -121,13 +163,13 @@ class Upstream247MergeTests(unittest.TestCase):
 
     def test_fork_version_keeps_upstream_update_comparison(self):
         version = assigned_string(SRC / "main.py", "__version__")
-        self.assertEqual(version, "2.4.7-momo.1")
+        self.assertEqual(version, "2.4.8-momo.1")
 
         from auto_updater import AutoUpdater
 
         updater = AutoUpdater(queue.Queue(), "owner", "repo", version)
-        self.assertFalse(updater._is_newer_version("2.4.7"))
-        self.assertTrue(updater._is_newer_version("2.4.8"))
+        self.assertFalse(updater._is_newer_version("2.4.8"))
+        self.assertTrue(updater._is_newer_version("2.4.9"))
 
     def test_same_reassembly_period_does_not_exit_farm(self):
         source = (SRC / "script.py").read_text(encoding="utf-8")

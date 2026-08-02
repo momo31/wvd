@@ -2054,6 +2054,11 @@ msgstr ""
 msgid "每次启动仅一次"
 msgstr ""
 
+#: src/gui.py:1374
+msgid ""
+"该任务在小村子住宿. 主要不要开\"住豪华房\"和\"6小时重置队伍\"."
+msgstr ""
+
 #~ msgid "全自动战斗."
 #~ msgstr ""
 
@@ -2080,4 +2085,3 @@ msgstr ""
 
 #~ msgid "地图卡死检测:{a}"
 #~ msgstr ""
-

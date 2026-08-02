@@ -27,6 +27,7 @@ KO_TARGET_TRANSLATIONS = {
     "[刷怪]FFXI 2F 精英": "[몬스터] FFXI 2F 엘리트",
     "[恶名]FFXI 5F 4精英": "[악명] FFXI 5F 엘리트 4마리",
     "[恶名]FFXI 5F 2精英": "[악명] FFXI 5F 엘리트 2마리",
+    "[恶名]FFXI 5F 单恶魔": "[악명] FFXI 5F 엘리트 1마리",
     "无限刷怪": "[몬스터] 무한 사냥 (제자리)",
     "[宝箱]水路一号街": "[상자] 무역수로 1번가",
     "[宝箱]水路船二lounge": "[상자] 무역수로 선실 2층 (라운지)",
@@ -1370,6 +1371,7 @@ class ConfigPanelApp(tk.Toplevel):
             if not task_name:
                 return
             if tip := LoadQuest(task_name)._TIPS:
+                tip = _(tip)
                 logger.info(f"\n\n########### TIPS #############\n\n{tip}\n\n##############################")
         def update_combat_strategy_combobox_values():
             if not hasattr(self, 'task_point_comboboxes') or not self.task_point_comboboxes:
