@@ -1,3 +1,4 @@
+import ast
 import sys
 import unittest
 from pathlib import Path
@@ -18,6 +19,37 @@ from combat_strategy import (  # noqa: E402
 
 
 class CombatStrategyQueueTests(unittest.TestCase):
+    def test_unmatched_character_replays_previous_action_without_defending(self):
+        script_path = ROOT / "src" / "script.py"
+        tree = ast.parse(
+            script_path.read_text(encoding="utf-8"), filename=str(script_path)
+        )
+        unmatched_branch = next(
+            node
+            for node in ast.walk(tree)
+            if isinstance(node, ast.If)
+            and isinstance(node.test, ast.Compare)
+            and isinstance(node.test.left, ast.Name)
+            and node.test.left.id == "highest_match_rate"
+        )
+        calls = [node for node in ast.walk(unmatched_branch) if isinstance(node, ast.Call)]
+        call_names = {
+            call.func.id for call in calls if isinstance(call.func, ast.Name)
+        }
+
+        self.assertIn("AutoThisChar", call_names)
+        self.assertNotIn("DefendThisChar", call_names)
+        self.assertTrue(
+            any(
+                isinstance(call.func, ast.Name)
+                and call.func.id == "SetAutoCombat"
+                and len(call.args) == 1
+                and isinstance(call.args[0], ast.Constant)
+                and call.args[0].value is False
+                for call in calls
+            )
+        )
+
     def test_pending_skills_prevent_auto_combat(self):
         strategy = {
             "group_name": "custom",

@@ -2140,12 +2140,11 @@ def Factory():
 
         # 5. 判断匹配率是否达标
         if highest_match_rate < 0.80:
-            logger.info(
-                "현재 캐릭터를 전략 대기열에서 확실히 식별하지 못했습니다(%.1f%%). "
-                "전체 자동전투를 켜지 않고 방어합니다.",
-                highest_match_rate * 100,
-            )
-            DefendThisChar()
+            logger.info(_("并未设定该角色的行为, 使用自动战斗."))
+            # 이미 전략 행동을 마친 캐릭터는 방어를 새 반복 행동으로 저장하지
+            # 않도록 자동전투로 이전 행동을 한 번 실행한 뒤 다시 수동으로 돌린다.
+            if AutoThisChar():
+                SetAutoCombat(False)
             return
 
         # 6. 按照技能等级释放技能
