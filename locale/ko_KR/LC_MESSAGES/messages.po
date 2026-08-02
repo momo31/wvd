@@ -2119,6 +2119,31 @@ msgstr "전투 종료 후 상자가 없음을 확인했습니다. 즉시 회복�
 msgid "战斗结束后的画面在{a}秒内未稳定. 重新识别状态."
 msgstr "전투 종료 후 화면이 {a}초 안에 안정되지 않아 상태를 다시 확인합니다."
 
+#: src/script.py
+msgid "恢复后未能确认地下城画面. 将重新识别状态."
+msgstr "회복 후 던전 화면을 확인하지 못해 상태를 다시 확인합니다."
+
+#: src/script.py
+msgid "开启宝箱后"
+msgstr "상자 개봉 후"
+
+#: src/script.py
+msgid "战斗后"
+msgstr "전투 후"
+
+#: src/script.py
+msgid "进入地下城时"
+msgstr "던전 시작 시"
+
+#: src/script.py
+msgid "复活后"
+msgstr "부활 후"
+
+#: src/script.py
+#, python-brace-format
+msgid "进行恢复. 原因: {a}."
+msgstr "회복을 진행합니다. 사유: {a}."
+
 #~ msgid ""
 #~ "cmd命令返回:{a}\n"
 #~ " cmd命令错误:{b}"

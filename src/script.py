@@ -32,6 +32,7 @@ from combat_strategy import (
     should_skip_dungeon_strategy_reload,
 )
 from post_combat import PostCombatDecision, PostCombatTracker
+from recovery import RecoveryPlan, RecoveryReason
 
 
 class TaskStoppedException(Exception):
@@ -1003,6 +1004,27 @@ def Factory():
         return False
     def PressReturn():
         DeviceShell("input keyevent KEYCODE_BACK")
+    def ReturnToDungeonAfterRecovery(max_back_presses=5):
+        for back_count in range(max_back_presses + 1):
+            scn = ScreenShot()
+            if CheckIf(scn, "dungflag") and not CheckIf(scn, "mapFlag"):
+                return True
+            if back_count >= max_back_presses:
+                break
+            t = time.time()
+            PressReturn()
+            elapsed = time.time() - t
+            if elapsed < 0.3:
+                Sleep(0.3 - elapsed)
+        logger.warning(_("恢复后未能确认地下城画面. 将重新识别状态."))
+        return False
+    def RecoveryReasonLabel(reason):
+        return {
+            RecoveryReason.CHEST: _("开启宝箱后"),
+            RecoveryReason.COMBAT: _("战斗后"),
+            RecoveryReason.DUNGEON_START: _("进入地下城时"),
+            RecoveryReason.REVIVE: _("复活后"),
+        }[reason]
     def WrapImage(image,r,g,b):
         scn_b = image * np.array([b, g, r])
         return np.clip(scn_b, 0, 255).astype(np.uint8)
@@ -2670,7 +2692,7 @@ def Factory():
         gameFrozen_StateMapCounter = 0
         GAMEFROZEN_STATEMAPLIMIT = 20+20*len(targetInfoList)
         dungState = None
-        shouldRecover = False
+        recoveryPlan = RecoveryPlan()
         waitTimer = time.time()
         needRecoverBecauseCombat = False
         needRecoverBecauseChest = False
@@ -2770,32 +2792,36 @@ def Factory():
                             runtimeContext._TIME_CHEST_TOTAL = runtimeContext._TIME_CHEST_TOTAL + spend_on_chest
                     ########### RECOVER
                     if needRecoverBecauseChest:
-                        logger.info(_("进行开启宝箱后的恢复."))
                         runtimeContext._COUNTERCHEST+=1
                         needRecoverBecauseChest = False
                         runtimeContext._MEET_CHEST_OR_COMBAT = True
-                        if not setting.SKIP_CHEST_RECOVER:
-                            logger.info(_("由于面板配置, 进行开启宝箱后恢复."))
-                            shouldRecover = True
-                        else:
+                        if not recoveryPlan.request(
+                            RecoveryReason.CHEST,
+                            enabled=not setting.SKIP_CHEST_RECOVER,
+                        ):
                             logger.info(_("由于面板配置, 跳过了开启宝箱后恢复."))
                     if needRecoverBecauseCombat:
                         runtimeContext._COUNTERCOMBAT+=1
                         needRecoverBecauseCombat = False
                         runtimeContext._MEET_CHEST_OR_COMBAT = True
-                        if (not setting.SKIP_COMBAT_RECOVER):
-                            logger.info(_("由于面板配置, 进行战后恢复."))
-                            shouldRecover = True
-                        else:
+                        if not recoveryPlan.request(
+                            RecoveryReason.COMBAT,
+                            enabled=not setting.SKIP_COMBAT_RECOVER,
+                        ):
                             logger.info(_("由于面板配置, 跳过了战后恢复."))
                     if setting.RECOVER_WHEN_BEGINNING and runtimeContext.NEED_RECOVER_WHEN_BEGINNING:
-                        shouldRecover = True
+                        recoveryPlan.request(RecoveryReason.DUNGEON_START)
                         runtimeContext.NEED_RECOVER_WHEN_BEGINNING = False
-                        logger.info(_("由于面板配置, 在刚进入地下城时进行恢复."))
                     if runtimeContext._RECOVERAFTERREZ == True:
-                        shouldRecover = True
+                        recoveryPlan.request(RecoveryReason.REVIVE)
                         runtimeContext._RECOVERAFTERREZ = False
-                    if shouldRecover:
+                    if recoveryPlan.should_recover:
+                        logger.info(_("进行恢复. 原因: {a}.").format(
+                            a=", ".join(
+                                RecoveryReasonLabel(reason)
+                                for reason in recoveryPlan.reasons
+                            )
+                        ))
                         for undrscore in range(3):
                             Press([1,1])
                             Sleep(0.1)
@@ -2816,16 +2842,15 @@ def Factory():
                                 if recover_pos := CheckIf(ScreenShot(),"recover"):
                                     Press(recover_pos)
                                     Sleep(1)
-                                    for underscore in range(5):
-                                        t = time.time()
-                                        PressReturn()
-                                        if time.time()-t<0.3:
-                                            Sleep(0.3-(time.time()-t))
-                                    shouldRecover = False
+                                    recoveryPlan.complete()
+                                    if not ReturnToDungeonAfterRecovery():
+                                        dungState = None
                                     break
                             else:
                                 logger.info(_("自动回复异常, 中止本次回复."))
                                 break
+                        if dungState is None:
+                            continue
                     ########### 防止卡空气墙
                     if setting.BYPASS_THE_WALL:
                         if (not runtimeContext._BYPASSAFTERRESTART) and (quest._TYPE == "dungeon"): # 加入类别判断以避免干扰任务流程
@@ -3240,7 +3265,7 @@ def Factory():
             case "darkLight":
                 gameFrozen_StateNoneScreenHistory = []
                 dungState = None
-                shouldRecover = False
+                recoveryPlan = RecoveryPlan()
                 needRecoverBecauseCombat = False
                 needRecoverBecauseChest = False
                 postCombatResolutionPending = False
@@ -3307,25 +3332,30 @@ def Factory():
                                     runtimeContext._TIME_CHEST_TOTAL = runtimeContext._TIME_CHEST_TOTAL + spend_on_chest
                             ########### RECOVER
                             if needRecoverBecauseChest:
-                                logger.info(_("进行开启宝箱后的恢复."))
                                 runtimeContext._COUNTERCHEST+=1
                                 needRecoverBecauseChest = False
                                 runtimeContext._MEET_CHEST_OR_COMBAT = True
-                                if not setting.SKIP_CHEST_RECOVER:
-                                    logger.info(_("由于面板配置, 进行开启宝箱后恢复."))
-                                    shouldRecover = True
-                                else:
+                                if not recoveryPlan.request(
+                                    RecoveryReason.CHEST,
+                                    enabled=not setting.SKIP_CHEST_RECOVER,
+                                ):
                                     logger.info(_("由于面板配置, 跳过了开启宝箱后恢复."))
                             if needRecoverBecauseCombat:
                                 runtimeContext._COUNTERCOMBAT+=1
                                 needRecoverBecauseCombat = False
                                 runtimeContext._MEET_CHEST_OR_COMBAT = True
-                                if (not setting.SKIP_COMBAT_RECOVER):
-                                    logger.info(_("由于面板配置, 进行战后恢复."))
-                                    shouldRecover = True
-                                else:
+                                if not recoveryPlan.request(
+                                    RecoveryReason.COMBAT,
+                                    enabled=not setting.SKIP_COMBAT_RECOVER,
+                                ):
                                     logger.info(_("由于面板配置, 跳过了战后恢复."))
-                            if shouldRecover:
+                            if recoveryPlan.should_recover:
+                                logger.info(_("进行恢复. 原因: {a}.").format(
+                                    a=", ".join(
+                                        RecoveryReasonLabel(reason)
+                                        for reason in recoveryPlan.reasons
+                                    )
+                                ))
                                 Press([1,1])
                                 FindCoordsOrElseExecuteFallbackAndWait( # 点击打开人物面板有可能会被战斗打断
                                     ["trait","combatActive","chestFlag","combatClose"],
@@ -3341,12 +3371,11 @@ def Factory():
                                         )
                                     if recover_pos := CheckIf(ScreenShot(),"recover"):
                                         Press(recover_pos)
-                                        for underscore in range(5):
-                                            t = time.time()
-                                            PressReturn()
-                                            if time.time()-t<0.3:
-                                                Sleep(0.3-(time.time()-t))
-                                        shouldRecover = False
+                                        Sleep(1)
+                                        recoveryPlan.complete()
+                                        if not ReturnToDungeonAfterRecovery():
+                                            dungState = None
+                                            continue
                             ########### light the dark light
                             Press(FindCoordsOrElseExecuteFallbackAndWait("darklight_lightIt","darkLight",1))
                         case DungeonState.Chest:
