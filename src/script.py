@@ -1359,8 +1359,12 @@ def Factory():
         Sleep(1)
         FindCoordsOrElseExecuteFallbackAndWait(["Inn","openworldmap","dungFlag"],[target,press_any_key],1)
     
-    def TeleportFromDungeonToCity(target, swipe, press_any_key = [550,1]):
+    def TeleportFromDungeonToCity(target, swipe=None, press_any_key = [550,1]):
         nonlocal runtimeContext
+        if Path(target).name.startswith("EVENT_"):
+            FindCoordsOrElseExecuteFallbackAndWait("Inn", [[1,1],"worldmapflag","EVENT",target],2)
+            return
+
         FindCoordsOrElseExecuteFallbackAndWait(["dungFlag","worldmapflag","openworldmap","startdownload"],"openworldmap",1)
         scn = ScreenShot()
 
@@ -1638,16 +1642,14 @@ def Factory():
                 # 由于定位流程包含了返回键, 有时会退出到大地图, 因此强制执行RTT流程, 不管是否需要住宿.
                 # if setting.ACTIVE_REST and runtimeContext._MEET_CHEST_OR_COMBAT and ((runtimeContext._COUNTERDUNG-1) % (max(setting.REST_INTERVEL,1)) == 0):
                 if quest._RTT:
-                    for info in quest._RTT:
-                        TeleportFromDungeonToCity(*info[2])
+                    TeleportFromDungeonToCity(*quest._RTT)
                     return IdentifyState()
                        
             if pos:=(CheckIf(screen,"openworldmap")):
                 if setting.ACTIVE_REST and runtimeContext._MEET_CHEST_OR_COMBAT and ((runtimeContext._COUNTERDUNG-1) % (max(setting.REST_INTERVEL,1)) == 0):
                     Press(pos)
                     if quest._RTT:
-                        for info in quest._RTT:
-                            TeleportFromDungeonToCity(*info[2])
+                        TeleportFromDungeonToCity(*quest._RTT)
                     return IdentifyState()
                 else:
                     logger.info(_("不满足回城条件, 跳过回城."))
@@ -1831,10 +1833,12 @@ def Factory():
         )
         return None
     def StateInn():
-        if not setting.ACTIVE_ROYALSUITE_REST:
-            FindCoordsOrElseExecuteFallbackAndWait("OK",["Inn","Stay","Economy",[1,1]],2)
-        else:
+        FindCoordsOrElseExecuteFallbackAndWait("Economy", ["Inn","Stay",[1,1]],2)
+        if setting.ACTIVE_ROYALSUITE_REST and CheckIf(ScreenShot(),"royalsuite"):
             FindCoordsOrElseExecuteFallbackAndWait("OK",["Inn","Stay","royalsuite",[1,1]],2)
+        else:
+            FindCoordsOrElseExecuteFallbackAndWait("OK",["Inn","Stay","Economy",[1,1]],2)
+
         FindCoordsOrElseExecuteFallbackAndWait("Stay",["OK",[299,1464]],2)
         PressReturn()
     def StateEoT():
@@ -1845,6 +1849,8 @@ def Factory():
         def EoTStep(info):
             if info[1]=="intoWorldMap":
                 TeleportFromCityToWorldLocation(*info[2])
+            elif info[1]=="EVENT":
+                FindCoordsOrElseExecuteFallbackAndWait("openworldmap", [[1,1],"EVENT",info[2]],2)
             else:
                 pos = FindCoordsOrElseExecuteFallbackAndWait(info[1], info[2], info[3])
                 if info[0]=="press":
@@ -2194,11 +2200,7 @@ def Factory():
         if CloseSkillDialog(wait_seconds=0.5):
             logger.warning("전투 상태 진입 시 남아 있던 스킬창을 Close 버튼으로 닫았습니다.")
 
-        # 1. 检查重置标识
-        if setting.RELOAD_STRATEGY_WHEN == _("每场战斗前"):
-            ReloadStrategy()
-
-        # 2. 获取当前策略中的技能设置列表
+        # 1. 获取当前策略中的技能设置列表
         skill_settings = runtimeContext.CURRENT_STRATEGY.get("skill_settings", [])
         if not runtimeContext.CURRENT_STRATEGY:
             logger.error(_("错误: 当前战斗策略内容为空. 使用全自动战斗."))
@@ -2225,7 +2227,7 @@ def Factory():
         # 자동전투를 먼저 끈 뒤 배속을 올려, 전투 진입 직후 자동 행동이 선행하는 시간을 줄인다.
         ActivateCombatSpeed()
 
-        # 3. 非全自动模式：点击任意键直到出现“flee”图片
+        # 2. 非全自动模式：点击任意键直到出现“flee”图片
         [pos_x, pos_y] = FindCoordsOrElseExecuteFallbackAndWait(["flee","chestFlag","dungFlag", "someonedead","multipeopledead","RiseAgain"],[1,1],1)
         if (pos_x>=735)and(pos_x<=735+126)and(pos_y>=1158)and(pos_y<=1158+68):
             pass
@@ -2243,7 +2245,7 @@ def Factory():
                 logger.info("전투가 종료되었으며 모든 전략 스킬이 완료되었습니다.")
             return True
 
-        # 4. 进行匹配
+        # 3. 进行匹配
         highest_match_rate = 0
         target_skill = None
         scn = ScreenShot()
@@ -2266,7 +2268,7 @@ def Factory():
                         logger.debug(_("最佳 {a}, {b}").format(a=candidate, b=highest_match_rate))
         logger.debug(f"匹配时间 {time.time() - t}")
 
-        # 5. 判断匹配率是否达标
+        # 4. 判断匹配率是否达标
         if highest_match_rate < 0.80:
             logger.info(_("并未设定该角色的行为, 使用自动战斗."))
             # 이미 전략 행동을 마친 캐릭터는 방어를 새 반복 행동으로 저장하지
@@ -2274,7 +2276,7 @@ def Factory():
             AutoThisChar()
             return
 
-        # 6. 按照技能等级释放技能
+        # 5. 按照技能等级释放技能
         if target_skill.get("skill_var") == _("防御"):
             DefendThisChar()
             action_result = SkillExecutionResult.SUCCESS
@@ -2769,6 +2771,9 @@ def Factory():
                             continue
                         postCombatResolutionPending = False
                     Press([1,1])
+                    ########### 重置战斗策略
+                    if (runtimeContext._TIME_COMBAT !=0) and (setting.RELOAD_STRATEGY_WHEN == _("每场战斗前")):
+                        ReloadStrategy()
                     ########### TIMER
                     if (runtimeContext._TIME_CHEST !=0) or (runtimeContext._TIME_COMBAT!=0):
                         spend_on_chest = 0
@@ -4106,8 +4111,7 @@ def Factory():
                     if resetBag:
                         Press(FindCoordsOrElseExecuteFallbackAndWait("OpenWorldMap",[[1,1],"leaveDung","donothing"],1))
 
-                        for info in quest._RTT:
-                            TeleportFromDungeonToCity(*info[2])
+                        TeleportFromDungeonToCity(*quest._RTT)
 
                         reunionParty("FFXI/FFXIStone")
                         resetBag = False

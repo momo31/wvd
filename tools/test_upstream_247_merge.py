@@ -40,7 +40,7 @@ def contains_han(text):
     return any("\u3400" <= character <= "\u9fff" for character in text)
 
 
-class Upstream248MergeTests(unittest.TestCase):
+class Upstream249MergeTests(unittest.TestCase):
     def test_quest_catalog_excludes_1f_and_preserves_upstream_entries(self):
         quests = load_json_rejecting_duplicate_keys(
             ROOT / "resources" / "quest" / "quest.json"
@@ -62,9 +62,10 @@ class Upstream248MergeTests(unittest.TestCase):
         self.assertEqual(quests["FFXI-5F-Elite"]["_EOT"][1][1], "FFXI/zone5")
         for quest_key in ffxi_quests:
             self.assertEqual(
-                quests[quest_key]["_RTT"][0][2][0],
-                "FFXI/City_VNH",
+                quests[quest_key]["_EOT"][0],
+                ["press", "EVENT", "FFXI/EVENT_GCN", 1],
             )
+            self.assertEqual(quests[quest_key]["_RTT"], ["FFXI/EVENT_VNH"])
 
     def test_korean_quest_list_does_not_expose_chinese_names(self):
         quests = load_json_rejecting_duplicate_keys(
@@ -101,7 +102,12 @@ class Upstream248MergeTests(unittest.TestCase):
     def test_ffxi_templates_exist_and_load(self):
         from utils import LoadTemplateImage
 
-        for template_name in ("FFXI/zone5", "FFXI/City_VNH"):
+        for template_name in (
+            "EVENT",
+            "FFXI/EVENT_GCN",
+            "FFXI/EVENT_VNH",
+            "FFXI/zone5",
+        ):
             image_path = (
                 ROOT / "resources" / "images" / f"{template_name}.png"
             )
@@ -163,13 +169,32 @@ class Upstream248MergeTests(unittest.TestCase):
 
     def test_fork_version_keeps_upstream_update_comparison(self):
         version = assigned_string(SRC / "main.py", "__version__")
-        self.assertEqual(version, "2.4.8-momo.1")
+        self.assertEqual(version, "2.4.9-momo.1")
 
         from auto_updater import AutoUpdater
 
         updater = AutoUpdater(queue.Queue(), "owner", "repo", version)
-        self.assertFalse(updater._is_newer_version("2.4.8"))
-        self.assertTrue(updater._is_newer_version("2.4.9"))
+        self.assertFalse(updater._is_newer_version("2.4.9"))
+        self.assertTrue(updater._is_newer_version("2.4.10"))
+
+    def test_per_combat_strategy_reload_happens_after_combat(self):
+        source = (SRC / "script.py").read_text(encoding="utf-8")
+        combat_start = source.index("def StateCombat():")
+        combat_end = source.index("def StateMap_FindSwipeClick", combat_start)
+        combat_block = source[combat_start:combat_end]
+        self.assertNotIn(
+            'if setting.RELOAD_STRATEGY_WHEN == _("每场战斗前"):',
+            combat_block,
+        )
+
+        dungeon_start = source.index("def StateDungeon(")
+        dungeon_end = source.index('case "darkLight":', dungeon_start)
+        dungeon_block = source[dungeon_start:dungeon_end]
+        self.assertIn(
+            '(runtimeContext._TIME_COMBAT !=0) and '
+            '(setting.RELOAD_STRATEGY_WHEN == _("每场战斗前"))',
+            dungeon_block,
+        )
 
     def test_same_reassembly_period_does_not_exit_farm(self):
         source = (SRC / "script.py").read_text(encoding="utf-8")

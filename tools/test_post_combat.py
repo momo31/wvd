@@ -95,11 +95,13 @@ class PostCombatTrackerTests(unittest.TestCase):
         self.assertGreaterEqual(len(resolver_calls), 4)
 
         combat_end_start = source.index('logger.debug(_("战斗已结束."))')
-        combat_end_finish = source.index("# 4. 进行匹配", combat_end_start)
+        combat_end_finish = source.index("highest_match_rate = 0", combat_end_start)
         self.assertIn("return True", source[combat_end_start:combat_end_finish])
 
         fallback_start = source.index("if highest_match_rate < 0.80:")
-        fallback_finish = source.index("# 6. 按照技能等级释放技能", fallback_start)
+        fallback_finish = source.index(
+            'if target_skill.get("skill_var")', fallback_start
+        )
         self.assertNotIn("return True", source[fallback_start:fallback_finish])
         self.assertGreaterEqual(
             source.count('if recover_pos := CheckIf(ScreenShot(),"recover"):'),
