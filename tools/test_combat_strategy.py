@@ -18,10 +18,18 @@ from combat_strategy import (  # noqa: E402
     should_activate_auto_combat,
     should_preserve_strategy_progress,
     should_skip_dungeon_strategy_reload,
+    target_probe_points,
 )
 
 
 class CombatStrategyQueueTests(unittest.TestCase):
+    def test_target_probe_points_are_bounded_and_deterministic(self):
+        self.assertEqual(
+            target_probe_points([500, 900]),
+            ((500, 1050), (500, 1025), (428, 1050), (572, 1050), (500, 1100)),
+        )
+        self.assertEqual(target_probe_points([500]), ())
+
     def test_auto_combat_transition_survives_hidden_action_frames(self):
         tracker = AutoCombatTransitionTracker(timeout_seconds=10)
 

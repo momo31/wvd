@@ -30,9 +30,11 @@ from combat_strategy import (
     should_activate_auto_combat,
     should_preserve_strategy_progress,
     should_skip_dungeon_strategy_reload,
+    target_probe_points,
 )
 from post_combat import PostCombatDecision, PostCombatTracker
 from recovery import RecoveryPlan, RecoveryReason
+from screen_health import ScreenHealth, classify_screen
 
 
 class TaskStoppedException(Exception):
@@ -147,6 +149,7 @@ class RuntimeContext:
     TASK_STEP_INDEX = 0
     COMBAT_COUNT_SINCE_RELOAD = 0
     _LAST_BAGCLEAR = 0
+    _STATE_RESET_REQUIRED = False
 class FarmQuest:
     _TARGETINFOLIST = None
     _EOT = None
@@ -495,7 +498,9 @@ def CheckAndRecoverDevice(setting : FarmConfig, runtimeContext: RuntimeContext, 
             KillEmulator()
             KillAdb()
             time.sleep(2)
-            return None
+            # Keep the bounded recovery loop alive. A transient ADB daemon
+            # failure must not leave ScreenShot using a stale device handle.
+            continue
     else:
         logger.info(_("达到最大重试次数，连接失败"))
         return None
@@ -641,12 +646,25 @@ def Factory():
                 raise
     
     consecutive_failures = 0
+    orientation_failures = 0
     MAX_SCREENSHOT_RETRIES = 5
 
     def Sleep(t=1):
-        time.sleep(t)
+        """Sleep in short slices so a stop request interrupts long waits."""
+
+        deadline = time.monotonic() + max(0.0, float(t))
+        while True:
+            if setting is not None:
+                stop_event = getattr(setting, "_FORCESTOPING", None)
+                if stop_event is not None and stop_event.is_set():
+                    raise TaskStoppedException()
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                return
+            time.sleep(min(remaining, 0.5))
     def ScreenShot():
         nonlocal consecutive_failures
+        nonlocal orientation_failures
         t = time.time()
 
         while True:
@@ -742,11 +760,25 @@ def Factory():
                     if (current_h, current_w) == (900, 1600):
                         logger.error(_("截图尺寸错误: 当前{a}, 检测为横屏.").format(a=image.shape))  
                         # 不能截图, 截图就爆栈了.
-                        restartGame(skip_screenshot=True)
+                        orientation_failures += 1
+                        logger.warning(
+                            "screenshot orientation is landscape (%s); waiting for portrait frame",
+                            image.shape,
+                        )
+                        # Orientation can be transient while the emulator is
+                        # booting. Avoid recursive restartGame calls here and
+                        # never return coordinates in the wrong orientation.
+                        if orientation_failures >= 3:
+                            orientation_failures = 0
+                            restartGame(skip_screenshot=True)
+                        time.sleep(0.5)
+                        continue
                     else:
                         logger.error(_("截图尺寸错误: 期望(1600,900), 实际({a},{b}).").format(a=current_h,b=current_w))
                         raise RuntimeError(_("分辨率异常: {a}x{b}").format(a=current_w, b=current_h))
 
+
+                orientation_failures = 0
 
                 # logger.info(f"{time.time()-t}")
 
@@ -782,6 +814,8 @@ def Factory():
                 if setting._FORCESTOPING.is_set():
                     logger.info(_("스크린샷 중단 요청으로 인한 강제 종료..."))
                     raise TaskStoppedException()
+                if isinstance(e, RestartSignal):
+                    raise
                 if isinstance(e, (AttributeError, RuntimeError, ConnectionResetError, cv2.error, socket.error)):
                     consecutive_failures += 1
                     logger.info(_("ADB操作失败/数据错误, 尝试重启ADB or 模拟器程序... [연속 실패: {a}/{b}]").format(a=consecutive_failures, b=MAX_SCREENSHOT_RETRIES))
@@ -1129,6 +1163,8 @@ def Factory():
         runtimeContext._TIME_COMBAT = 0 # 因为重启了, 所以清空战斗和宝箱计时器.
         runtimeContext._ZOOMWORLDMAP = False
         runtimeContext._BYPASSAFTERRESTART = False
+        runtimeContext._STATE_RESET_REQUIRED = True
+        runtimeContext._AUTO_COMBAT_TRANSITION = None
 
         # 같은 던전에서 게임만 재시작된 경우 던전 단위 전략 진행률을 보존한다.
         # RestartSignal 뒤 StateDungeon이 다시 호출될 때의 초기 ReloadStrategy가
@@ -1496,6 +1532,8 @@ def Factory():
         counter = 0
         anomaly_saved = False
         loading_wait = 0            # 재시작 후 로딩 화면 대기 카운터
+        black_wait = 0
+        startup_wait = 0
         LOADING_MAX = 90            # 로딩 대기 상한(약 180초). 초과 시 무한 로딩으로 보고 재시작.
         while 1:
             t_start = time.time()
@@ -1511,6 +1549,27 @@ def Factory():
                 counter = 0
                 anomaly_saved = False
                 continue
+
+            # ADB can return a valid PNG containing only black pixels while
+            # the game is restarting. Never interpret that frame as a
+            # chest/combat screen.
+            if classify_screen(screen) is ScreenHealth.BLACK:
+                black_wait += 1
+                counter = 0
+                if black_wait == 1 or black_wait % 5 == 0:
+                    logger.warning(
+                        "black emulator frame detected; waiting (%s/15)",
+                        black_wait,
+                    )
+                if black_wait >= 15:
+                    logger.warning(
+                        "black emulator frame persisted; restarting the game"
+                    )
+                    black_wait = 0
+                    restartGame(skip_screenshot=True)
+                Sleep(1)
+                continue
+            black_wait = 0
 
             # 재시작/게임 진입 직후의 로딩 화면("The Abyss is readying to open...")은 정상 대기 상태다.
             # counter/anomaly 트리거 없이 로딩이 끝날 때까지 기다린다(무한 로딩만 상한으로 방어).
@@ -1531,6 +1590,24 @@ def Factory():
             if Press(CheckIf(screen,"startdownload",[[222,901,465,84]])):
                 logger.info(_("确认, 下载, 确认."))
                 Sleep(2)
+
+            # The post-restart title/disclaimer screen has no dungeon marker.
+            # Handle its control explicitly instead of counting it as a
+            # frozen dungeon state.
+            if pos := CheckIf(screen, "totitle"):
+                startup_wait += 1
+                Press(pos)
+                if startup_wait == 1 or startup_wait % 5 == 0:
+                    logger.info(
+                        "startup/title screen detected; waiting (%s/15)",
+                        startup_wait,
+                    )
+                if startup_wait >= 15:
+                    startup_wait = 0
+                    restartGame(skip_screenshot=True)
+                Sleep(1)
+                continue
+            startup_wait = 0
 
             if CheckIf(screen, "trait") or CheckIf(screen, "recover"):
                 logger.info(_("检测到恢复/状态画面，正在尝试返回以关闭。"))
@@ -1554,9 +1631,11 @@ def Factory():
                 ]
             for pattern, state in identifyConfig:
                 if CheckIf(screen, pattern):
+                    runtimeContext._STATE_RESET_REQUIRED = False
                     return State.Dungeon, state, screen
                 
             if StateCombatCheck(screen):
+                runtimeContext._STATE_RESET_REQUIRED = False
                 return State.Dungeon, DungeonState.Combat, screen
 
             # 성향(카르마) 선택 화면은 dialogueNext 스킵보다 먼저 처리한다.
@@ -1675,6 +1754,25 @@ def Factory():
                 for option in quest._SPECIALDIALOGOPTION:
                     if Press(CheckIf(screen,option)):
                         return IdentifyState()
+
+            # After a restart the first actionable screen may be a localized
+            # disclaimer/splash for which no template exists. Keep it in the
+            # startup phase, tap the center control, and only restart after a
+            # bounded wait. This prevents false anomaly captures and stale
+            # Chest/Combat state re-entry.
+            if runtimeContext._STATE_RESET_REQUIRED:
+                startup_wait += 1
+                Press([450, 800])
+                if startup_wait == 1 or startup_wait % 5 == 0:
+                    logger.info(
+                        "post-restart startup screen is not actionable; waiting (%s/30)",
+                        startup_wait,
+                    )
+                if startup_wait >= 30:
+                    startup_wait = 0
+                    restartGame(skip_screenshot=True)
+                Sleep(1)
+                continue
 
             if counter>=10:
                 if not anomaly_saved:
@@ -2136,9 +2234,9 @@ def Factory():
                     Sleep(2)
                 elif next_pos:
                     target_selected = False
-                    for underscore in range(3):
-                        Press([next_pos[0]-15+random.randint(0,30),next_pos[1]+150+random.randint(0,30)])
-                        Sleep(1)
+                    for target_pos in target_probe_points(next_pos):
+                        Press(list(target_pos))
+                        Sleep(0.8)
                         fresh_next = CheckIf(ScreenShot(), "next")
                         if not fresh_next:
                             target_selected = True
@@ -2530,6 +2628,16 @@ def Factory():
                 return None
             # --- 자체 스턱 가드 대기 루프 ---
             scn = ScreenShot()
+            frame_health = classify_screen(scn)
+            if frame_health is ScreenHealth.BLACK or CheckIf(scn, "abyssReadying"):
+                # A restart can leave the previous Chest state alive while
+                # the emulator is still loading. Return to IdentifyState so
+                # the loading frame cannot consume the chest timeout budget.
+                logger.info("transient loading frame while opening chest; re-identifying state")
+                return None
+            if CheckIf(scn, "totitle"):
+                logger.info("title screen while opening chest; re-identifying state")
+                return None
             found_target = False
             for pattern in ["dungFlag", "combatActive", "chestOpening", "whowillopenit", "RiseAgain", "ambush"]:
                 if (pattern.startswith("combatActive") and StateCombatCheck(scn)) or CheckIf(scn, pattern):

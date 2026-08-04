@@ -8,6 +8,36 @@ Keeping that rule here makes it small enough to test without an emulator.
 from enum import Enum
 
 
+def target_probe_points(next_position):
+    """Return deterministic tap points around the combat target selector.
+
+    The selector arrow can be detected a few pixels differently between
+    emulator frames.  A fixed, bounded probe sequence is safer than random
+    taps because it is reproducible and keeps every retry inside the intended
+    target row.
+    """
+
+    if not isinstance(next_position, (list, tuple)) or len(next_position) != 2:
+        return ()
+    try:
+        x, y = (int(next_position[0]), int(next_position[1]))
+    except (TypeError, ValueError):
+        return ()
+
+    points = (
+        (x, y + 150),
+        (x, y + 125),
+        (x - 72, y + 150),
+        (x + 72, y + 150),
+        (x, y + 200),
+    )
+    unique = []
+    for point in points:
+        if point not in unique:
+            unique.append(point)
+    return tuple(unique)
+
+
 class SkillExecutionResult(Enum):
     """Outcome of one configured character action."""
 

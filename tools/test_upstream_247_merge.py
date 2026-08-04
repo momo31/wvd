@@ -169,7 +169,7 @@ class Upstream249MergeTests(unittest.TestCase):
 
     def test_fork_version_keeps_upstream_update_comparison(self):
         version = assigned_string(SRC / "main.py", "__version__")
-        self.assertEqual(version, "2.4.9-momo.1")
+        self.assertEqual(version, "2.4.9-momo.2")
 
         from auto_updater import AutoUpdater
 

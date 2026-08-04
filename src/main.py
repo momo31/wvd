@@ -15,7 +15,7 @@ if sys.platform.startswith('win'):
 from gui import *
 import argparse
 
-__version__ = '2.4.9-momo.1'
+__version__ = '2.4.9-momo.2'
 OWNER = "arnold2957"
 REPO = "wvd"
 
