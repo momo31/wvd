@@ -2229,3 +2229,65 @@ msgstr "Performing recovery. Reason: {a}."
 
 #~ msgid "地图卡死检测:{a}"
 #~ msgstr "Map freeze detection: {a}"
+
+#: CHANGES_LOG.md:1
+msgid "**新版本!**"
+msgstr "**New version!**"
+
+#: CHANGES_LOG.md:3
+msgid "修复了挖矿任务会卡死的问题."
+msgstr "Fixed the FFXI mining task hang."
+
+#: CHANGES_LOG.md:4
+msgid "请按照如下步骤设置:"
+msgstr "Follow these setup steps:"
+
+#: CHANGES_LOG.md:5
+msgid "1 购买9999个鹤嘴锄并保存在仓库里."
+msgstr "1 Buy 9,999 pickaxes and store them in the warehouse."
+
+#: CHANGES_LOG.md:6
+msgid "2 六人队伍脱掉所有装备, 然后尽可能多的携带鹤嘴锄."
+msgstr "2 Unequip all gear from the six-member party, then carry as many pickaxes as possible."
+
+#: CHANGES_LOG.md:7
+msgid "3 在王城的工会里新建一个队伍, 并命名为FFXIStone."
+msgstr "3 Create a new party at the Royal City guild and name it FFXIStone."
+
+#: CHANGES_LOG.md:8
+msgid "4 前往活动地图2F, 在哈肯正对的矿点前, 打上标记."
+msgstr "4 On event map 2F, place a marker at the mining point directly in front of Harken."
+
+#: CHANGES_LOG.md:9
+msgid "5 确保这是该层唯一的标记."
+msgstr "5 Make sure this is the only marker on the floor."
+
+#: CHANGES_LOG.md:10
+msgid "6 副本或主城中启动脚本."
+msgstr "6 Start the script from a dungeon or the city."
+
+#: CHANGES_LOG.md:12
+msgid "**已知问题**"
+msgstr "**Known issues**"
+
+#: CHANGES_LOG.md:16
+msgid "**历史更新**"
+msgstr "**Previous updates**"
+
+#: resources/quest/quest.json:874
+msgid ""
+"请按照如下步骤设置:\n"
+"1 购买9999个鹤嘴锄并保存在仓库里\n"
+"2 六人队伍脱掉所有装备, 然后尽可能多的携带鹤嘴锄\n"
+"3 在王城的工会里新建一个队伍, 并命名为FFXIStone.\n"
+"4 前往活动地图2F, 在哈肯正对的矿点前, 打上标记.\n"
+"5 确保这是该层唯一的标记.\n"
+"6 副本或主城中启动脚本."
+msgstr ""
+"Follow these setup steps:\n"
+"1. Buy 9,999 pickaxes and store them in the warehouse.\n"
+"2. Unequip all gear from the six-member party, then carry as many pickaxes as possible.\n"
+"3. Create a new party at the Royal City guild and name it FFXIStone.\n"
+"4. On event map 2F, place a marker at the mining point directly in front of Harken.\n"
+"5. Make sure this is the only marker on the floor.\n"
+"6. Start the script from a dungeon or the city."

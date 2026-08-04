@@ -245,6 +245,23 @@ trans = gettext.translation('messages', localedir, languages=[LANGUAGE], fallbac
 trans.install()
 ###########################################
 CHANGES_LOG = "CHANGES_LOG.md"
+
+
+def LocalizeChangesLog(markdown_content, translator=None):
+    """Translate changelog lines while preserving the Markdown layout."""
+
+    translate = translator or _
+    localized_lines = []
+    for line in markdown_content.splitlines(keepends=True):
+        body = line.rstrip("\r\n")
+        ending = line[len(body):]
+        if body:
+            localized_lines.append(f"{translate(body)}{ending}")
+        else:
+            localized_lines.append(line)
+    return "".join(localized_lines)
+
+
 def ShowChangesLogWindow():
     log_window = tk.Toplevel()
     log_window.title(_("更新日志"))
@@ -271,7 +288,7 @@ def ShowChangesLogWindow():
     try:
         # 替换为你的Markdown文件路径
         with open(CHANGES_LOG, "r", encoding="utf-8") as file:
-            markdown_content = file.read()
+            markdown_content = LocalizeChangesLog(file.read())
         
         # 临时启用文本框以插入内容
         text_area.configure(state='normal')

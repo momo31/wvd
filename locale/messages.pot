@@ -2091,3 +2091,58 @@ msgstr ""
 #, python-brace-format
 msgid "进行恢复. 原因: {a}."
 msgstr ""
+
+#: CHANGES_LOG.md:1
+msgid "**新版本!**"
+msgstr ""
+
+#: CHANGES_LOG.md:3
+msgid "修复了挖矿任务会卡死的问题."
+msgstr ""
+
+#: CHANGES_LOG.md:4
+msgid "请按照如下步骤设置:"
+msgstr ""
+
+#: CHANGES_LOG.md:5
+msgid "1 购买9999个鹤嘴锄并保存在仓库里."
+msgstr ""
+
+#: CHANGES_LOG.md:6
+msgid "2 六人队伍脱掉所有装备, 然后尽可能多的携带鹤嘴锄."
+msgstr ""
+
+#: CHANGES_LOG.md:7
+msgid "3 在王城的工会里新建一个队伍, 并命名为FFXIStone."
+msgstr ""
+
+#: CHANGES_LOG.md:8
+msgid "4 前往活动地图2F, 在哈肯正对的矿点前, 打上标记."
+msgstr ""
+
+#: CHANGES_LOG.md:9
+msgid "5 确保这是该层唯一的标记."
+msgstr ""
+
+#: CHANGES_LOG.md:10
+msgid "6 副本或主城中启动脚本."
+msgstr ""
+
+#: CHANGES_LOG.md:12
+msgid "**已知问题**"
+msgstr ""
+
+#: CHANGES_LOG.md:16
+msgid "**历史更新**"
+msgstr ""
+
+#: resources/quest/quest.json:874
+msgid ""
+"请按照如下步骤设置:\n"
+"1 购买9999个鹤嘴锄并保存在仓库里\n"
+"2 六人队伍脱掉所有装备, 然后尽可能多的携带鹤嘴锄\n"
+"3 在王城的工会里新建一个队伍, 并命名为FFXIStone.\n"
+"4 前往活动地图2F, 在哈肯正对的矿点前, 打上标记.\n"
+"5 确保这是该层唯一的标记.\n"
+"6 副本或主城中启动脚本."
+msgstr ""
