@@ -31,6 +31,8 @@ screenshotwhenrestart/
 /本地化
 *.mo
 /src/.vscode
+.vscode/
+.codex/
 
 # Antigravity
 .antigravityrules
