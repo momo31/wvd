@@ -2234,6 +2234,26 @@ msgstr "Performing recovery. Reason: {a}."
 msgid "**新版本!**"
 msgstr "**New version!**"
 
+#: CHANGES_LOG.md:2
+msgid "==v2.4.11=="
+msgstr "==v2.4.11=="
+
+#: CHANGES_LOG.md:3
+msgid "挖矿任务现已加入矿石统计."
+msgstr "Mining now includes ore statistics."
+
+#: CHANGES_LOG.md:4
+msgid "不忘初心, 朋友们."
+msgstr "Stay true to the original goal, friends."
+
+#: CHANGES_LOG.md:8
+msgid "重构状态机."
+msgstr "Refactor the state machine."
+
+#: CHANGES_LOG.md:9
+msgid "所有人都恐惧的时候在两个箱子里来回跑."
+msgstr "When everyone is afraid, it runs back and forth between two chests."
+
 #: CHANGES_LOG.md:3
 msgid "修复了挖矿任务会卡死的问题."
 msgstr "Fixed the FFXI mining task hang."

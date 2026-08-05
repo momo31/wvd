@@ -95,7 +95,9 @@ class Upstream2410MergeTests(unittest.TestCase):
         from utils import LocalizeChangesLog
 
         changelog = (ROOT / "CHANGES_LOG.md").read_text(encoding="utf-8")
-        current_section = changelog.split("**已知问题**", 1)[0]
+        current_section = changelog.split("==v2.4.10==", 1)[1].split(
+            "==v2.4.9==", 1
+        )[0]
         self.assertIn("9999", current_section)
         self.assertNotIn("999999", current_section)
 

@@ -169,14 +169,15 @@ class Upstream249MergeTests(unittest.TestCase):
 
     def test_fork_version_keeps_upstream_update_comparison(self):
         version = assigned_string(SRC / "main.py", "__version__")
-        self.assertEqual(version, "2.4.10-momo.1")
+        self.assertEqual(version, "2.4.11-momo.1")
 
         from auto_updater import AutoUpdater
 
         updater = AutoUpdater(queue.Queue(), "owner", "repo", version)
         self.assertFalse(updater._is_newer_version("2.4.9"))
         self.assertFalse(updater._is_newer_version("2.4.10"))
-        self.assertTrue(updater._is_newer_version("2.4.11"))
+        self.assertFalse(updater._is_newer_version("2.4.11"))
+        self.assertTrue(updater._is_newer_version("2.4.12"))
 
     def test_per_combat_strategy_reload_happens_after_combat(self):
         source = (SRC / "script.py").read_text(encoding="utf-8")

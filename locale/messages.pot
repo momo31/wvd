@@ -2096,6 +2096,26 @@ msgstr ""
 msgid "**新版本!**"
 msgstr ""
 
+#: CHANGES_LOG.md:2
+msgid "==v2.4.11=="
+msgstr ""
+
+#: CHANGES_LOG.md:3
+msgid "挖矿任务现已加入矿石统计."
+msgstr ""
+
+#: CHANGES_LOG.md:4
+msgid "不忘初心, 朋友们."
+msgstr ""
+
+#: CHANGES_LOG.md:8
+msgid "重构状态机."
+msgstr ""
+
+#: CHANGES_LOG.md:9
+msgid "所有人都恐惧的时候在两个箱子里来回跑."
+msgstr ""
+
 #: CHANGES_LOG.md:3
 msgid "修复了挖矿任务会卡死的问题."
 msgstr ""

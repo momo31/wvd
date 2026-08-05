@@ -4243,6 +4243,47 @@ def Factory():
                                               TargetInfo("stair_fortressGate","左下", [720,1027]),])
                         )
             case "FFXI-Org":
+                ore_labels = {
+                    "all_refined": {
+                        "zh_CN": "全改", "en_US": "All refined", "ko_KR": "전체 개조"
+                    },
+                    "lesser_refined": {
+                        "zh_CN": "下改", "en_US": "Lesser refinement", "ko_KR": "하급 개조"
+                    },
+                    "ouroboros": {
+                        "zh_CN": "衔尾蛇", "en_US": "Ouroboros", "ko_KR": "우로보로스"
+                    },
+                    "refine_stone": {
+                        "zh_CN": "精炼石", "en_US": "Refining stone", "ko_KR": "정련석"
+                    },
+                    "modify_stone": {
+                        "zh_CN": "改造石", "en_US": "Modification stone", "ko_KR": "개조석"
+                    },
+                    "silver_ore": {
+                        "zh_CN": "银矿石", "en_US": "Silver ore", "ko_KR": "은광석"
+                    },
+                    "fine_ore": {
+                        "zh_CN": "特级矿石", "en_US": "Fine ore", "ko_KR": "특급 광석"
+                    },
+                    "high_ore": {
+                        "zh_CN": "上级矿石", "en_US": "High-grade ore", "ko_KR": "상급 광석"
+                    },
+                    "mid_ore": {
+                        "zh_CN": "中级矿石", "en_US": "Mid-grade ore", "ko_KR": "중급 광석"
+                    },
+                    "low_ore": {
+                        "zh_CN": "下级矿石", "en_US": "Low-grade ore", "ko_KR": "하급 광석"
+                    },
+                    "other": {
+                        "zh_CN": "其他", "en_US": "Other", "ko_KR": "기타"
+                    },
+                }
+                def ore_label(key):
+                    labels = ore_labels[key]
+                    return labels.get(LANGUAGE, labels["en_US"])
+
+                counter = {key: 0 for key in ore_labels}
+                start_time = time.time()
                 # reunionParty("FFXI/FFXIStone")
                 resetBag = False
                 while 1:
@@ -4260,22 +4301,58 @@ def Factory():
 
                     while 1:
                         scn = ScreenShot()
-
-                        if CheckIf(scn, "FFXI/nothingToDig"):
-                            RestartableSequenceExecution(
-                                lambda: Press(FindCoordsOrElseExecuteFallbackAndWait("ReturnText",[[1,1],"leaveDung","donothing"],1))
-                            )
-                            logger.info(_("没东西了, 撤退"))
-                            break
-
                         Press([450,600])
-                        if CheckIf(ScreenShot(),"FFXI/needpickaxe"):
-                            resetBag = True
+
+                        if CheckIf(scn, "FFXI/receive", [[4,664,890,283]]):
+                            vals = {
+                                "fine_ore": CheckHow(scn, "FFXI/org_fine", [[4,664,890,283]]),
+                                "high_ore": CheckHow(scn, "FFXI/org_high", [[4,664,890,283]]),
+                                "mid_ore": CheckHow(scn, "FFXI/org_mid", [[4,664,890,283]]),
+                                "low_ore": CheckHow(scn, "FFXI/org_low", [[4,664,890,283]]),
+                                "refine_stone": CheckHow(scn, "FFXI/org_refine", [[4,664,890,283]]),
+                                "modify_stone": CheckHow(scn, "FFXI/org_alter", [[4,664,890,283]]),
+                                "silver_ore": CheckHow(scn, "FFXI/org_sliver", [[4,664,890,283]]),
+                                "ouroboros": CheckHow(scn, "FFXI/org_ouro", [[4,664,890,283]]),
+                                "lesser_refined": CheckHow(scn, "FFXI/org_lesser_full", [[4,664,890,283]]),
+                            }
+
+                            best = max(vals, key=vals.get)
+                            if vals[best] > 0.9:
+                                counter[best] += 1
+                                logger.info("Obtained %s.", ore_label(best))
+                            elif vals["lesser_refined"] < 0.8:
+                                counter["all_refined"] += 1
+                                logger.info("Detected an all-refined ore reward.")
+                            else:
+                                counter["other"] += 1
+                                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                                file_path = os.path.join(LOGS_FOLDER_NAME, f"{timestamp}.png")
+                                cv2.imwrite(file_path, scn)
+                                logger.warning(
+                                    "Unrecognized ore reward; screenshot saved to %s.",
+                                    file_path,
+                                )
+
+                        if (
+                            CheckIf(scn, "FFXI/nothingToDig", [[320,667,423,474]])
+                            or CheckIf(scn, "FFXI/nothingToDig2", [[320,667,423,474]])
+                            or CheckIf(scn, "FFXI/nothingToDig3", [[320,667,423,474]])
+                        ):
+                            logger.info(_("没东西了, 撤退"))
                             RestartableSequenceExecution(
                                 lambda: Press(FindCoordsOrElseExecuteFallbackAndWait("ReturnText",[[1,1],"leaveDung","donothing"],1))
                             )
                             break
-                        Sleep(0.2)
+
+                        if CheckIf(scn,"FFXI/needpickaxe",[[4,664,890,283]]):
+                            resetBag = True
+                            logger.info("Pickaxe exhausted; returning to town.")
+                            RestartableSequenceExecution(
+                                lambda: Press(FindCoordsOrElseExecuteFallbackAndWait("ReturnText",[[1,1],"leaveDung","donothing"],1))
+                            )
+                            break
+
+                        Sleep(1.5)
 
                     if resetBag:
                         RestartableSequenceExecution(
@@ -4287,6 +4364,14 @@ def Factory():
                         reunionParty("FFXI/FFXIStone")
                         resetBag = False
 
+                    output_parts = [
+                        f"{ore_label(key)}: {value}"
+                        for key, value in counter.items()
+                        if value > 0
+                    ]
+                    output_str = ", ".join(output_parts)
+                    output_str += f"\nElapsed: {(time.time()-start_time):.2f}s."
+                    logger.info(output_str,extra={"summary": True})
         ##########################
         setting._FINISHINGCALLBACK()
         return

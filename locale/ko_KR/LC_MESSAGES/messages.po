@@ -2203,6 +2203,26 @@ msgstr "회복을 진행합니다. 사유: {a}."
 msgid "**新版本!**"
 msgstr "**새 버전!**"
 
+#: CHANGES_LOG.md:2
+msgid "==v2.4.11=="
+msgstr "==v2.4.11=="
+
+#: CHANGES_LOG.md:3
+msgid "挖矿任务现已加入矿石统计."
+msgstr "광석 채굴 작업에 광석 통계가 추가되었습니다."
+
+#: CHANGES_LOG.md:4
+msgid "不忘初心, 朋友们."
+msgstr "여러분, 초심을 잃지 맙시다."
+
+#: CHANGES_LOG.md:8
+msgid "重构状态机."
+msgstr "상태 머신을 리팩터링합니다."
+
+#: CHANGES_LOG.md:9
+msgid "所有人都恐惧的时候在两个箱子里来回跑."
+msgstr "모두가 공포 상태일 때 두 상자 사이를 오갑니다."
+
 #: CHANGES_LOG.md:3
 msgid "修复了挖矿任务会卡死的问题."
 msgstr "FFXI 채굴 작업이 멈추는 문제를 수정했습니다."
