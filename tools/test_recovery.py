@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
 sys.path.insert(0, str(SRC))
 
-from recovery import RecoveryPlan, RecoveryReason
+from recovery import RecoveryPlan, RecoveryReason, RecoverySupervisor
 
 
 class RecoveryPlanTests(unittest.TestCase):
@@ -42,6 +42,35 @@ class RecoveryPlanTests(unittest.TestCase):
 
         self.assertFalse(plan.should_recover)
         self.assertEqual(plan.reasons, ())
+
+
+class RecoverySupervisorTests(unittest.TestCase):
+    def test_rapid_restarts_escalate_without_discarding_history(self):
+        supervisor = RecoverySupervisor()
+
+        self.assertFalse(supervisor.note_app_restart(0.0))
+        self.assertFalse(supervisor.note_app_restart(30.0))
+        self.assertFalse(supervisor.note_app_restart(60.0))
+        self.assertTrue(supervisor.note_app_restart(90.0))
+        self.assertEqual(supervisor.restart_times, (0.0, 30.0, 60.0, 90.0))
+
+    def test_repeated_emulator_recovery_trips_the_circuit_breaker(self):
+        supervisor = RecoverySupervisor(max_emulator_restarts_without_stable=2)
+
+        self.assertTrue(supervisor.request_emulator_restart())
+        self.assertTrue(supervisor.request_emulator_restart())
+        self.assertFalse(supervisor.request_emulator_restart())
+
+    def test_stable_state_clears_restart_and_emulator_history(self):
+        supervisor = RecoverySupervisor()
+
+        supervisor.note_app_restart(0.0)
+        supervisor.request_emulator_restart()
+        supervisor.mark_stable()
+
+        self.assertEqual(supervisor.restart_times, ())
+        self.assertEqual(supervisor.emulator_restarts_without_stable, 0)
+        self.assertTrue(supervisor.request_emulator_restart())
 
 
 class RecoveryScreenReturnTests(unittest.TestCase):

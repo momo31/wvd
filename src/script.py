@@ -33,7 +33,7 @@ from combat_strategy import (
     target_probe_points,
 )
 from post_combat import PostCombatDecision, PostCombatTracker
-from recovery import RecoveryPlan, RecoveryReason
+from recovery import RecoveryPlan, RecoveryReason, RecoverySupervisor
 from screen_health import ScreenHealth, classify_screen
 
 
@@ -150,6 +150,29 @@ class RuntimeContext:
     COMBAT_COUNT_SINCE_RELOAD = 0
     _LAST_BAGCLEAR = 0
     _STATE_RESET_REQUIRED = False
+
+    def __init__(self):
+        """Keep recovery state isolated to one farming task.
+
+        Most of the historical runtime fields still have class-level defaults
+        for compatibility with the existing state machine.  Recovery history
+        is deliberately instance-owned so a completed task cannot make the
+        next task inherit stale restart counters or a pending reset flag.
+        """
+
+        self._RUNNING_EMU_PID = None
+        self._CRASHCOUNTER = 0
+        self._RESTART_TIMES = []
+        self._RECOVERY_SUPERVISOR = RecoverySupervisor()
+        self._STATE_RESET_REQUIRED = False
+
+    def mark_stable(self):
+        """Forget recovery history once an actionable state is visible."""
+
+        self._STATE_RESET_REQUIRED = False
+        self._CRASHCOUNTER = 0
+        self._RESTART_TIMES.clear()
+        self._RECOVERY_SUPERVISOR.mark_stable()
 class FarmQuest:
     _TARGETINFOLIST = None
     _EOT = None
@@ -590,6 +613,9 @@ def Factory():
         if device := CheckAndRecoverDevice(setting, runtimeContext, force_restart_emu, force_restart_adb):
             setting._ADBDEVICE = device
             logger.info(_("ADB服务成功启动，设备已连接."))
+            return True
+        logger.error("ADB recovery failed; stopping the task.")
+        return False
     def DeviceShell(cmdStr):
         while True:
             if setting._FORCESTOPING.is_set():
@@ -626,7 +652,8 @@ def Factory():
             except ( RuntimeError, ConnectionResetError, cv2.error) as e:
                 logger.warning(_("ADB操作失败 ({a}): {b}").format(a=type(e).__name__, b=e))
                 logger.info(_("ADB操作失败, 尝试重启ADB或模拟器程序..."))
-                ResetDevice()
+                if not ResetDevice():
+                    raise TaskStoppedException()
                 time.sleep(1)
                 if setting._FORCESTOPING.is_set():
                     logger.info(_("DeviceShell 중단 요청으로 인한 강제 종료..."))
@@ -634,7 +661,8 @@ def Factory():
                 continue
             except TimeoutError as e:
                 logger.info(_("ADB超时, 尝试重启ADB或模拟器程序..."))             
-                ResetDevice(force_restart_adb=True)
+                if not ResetDevice(force_restart_adb=True):
+                    raise TaskStoppedException()
                 time.sleep(1)
                 if setting._FORCESTOPING.is_set():
                     logger.info(_("DeviceShell 중단 요청으로 인한 강제 종료..."))
@@ -770,7 +798,10 @@ def Factory():
                         # never return coordinates in the wrong orientation.
                         if orientation_failures >= 3:
                             orientation_failures = 0
-                            restartGame(skip_screenshot=True)
+                            restartGame(
+                                skip_screenshot=True,
+                                force_restart_EMU=True,
+                            )
                         time.sleep(0.5)
                         continue
                     else:
@@ -803,10 +834,12 @@ def Factory():
                 if consecutive_failures >= MAX_SCREENSHOT_RETRIES:
                     logger.warning(_("스크린샷 연속 실패 {a}회 도달. 에뮬레이터를 강제 재시작합니다.").format(a=MAX_SCREENSHOT_RETRIES))
                     consecutive_failures = 0
-                    ResetDevice(force_restart_emu=True)
+                    if not ResetDevice(force_restart_emu=True):
+                        raise TaskStoppedException()
                 else:
                     logger.info(_("ADB操作失败, 尝试重启ADB or 模拟器程序..."))
-                    ResetDevice(force_restart_adb=True)
+                    if not ResetDevice(force_restart_adb=True):
+                        raise TaskStoppedException()
                 time.sleep(1.0)  # ADB 데몬 및 그래픽 버퍼 안정화 대기
                 
             except Exception as e:
@@ -814,7 +847,7 @@ def Factory():
                 if setting._FORCESTOPING.is_set():
                     logger.info(_("스크린샷 중단 요청으로 인한 강제 종료..."))
                     raise TaskStoppedException()
-                if isinstance(e, RestartSignal):
+                if isinstance(e, (RestartSignal, TaskStoppedException)):
                     raise
                 if isinstance(e, (AttributeError, RuntimeError, ConnectionResetError, cv2.error, socket.error)):
                     consecutive_failures += 1
@@ -822,9 +855,11 @@ def Factory():
                     if consecutive_failures >= MAX_SCREENSHOT_RETRIES:
                         logger.warning(_("스크린샷 연속 실패 {a}회 도달. 에뮬레이터를 강제 재시작합니다.").format(a=MAX_SCREENSHOT_RETRIES))
                         consecutive_failures = 0
-                        ResetDevice(force_restart_emu=True)
+                        if not ResetDevice(force_restart_emu=True):
+                            raise TaskStoppedException()
                     else:
-                        ResetDevice()
+                        if not ResetDevice():
+                            raise TaskStoppedException()
                 time.sleep(1)
     def _check(screenImage, template, roi = None, outputMatchResult = False):
         if screenImage is None or template is None:
@@ -1187,18 +1222,37 @@ def Factory():
         logger.info(_("崩溃计数: {a}\n崩溃计数超过{b}次后会重启模拟器.").format(a=runtimeContext._CRASHCOUNTER, b=setting.MAX_CRASH_LIMIT))
         # 짧은 간격 반복 재시작(같은 화면 순환 등 무한 재시작) 감지: 3분 내 4회 이상이면
         # 게임 재시작만으로는 순환을 못 벗어난 것으로 보고 에뮬레이터 리셋을 앞당겨 상태를 완전히 되돌린다.
-        now = time.time()
-        runtimeContext._RESTART_TIMES = [t for t in runtimeContext._RESTART_TIMES if now - t < 180] + [now]
-        rapid_restart_loop = len(runtimeContext._RESTART_TIMES) >= 4
+        now = time.monotonic()
+        supervisor = runtimeContext._RECOVERY_SUPERVISOR
+        rapid_restart_loop = supervisor.note_app_restart(now)
+        runtimeContext._RESTART_TIMES = list(supervisor.restart_times)
+        emulator_restart_requested = (
+            force_restart_EMU
+            or runtimeContext._CRASHCOUNTER > setting.MAX_CRASH_LIMIT
+            or rapid_restart_loop
+        )
         if rapid_restart_loop:
-            logger.warning(_("짧은 간격 재시작이 반복되어(무한 재시작 순환 추정) 에뮬레이터를 강제 재시작합니다."), extra={"summary": True})
-            runtimeContext._RESTART_TIMES = []
-        if runtimeContext._CRASHCOUNTER > setting.MAX_CRASH_LIMIT or rapid_restart_loop:
+            logger.warning(
+                "rapid app restarts detected; escalating to an emulator recovery",
+                extra={"summary": True},
+            )
+        if emulator_restart_requested:
+            if not supervisor.request_emulator_restart():
+                logger.error(
+                    "recovery circuit breaker tripped after repeated emulator failures"
+                )
+                setting._FORCESTOPING.set()
+                raise TaskStoppedException()
             runtimeContext._CRASHCOUNTER = 0
             force_restart_EMU = True
 
         if force_restart_EMU:
-            CheckAndRecoverDevice(setting, runtimeContext, FORCE_RESTART_EMU=True)
+            # ResetDevice rebinds setting._ADBDEVICE to the new emulator
+            # object.  Keeping the old adbutils handle after an emulator
+            # restart makes the next screenshot operate on a stale transport.
+            if not ResetDevice(force_restart_emu=True):
+                setting._FORCESTOPING.set()
+                raise TaskStoppedException()
             Sleep(5)
 
         DeviceShell("logcat -c")
@@ -1607,7 +1661,8 @@ def Factory():
                     restartGame(skip_screenshot=True)
                 Sleep(1)
                 continue
-            startup_wait = 0
+            if not runtimeContext._STATE_RESET_REQUIRED:
+                startup_wait = 0
 
             if CheckIf(screen, "trait") or CheckIf(screen, "recover"):
                 logger.info(_("检测到恢复/状态画面，正在尝试返回以关闭。"))
@@ -1632,10 +1687,12 @@ def Factory():
             for pattern, state in identifyConfig:
                 if CheckIf(screen, pattern):
                     runtimeContext._STATE_RESET_REQUIRED = False
+                    runtimeContext.mark_stable()
                     return State.Dungeon, state, screen
                 
             if StateCombatCheck(screen):
                 runtimeContext._STATE_RESET_REQUIRED = False
+                runtimeContext.mark_stable()
                 return State.Dungeon, DungeonState.Combat, screen
 
             # 성향(카르마) 선택 화면은 dialogueNext 스킵보다 먼저 처리한다.
@@ -4247,7 +4304,8 @@ def Factory():
         try:
             ReloadStrategy()
             
-            ResetDevice()
+            if not ResetDevice():
+                raise TaskStoppedException()
 
             quest = LoadQuest(setting.FARM_TARGET)
             if quest:

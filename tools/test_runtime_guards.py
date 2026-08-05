@@ -20,7 +20,10 @@ class RuntimeGuardSourceTests(unittest.TestCase):
         self.assertIn("runtimeContext._STATE_RESET_REQUIRED = False", self.source)
 
     def test_restart_signal_is_not_swallowed_by_screenshot_recovery(self):
-        self.assertIn("if isinstance(e, RestartSignal):\n                    raise", self.source)
+        self.assertIn(
+            "if isinstance(e, (RestartSignal, TaskStoppedException)):\n                    raise",
+            self.source,
+        )
 
     def test_long_wait_is_interruptible(self):
         self.assertNotIn("time.sleep(7300)", self.source)
@@ -37,6 +40,18 @@ class RuntimeGuardSourceTests(unittest.TestCase):
         self.assertIsNotNone(source)
         self.assertIn("Keep the bounded recovery loop alive", source)
         self.assertIn("continue", source)
+
+    def test_post_restart_wait_counter_is_not_reset_before_the_guard(self):
+        self.assertIn(
+            "if not runtimeContext._STATE_RESET_REQUIRED:\n                startup_wait = 0",
+            self.source,
+        )
+        self.assertIn("runtimeContext.mark_stable()", self.source)
+
+    def test_emulator_recovery_rebinds_adb_and_has_a_circuit_breaker(self):
+        self.assertIn("if not ResetDevice(force_restart_emu=True):", self.source)
+        self.assertIn("supervisor.request_emulator_restart()", self.source)
+        self.assertIn("recovery circuit breaker tripped", self.source)
 
 
 if __name__ == "__main__":
