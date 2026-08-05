@@ -2108,6 +2108,34 @@ msgstr ""
 msgid "不忘初心, 朋友们."
 msgstr ""
 
+#: CHANGES_LOG.md:6
+msgid "==v2.4.12=="
+msgstr ""
+
+#: CHANGES_LOG.md:7
+msgid "修复了出小改 全改的时候进行截图时截图路径出错导致脚本停止."
+msgstr ""
+
+#: CHANGES_LOG.md:9
+msgid "==v2.4.13=="
+msgstr ""
+
+#: CHANGES_LOG.md:10
+msgid "优化了单体选择. 现在会检测Next的位置并尝试点击next下方的箭头."
+msgstr ""
+
+#: CHANGES_LOG.md:11
+msgid "同时保留了一定程度的随机选择."
+msgstr ""
+
+#: CHANGES_LOG.md:12
+msgid "现在随机选择会尝试保证均匀选择."
+msgstr ""
+
+#: CHANGES_LOG.md:13
+msgid "测试版本, 欢迎反馈."
+msgstr ""
+
 #: CHANGES_LOG.md:8
 msgid "重构状态机."
 msgstr ""

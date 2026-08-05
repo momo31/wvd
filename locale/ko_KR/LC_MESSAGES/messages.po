@@ -2215,6 +2215,34 @@ msgstr "광석 채굴 작업에 광석 통계가 추가되었습니다."
 msgid "不忘初心, 朋友们."
 msgstr "여러분, 초심을 잃지 맙시다."
 
+#: CHANGES_LOG.md:6
+msgid "==v2.4.12=="
+msgstr "==v2.4.12=="
+
+#: CHANGES_LOG.md:7
+msgid "修复了出小改 全改的时候进行截图时截图路径出错导致脚本停止."
+msgstr "하급 개조/전체 개조 보상에서 스크린샷 경로 오류로 스크립트가 중지되던 문제를 수정했습니다."
+
+#: CHANGES_LOG.md:9
+msgid "==v2.4.13=="
+msgstr "==v2.4.13=="
+
+#: CHANGES_LOG.md:10
+msgid "优化了单体选择. 现在会检测Next的位置并尝试点击next下方的箭头."
+msgstr "단일 대상 선택을 개선했습니다. 이제 Next 위치를 감지하고 Next 아래 화살표를 클릭합니다."
+
+#: CHANGES_LOG.md:11
+msgid "同时保留了一定程度的随机选择."
+msgstr "일정 수준의 무작위 선택도 유지합니다."
+
+#: CHANGES_LOG.md:12
+msgid "现在随机选择会尝试保证均匀选择."
+msgstr "무작위 선택이 고르게 분산되도록 시도합니다."
+
+#: CHANGES_LOG.md:13
+msgid "测试版本, 欢迎反馈."
+msgstr "테스트 버전입니다. 피드백을 환영합니다."
+
 #: CHANGES_LOG.md:8
 msgid "重构状态机."
 msgstr "상태 머신을 리팩터링합니다."

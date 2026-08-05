@@ -2246,6 +2246,34 @@ msgstr "Mining now includes ore statistics."
 msgid "不忘初心, 朋友们."
 msgstr "Stay true to the original goal, friends."
 
+#: CHANGES_LOG.md:6
+msgid "==v2.4.12=="
+msgstr "==v2.4.12=="
+
+#: CHANGES_LOG.md:7
+msgid "修复了出小改 全改的时候进行截图时截图路径出错导致脚本停止."
+msgstr "Fixed the screenshot path error that stopped the script when obtaining lesser/full refinement."
+
+#: CHANGES_LOG.md:9
+msgid "==v2.4.13=="
+msgstr "==v2.4.13=="
+
+#: CHANGES_LOG.md:10
+msgid "优化了单体选择. 现在会检测Next的位置并尝试点击next下方的箭头."
+msgstr "Improved single-target selection. It now detects the Next position and tries to click the arrow below Next."
+
+#: CHANGES_LOG.md:11
+msgid "同时保留了一定程度的随机选择."
+msgstr "It also retains a degree of random selection."
+
+#: CHANGES_LOG.md:12
+msgid "现在随机选择会尝试保证均匀选择."
+msgstr "Random selection now attempts to distribute selections evenly."
+
+#: CHANGES_LOG.md:13
+msgid "测试版本, 欢迎反馈."
+msgstr "Test version; feedback welcome."
+
 #: CHANGES_LOG.md:8
 msgid "重构状态机."
 msgstr "Refactor the state machine."

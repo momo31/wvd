@@ -2336,7 +2336,6 @@ def Factory():
                     return SkillExecutionResult.FAILED
 
             logger.info(_("技能施放总计耗时: {a}秒").format(a=round(time.time()-t_start, 2)))
-
             # 资源不足
             resource_shortage = False
             for underscore in range(3):
@@ -4349,6 +4348,7 @@ def Factory():
                                 counter["other"] += 1
                                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                                 file_path = os.path.join(LOGS_FOLDER_NAME, f"{timestamp}.png")
+                                logger.info(f"记得把截图发给我. 已保存在{file_path}中.")
                                 cv2.imwrite(file_path, scn)
                                 logger.warning(
                                     "Unrecognized ore reward; screenshot saved to %s.",

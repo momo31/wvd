@@ -15,7 +15,7 @@ class Upstream2411MergeTests(unittest.TestCase):
         cls.mining_block = cls.script_source[start:]
 
     def test_version_and_mining_templates_are_integrated(self):
-        self.assertIn("__version__ = '2.4.11-momo.1'", self.main_source)
+        self.assertIn("__version__ = '2.4.13-momo.1'", self.main_source)
         for template in (
             "FFXI/receive",
             "FFXI/nothingToDig2",
@@ -37,19 +37,55 @@ class Upstream2411MergeTests(unittest.TestCase):
         assignment = self.mining_block.rfind("file_path = os.path.join", 0, warning)
         self.assertGreaterEqual(assignment, 0)
 
+    def test_single_target_selection_waits_and_uses_bounded_probe_points(self):
+        skill_start = self.script_source.index(
+            "def SkillLvlSelectAndDoubleCheck("
+        )
+        skill_end = self.script_source.index(
+            "# 资源不足", skill_start
+        )
+        skill_block = self.script_source[skill_start:skill_end]
+
+        self.assertIn("for underscore in range(5):", skill_block)
+        self.assertIn("for target_pos in target_probe_points(next_pos):", skill_block)
+        self.assertIn("if not target_selected:", skill_block)
+        self.assertNotIn("Press([pos[0],pos[1]+40])", skill_block)
+
     def test_new_changelog_entries_are_translated_for_supported_languages(self):
         expected = {
             "en_US": {
                 "挖矿任务现已加入矿石统计.": "Mining now includes ore statistics.",
                 "不忘初心, 朋友们.": "Stay true to the original goal, friends.",
+                "修复了出小改 全改的时候进行截图时截图路径出错导致脚本停止.": (
+                    "Fixed the screenshot path error that stopped the script "
+                    "when obtaining lesser/full refinement."
+                ),
+                "优化了单体选择. 现在会检测Next的位置并尝试点击next下方的箭头.": (
+                    "Improved single-target selection. It now detects the Next "
+                    "position and tries to click the arrow below Next."
+                ),
             },
             "ko_KR": {
                 "挖矿任务现已加入矿石统计.": "광석 채굴 작업에 광석 통계가 추가되었습니다.",
                 "不忘初心, 朋友们.": "여러분, 초심을 잃지 맙시다.",
+                "修复了出小改 全改的时候进行截图时截图路径出错导致脚本停止.": (
+                    "하급 개조/전체 개조 보상에서 스크린샷 경로 오류로 "
+                    "스크립트가 중지되던 문제를 수정했습니다."
+                ),
+                "优化了单体选择. 现在会检测Next的位置并尝试点击next下方的箭头.": (
+                    "단일 대상 선택을 개선했습니다. 이제 Next 위치를 감지하고 "
+                    "Next 아래 화살표를 클릭합니다."
+                ),
             },
             "zh_CN": {
                 "挖矿任务现已加入矿石统计.": "挖矿任务现已加入矿石统计.",
                 "不忘初心, 朋友们.": "不忘初心, 朋友们.",
+                "修复了出小改 全改的时候进行截图时截图路径出错导致脚本停止.": (
+                    "修复了出小改 全改的时候进行截图时截图路径出错导致脚本停止."
+                ),
+                "优化了单体选择. 现在会检测Next的位置并尝试点击next下方的箭头.": (
+                    "优化了单体选择. 现在会检测Next的位置并尝试点击next下方的箭头."
+                ),
             },
         }
         for language, messages in expected.items():
