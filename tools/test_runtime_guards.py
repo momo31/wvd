@@ -47,11 +47,16 @@ class RuntimeGuardSourceTests(unittest.TestCase):
             self.source,
         )
         self.assertIn("runtimeContext.mark_stable()", self.source)
+        self.assertIn("BLACK_FRAME_MAX = 45", self.source)
+        self.assertIn("POST_RESTART_STARTUP_MAX = 90", self.source)
 
-    def test_emulator_recovery_rebinds_adb_and_has_a_circuit_breaker(self):
+    def test_emulator_recovery_rebinds_adb_and_uses_backoff_without_a_hard_limit(self):
         self.assertIn("if not ResetDevice(force_restart_emu=True):", self.source)
         self.assertIn("supervisor.request_emulator_restart()", self.source)
-        self.assertIn("recovery circuit breaker tripped", self.source)
+        self.assertIn("supervisor.emulator_restart_delay_seconds", self.source)
+        self.assertIn("supervisor.app_restart_cooldown", self.source)
+        self.assertNotIn("recovery circuit breaker tripped", self.source)
+        self.assertNotIn("if not supervisor.request_emulator_restart()", self.source)
 
 
 if __name__ == "__main__":

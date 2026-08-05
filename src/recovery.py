@@ -37,13 +37,13 @@ class RecoveryPlan:
 
 
 class RecoverySupervisor:
-    """Bound repeated recovery actions until a stable screen is observed.
+    """Track repeated recovery and pace retries until a stable screen appears.
 
-    The automation can recover from a transient game or emulator failure, but
-    repeated recovery without ever reaching an actionable screen is itself a
-    failure mode.  This small state machine keeps the policy independent from
-    Tkinter/ADB code so the escalation and circuit-breaker behavior can be
-    tested without an emulator.
+    A transient game or emulator failure should be recoverable even when it
+    happens more than once.  Rather than permanently stopping after a fixed
+    number of emulator resets, the supervisor records the attempts and exposes
+    cooldown/backoff values to the runtime.  This keeps retries observable and
+    progressively slower without imposing a hard recovery ceiling.
     """
 
     def __init__(
@@ -51,17 +51,27 @@ class RecoverySupervisor:
         *,
         restart_window_seconds=180.0,
         rapid_restart_limit=4,
-        max_emulator_restarts_without_stable=2,
+        minimum_restart_interval_seconds=90.0,
+        emulator_restart_backoff_seconds=45.0,
+        max_emulator_restart_backoff_seconds=360.0,
         clock=None,
     ):
         self.restart_window_seconds = float(restart_window_seconds)
         self.rapid_restart_limit = int(rapid_restart_limit)
-        self.max_emulator_restarts_without_stable = int(
-            max_emulator_restarts_without_stable
+        self.minimum_restart_interval_seconds = max(
+            0.0, float(minimum_restart_interval_seconds)
+        )
+        self.emulator_restart_backoff_seconds = max(
+            0.0, float(emulator_restart_backoff_seconds)
+        )
+        self.max_emulator_restart_backoff_seconds = max(
+            self.emulator_restart_backoff_seconds,
+            float(max_emulator_restart_backoff_seconds),
         )
         self._clock = clock or time.monotonic
         self._restart_times = []
         self._emulator_restarts_without_stable = 0
+        self._last_app_restart_at = None
 
     @property
     def restart_times(self):
@@ -73,6 +83,21 @@ class RecoverySupervisor:
     def emulator_restarts_without_stable(self):
         return self._emulator_restarts_without_stable
 
+    @property
+    def emulator_restart_delay_seconds(self):
+        """Return the exponential wait before the next emulator reset.
+
+        The first reset waits for the base interval.  Each subsequent reset
+        without a stable screen doubles the delay up to the configured cap.
+        The counter is reset by :meth:`mark_stable`.
+        """
+
+        attempt = max(self._emulator_restarts_without_stable - 1, 0)
+        if attempt >= 30:
+            return self.max_emulator_restart_backoff_seconds
+        delay = self.emulator_restart_backoff_seconds * (2**attempt)
+        return min(delay, self.max_emulator_restart_backoff_seconds)
+
     def _now(self, now):
         return float(self._clock() if now is None else now)
 
@@ -80,22 +105,27 @@ class RecoverySupervisor:
         cutoff = now - self.restart_window_seconds
         self._restart_times = [stamp for stamp in self._restart_times if stamp >= cutoff]
 
+    def app_restart_cooldown(self, now=None):
+        """Return the remaining minimum interval before another app restart."""
+
+        now = self._now(now)
+        if self._last_app_restart_at is None:
+            return 0.0
+        elapsed = max(0.0, now - self._last_app_restart_at)
+        return max(0.0, self.minimum_restart_interval_seconds - elapsed)
+
     def note_app_restart(self, now=None):
         """Record an app restart and report whether it is occurring rapidly."""
 
         now = self._now(now)
         self._prune(now)
         self._restart_times.append(now)
+        self._last_app_restart_at = now
         return len(self._restart_times) >= self.rapid_restart_limit
 
     def request_emulator_restart(self):
-        """Allow one emulator escalation, or trip the circuit breaker."""
+        """Record and allow an emulator escalation with no hard attempt limit."""
 
-        if (
-            self._emulator_restarts_without_stable
-            >= self.max_emulator_restarts_without_stable
-        ):
-            return False
         self._emulator_restarts_without_stable += 1
         return True
 
@@ -104,3 +134,4 @@ class RecoverySupervisor:
 
         self._restart_times.clear()
         self._emulator_restarts_without_stable = 0
+        self._last_app_restart_at = None

@@ -1222,8 +1222,19 @@ def Factory():
         logger.info(_("崩溃计数: {a}\n崩溃计数超过{b}次后会重启模拟器.").format(a=runtimeContext._CRASHCOUNTER, b=setting.MAX_CRASH_LIMIT))
         # 짧은 간격 반복 재시작(같은 화면 순환 등 무한 재시작) 감지: 3분 내 4회 이상이면
         # 게임 재시작만으로는 순환을 못 벗어난 것으로 보고 에뮬레이터 리셋을 앞당겨 상태를 완전히 되돌린다.
-        now = time.monotonic()
+        # 재시작 직후 다시 같은 화면을 만나는 경우에는 최소 간격을 보장해
+        # 게임/에뮬레이터가 정리될 시간을 준다.
         supervisor = runtimeContext._RECOVERY_SUPERVISOR
+        now = time.monotonic()
+        app_restart_cooldown = supervisor.app_restart_cooldown(now)
+        if app_restart_cooldown > 0:
+            logger.info(
+                "재시작 쿨다운 중입니다. %.1f초 후 게임을 다시 시작합니다.",
+                app_restart_cooldown,
+                extra={"summary": True},
+            )
+            Sleep(app_restart_cooldown)
+            now = time.monotonic()
         rapid_restart_loop = supervisor.note_app_restart(now)
         runtimeContext._RESTART_TIMES = list(supervisor.restart_times)
         emulator_restart_requested = (
@@ -1237,12 +1248,17 @@ def Factory():
                 extra={"summary": True},
             )
         if emulator_restart_requested:
-            if not supervisor.request_emulator_restart():
-                logger.error(
-                    "recovery circuit breaker tripped after repeated emulator failures"
-                )
-                setting._FORCESTOPING.set()
-                raise TaskStoppedException()
+            # 안정 화면을 아직 확인하지 못했더라도 복구 시도를 중단하지 않는다.
+            # 대신 시도 횟수에 따라 대기 시간을 지수적으로 늘려 재시작 폭주를 막는다.
+            supervisor.request_emulator_restart()
+            emulator_restart_delay = supervisor.emulator_restart_delay_seconds
+            logger.warning(
+                "에뮬레이터 복구 #%s를 %.1f초 후 시도합니다.",
+                supervisor.emulator_restarts_without_stable,
+                emulator_restart_delay,
+                extra={"summary": True},
+            )
+            Sleep(emulator_restart_delay)
             runtimeContext._CRASHCOUNTER = 0
             force_restart_EMU = True
 
@@ -1589,6 +1605,9 @@ def Factory():
         black_wait = 0
         startup_wait = 0
         LOADING_MAX = 90            # 로딩 대기 상한(약 180초). 초과 시 무한 로딩으로 보고 재시작.
+        BLACK_FRAME_MAX = 45        # 기존 15회의 3배로 검은 프레임을 대기.
+        TITLE_STARTUP_MAX = 45      # 기존 15회의 3배로 타이틀/약관 화면을 대기.
+        POST_RESTART_STARTUP_MAX = 90  # 기존 30회의 3배로 재시작 후 화면을 대기.
         while 1:
             t_start = time.time()
             screen = ScreenShot()
@@ -1612,10 +1631,11 @@ def Factory():
                 counter = 0
                 if black_wait == 1 or black_wait % 5 == 0:
                     logger.warning(
-                        "black emulator frame detected; waiting (%s/15)",
+                        "black emulator frame detected; waiting (%s/%s)",
                         black_wait,
+                        BLACK_FRAME_MAX,
                     )
-                if black_wait >= 15:
+                if black_wait >= BLACK_FRAME_MAX:
                     logger.warning(
                         "black emulator frame persisted; restarting the game"
                     )
@@ -1653,10 +1673,11 @@ def Factory():
                 Press(pos)
                 if startup_wait == 1 or startup_wait % 5 == 0:
                     logger.info(
-                        "startup/title screen detected; waiting (%s/15)",
+                        "startup/title screen detected; waiting (%s/%s)",
                         startup_wait,
+                        TITLE_STARTUP_MAX,
                     )
-                if startup_wait >= 15:
+                if startup_wait >= TITLE_STARTUP_MAX:
                     startup_wait = 0
                     restartGame(skip_screenshot=True)
                 Sleep(1)
@@ -1822,10 +1843,11 @@ def Factory():
                 Press([450, 800])
                 if startup_wait == 1 or startup_wait % 5 == 0:
                     logger.info(
-                        "post-restart startup screen is not actionable; waiting (%s/30)",
+                        "post-restart startup screen is not actionable; waiting (%s/%s)",
                         startup_wait,
+                        POST_RESTART_STARTUP_MAX,
                     )
-                if startup_wait >= 30:
+                if startup_wait >= POST_RESTART_STARTUP_MAX:
                     startup_wait = 0
                     restartGame(skip_screenshot=True)
                 Sleep(1)
