@@ -2235,6 +2235,22 @@ msgid "**新版本!**"
 msgstr "**New version!**"
 
 #: CHANGES_LOG.md:2
+msgid "==v2.4.15=="
+msgstr "==v2.4.15=="
+
+#: CHANGES_LOG.md:3
+msgid "稍微增加了挖矿的截图时间, 以避免误报."
+msgstr "Slightly increased the mining screenshot delay to avoid false positives."
+
+#: CHANGES_LOG.md:10
+msgid "==v2.4.14=="
+msgstr "==v2.4.14=="
+
+#: CHANGES_LOG.md:11
+msgid "修复了如果战斗画面没有next脚本会卡死的问题."
+msgstr "Fixed a script hang when the battle screen has no Next marker."
+
+#: CHANGES_LOG.md:2
 msgid "==v2.4.11=="
 msgstr "==v2.4.11=="
 

@@ -2204,6 +2204,22 @@ msgid "**新版本!**"
 msgstr "**새 버전!**"
 
 #: CHANGES_LOG.md:2
+msgid "==v2.4.15=="
+msgstr "==v2.4.15=="
+
+#: CHANGES_LOG.md:3
+msgid "稍微增加了挖矿的截图时间, 以避免误报."
+msgstr "오탐을 방지하기 위해 채굴 스크린샷 대기 시간을 조금 늘렸습니다."
+
+#: CHANGES_LOG.md:10
+msgid "==v2.4.14=="
+msgstr "==v2.4.14=="
+
+#: CHANGES_LOG.md:11
+msgid "修复了如果战斗画面没有next脚本会卡死的问题."
+msgstr "전투 화면에 Next가 없을 때 스크립트가 멈추던 문제를 수정했습니다."
+
+#: CHANGES_LOG.md:2
 msgid "==v2.4.11=="
 msgstr "==v2.4.11=="
 

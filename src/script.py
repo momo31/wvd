@@ -2328,12 +2328,30 @@ def Factory():
                         return SkillExecutionResult.FAILED
                     logger.info(_("释放了位于\"{a}\"的单体技能, 技能等级为{b}. 选择next作为敌方目标. (耗时: {c}秒)").format(a=skillPos, b=skilllvl, c=round(time.time()-t_cast_start, 2)))
                 else:
+                    # Upstream 2.4.14 fallback: if the Next marker is absent,
+                    # use two bounded random passes instead of indexing None
+                    # and hanging the combat state machine.
                     logger.warning(
-                        "스킬 확인 또는 대상 선택 화면을 판별하지 못했습니다. "
-                        "무작위 입력을 중단하고 전략 항목을 유지합니다."
+                        "스킬 확인 또는 Next 대상 화면을 판별하지 못했습니다. "
+                        "제한된 무작위 대상 선택으로 복구합니다."
                     )
-                    CancelSkillSelection()
-                    return SkillExecutionResult.FAILED
+                    x0, y0 = 75, 296
+                    width, height = 827, 600
+                    cols = 4
+                    rows = 3
+                    cell_w = width / cols
+                    cell_h = height / rows
+                    for _ in range(2):
+                        for row in range(rows):
+                            for col in range(cols):
+                                left = x0 + col * cell_w
+                                top = y0 + row * cell_h
+                                x = left + random.random() * cell_w
+                                y = top + random.random() * cell_h
+                                Press([x, y])
+                                Sleep(0.05)
+                    logger.info(_("释放了位于\"{a}\"的单体技能, 技能等级为{b}. 随机选择敌方目标.").format(a=skillPos, b=skilllvl))
+                    Sleep(2)
 
             logger.info(_("技能施放总计耗时: {a}秒").format(a=round(time.time()-t_start, 2)))
             # 资源不足
@@ -4374,7 +4392,7 @@ def Factory():
                             )
                             break
 
-                        Sleep(1.5)
+                        Sleep(1.7)
 
                     if resetBag:
                         RestartableSequenceExecution(
