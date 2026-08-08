@@ -50,7 +50,7 @@ class Upstream249MergeTests(unittest.TestCase):
             "FFXI-2F",
             "FFXI-2F-elite",
             "FFXI-5F-4Elite",
-            "FFXI-5F-2Elite",
+            "FFXI-5F-2Elite-mid",
             "FFXI-5F-2Elite-bottom",
             "FFXI-5F-Elite",
         )
@@ -59,7 +59,7 @@ class Upstream249MergeTests(unittest.TestCase):
             self.assertIn(quest_key, quests)
 
         self.assertEqual(quests["FFXI-5F-4Elite"]["_EOT"][1][1], "FFXI/zone5")
-        self.assertEqual(quests["FFXI-5F-2Elite"]["_EOT"][1][1], "FFXI/zone5")
+        self.assertEqual(quests["FFXI-5F-2Elite-mid"]["_EOT"][1][1], "FFXI/zone5")
         self.assertEqual(quests["FFXI-5F-2Elite-bottom"]["_EOT"][1][1], "FFXI/zone5")
         self.assertEqual(quests["FFXI-5F-Elite"]["_EOT"][1][1], "FFXI/zone5")
         for quest_key in ffxi_quests:
@@ -70,7 +70,7 @@ class Upstream249MergeTests(unittest.TestCase):
             self.assertEqual(quests[quest_key]["_RTT"], ["FFXI/EVENT_VNH"])
 
         self.assertEqual(
-            quests["FFXI-5F-2Elite"]["questName"],
+            quests["FFXI-5F-2Elite-mid"]["questName"],
             "[恶名]FFXI 5F 中部2精英",
         )
         self.assertEqual(
@@ -258,6 +258,16 @@ class Upstream249MergeTests(unittest.TestCase):
         )
         names = [quest["questName"] for quest in quests.values()]
         self.assertEqual(len(names), len(set(names)))
+
+    def test_legacy_ffxi_code_resolves_to_new_bottom_definition(self):
+        from script import LoadQuest, QUEST_DATA
+
+        quest = LoadQuest("FFXI-5F-2Elite")
+        self.assertEqual(
+            QUEST_DATA["FFXI-5F-2Elite-bottom"]["questName"],
+            "[恶名]FFXI 5F 底部2精英",
+        )
+        self.assertEqual(quest._TARGETINFOLIST[0].roi, [80, 1130])
 
 
 if __name__ == "__main__":

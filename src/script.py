@@ -236,10 +236,24 @@ class TargetInfo:
 
         self._roi = value
 ##################################################################
+QUEST_CODE_ALIASES = {
+    # The upstream catalog split the former 5F entry into mid/bottom routes.
+    # Keep old saved configurations pointed at the new bottom definition.
+    "FFXI-5F-2Elite": "FFXI-5F-2Elite-bottom",
+}
+
+
 def LoadQuest(farmtarget):
     logger.debug(f"读取任务{farmtarget}")
-    if farmtarget in QUEST_DATA:
-        data = QUEST_DATA[farmtarget]
+    quest_code = QUEST_CODE_ALIASES.get(farmtarget, farmtarget)
+    if quest_code in QUEST_DATA:
+        data = QUEST_DATA[quest_code]
+        if quest_code != farmtarget:
+            logger.info(
+                "任务内部代号 '%s' 已迁移到 '%s'.",
+                farmtarget,
+                quest_code,
+            )
     else:
         logger.error(_("任务列表已更新.请重新手动选择地下城任务."))
         return None
