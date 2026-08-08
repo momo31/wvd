@@ -51,7 +51,6 @@ class Upstream249MergeTests(unittest.TestCase):
             "FFXI-2F-elite",
             "FFXI-5F-4Elite",
             "FFXI-5F-2Elite",
-            "FFXI-5F-2Elite-mid",
             "FFXI-5F-2Elite-bottom",
             "FFXI-5F-Elite",
         )
@@ -61,7 +60,6 @@ class Upstream249MergeTests(unittest.TestCase):
 
         self.assertEqual(quests["FFXI-5F-4Elite"]["_EOT"][1][1], "FFXI/zone5")
         self.assertEqual(quests["FFXI-5F-2Elite"]["_EOT"][1][1], "FFXI/zone5")
-        self.assertEqual(quests["FFXI-5F-2Elite-mid"]["_EOT"][1][1], "FFXI/zone5")
         self.assertEqual(quests["FFXI-5F-2Elite-bottom"]["_EOT"][1][1], "FFXI/zone5")
         self.assertEqual(quests["FFXI-5F-Elite"]["_EOT"][1][1], "FFXI/zone5")
         for quest_key in ffxi_quests:
@@ -70,6 +68,15 @@ class Upstream249MergeTests(unittest.TestCase):
                 ["press", "EVENT", "FFXI/EVENT_GCN", 1],
             )
             self.assertEqual(quests[quest_key]["_RTT"], ["FFXI/EVENT_VNH"])
+
+        self.assertEqual(
+            quests["FFXI-5F-2Elite"]["questName"],
+            "[恶名]FFXI 5F 中部2精英",
+        )
+        self.assertEqual(
+            quests["FFXI-5F-2Elite-bottom"]["questName"],
+            "[恶名]FFXI 5F 底部2精英",
+        )
 
     def test_korean_quest_list_does_not_expose_chinese_names(self):
         quests = load_json_rejecting_duplicate_keys(
@@ -244,6 +251,13 @@ class Upstream249MergeTests(unittest.TestCase):
         translations = assigned_string(SRC / "gui.py", "KO_TARGET_TRANSLATIONS")
         self.assertIn("[恶名]FFXI 5F 中部2精英", translations)
         self.assertIn("[恶名]FFXI 5F 底部2精英", translations)
+
+    def test_quest_display_names_are_unique(self):
+        quests = load_json_rejecting_duplicate_keys(
+            ROOT / "resources" / "quest" / "quest.json"
+        )
+        names = [quest["questName"] for quest in quests.values()]
+        self.assertEqual(len(names), len(set(names)))
 
 
 if __name__ == "__main__":
