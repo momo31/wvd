@@ -49,6 +49,7 @@ wvdas는 "재기의 불"이 소진된 것을 감지하면 즉시 목표 작업�
 - 스크립트 좌측 상단의 "앱플레이어 경로(Emulator Path)" 설정:
 	 - MuMu12: Netease\MuMu Player 12\shell\MuMuPlayer.exe
 	 - MuMuX: Netease\MuMu\nx_device\12.0\shell\MuMuNxDevice.exe
+	 - MuMu15: Netease\MuMu\nx_device\15.0\shell\MuMuNxDevice.exe
 - 포트 번호는 기본값으로 16384를 사용합니다. 매우 드문 경우로 5555일 수 있습니다. 둘 다 아니라면 MuMu 멀티 드라이브 매니저에서 해당 앱플레이어의 구체적인 ADB 포트 번호를 찾을 수 있습니다.
 - **네트워크 브릿지 모드**를 비활성화합니다.
 

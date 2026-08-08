@@ -181,7 +181,7 @@ class Upstream249MergeTests(unittest.TestCase):
 
     def test_fork_version_keeps_upstream_update_comparison(self):
         version = assigned_string(SRC / "main.py", "__version__")
-        self.assertEqual(version, "2.4.15-momo.1")
+        self.assertEqual(version, "2.5.2-momo.1")
 
         from auto_updater import AutoUpdater
 
@@ -193,7 +193,10 @@ class Upstream249MergeTests(unittest.TestCase):
         self.assertFalse(updater._is_newer_version("2.4.13"))
         self.assertFalse(updater._is_newer_version("2.4.14"))
         self.assertFalse(updater._is_newer_version("2.4.15"))
-        self.assertTrue(updater._is_newer_version("2.4.16"))
+        self.assertFalse(updater._is_newer_version("2.5.0"))
+        self.assertFalse(updater._is_newer_version("2.5.1"))
+        self.assertFalse(updater._is_newer_version("2.5.2"))
+        self.assertTrue(updater._is_newer_version("2.5.3"))
 
     def test_per_combat_strategy_reload_happens_after_combat(self):
         source = (SRC / "script.py").read_text(encoding="utf-8")
@@ -251,6 +254,112 @@ class Upstream249MergeTests(unittest.TestCase):
         translations = assigned_string(SRC / "gui.py", "KO_TARGET_TRANSLATIONS")
         self.assertIn("[恶名]FFXI 5F 中部2精英", translations)
         self.assertIn("[恶名]FFXI 5F 底部2精英", translations)
+
+    def test_upstream_252_character_names_are_localized(self):
+        expected_translations = {
+            "en_US": {
+                "F 普修利": "F Prishe",
+                "F 赛德": "F Zeid",
+                "G 巴克什": "G Bakesh",
+            },
+            "ko_KR": {
+                "F 普修利": "F 프리쉬",
+                "F 赛德": "F 자이드",
+                "G 巴克什": "G 바케쉬",
+            },
+            "zh_CN": {
+                "F 普修利": "F 普修利",
+                "F 赛德": "F 赛德",
+                "G 巴克什": "G 巴克什",
+            },
+        }
+
+        for language, expected in expected_translations.items():
+            catalog_path = (
+                ROOT / "locale" / language / "LC_MESSAGES" / "messages.mo"
+            )
+            with catalog_path.open("rb") as stream:
+                translations = gettext.GNUTranslations(stream)
+            for source, localized in expected.items():
+                self.assertEqual(translations.gettext(source), localized)
+
+        korean_runtime_messages = {
+            "游戏未启动!": "게임이 실행 중이 아닙니다!",
+            "你开启了应用保活, 请关闭.": (
+                "앱 실행 유지 기능이 켜져 있습니다. 비활성화해 주세요."
+            ),
+            "无法识别的截屏数据，头部内容: {a}": (
+                "인식할 수 없는 스크린샷 데이터입니다. 헤더: {a}"
+            ),
+            "截图数据异常，无法修复": "스크린샷 데이터를 복구할 수 없습니다.",
+            "遇到了一些状况之外的情况. 已保存在{a}中.": (
+                "예상하지 못한 광석 보상입니다. 스크린샷을 {a}에 저장했습니다."
+            ),
+        }
+        korean_catalog_path = (
+            ROOT / "locale" / "ko_KR" / "LC_MESSAGES" / "messages.mo"
+        )
+        with korean_catalog_path.open("rb") as stream:
+            korean_translations = gettext.GNUTranslations(stream)
+        for source, localized in korean_runtime_messages.items():
+            self.assertEqual(korean_translations.gettext(source), localized)
+            self.assertFalse(contains_han(localized))
+
+    def test_upstream_252_runtime_guards_and_cleanup_are_present(self):
+        source = (SRC / "script.py").read_text(encoding="utf-8")
+        quests = load_json_rejecting_duplicate_keys(
+            ROOT / "resources" / "quest" / "quest.json"
+        )
+
+        self.assertEqual(assigned_string(SRC / "main.py", "__version__"), "2.5.2-momo.1")
+        self.assertIn('DeviceShell("dumpsys window | grep mCurrentFocus")', source)
+        self.assertIn('else "screencap 2>/dev/null"', source)
+        self.assertIn("Multiple displays were found", source)
+        self.assertIn("raise TaskStoppedException()", source)
+
+        self.assertNotIn("retard_tapjoy", quests)
+        self.assertNotIn('case "retard_tapjoy"', source)
+        for image_name in (
+            "nothanks.png",
+            "nothanks_s.png",
+            "nothanks_y.png",
+            "play.png",
+            "smallgame_empty.png",
+            "yes.png",
+        ):
+            self.assertFalse(
+                (ROOT / "resources" / "images" / "smallgame" / image_name).exists()
+            )
+
+    def test_upstream_252_changelog_does_not_fall_back_to_chinese_in_korean(self):
+        changelog = (ROOT / "CHANGES_LOG.md").read_text(encoding="utf-8")
+        new_section = changelog.split("==v2.5.2==", 1)[1].split(
+            "==v2.4.15==", 1
+        )[0]
+        messages = [
+            line
+            for line in new_section.splitlines()
+            if line and not line.startswith("==") and not line.startswith("**")
+        ]
+        self.assertEqual(len(messages), 18)
+
+        for language in ("en_US", "ko_KR", "zh_CN"):
+            catalog_path = (
+                ROOT / "locale" / language / "LC_MESSAGES" / "messages.mo"
+            )
+            with catalog_path.open("rb") as stream:
+                translations = gettext.GNUTranslations(stream)
+            for message in messages:
+                localized = translations.gettext(message)
+                if language == "zh_CN":
+                    self.assertEqual(localized, message)
+                else:
+                    self.assertNotEqual(localized, message)
+                if language == "ko_KR":
+                    self.assertFalse(
+                        contains_han(localized),
+                        f"Korean changelog is not localized: {message}",
+                    )
 
     def test_quest_display_names_are_unique(self):
         quests = load_json_rejecting_duplicate_keys(

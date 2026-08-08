@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-08-01 10:29+0900\n"
+"POT-Creation-Date: 2026-08-08 20:10+0900\n"
 "PO-Revision-Date: 2026-06-12 14:27+0800\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ko_KR\n"
@@ -2143,6 +2143,126 @@ msgstr "부활 후"
 #, python-brace-format
 msgid "进行恢复. 原因: {a}."
 msgstr "회복을 진행합니다. 사유: {a}."
+
+#: src/script.py:721
+msgid "游戏未启动!"
+msgstr "게임이 실행 중이 아닙니다!"
+
+#: src/script.py:816
+msgid "你开启了应用保活, 请关闭."
+msgstr "앱 실행 유지 기능이 켜져 있습니다. 비활성화해 주세요."
+
+#: src/script.py:820
+#, python-brace-format
+msgid "无法识别的截屏数据，头部内容: {a}"
+msgstr "인식할 수 없는 스크린샷 데이터입니다. 헤더: {a}"
+
+#: src/script.py:822
+msgid "将在之后截图时跳过所有警告信息."
+msgstr "이후 스크린샷에서는 모든 경고 출력을 건너뜁니다."
+
+#: src/script.py:827
+#, python-brace-format
+msgid "再次收到非法数据，头部内容: {a}"
+msgstr "잘못된 스크린샷 데이터를 다시 받았습니다. 헤더: {a}"
+
+#: src/script.py:829
+msgid "截图数据异常，无法修复"
+msgstr "스크린샷 데이터를 복구할 수 없습니다."
+
+#: src/script.py:907
+msgid ""
+"你开启了应用保活, 请关闭.\n"
+"请在\"设备设置-其他-应用运行\"中关闭."
+msgstr ""
+"앱 실행 유지 기능이 켜져 있습니다. 비활성화해 주세요.\n"
+"\"기기 설정 - 기타 - 앱 실행\"에서 비활성화해 주세요."
+
+#: src/script.py:2543
+#, python-brace-format
+msgid "释放了位于\"{a}\"的单体技能, 技能等级为{b}. 随机选择敌方目标."
+msgstr "\"스킬 위치 {a}\"의 단일 대상 스킬을 레벨 {b}로 시전했습니다. 적 대상을 무작위로 선택했습니다."
+
+#: src/script.py:4486
+#, python-brace-format
+msgid "遇到了一些状况之外的情况. 已保存在{a}中."
+msgstr "예상하지 못한 광석 보상입니다. 스크린샷을 {a}에 저장했습니다."
+
+#: src/utils.py:498
+msgid "F 普修利"
+msgstr "F 프리쉬"
+
+#: src/utils.py:499
+msgid "F 赛德"
+msgstr "F 자이드"
+
+#: src/utils.py:530
+msgid "G 巴克什"
+msgstr "G 바케쉬"
+
+#: CHANGES_LOG.md:3
+msgid "当检测到了应用保活开始的时候, 会停止脚本."
+msgstr "앱 실행 유지 기능이 감지되면 스크립트를 중지합니다."
+
+#: CHANGES_LOG.md:4
+msgid "修改了游戏是否启动的检测方法, 不再依赖简单的图片尺寸, 而是使用更准确的判断."
+msgstr "게임 실행 여부 감지 방식을 단순 이미지 크기 대신 더 정확한 판정으로 변경했습니다."
+
+#: CHANGES_LOG.md:5
+msgid "当截图返回数据包含警告信息的时候, 将不会尝试删除警告信息, 而是在打印了错误信息后跳过所有警告信息的输出."
+msgstr "스크린샷 데이터에 경고가 포함되면 오류를 기록한 뒤 이후 캡처의 경고 출력을 건너뜁니다."
+
+#: CHANGES_LOG.md:6
+msgid "修复了挖矿在回城过程中重启时, 脚本无法继续的问题."
+msgstr "채굴 중 귀환 과정에서 재시작하면 스크립트를 계속할 수 없던 문제를 수정했습니다."
+
+#: CHANGES_LOG.md:7
+msgid "战斗策略中支持的角色添加了赛德."
+msgstr "전투 전략 지원 캐릭터에 자이드를 추가했습니다."
+
+#: CHANGES_LOG.md:15
+msgid "修复了选择0号显示器会导致脚本无法运行的问题."
+msgstr "0번 디스플레이 선택 시 스크립트가 실행되지 않던 문제를 수정했습니다."
+
+#: CHANGES_LOG.md:16
+msgid "那些警告模拟器多显示的朋友们, 我只能说警告就让它警告吧."
+msgstr "에뮬레이터의 다중 디스플레이 경고를 그대로 허용하도록 변경했습니다."
+
+#: CHANGES_LOG.md:19
+msgid "修复了mumu15对模拟器多显示器的警告会导致截图数据无法识别的问题."
+msgstr "MuMu 15의 다중 디스플레이 경고로 스크린샷을 인식할 수 없던 문제를 수정했습니다."
+
+#: CHANGES_LOG.md:20
+msgid "现在如果模拟器具有多个显示器, 会选择默认显示器."
+msgstr "에뮬레이터에 디스플레이가 여러 개 있으면 기본 디스플레이를 선택합니다."
+
+#: CHANGES_LOG.md:21
+msgid "另: 宣布进入mumu15时代. mumu12已切割."
+msgstr "MuMu 15 지원을 시작하고 MuMu 12 지원을 종료했습니다."
+
+#: CHANGES_LOG.md:24
+msgid "战斗策略新增加了普利修和巴克什."
+msgstr "전투 전략에 프리쉬와 바케쉬를 추가했습니다."
+
+#: CHANGES_LOG.md:25
+msgid "新增了5f底部2精英的任务."
+msgstr "FFXI 5층 하단 엘리트 2마리 작업을 추가했습니다."
+
+#: CHANGES_LOG.md:28
+msgid "现在通过event进本的时候, 如果已经在副本中, 那么将会结束进本流程."
+msgstr "EVENT를 통해 진입할 때 이미 던전 안이면 진입 절차를 종료합니다."
+
+#: CHANGES_LOG.md:29
+msgid "优化了从EVENt进本时的判断图片, 以避免可能的错误点击."
+msgstr "EVENT 진입 판정 이미지를 개선해 잘못 클릭할 가능성을 줄였습니다."
+
+#: CHANGES_LOG.md:30
+msgid "完善了挖矿提示, 以避免误报."
+msgstr "채굴 안내를 보완해 오탐을 줄였습니다."
+
+#: CHANGES_LOG.md:31
+msgid "现在挖矿任务可以在挖矿中途停止."
+msgstr "채굴 작업을 진행 중에도 중지할 수 있습니다."
 
 #~ msgid ""
 #~ "cmd命令返回:{a}\n"
