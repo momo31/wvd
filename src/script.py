@@ -72,7 +72,7 @@ CONFIG_VAR_LIST = [
                                                                     },]],
             ["GENERAL",   "DEFAULT_OVERALL_STRATEGY", tk.StringVar, _("全自动战斗")],
             ["GENERAL",   "RELOAD_STRATEGY_WHEN",     tk.StringVar, _("不需要")],
-            ["GENERAL",   "LANGUAGE",                 tk.StringVar, "zh_CN"],
+            ["GENERAL",   "LANGUAGE",                 tk.StringVar, "ko_KR"],
             ["GENERAL",   "WEBSITE_ORG_TIME",         tk.StringVar, None],
             ["GENERAL",   "AM_REFRESH_TIME",          tk.StringVar, None],
 
@@ -4451,6 +4451,10 @@ def Factory():
                             break
                         scn = ScreenShot()
                         Press([450,600])
+
+                        if TryPressRetry(scn):
+                            Sleep(1)
+                            continue
 
                         if CheckIf(scn, "FFXI/receive", [[4,664,890,283]]):
                             vals = {

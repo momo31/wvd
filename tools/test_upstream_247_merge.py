@@ -179,9 +179,16 @@ class Upstream249MergeTests(unittest.TestCase):
         namespace["LoadRawConfigFromFile"] = lambda: {}
         self.assertEqual(getter("LANGUAGE", "zh_CN"), "zh_CN")
 
+    def test_packaged_config_path_and_korean_default_are_stable(self):
+        utils_source = (SRC / "utils.py").read_text(encoding="utf-8")
+        script_source = (SRC / "script.py").read_text(encoding="utf-8")
+        self.assertIn('os.path.dirname(sys.executable)', utils_source)
+        self.assertIn("GetOneVarInGeneralConfig('LANGUAGE', \"ko_KR\")", utils_source)
+        self.assertIn('["GENERAL",   "LANGUAGE",                 tk.StringVar, "ko_KR"]', script_source)
+
     def test_fork_version_keeps_upstream_update_comparison(self):
         version = assigned_string(SRC / "main.py", "__version__")
-        self.assertEqual(version, "2.5.2-momo.1")
+        self.assertEqual(version, "2.5.3-momo.1")
 
         from auto_updater import AutoUpdater
 
@@ -196,7 +203,8 @@ class Upstream249MergeTests(unittest.TestCase):
         self.assertFalse(updater._is_newer_version("2.5.0"))
         self.assertFalse(updater._is_newer_version("2.5.1"))
         self.assertFalse(updater._is_newer_version("2.5.2"))
-        self.assertTrue(updater._is_newer_version("2.5.3"))
+        self.assertFalse(updater._is_newer_version("2.5.3"))
+        self.assertTrue(updater._is_newer_version("2.5.4"))
 
     def test_per_combat_strategy_reload_happens_after_combat(self):
         source = (SRC / "script.py").read_text(encoding="utf-8")
@@ -254,6 +262,50 @@ class Upstream249MergeTests(unittest.TestCase):
         translations = assigned_string(SRC / "gui.py", "KO_TARGET_TRANSLATIONS")
         self.assertIn("[恶名]FFXI 5F 中部2精英", translations)
         self.assertIn("[恶名]FFXI 5F 底部2精英", translations)
+        self.assertEqual(translations["[骨头]战士灵庙"], "[뼈] 전사 영묘")
+        self.assertFalse(contains_han(translations["[骨头]战士灵庙"]))
+
+    def test_upstream_253_mining_patch_and_changelog_are_localized(self):
+        source = (SRC / "script.py").read_text(encoding="utf-8")
+        quests = load_json_rejecting_duplicate_keys(
+            ROOT / "resources" / "quest" / "quest.json"
+        )
+        self.assertIn("if TryPressRetry(scn):", source)
+        self.assertEqual(quests["LMG-FT"]["questName"], "[骨头]战士灵庙")
+
+        changelog = (ROOT / "CHANGES_LOG.md").read_text(encoding="utf-8")
+        section = changelog.split("==v2.5.3==", 1)[1].split(
+            "==v2.5.2==", 1
+        )[0]
+        messages = [
+            line
+            for line in section.splitlines()
+            if line and not line.startswith("==") and not line.startswith("**")
+        ]
+        self.assertEqual(
+            messages,
+            [
+                "现在可以准确的匹配挖矿任务是否是全改.",
+                "现在挖矿中弹出网络波动的重试可以正确点击继续.",
+                "修改了战士灵庙的文本.",
+                "重构状态机.",
+                "所有人都恐惧的时候在两个箱子里来回跑.",
+            ],
+        )
+        for language in ("en_US", "ko_KR", "zh_CN"):
+            catalog_path = (
+                ROOT / "locale" / language / "LC_MESSAGES" / "messages.mo"
+            )
+            with catalog_path.open("rb") as stream:
+                translations = gettext.GNUTranslations(stream)
+            for message in messages:
+                localized = translations.gettext(message)
+                if language == "zh_CN":
+                    self.assertEqual(localized, message)
+                else:
+                    self.assertNotEqual(localized, message)
+                if language == "ko_KR":
+                    self.assertFalse(contains_han(localized), message)
 
     def test_upstream_252_character_names_are_localized(self):
         expected_translations = {
@@ -311,7 +363,7 @@ class Upstream249MergeTests(unittest.TestCase):
             ROOT / "resources" / "quest" / "quest.json"
         )
 
-        self.assertEqual(assigned_string(SRC / "main.py", "__version__"), "2.5.2-momo.1")
+        self.assertEqual(assigned_string(SRC / "main.py", "__version__"), "2.5.3-momo.1")
         self.assertIn('DeviceShell("dumpsys window | grep mCurrentFocus")', source)
         self.assertIn('else "screencap 2>/dev/null"', source)
         self.assertIn("Multiple displays were found", source)
@@ -341,7 +393,7 @@ class Upstream249MergeTests(unittest.TestCase):
             for line in new_section.splitlines()
             if line and not line.startswith("==") and not line.startswith("**")
         ]
-        self.assertEqual(len(messages), 18)
+        self.assertEqual(len(messages), 16)
 
         for language in ("en_US", "ko_KR", "zh_CN"):
             catalog_path = (

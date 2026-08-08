@@ -2261,6 +2261,18 @@ msgid "G 巴克什"
 msgstr "G Bakesh"
 
 #: CHANGES_LOG.md:3
+msgid "现在可以准确的匹配挖矿任务是否是全改."
+msgstr "Mining reward matching now accurately detects the all-refined result."
+
+#: CHANGES_LOG.md:4
+msgid "现在挖矿中弹出网络波动的重试可以正确点击继续."
+msgstr "The retry prompt for network fluctuations during mining can now be clicked to continue correctly."
+
+#: CHANGES_LOG.md:5
+msgid "修改了战士灵庙的文本."
+msgstr "Updated the Fighter Mausoleum text."
+
+#: CHANGES_LOG.md:13
 msgid "当检测到了应用保活开始的时候, 会停止脚本."
 msgstr "The script stops when app keep-alive is detected."
 

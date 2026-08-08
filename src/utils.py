@@ -213,7 +213,14 @@ def LoadImage(path):
     return img
 
 ############################################
-CONFIG_FILE = 'config.json'
+def _config_file_path():
+    """Return the mutable config path beside the executable or project root."""
+    if getattr(sys, "frozen", False):
+        return os.path.join(os.path.dirname(sys.executable), "config.json")
+    return os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "config.json"))
+
+
+CONFIG_FILE = _config_file_path()
 def SaveConfigToFile(config_data):
     try:
         with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
@@ -240,7 +247,7 @@ def GetOneVarInGeneralConfig(var, default_value):
     return default_value
 ############################################
 localedir = ResourcePath("locale")
-LANGUAGE = GetOneVarInGeneralConfig('LANGUAGE', "zh_CN")
+LANGUAGE = GetOneVarInGeneralConfig('LANGUAGE', "ko_KR")
 trans = gettext.translation('messages', localedir, languages=[LANGUAGE], fallback=True)
 trans.install()
 ###########################################
