@@ -58,9 +58,20 @@ class Upstream2411MergeTests(unittest.TestCase):
         self.assertIn("for underscore in range(5):", skill_block)
         self.assertIn("for target_pos in target_probe_points(next_pos):", skill_block)
         self.assertIn("if not target_selected:", skill_block)
-        self.assertIn("for _ in range(2):", skill_block)
+        self.assertIn("for random_pass in range(2):", skill_block)
         self.assertIn("제한된 무작위 대상 선택으로 복구합니다.", skill_block)
         self.assertNotIn("Press([pos[0],pos[1]+40])", skill_block)
+
+    def test_skill_gettext_helper_is_not_shadowed_by_fallback_loop_variable(self):
+        skill_start = self.script_source.index(
+            "def SkillLvlSelectAndDoubleCheck("
+        )
+        skill_end = self.script_source.index(
+            "# 资源不足", skill_start
+        )
+        skill_block = self.script_source[skill_start:skill_end]
+        self.assertNotIn("for _ in range", skill_block)
+        self.assertIn("logger.info(_(", skill_block)
 
     def test_new_changelog_entries_are_translated_for_supported_languages(self):
         expected = {

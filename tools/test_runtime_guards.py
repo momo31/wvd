@@ -58,6 +58,38 @@ class RuntimeGuardSourceTests(unittest.TestCase):
         self.assertNotIn("recovery circuit breaker tripped", self.source)
         self.assertNotIn("if not supervisor.request_emulator_restart()", self.source)
 
+    def test_blocking_overlays_are_handled_before_state_templates(self):
+        identify_start = self.source.index("def IdentifyState():")
+        identify_end = self.source.index("def GameFrozenCheck(", identify_start)
+        identify_block = self.source[identify_start:identify_end]
+
+        self.assertIn("def CheckIfAtThreshold(", self.source)
+        self.assertIn("from screen_health import ScreenHealth, classify_screen, is_pause_overlay", self.source)
+        self.assertIn("if HandleBlockingOverlay(screen):", identify_block)
+        self.assertIn("counter += 1", identify_block)
+        self.assertIn("blocking overlay persisted; restarting the game", identify_block)
+        self.assertLess(
+            identify_block.index("HandleBlockingOverlay(screen)"),
+            identify_block.index("identifyConfig ="),
+        )
+        self.assertIn('"spellskill/skillDetail", threshold=0.70', self.source)
+
+    def test_unresolved_state_is_the_only_path_for_frozen_and_elapsed_guards(self):
+        dungeon_start = self.source.index("def StateDungeon(")
+        dungeon_end = self.source.index("def StateAcceptRequest", dungeon_start)
+        dungeon_block = self.source[dungeon_start:dungeon_end]
+
+        self.assertIn(
+            "if dungState is not None:\n                        continue",
+            dungeon_block,
+        )
+        state_none_start = dungeon_block.index("case None:")
+        state_none_end = dungeon_block.index("case DungeonState.Quit:", state_none_start)
+        state_none = dungeon_block[state_none_start:state_none_end]
+        self.assertIn("GameFrozenCheck", state_none)
+        self.assertIn("_TIME_COMBAT", state_none)
+        self.assertLess(state_none.index("if dungState is not None:"), state_none.index("GameFrozenCheck"))
+
 
 if __name__ == "__main__":
     unittest.main()

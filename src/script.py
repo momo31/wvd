@@ -34,7 +34,7 @@ from combat_strategy import (
 )
 from post_combat import PostCombatDecision, PostCombatTracker
 from recovery import RecoveryPlan, RecoveryReason, RecoverySupervisor
-from screen_health import ScreenHealth, classify_screen
+from screen_health import ScreenHealth, classify_screen, is_pause_overlay
 
 
 class TaskStoppedException(Exception):
@@ -897,6 +897,41 @@ def Factory():
             pos=[roi[0][0] + max_loc[0] + template.shape[1]//2,
                  roi[0][1] + max_loc[1] + template.shape[0]//2]
         return pos,max_val
+    def CheckIfAtThreshold(
+        screenImage,
+        shortPathOfTarget,
+        threshold=0.8,
+        roi=None,
+        outputMatchResult=False,
+    ):
+        """Match a template with an explicit threshold for transient UI.
+
+        The normal ``CheckIf`` threshold remains unchanged.  Only overlays
+        with known lower-confidence matches should call this helper.
+        """
+
+        pos, max_val = _check(
+            screenImage,
+            LoadTemplateImage(shortPathOfTarget),
+            roi,
+            outputMatchResult,
+        )
+        if max_val < threshold:
+            logger.debug(
+                "template match below threshold: %s score=%.2f%% threshold=%.2f",
+                shortPathOfTarget,
+                max_val * 100,
+                threshold * 100,
+            )
+            return None
+        logger.debug(
+            "template match accepted: %s score=%.2f%% position=%s",
+            shortPathOfTarget,
+            max_val * 100,
+            pos,
+        )
+        return pos
+
     def CheckIf(screenImage, shortPathOfTarget, roi = None, outputMatchResult = False):
         pos, max_val = _check(screenImage, LoadTemplateImage(shortPathOfTarget), roi, outputMatchResult)
 
@@ -1597,6 +1632,65 @@ def Factory():
         Sleep(2)
         return True
 
+    def HandleBlockingOverlay(screen):
+        """Dismiss transient overlays before they reach state classification.
+
+        Announcement, Harken's Blessing, and skill-detail panels all expose a
+        Close control in the lower portion of the portrait frame.  Their
+        match confidence varies with dimming and localization, so the lower
+        ROI gets a dedicated threshold while the normal state templates keep
+        the global 0.8 threshold.  A luminance gate prevents the similar
+        ``close`` scores seen on the bright shrine/choice screen from being
+        interpreted as a modal.
+        """
+
+        if is_pause_overlay(screen):
+            logger.info("pause overlay detected; tapping the center to resume")
+            Press([450, 800])
+            Sleep(1)
+            return True
+
+        close_roi = [[0, 900, 900, 700]]
+
+        # The detail icon can fall to about 0.76 on a dim combat frame.  It
+        # must be checked before the generic Close template so a skill popup
+        # never gets mistaken for a normal state.
+        if CheckIfAtThreshold(screen, "spellskill/skillDetail", threshold=0.70):
+            close_pos = (
+                CheckIfAtThreshold(
+                    screen, "combatClose", threshold=0.75, roi=close_roi
+                )
+                or CheckIfAtThreshold(
+                    screen, "close", threshold=0.75, roi=close_roi
+                )
+            )
+            logger.info("skill detail overlay detected; closing it before state matching")
+            Press(close_pos or [450, 1525])
+            Sleep(0.7)
+            return True
+
+        # Harken's modal is darkened, and its Close match is usually between
+        # 0.60 and 0.65.  Announcements have a much stronger match.  Keep the
+        # gate below the bright shrine scene's luminance to avoid clicking a
+        # blessing choice that happens to resemble a close icon.
+        upper_mean = float(np.asarray(screen)[:900].mean())
+        if upper_mean <= 52.0:
+            close_pos = (
+                CheckIfAtThreshold(
+                    screen, "combatClose", threshold=0.60, roi=close_roi
+                )
+                or CheckIfAtThreshold(
+                    screen, "close", threshold=0.60, roi=close_roi
+                )
+            )
+            if close_pos:
+                logger.info("blocking modal detected; closing it before state matching")
+                Press(close_pos)
+                Sleep(0.7)
+                return True
+
+        return False
+
     def IdentifyState():
         nonlocal setting # 修改因果
         counter = 0
@@ -1644,6 +1738,20 @@ def Factory():
                 Sleep(1)
                 continue
             black_wait = 0
+
+            # Modal/paused screens block every gameplay marker.  Dismiss them
+            # before loading and state checks so they do not consume the
+            # anomaly/restart budget as an unknown dungeon state.
+            if HandleBlockingOverlay(screen):
+                anomaly_saved = False
+                counter += 1
+                if counter >= setting.MAX_TRY_LIMIT:
+                    logger.warning(
+                        "blocking overlay persisted; restarting the game"
+                    )
+                    counter = 0
+                    restartGame()
+                continue
 
             # 재시작/게임 진입 직후의 로딩 화면("The Abyss is readying to open...")은 정상 대기 상태다.
             # counter/anomaly 트리거 없이 로딩이 끝날 때까지 기다린다(무한 로딩만 상한으로 방어).
@@ -1881,12 +1989,6 @@ def Factory():
                             AddImportantInfo(_("购买了尸油."))
                         return IdentifyState()
                     
-                if pos_b:=CheckIf(screen,"blessing"):
-                    if pos:=CheckIf(screen, "combatClose"): # 如果因为某些原因点到了切换哈肯祝福, 进入了二次确认界面
-                        Press(pos) # 我们把二次确认的界面关了, 无事发生
-                    else:
-                        Press(pos_b)
-                
                 if (CheckIf(screen,"multipeopledead")):
                     runtimeContext._SUICIDE = True # 准备尝试自杀
                     logger.info(_("死了好几个, 惨哦"))
@@ -2124,22 +2226,41 @@ def Factory():
             """Close the combat skill panel, including panels that appear late."""
 
             deadline = time.time() + max(0.0, wait_seconds)
+            close_roi = [[0, 900, 900, 700]]
             while True:
                 scn = ScreenShot()
-                if CheckIf(scn, "spellskill/skillDetail"):
+                if CheckIfAtThreshold(scn, "spellskill/skillDetail", threshold=0.70):
                     close_pos = (
-                        CheckIf(scn, "combatClose")
-                        or CheckIf(scn, "close")
+                        CheckIfAtThreshold(
+                            scn, "combatClose", threshold=0.75, roi=close_roi
+                        )
+                        or CheckIfAtThreshold(
+                            scn, "close", threshold=0.75, roi=close_roi
+                        )
                     )
                     # Both combat close templates are centered near this point;
                     # the coordinate is a final fallback for localized variants.
                     Press(close_pos or [450, 1525])
                     Sleep(0.7)
-                    if not CheckIf(ScreenShot(), "spellskill/skillDetail"):
+                    if not CheckIfAtThreshold(
+                        ScreenShot(), "spellskill/skillDetail", threshold=0.70
+                    ):
+                        return True
+
+                    # A delayed panel can survive the first click.  Retry the
+                    # visible close control before falling back to Android Back,
+                    # and report failure if it is still present.
+                    Press([450, 1525])
+                    Sleep(0.7)
+                    if not CheckIfAtThreshold(
+                        ScreenShot(), "spellskill/skillDetail", threshold=0.70
+                    ):
                         return True
                     PressReturn()
                     Sleep(0.4)
-                    return True
+                    return not CheckIfAtThreshold(
+                        ScreenShot(), "spellskill/skillDetail", threshold=0.70
+                    )
 
                 if time.time() >= deadline:
                     return False
@@ -2230,7 +2351,9 @@ def Factory():
                 open_deadline = time.time() + 2.5
                 while time.time() < open_deadline:
                     Sleep(0.4)
-                    if CheckIf(ScreenShot(),"spellskill/skillDetail"):
+                    if CheckIfAtThreshold(
+                        ScreenShot(), "spellskill/skillDetail", threshold=0.70
+                    ):
                         into_detail = True
                         break
                 if into_detail:
@@ -2341,7 +2464,9 @@ def Factory():
                     rows = 3
                     cell_w = width / cols
                     cell_h = height / rows
-                    for _ in range(2):
+                    # Do not use ``_`` here: it is the gettext lookup function
+                    # used throughout this nested function.
+                    for random_pass in range(2):
                         for row in range(rows):
                             for col in range(cols):
                                 left = x0 + col * cell_w
@@ -2376,7 +2501,7 @@ def Factory():
             # 스킬창이 남아 있으면 성공으로 간주하지 않는다.
             Sleep(1)
             scn = ScreenShot()
-            if CheckIf(scn, "spellskill/skillDetail"):
+            if CheckIfAtThreshold(scn, "spellskill/skillDetail", threshold=0.70):
                 logger.warning("스킬 상세창이 남아 있어 시전 실패로 처리합니다. 전략 항목을 유지합니다.")
                 CancelSkillSelection()
                 return SkillExecutionResult.FAILED
@@ -2947,6 +3072,13 @@ def Factory():
                     if (s == State.Inn) or (dungState == DungeonState.Quit):
                         logger.debug(_(f"本次地下城打开地图次数{gameFrozen_StateMapCounter}"))
                         break
+
+                    # IdentifyState already returned an actionable screen.
+                    # Frozen-state and elapsed-time guards are only valid for
+                    # an unresolved state; applying them to Map/Combat here
+                    # reused stale timers and caused false restarts.
+                    if dungState is not None:
+                        continue
 
                     gameFrozen_StateNoneScreenHistory, result = GameFrozenCheck(gameFrozen_StateNoneScreenHistory,scn)
                     if result:

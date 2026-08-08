@@ -55,3 +55,44 @@ def is_black_screen(image):
     """Return whether ``image`` is a likely blank/black emulator capture."""
 
     return classify_screen(image) is ScreenHealth.BLACK
+
+
+def is_pause_overlay(image, *, brightness_threshold=120.0):
+    """Return whether a portrait frame contains the centered ``Pause`` label.
+
+    The game does not expose a stable pause-button template.  Its pause
+    overlay does, however, render one short, bright label in a fixed central
+    band while dimming the rest of the scene.  A compact projection check is
+    less sensitive to localized text than a full-screen template match and
+    avoids treating the long text blocks in announcements or skill panels as
+    a pause screen.
+    """
+
+    if image is None or not hasattr(image, "shape"):
+        return False
+    if tuple(image.shape[:2]) != (1600, 900):
+        return False
+
+    pixels = np.asarray(image)
+    if pixels.ndim == 2:
+        grayscale = pixels.astype(np.float32)
+    else:
+        grayscale = pixels[..., :3].astype(np.float32).mean(axis=2)
+
+    # The label is centered around x=450 and y=800 on the supported frame.
+    band = grayscale[730:870, 300:600]
+    bright = band >= brightness_threshold
+    ys, xs = np.where(bright)
+    if len(xs) == 0:
+        return False
+
+    x_span = int(xs.max() - xs.min() + 1)
+    y_span = int(ys.max() - ys.min() + 1)
+    bright_count = int(bright.sum())
+
+    return (
+        float(band.mean()) <= 50.0
+        and 100 <= x_span <= 220
+        and 30 <= y_span <= 65
+        and 700 <= bright_count <= 2600
+    )
