@@ -2129,7 +2129,7 @@ def Factory():
             if info[1]=="intoWorldMap":
                 TeleportFromCityToWorldLocation(*info[2])
             elif info[1]=="EVENT":
-                FindCoordsOrElseExecuteFallbackAndWait("openworldmap", [[1,1],"EVENT",info[2]],2)
+                FindCoordsOrElseExecuteFallbackAndWait(["openworldmap","dungFlag"], [[1,1],"EVENT",info[2]],2)
             else:
                 pos = FindCoordsOrElseExecuteFallbackAndWait(info[1], info[2], info[3])
                 if info[0]=="press":
@@ -4471,6 +4471,8 @@ def Factory():
                     )
 
                     while 1:
+                        if setting._FORCESTOPING.is_set():
+                            break
                         scn = ScreenShot()
                         Press([450,600])
 
@@ -4486,12 +4488,18 @@ def Factory():
                                 "ouroboros": CheckHow(scn, "FFXI/org_ouro", [[4,664,890,283]]),
                                 "lesser_refined": CheckHow(scn, "FFXI/org_lesser_full", [[4,664,890,283]]),
                             }
+                            all_refined_match = CheckHow(
+                                scn, "FFXI/org_full", [[4,664,890,283]]
+                            )
 
                             best = max(vals, key=vals.get)
                             if vals[best] > 0.9:
                                 counter[best] += 1
                                 logger.info("Obtained %s.", ore_label(best))
-                            elif vals["lesser_refined"] < 0.8:
+                            elif (
+                                vals["lesser_refined"] < 0.8
+                                and all_refined_match > 0.9
+                            ):
                                 counter["all_refined"] += 1
                                 logger.info("Detected an all-refined ore reward.")
                             else:
@@ -4531,7 +4539,9 @@ def Factory():
                             lambda: Press(FindCoordsOrElseExecuteFallbackAndWait("OpenWorldMap",[[1,1],"leaveDung","donothing"],1))
                         )
 
-                        TeleportFromDungeonToCity(*quest._RTT)
+                        RestartableSequenceExecution(
+                            lambda: TeleportFromDungeonToCity(*quest._RTT)
+                        )
 
                         reunionParty("FFXI/FFXIStone")
                         resetBag = False
