@@ -51,6 +51,8 @@ class Upstream249MergeTests(unittest.TestCase):
             "FFXI-2F-elite",
             "FFXI-5F-4Elite",
             "FFXI-5F-2Elite",
+            "FFXI-5F-2Elite-mid",
+            "FFXI-5F-2Elite-bottom",
             "FFXI-5F-Elite",
         )
         self.assertNotIn("ff-collabo-dungeon1f", quests)
@@ -59,6 +61,8 @@ class Upstream249MergeTests(unittest.TestCase):
 
         self.assertEqual(quests["FFXI-5F-4Elite"]["_EOT"][1][1], "FFXI/zone5")
         self.assertEqual(quests["FFXI-5F-2Elite"]["_EOT"][1][1], "FFXI/zone5")
+        self.assertEqual(quests["FFXI-5F-2Elite-mid"]["_EOT"][1][1], "FFXI/zone5")
+        self.assertEqual(quests["FFXI-5F-2Elite-bottom"]["_EOT"][1][1], "FFXI/zone5")
         self.assertEqual(quests["FFXI-5F-Elite"]["_EOT"][1][1], "FFXI/zone5")
         for quest_key in ffxi_quests:
             self.assertEqual(
@@ -107,6 +111,7 @@ class Upstream249MergeTests(unittest.TestCase):
             "FFXI/EVENT_GCN",
             "FFXI/EVENT_VNH",
             "FFXI/zone5",
+            "FFXI/org_full",
         ):
             image_path = (
                 ROOT / "resources" / "images" / f"{template_name}.png"
@@ -218,6 +223,27 @@ class Upstream249MergeTests(unittest.TestCase):
             inn_block,
         )
         self.assertNotIn("\n                            return", inn_block)
+
+    def test_compatible_upstream_runtime_guards_are_present(self):
+        source = (SRC / "script.py").read_text(encoding="utf-8")
+        self.assertIn(
+            'FindCoordsOrElseExecuteFallbackAndWait(["openworldmap","dungFlag"]',
+            source,
+        )
+        mining_start = source.index('case "FFXI-Org":')
+        mining_end = source.index('##########################', mining_start)
+        mining_block = source[mining_start:mining_end]
+        self.assertIn("if setting._FORCESTOPING.is_set():", mining_block)
+        self.assertIn('CheckHow(\n                                scn, "FFXI/org_full"', mining_block)
+        self.assertIn(
+            "lambda: TeleportFromDungeonToCity(*quest._RTT)",
+            mining_block,
+        )
+
+    def test_new_quest_names_have_korean_mappings(self):
+        translations = assigned_string(SRC / "gui.py", "KO_TARGET_TRANSLATIONS")
+        self.assertIn("[恶名]FFXI 5F 中部2精英", translations)
+        self.assertIn("[恶名]FFXI 5F 底部2精英", translations)
 
 
 if __name__ == "__main__":
