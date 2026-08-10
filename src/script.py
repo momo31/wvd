@@ -1173,9 +1173,22 @@ def Factory():
         return False
     def PressReturn():
         DeviceShell("input keyevent KEYCODE_BACK")
+    def DismissSetTrapScreen(screen=None):
+        """Close the ranger trap setup screen before classifying the dungeon UI."""
+        scn = screen if screen is not None else ScreenShot()
+        if not CheckIf(scn, "settrap"):
+            return False
+        logger.info(_("检测到猎人的陷阱设置画面. 返回关闭后继续恢复."))
+        PressReturn()
+        Sleep(0.5)
+        return True
     def ReturnToDungeonAfterRecovery(max_back_presses=5):
         for back_count in range(max_back_presses + 1):
             scn = ScreenShot()
+            # The trap setup screen keeps the dungeon marker visible behind
+            # it, so dungFlag alone cannot prove that recovery panels closed.
+            if DismissSetTrapScreen(scn):
+                continue
             if CheckIf(scn, "dungflag") and not CheckIf(scn, "mapFlag"):
                 return True
             if back_count >= max_back_presses:
@@ -1246,6 +1259,8 @@ def Factory():
                 if setting._FORCESTOPING.is_set():
                     raise TaskStoppedException()
                 scn = ScreenShot()
+                if DismissSetTrapScreen(scn):
+                    continue
                 if isinstance(targetPattern, (list, tuple)):
                     for pattern in targetPattern:
                         if p:=checkPattern(scn, pattern):
@@ -1709,6 +1724,9 @@ def Factory():
         interpreted as a modal.
         """
 
+        if DismissSetTrapScreen(screen):
+            return True
+
         if is_pause_overlay(screen):
             logger.info("pause overlay detected; tapping the center to resume")
             Press([450, 800])
@@ -1733,6 +1751,23 @@ def Factory():
             Press(close_pos or [450, 1525])
             Sleep(0.7)
             return True
+
+        # The dungeon travel dialog contains a dark horizontal row labelled
+        # ``Return``.  At the relaxed modal threshold that row can look like
+        # the generic ``Close`` template, which makes the handler tap another
+        # travel destination before IdentifyState gets a chance to select the
+        # return option.  Let the dedicated return-dialog path handle it.
+        if CheckIf(screen, "returnText"):
+            return False
+
+        # Chest interaction screens are valid dungeon states, but their dark
+        # action rows can resemble the relaxed generic Close templates.  Let
+        # IdentifyState and StateChest handle every chest phase instead of
+        # dismissing it as a blocking modal.
+        chest_patterns = ("chestFlag", "whowillopenit", "chestOpening")
+        if any(CheckIf(screen, pattern) for pattern in chest_patterns):
+            logger.debug("chest interaction detected; deferring to state matching")
+            return False
 
         # Harken's modal is darkened, and its Close match is usually between
         # 0.60 and 0.65.  Announcements have a much stronger match.  Keep the
@@ -1876,6 +1911,7 @@ def Factory():
                 ("dungFlag",      DungeonState.Dungeon),
                 ("chestFlag",     DungeonState.Chest),
                 ("whowillopenit", DungeonState.Chest),
+                ("chestOpening",  DungeonState.Chest),
                 ("mapFlag",       DungeonState.Map),
                 ]
             for pattern, state in identifyConfig:
@@ -2136,6 +2172,9 @@ def Factory():
                 raise TaskStoppedException()
 
             screen = ScreenShot()
+            if DismissSetTrapScreen(screen):
+                tracker.observe(time.monotonic())
+                continue
             chest_active = bool(CheckIf(screen, "chestFlag"))
             if not chest_active:
                 chest_active = bool(CheckIf(screen, "whowillopenit"))
@@ -2492,7 +2531,7 @@ def Factory():
                     scn = ScreenShot()
                     if ok_pos := CheckIf(scn, "OK"):
                         break
-                    if next_pos := CheckIf(scn, "next"):
+                    if next_pos := CheckIf(scn, "next", [[1,291,898,600]]):
                         break
                     Sleep(0.5)
 
@@ -2501,10 +2540,19 @@ def Factory():
                     Sleep(2)
                 elif next_pos:
                     target_selected = False
-                    for target_pos in target_probe_points(next_pos):
+                    # The 2.5.4 combat layout places the selectable arrow
+                    # directly below the Next marker.  Try that upstream
+                    # location first, then keep the bounded local probes for
+                    # emulator frames where the marker is offset.
+                    target_positions = (
+                        (next_pos[0], next_pos[1] + 40),
+                    ) + target_probe_points(next_pos)
+                    for target_pos in target_positions:
                         Press(list(target_pos))
                         Sleep(0.8)
-                        fresh_next = CheckIf(ScreenShot(), "next")
+                        fresh_next = CheckIf(
+                            ScreenShot(), "next", [[1,291,898,600]]
+                        )
                         if not fresh_next:
                             target_selected = True
                             break
@@ -3235,6 +3283,8 @@ def Factory():
                         while 1:
                             counter_trychar += 1
                             scn=ScreenShot()
+                            if DismissSetTrapScreen(scn):
+                                continue
                             if (CheckIf(scn,"dungflag") and not CheckIf(scn,"mapFlag")) and (counter_trychar <=30):
                                 Press([36+(counter_trychar%3)*286,1425])
                                 Sleep(2)
@@ -4450,6 +4500,7 @@ def Factory():
                         if setting._FORCESTOPING.is_set():
                             break
                         scn = ScreenShot()
+                        Sleep(0.2)
                         Press([450,600])
 
                         if TryPressRetry(scn):

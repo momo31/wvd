@@ -102,6 +102,12 @@ class RecoveryScreenReturnTests(unittest.TestCase):
             if isinstance(node, ast.FunctionDef)
             and node.name == "ReturnToDungeonAfterRecovery"
         )
+        cls.dismiss_node = next(
+            node
+            for node in ast.walk(tree)
+            if isinstance(node, ast.FunctionDef)
+            and node.name == "DismissSetTrapScreen"
+        )
 
     def build_function(self, screens):
         screen_iter = iter(screens)
@@ -115,11 +121,18 @@ class RecoveryScreenReturnTests(unittest.TestCase):
                 cls.current += 0.05
                 return cls.current
 
+        def dismiss_settrap(screen):
+            if screen != "settrap":
+                return False
+            back_presses.append("back")
+            return True
+
         namespace = {
             "ScreenShot": lambda: next(screen_iter),
             "CheckIf": lambda screen, pattern: (
-                pattern == "dungflag" and screen == "dungeon"
+                pattern == "dungflag" and screen in {"dungeon", "settrap"}
             ),
+            "DismissSetTrapScreen": dismiss_settrap,
             "PressReturn": lambda: back_presses.append("back"),
             "Sleep": lambda _seconds: None,
             "time": FakeClock,
@@ -149,6 +162,60 @@ class RecoveryScreenReturnTests(unittest.TestCase):
         self.assertTrue(return_to_dungeon())
         self.assertEqual(back_presses, ["back", "back"])
 
+    def test_settrap_overlay_is_closed_before_accepting_its_dungeon_flag(self):
+        return_to_dungeon, back_presses = self.build_function(
+            ["settrap", "dungeon"]
+        )
+
+        self.assertTrue(return_to_dungeon())
+        self.assertEqual(back_presses, ["back"])
+
+    def test_settrap_dismissal_uses_android_back_once(self):
+        back_presses = []
+        sleeps = []
+        namespace = {
+            "ScreenShot": lambda: "settrap",
+            "CheckIf": lambda screen, pattern: (
+                screen == "settrap" and pattern == "settrap"
+            ),
+            "PressReturn": lambda: back_presses.append("back"),
+            "Sleep": sleeps.append,
+            "logger": type(
+                "FakeLogger",
+                (),
+                {"info": staticmethod(lambda _message: None)},
+            ),
+            "_": lambda message: message,
+        }
+        module = ast.Module(body=[self.dismiss_node], type_ignores=[])
+        ast.fix_missing_locations(module)
+        exec(compile(module, "<settrap-dismiss>", "exec"), namespace)
+        dismiss = namespace["DismissSetTrapScreen"]
+
+        self.assertFalse(dismiss("dungeon"))
+        self.assertTrue(dismiss("settrap"))
+        self.assertEqual(back_presses, ["back"])
+        self.assertEqual(sleeps, [0.5])
+
+    def test_settrap_dismissal_is_shared_by_state_and_recovery_paths(self):
+        required_blocks = {
+            "fallback": ("def FindCoordsOrElseExecuteFallbackAndWait", "def restartGame"),
+            "overlay": ("def HandleBlockingOverlay", "def IdentifyState"),
+            "post_combat": ("def ResolvePostCombatState", "def StateInn"),
+            "recovery": ("counter_trychar = -1", "########### 防止卡空气墙"),
+        }
+
+        for name, (start_marker, end_marker) in required_blocks.items():
+            with self.subTest(path=name):
+                start = self.source.index(start_marker)
+                end = self.source.index(end_marker, start)
+                self.assertIn(
+                    "DismissSetTrapScreen(",
+                    self.source[start:end],
+                )
+
+        self.assertTrue((ROOT / "resources" / "images" / "settrap.png").is_file())
+
     def test_recovery_log_reports_only_the_final_decision(self):
         self.assertNotIn('logger.info(_("进行开启宝箱后的恢复."))', self.source)
         self.assertEqual(self.source.count('logger.info(_("进行恢复. 原因: {a}."'), 2)
@@ -161,6 +228,7 @@ class RecoveryScreenReturnTests(unittest.TestCase):
             "进入地下城时",
             "复活后",
             "进行恢复. 原因: {a}.",
+            "检测到猎人的陷阱设置画面. 返回关闭后继续恢复.",
         )
 
         for language in ("en_US", "ko_KR"):

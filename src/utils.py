@@ -214,10 +214,72 @@ def LoadImage(path):
 
 ############################################
 def _config_file_path():
-    """Return the mutable config path beside the executable or project root."""
+    """Return the writable config path beside the executable or project root."""
     if getattr(sys, "frozen", False):
-        return os.path.join(os.path.dirname(sys.executable), "config.json")
+        return os.path.join(os.path.dirname(os.path.abspath(sys.executable)), "config.json")
     return os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "config.json"))
+
+
+def _config_has_runtime_settings(config_data):
+    """Return whether a config contains a user-selected emulator/task setup."""
+    general = config_data.get("GENERAL", {}) if isinstance(config_data, dict) else {}
+    if not isinstance(general, dict):
+        return False
+
+    emu_path = general.get("EMU_PATH")
+    if isinstance(emu_path, str) and emu_path.strip():
+        return True
+
+    emu_index = general.get("EMU_INDEX")
+    if emu_index not in (None, "", 0, "0"):
+        return True
+
+    adb_address = general.get("ADB_ADRESS")
+    if adb_address not in (None, "", "127.0.0.1:16384"):
+        return True
+
+    farm_target = general.get("FARM_TARGET")
+    return farm_target not in (None, "", "None")
+
+
+def _config_fallback_candidates():
+    """Yield nearby config files that can seed a frozen executable."""
+    if not getattr(sys, "frozen", False):
+        return []
+
+    candidates = []
+    seen = set()
+
+    def add_candidate(directory):
+        candidate = os.path.abspath(os.path.join(directory, "config.json"))
+        if candidate not in seen:
+            seen.add(candidate)
+            candidates.append(candidate)
+
+    add_candidate(os.getcwd())
+    directory = os.path.dirname(os.path.abspath(sys.executable))
+    # A repository build is commonly laid out as <repo>\\dist\\wvd\\wvd.exe.
+    # Walking a few parents also supports an extracted distribution with a
+    # config file placed beside its top-level folder.
+    for _ in range(4):
+        add_candidate(directory)
+        parent = os.path.dirname(directory)
+        if parent == directory:
+            break
+        directory = parent
+
+    return candidates
+
+
+def _find_config_fallback():
+    """Find a nearby non-empty config when a frozen config is only defaults."""
+    for candidate in _config_fallback_candidates():
+        if os.path.abspath(candidate) == os.path.abspath(CONFIG_FILE):
+            continue
+        data = LoadJson(candidate)
+        if _config_has_runtime_settings(data):
+            return candidate
+    return None
 
 
 CONFIG_FILE = _config_file_path()
@@ -233,7 +295,23 @@ def SaveConfigToFile(config_data):
 def LoadRawConfigFromFile(config_file_path = CONFIG_FILE):
     if config_file_path == None:
         config_file_path = CONFIG_FILE
-    return LoadJson((config_file_path))
+    config_data = LoadJson(config_file_path)
+
+    # Keep writes beside a frozen executable, but recover the user's existing
+    # repository config when the executable folder contains the generated
+    # first-run defaults (the usual dist/wvd layout).
+    if (
+        getattr(sys, "frozen", False)
+        and os.path.abspath(config_file_path) == os.path.abspath(CONFIG_FILE)
+        and not _config_has_runtime_settings(config_data)
+    ):
+        fallback_path = _find_config_fallback()
+        if fallback_path:
+            fallback_data = LoadJson(fallback_path)
+            if fallback_data:
+                return fallback_data
+
+    return config_data
 def SetOneVarInGeneralConfig(var, value):
     data = LoadRawConfigFromFile()
     data['GENERAL'][var] = value

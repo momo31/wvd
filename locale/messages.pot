@@ -2208,7 +2208,15 @@ msgid ""
 "3 在王城的工会里新建一个队伍, 并命名为FFXIStone.\n"
 "4 前往活动地图2F, 在哈肯正对的矿点前, 打上标记.\n"
 "5 确保这是该层唯一的标记.\n"
-"6 副本或主城中启动脚本."
+"6 副本或主城中启动脚本.\n"
+"\n"
+"Please follow these steps to set it up:\n"
+"1 Purchase 9,999 pickaxes.\n"
+"2 Have your six-person party remove all equipment, then carry as many pickaxes as possible.\n"
+"3 Create a new party at the Guild in the Royal City and name it \"FFXIStone\".\n"
+"4 Go to the 2nd floor and place a marker at the mining place directly facing Harken.\n"
+"5 Ensure this is the only marker on that floor.\n"
+"6 Start the script while in the dungeon or the city."
 msgstr ""
 
 #: src/script.py:721
@@ -2339,4 +2347,24 @@ msgstr ""
 
 #: CHANGES_LOG.md:31
 msgid "现在挖矿任务可以在挖矿中途停止."
+msgstr ""
+
+#: src/script.py
+msgid "检测到猎人的陷阱设置画面. 返回关闭后继续恢复."
+msgstr ""
+
+#: CHANGES_LOG.md:3
+msgid "修复了战斗中next无法点击的问题."
+msgstr ""
+
+#: CHANGES_LOG.md:4
+msgid "修复了偶发的无法识别到镐子数量不足的问题."
+msgstr ""
+
+#: CHANGES_LOG.md:5
+msgid "Fixed an issue where the script failed to launch due to an incorrect English quest name."
+msgstr ""
+
+#: CHANGES_LOG.md:6
+msgid "Added English descriptions for the mining quest. Enjoy!"
 msgstr ""

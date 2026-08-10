@@ -15,7 +15,7 @@ class Upstream2411MergeTests(unittest.TestCase):
         cls.mining_block = cls.script_source[start:]
 
     def test_version_and_mining_templates_are_integrated(self):
-        self.assertIn("__version__ = '2.5.3-momo.1'", self.main_source)
+        self.assertIn("__version__ = '2.5.4-momo.1'", self.main_source)
         for template in (
             "FFXI/receive",
             "FFXI/nothingToDig2",
@@ -56,7 +56,7 @@ class Upstream2411MergeTests(unittest.TestCase):
         skill_block = self.script_source[skill_start:skill_end]
 
         self.assertIn("for underscore in range(5):", skill_block)
-        self.assertIn("for target_pos in target_probe_points(next_pos):", skill_block)
+        self.assertIn("target_probe_points(next_pos)", skill_block)
         self.assertIn("if not target_selected:", skill_block)
         self.assertIn("for random_pass in range(2):", skill_block)
         self.assertIn("제한된 무작위 대상 선택으로 복구합니다.", skill_block)

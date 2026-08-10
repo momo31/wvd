@@ -12,6 +12,58 @@ class RuntimeGuardSourceTests(unittest.TestCase):
     def setUpClass(cls):
         cls.source = (SRC / "script.py").read_text(encoding="utf-8")
         cls.tree = ast.parse(cls.source, filename=str(SRC / "script.py"))
+        cls.overlay_node = next(
+            node
+            for node in ast.walk(cls.tree)
+            if isinstance(node, ast.FunctionDef)
+            and node.name == "HandleBlockingOverlay"
+        )
+
+    def build_overlay_handler(self, active_patterns=(), close_position=None):
+        calls = {"press": [], "sleep": [], "threshold": [], "debug": []}
+
+        class FakeArray:
+            def __getitem__(self, _key):
+                return self
+
+            @staticmethod
+            def mean():
+                return 40.0
+
+        class FakeNumpy:
+            @staticmethod
+            def asarray(_screen):
+                return FakeArray()
+
+        def check_at_threshold(_screen, pattern, threshold, roi=None):
+            calls["threshold"].append((pattern, threshold, roi))
+            if pattern in {"combatClose", "close"}:
+                return close_position
+            return False
+
+        namespace = {
+            "DismissSetTrapScreen": lambda _screen: False,
+            "is_pause_overlay": lambda _screen: False,
+            "CheckIf": lambda _screen, pattern: (
+                [450, 1264] if pattern in active_patterns else False
+            ),
+            "CheckIfAtThreshold": check_at_threshold,
+            "Press": calls["press"].append,
+            "Sleep": calls["sleep"].append,
+            "np": FakeNumpy,
+            "logger": type(
+                "FakeLogger",
+                (),
+                {
+                    "info": staticmethod(lambda _message: None),
+                    "debug": staticmethod(calls["debug"].append),
+                },
+            ),
+        }
+        module = ast.Module(body=[self.overlay_node], type_ignores=[])
+        ast.fix_missing_locations(module)
+        exec(compile(module, "<blocking-overlay>", "exec"), namespace)
+        return namespace["HandleBlockingOverlay"], calls
 
     def test_restart_state_cannot_reenter_stale_chest_screen(self):
         self.assertIn("runtimeContext._STATE_RESET_REQUIRED = True", self.source)
@@ -73,6 +125,59 @@ class RuntimeGuardSourceTests(unittest.TestCase):
             identify_block.index("identifyConfig ="),
         )
         self.assertIn('"spellskill/skillDetail", threshold=0.70', self.source)
+
+    def test_return_dialog_is_not_misclassified_as_a_close_overlay(self):
+        overlay_start = self.source.index("def HandleBlockingOverlay(")
+        overlay_end = self.source.index("def IdentifyState():", overlay_start)
+        overlay = self.source[overlay_start:overlay_end]
+
+        self.assertIn('if CheckIf(screen, "returnText"):', overlay)
+        self.assertIn(
+            "# The dungeon travel dialog contains a dark horizontal row labelled",
+            overlay,
+        )
+        self.assertLess(
+            overlay.index('if CheckIf(screen, "returnText"):'),
+            overlay.index("upper_mean ="),
+        )
+
+    def test_chest_dialogs_are_not_misclassified_as_close_overlays(self):
+        overlay_start = self.source.index("def HandleBlockingOverlay(")
+        overlay_end = self.source.index("def IdentifyState():", overlay_start)
+        overlay = self.source[overlay_start:overlay_end]
+
+        for pattern in ("chestFlag", "whowillopenit", "chestOpening"):
+            with self.subTest(pattern=pattern):
+                handler, calls = self.build_overlay_handler(
+                    active_patterns={pattern},
+                    close_position=[269, 1314],
+                )
+
+                self.assertFalse(handler("chest-screen"))
+                self.assertEqual(calls["press"], [])
+                self.assertFalse(
+                    any(threshold == 0.60 for _, threshold, _ in calls["threshold"])
+                )
+
+        self.assertLess(
+            overlay.index('chest_patterns = ("chestFlag", "whowillopenit", "chestOpening")'),
+            overlay.index("upper_mean ="),
+        )
+
+        identify_start = self.source.index("identifyConfig =")
+        identify_end = self.source.index("for pattern, state in identifyConfig:", identify_start)
+        identify_config = self.source[identify_start:identify_end]
+        self.assertIn('("chestOpening",  DungeonState.Chest)', identify_config)
+
+    def test_real_blocking_modal_still_closes(self):
+        handler, calls = self.build_overlay_handler(close_position=[269, 1314])
+
+        self.assertTrue(handler("modal-screen"))
+        self.assertEqual(calls["press"], [[269, 1314]])
+        self.assertEqual(calls["sleep"], [0.7])
+        self.assertTrue(
+            any(threshold == 0.60 for _, threshold, _ in calls["threshold"])
+        )
 
     def test_unresolved_state_is_the_only_path_for_frozen_and_elapsed_guards(self):
         dungeon_start = self.source.index("def StateDungeon(")
