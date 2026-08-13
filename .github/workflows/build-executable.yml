@@ -54,10 +54,15 @@ jobs:
     - name: Compile translation catalogs
       run: |
         python -m babel.messages.frontend compile -d locale -D messages
+        python -m babel.messages.frontend compile -d mod/telegram_remote_control/locale -D telegram_remote_control
+
+    - name: Run remote-control unit tests
+      run: |
+        python -m unittest discover -s mod/telegram_remote_control/tests -p "test_*.py"
 
     - name: Build with PyInstaller
       run: |
-        pyinstaller --onedir --add-data "resources;resources/" --add-data "locale;locale/" src/main.py -n wvd
+        pyinstaller --onedir --paths "." --add-data "resources;resources/" --add-data "locale;locale/" --add-data "mod/telegram_remote_control/locale;mod/telegram_remote_control/locale/" src/main.py -n wvd
         Write-Host "Build completed successfully."
 
     - name: Compress build artifact to ZIP

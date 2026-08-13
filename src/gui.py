@@ -5,6 +5,8 @@ import logging
 from script import *
 from auto_updater import *
 from utils import *
+from mod.telegram_remote_control.settings_ui import mount_telegram_settings
+from mod.telegram_remote_control.models import ControlState
 import webbrowser
 from datetime import datetime, date
 
@@ -1955,6 +1957,21 @@ class ConfigPanelApp(tk.Toplevel):
         self.button_auto_download.grid_remove()
         self.button_manual_download.grid_remove()
 
+        # Telegram settings live inside the same scrollable content area as
+        # the existing macro options.  Values are persisted by save_config()
+        # because script.CONFIG_VAR_LIST includes the three GENERAL keys.
+        self.telegram_settings_widgets = mount_telegram_settings(
+            content_root,
+            enabled_var=self.TELEGRAM_ENABLED,
+            token_var=self.TELEGRAM_BOT_TOKEN,
+            chat_id_var=self.TELEGRAM_ALLOWED_CHAT_ID,
+            event_queue=self.msg_queue,
+            save_config=self.save_config,
+            translator=_,
+        )
+        # Short alias kept for existing UI helpers below.
+        self.telegram_widgets = self.telegram_settings_widgets
+
     def updateACTIVE_REST_state(self):
         if self.ACTIVE_REST.get():
             self.rest_intervel_entry.config(state="normal")
@@ -2020,6 +2037,48 @@ class ConfigPanelApp(tk.Toplevel):
             for widget in Button_and_Entry:
                 widget.configure(state="normal")
             self.updateACTIVE_REST_state()
+
+        if hasattr(self, "telegram_widgets"):
+            widget_state = "disabled" if state == tk.DISABLED else "normal"
+            self.telegram_widgets.enabled_check.configure(state=widget_state)
+            self.telegram_widgets.token_entry.configure(state=widget_state)
+            self.telegram_widgets.chat_id_entry.configure(state=widget_state)
+            self.telegram_widgets.apply_button.configure(state=widget_state)
+            self.telegram_widgets.test_button.configure(
+                state="disabled" if widget_state == "disabled" else "normal"
+            )
+
+    def apply_remote_control_state(self, state):
+        """Reflect canonical remote state without changing task ownership."""
+        try:
+            state = ControlState(state)
+        except Exception:
+            return
+        if not hasattr(self, "telegram_widgets"):
+            return
+        labels = {
+            ControlState.IDLE: _("Telegram: 대기 중"),
+            ControlState.STARTING: _("Telegram: 게임 시작 중"),
+            ControlState.RUNNING: _("Telegram: 매크로 실행 중"),
+            ControlState.STOP_REQUESTED: _("Telegram: 정지 처리 중"),
+            ControlState.RETURNING_TO_TOWN: _("Telegram: 마을 복귀 중"),
+            ControlState.RETURNING_TO_TITLE: _("Telegram: 타이틀 복귀 중"),
+            ControlState.AT_TITLE: _("Telegram: 타이틀 대기"),
+            ControlState.GAME_STOPPED_FALLBACK: _("Telegram: 강제 종료 완료"),
+            ControlState.ERROR: _("Telegram: 오류"),
+        }
+        self.telegram_widgets.status_label.configure(text=labels.get(state, ""))
+        busy_states = {
+            ControlState.STARTING,
+            ControlState.RUNNING,
+            ControlState.STOP_REQUESTED,
+            ControlState.RETURNING_TO_TOWN,
+            ControlState.RETURNING_TO_TITLE,
+        }
+        busy = state in busy_states
+        self.quest_active = busy
+        self.start_stop_btn.config(text=_("중지") if busy else _("시작"))
+        self.set_controls_state(tk.DISABLED if busy else tk.NORMAL)
 
     def toggle_start_stop(self):
         if not self.quest_active:

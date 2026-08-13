@@ -1,3 +1,11 @@
+import sys
+
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 from ppadb.client import Client as AdbClient
 try:
     from win10toast import ToastNotifier
@@ -14,7 +22,6 @@ import subprocess
 from utils import *
 import random
 from threading import Thread,Event
-from pathlib import Path
 import numpy as np
 import copy
 import struct
@@ -35,6 +42,27 @@ from combat_strategy import (
 from post_combat import PostCombatDecision, PostCombatTracker
 from recovery import RecoveryPlan, RecoveryReason, RecoverySupervisor
 from screen_health import ScreenHealth, classify_screen, is_pause_overlay
+from mod.telegram_remote_control.adapters import GameAutomationAdapter
+from mod.telegram_remote_control.config import extend_config_var_list
+from mod.telegram_remote_control.constants import HANDOFF_TARGET_7000G
+from mod.telegram_remote_control.models import (
+    CheckpointKind,
+    ControlState,
+    RemoteRecoverySuppressed,
+    RemoteStopSignal,
+    StartReason,
+    TaskExitReason,
+)
+from mod.telegram_remote_control.runtime_bridge import (
+    raise_if_remote_recovery_disallowed,
+    remote_stop_checkpoint,
+    request_task_handoff,
+)
+from mod.telegram_remote_control.stop_orchestrator import (
+    execute_recovery_suppressed_fallback,
+    execute_remote_stop,
+)
+from mod.telegram_remote_control.login_transition import prepare_telegram_run
 
 
 class TaskStoppedException(Exception):
@@ -96,6 +124,7 @@ CONFIG_VAR_LIST = [
             ["TEMPLATE",   "BYPASS_THE_WALL",         tk.BooleanVar, False],
             ["TEMPLATE",   "RE_ASSEMBLE_PARTY",       tk.BooleanVar, False],
             ]
+CONFIG_VAR_LIST = extend_config_var_list(CONFIG_VAR_LIST, tk)
 class FarmConfig:
     for attr_name, var_type, var_config_name, var_default_value in CONFIG_VAR_LIST:
         locals()[var_config_name] = var_default_value
@@ -106,6 +135,12 @@ class FarmConfig:
         self._MSGQUEUE = None
         #### 底层接口
         self._ADBDEVICE = None
+        # Optional remote-control context. Local GUI runs leave these unset;
+        # the Telegram controller injects them before starting Farm.
+        self._REMOTE_RUNTIME = None
+        self._START_REASON = StartReason.LOCAL
+        self._TASK_RUN_ID = None
+        self._REMOTE_HANDOFF_TARGET = None
     def __getitem__(self, key):
         return getattr(self, key)
     def __getattr__(self, name):
@@ -305,6 +340,14 @@ def GetADBPathFromEmuPath(emu_path):
     
         return adb_path
 def CheckAndRecoverDevice(setting : FarmConfig, runtimeContext: RuntimeContext, FORCE_RESTART_EMU = False, FORCE_RESTART_ADB = False):
+    def WaitForDeviceRecovery(seconds):
+        """Sleep in stop-aware slices while recovering the ADB/emulator."""
+        stop_event = getattr(setting, "_FORCESTOPING", None)
+        if stop_event is None:
+            time.sleep(seconds)
+            return True
+        return not stop_event.wait(max(0.0, float(seconds)))
+
     def CheckEmulator():
         result = subprocess.run(
             "tasklist /FO CSV /NH | findstr \"MuMuNxDevice.exe MuMuPlayer.exe\"",
@@ -340,7 +383,8 @@ def CheckAndRecoverDevice(setting : FarmConfig, runtimeContext: RuntimeContext, 
                     stderr=subprocess.DEVNULL,
                     check=False  # 不检查命令是否成功（进程可能不存在）
                 )
-                time.sleep(1)
+                if not WaitForDeviceRecovery(1):
+                    return
                 subprocess.run(
                     f"taskkill /f /im HD-Adb.exe", 
                     shell=True,
@@ -375,7 +419,8 @@ def CheckAndRecoverDevice(setting : FarmConfig, runtimeContext: RuntimeContext, 
                         stderr=subprocess.DEVNULL,
                         check=False  # 不检查命令是否成功（进程可能不存在）
                     )
-                    time.sleep(1)
+                    if not WaitForDeviceRecovery(1):
+                        return
                     subprocess.run(
                         f"taskkill /F /IM MuMuVMMHeadless.exe", 
                         shell=True,
@@ -383,7 +428,8 @@ def CheckAndRecoverDevice(setting : FarmConfig, runtimeContext: RuntimeContext, 
                         stderr=subprocess.DEVNULL,
                         check=False  # 不检查命令是否成功（进程可能不存在）
                     )
-                    time.sleep(1)
+                    if not WaitForDeviceRecovery(1):
+                        return
                 else:
                     logger.info(_("模拟器uid未知, 全杀了."))
                     subprocess.run(
@@ -393,7 +439,8 @@ def CheckAndRecoverDevice(setting : FarmConfig, runtimeContext: RuntimeContext, 
                         stderr=subprocess.DEVNULL,
                         check=False  # 不检查命令是否成功（进程可能不存在）
                     )
-                    time.sleep(1)
+                    if not WaitForDeviceRecovery(1):
+                        return
                     subprocess.run(
                         f"taskkill /f /im {emulator_SVC}", 
                         shell=True,
@@ -401,7 +448,8 @@ def CheckAndRecoverDevice(setting : FarmConfig, runtimeContext: RuntimeContext, 
                         stderr=subprocess.DEVNULL,
                         check=False  # 不检查命令是否成功（进程可能不存在）
                     )
-                    time.sleep(1)
+                    if not WaitForDeviceRecovery(1):
+                        return
 
             # Unix/Linux 系统使用 pkill 命令
             else:
@@ -447,7 +495,8 @@ def CheckAndRecoverDevice(setting : FarmConfig, runtimeContext: RuntimeContext, 
                 cwd=os.path.dirname(hd_player_path))
 
             # 延时
-            time.sleep(5)
+            if not WaitForDeviceRecovery(5):
+                return False
 
             # 启动后检查进程
             aft_results_list = CheckEmulator()
@@ -464,7 +513,8 @@ def CheckAndRecoverDevice(setting : FarmConfig, runtimeContext: RuntimeContext, 
             return False
         
         logger.info(_("等待模拟器启动..."))
-        time.sleep(15)
+        if not WaitForDeviceRecovery(15):
+            return False
 
     # 以上是内部函数
     ####################################
@@ -472,17 +522,21 @@ def CheckAndRecoverDevice(setting : FarmConfig, runtimeContext: RuntimeContext, 
 
     if FORCE_RESTART_EMU:
         KillEmulator()
-        time.sleep(1)
+        if not WaitForDeviceRecovery(1):
+            return None
     
     if FORCE_RESTART_ADB:
         KillAdb()
-        time.sleep(1)
+        if not WaitForDeviceRecovery(1):
+            return None
 
     MAXRETRIES = 20
 
     adb_path = GetADBPathFromEmuPath(setting.EMU_PATH)
 
     for attempt in range(MAXRETRIES):
+        if not WaitForDeviceRecovery(0):
+            return None
         logger.info(_("-----------------------\n开始尝试连接adb. 次数:{a}/{b}...").format(a=attempt + 1, b=MAXRETRIES))
 
         if attempt == 3:
@@ -495,13 +549,15 @@ def CheckAndRecoverDevice(setting : FarmConfig, runtimeContext: RuntimeContext, 
             logger.info(_("检查adb服务..."))
             result = CMDLine(f"\"{adb_path}\" devices")
             if ("daemon not running" in result.stderr) or ("offline" in result.stdout):
-                time.sleep(2)
+                if not WaitForDeviceRecovery(2):
+                    return None
                 result = CMDLine(f"\"{adb_path}\" devices")
                 if ("daemon not running" in result.stderr) or ("offline" in result.stdout):
                     logger.info("adb服务未启动!\n启动adb服务...")
                     CMDLine(f"\"{adb_path}\" kill-server")
                     CMDLine(f"\"{adb_path}\" start-server")
-                    time.sleep(2)
+                    if not WaitForDeviceRecovery(2):
+                        return None
 
             logger.debug(_("尝试连接到adb..."))
             result = CMDLine(f"\"{adb_path}\" connect {setting.ADB_ADRESS}")
@@ -529,16 +585,20 @@ def CheckAndRecoverDevice(setting : FarmConfig, runtimeContext: RuntimeContext, 
                 logger.info(_("无法连接. 检查adb端口."))
 
             logger.info(_("连接失败: {a}").format(a=result.stderr.strip()))
-            time.sleep(2)
+            if not WaitForDeviceRecovery(2):
+                return None
             KillEmulator()
             KillAdb()
-            time.sleep(2)
+            if not WaitForDeviceRecovery(2):
+                return None
         except Exception as e:
             logger.error(_("重启ADB服务时出错: {a}").format(a=e))
-            time.sleep(2)
+            if not WaitForDeviceRecovery(2):
+                return None
             KillEmulator()
             KillAdb()
-            time.sleep(2)
+            if not WaitForDeviceRecovery(2):
+                return None
             # Keep the bounded recovery loop alive. A transient ADB daemon
             # failure must not leave ScreenShot using a stale device handle.
             continue
@@ -569,7 +629,8 @@ def CheckAndRecoverDevice(setting : FarmConfig, runtimeContext: RuntimeContext, 
                     except Exception as e:
                         logger.debug(f"부팅 상태 확인 중 예외 발생: {e}")
                     logger.info(_("Android 시스템 부팅 대기 중..."))
-                    time.sleep(3)
+                    if not WaitForDeviceRecovery(3):
+                        return None
                 if not boot_completed:
                     logger.warning(_("경고: Android 부팅 대기 시간이 초과되었습니다."))
                 return device
@@ -628,6 +689,10 @@ def Factory():
     def ResetDevice(force_restart_emu=False, force_restart_adb = False):
         nonlocal setting # 修改device
         nonlocal runtimeContext
+        raise_if_remote_recovery_disallowed(
+            getattr(setting, "_REMOTE_RUNTIME", None),
+            "reset_device",
+        )
         if device := CheckAndRecoverDevice(setting, runtimeContext, force_restart_emu, force_restart_adb):
             setting._ADBDEVICE = device
             logger.info(_("ADB服务成功启动，设备已连接."))
@@ -1308,6 +1373,10 @@ def Factory():
             return None # restartGame会抛出异常 所以直接返回none就行了
     def restartGame(skip_screenshot = False, force_restart_EMU = False):
         nonlocal runtimeContext
+        raise_if_remote_recovery_disallowed(
+            getattr(setting, "_REMOTE_RUNTIME", None),
+            "restart_game",
+        )
         runtimeContext._COMBATSPD = False # 重启会重置2倍速, 所以重置标识符以便重新打开.
         runtimeContext._TIME_CHEST = 0
         runtimeContext._TIME_COMBAT = 0 # 因为重启了, 所以清空战斗和宝箱计时器.
@@ -1404,6 +1473,10 @@ def Factory():
         pass
     def RestartableSequenceExecution(*operations):
         while True:
+            remote_stop_checkpoint(
+                getattr(setting, "_REMOTE_RUNTIME", None),
+                CheckpointKind.BETWEEN_OPERATIONS,
+            )
             if setting._FORCESTOPING.is_set():
                 logger.info(_("任务已停止."))
                 return
@@ -2075,7 +2148,12 @@ def Factory():
                         logger.error(f"Failed to save anomaly screenshot: {e}")
                 if (CheckIf(screen,"cursedWheel_timeLeap")):
                     if (setting.ACTIVE_BEG_MONEY):
-                        setting._MSGQUEUE.put(("turn_to_7000G",""))
+                        request_task_handoff(
+                            getattr(setting, "_REMOTE_RUNTIME", None),
+                            setting._MSGQUEUE,
+                            target=HANDOFF_TARGET_7000G,
+                            event_name="turn_to_7000G",
+                        )
                         raise SystemExit
                     else:
                         logger.info(_("看起来你没有选择找王女要钱. 那么就等两个小时吧."), extra={"summary": True})
@@ -3173,6 +3251,10 @@ def Factory():
         
         ##############################################
         while 1:
+            remote_stop_checkpoint(
+                getattr(setting, "_REMOTE_RUNTIME", None),
+                CheckpointKind.DUNGEON_STABLE,
+            )
             logger.info("----------------------")
             if setting._FORCESTOPING.is_set():
                 logger.info(_("即将停止脚本..."))
@@ -3219,6 +3301,10 @@ def Factory():
                                 postCombatResolutionPending = False
                             continue
                         postCombatResolutionPending = False
+                    remote_stop_checkpoint(
+                        getattr(setting, "_REMOTE_RUNTIME", None),
+                        CheckpointKind.DUNGEON_STABLE,
+                    )
                     Press([1,1])
                     ########### 重置战斗策略
                     if (runtimeContext._TIME_COMBAT !=0) and (setting.RELOAD_STRATEGY_WHEN == _("每场战斗前")):
@@ -3456,6 +3542,10 @@ def Factory():
         nonlocal runtimeContext
         state = None
         while 1:
+            remote_stop_checkpoint(
+                getattr(setting, "_REMOTE_RUNTIME", None),
+                CheckpointKind.BETWEEN_OPERATIONS,
+            )
             logger.info("======================")
             Sleep(1)
             if setting._FORCESTOPING.is_set():
@@ -3475,6 +3565,10 @@ def Factory():
                         logger.info(_("即将停止脚本..."))
                         break
                 case State.Inn:
+                    remote_stop_checkpoint(
+                        getattr(setting, "_REMOTE_RUNTIME", None),
+                        CheckpointKind.TOWN_STABLE,
+                    )
                     if setting.RE_ASSEMBLE_PARTY:
                         period = int(runtimeContext._TOTALTIME // (6 * 3600))
                         if runtimeContext._LAST_BAGCLEAR != period:
@@ -3493,6 +3587,10 @@ def Factory():
                         )
                     state = State.EoT
                 case State.EoT:
+                    remote_stop_checkpoint(
+                        getattr(setting, "_REMOTE_RUNTIME", None),
+                        CheckpointKind.BETWEEN_OPERATIONS,
+                    )
                     DungeonCompletionCounter()
                     RestartableSequenceExecution(
                         lambda:StateEoT()
@@ -4589,11 +4687,65 @@ def Factory():
         ##########################
         setting._FINISHINGCALLBACK()
         return
+    def BuildRemoteAdapter():
+        """Expose only bounded game operations to the remote feature.
+
+        The adapter deliberately uses the legacy matching/ADB primitives so
+        the Telegram state machine cannot reach mutable controller globals
+        directly.  ``control_shell`` bypasses ``DeviceShell``'s recovery
+        loop; a stop fallback must never restart or rebind the emulator.
+        """
+
+        def control_shell(argv):
+            if setting is None or setting._ADBDEVICE is None:
+                raise RuntimeError("ADB device is not connected")
+            command = " ".join(str(part) for part in argv)
+            value = setting._ADBDEVICE.shell(command, timeout=5)
+            return value.decode(errors="replace") if isinstance(value, bytes) else str(value or "")
+
+        def match_base(screen, name, roi=None, threshold=0.8):
+            return CheckIfAtThreshold(screen, name, threshold=threshold, roi=roi)
+
+        def return_via_quest_rtt():
+            if quest is None or not getattr(quest, "_RTT", None):
+                return False
+            TeleportFromDungeonToCity(*quest._RTT)
+            return True
+
+        def finish_combat_or_chest(kind):
+            if kind == "combat":
+                StateCombat()
+            else:
+                StateChest()
+            return True
+
+        def local_stop_requested():
+            event = getattr(setting, "_FORCESTOPING", None) if setting is not None else None
+            return bool(event is not None and event.is_set())
+
+        return GameAutomationAdapter(
+            screenshot=ScreenShot,
+            match_base=match_base,
+            is_black_frame=lambda screen: classify_screen(screen) is ScreenHealth.BLACK,
+            press=Press,
+            press_back=PressReturn,
+            sleep=Sleep,
+            try_press_retry=TryPressRetry,
+            device_shell=DeviceShell,
+            control_shell=control_shell,
+            return_via_quest_rtt=return_via_quest_rtt,
+            finish_combat_or_chest=finish_combat_or_chest,
+            local_stop_requested=local_stop_requested,
+            local_stop_exception_type=TaskStoppedException,
+            failure_dir=Path(LOGS_FOLDER_NAME),
+        )
+
     def Farm(set:FarmConfig):
         nonlocal quest
         nonlocal setting # 初始化
         nonlocal runtimeContext
-        
+        runtime = getattr(set, "_REMOTE_RUNTIME", None)
+        adapter = None
 
         setting = set
         runtimeContext = RuntimeContext()
@@ -4607,19 +4759,66 @@ def Factory():
                 raise TaskStoppedException()
 
             quest = LoadQuest(setting.FARM_TARGET)
+            if quest is None:
+                if runtime is not None:
+                    runtime.mark_exit(
+                        TaskExitReason.ERROR,
+                        "매크로 설정을 불러오지 못했습니다.",
+                        "load_quest",
+                    )
+                setting._FINISHINGCALLBACK()
+                return
+            if runtime is not None:
+                adapter = BuildRemoteAdapter()
+                runtime.register_adapter(
+                    adapter,
+                    handoff_target=getattr(setting, "_REMOTE_HANDOFF_TARGET", None),
+                )
+                setting._REMOTE_HANDOFF_TARGET = None
+                if runtime.start_reason is StartReason.TELEGRAM:
+                    if not prepare_telegram_run(adapter, runtime):
+                        setting._FINISHINGCALLBACK()
+                        return
+                runtime.report_progress(ControlState.RUNNING, "매크로 실행 중입니다.")
             if quest:
                 if quest._TYPE =="dungeon":
                     DungeonFarm()
                 else:
                     QuestFarm()
-            else:
-                setting._FINISHINGCALLBACK()
+            if runtime is not None and runtime.exit_reason is None:
+                reason = (
+                    TaskExitReason.LOCAL_STOP
+                    if runtime.worker_force_stop_event.is_set()
+                    else TaskExitReason.COMPLETED
+                )
+                runtime.mark_exit(reason, "작업이 중지되었습니다." if reason is TaskExitReason.LOCAL_STOP else "작업이 완료되었습니다.")
+        except RemoteStopSignal as signal:
+            if runtime is not None and adapter is not None:
+                execute_remote_stop(adapter, runtime, signal)
+            elif runtime is not None:
+                runtime.mark_exit(TaskExitReason.ERROR, "정지 전환을 시작할 수 없습니다.", "stop_adapter_missing")
+            setting._FINISHINGCALLBACK()
+        except RemoteRecoverySuppressed as suppressed:
+            if runtime is not None:
+                execute_recovery_suppressed_fallback(adapter, runtime, suppressed)
+            setting._FINISHINGCALLBACK()
         except TaskStoppedException:
             logger.info(_("任务已停止."))
+            if runtime is not None and runtime.exit_reason is None:
+                if runtime.is_stop_requested() and adapter is not None:
+                    execute_remote_stop(
+                        adapter,
+                        runtime,
+                        RemoteStopSignal(CheckpointKind.BETWEEN_OPERATIONS),
+                    )
+                else:
+                    runtime.mark_exit(TaskExitReason.LOCAL_STOP, "작업이 중지되었습니다.")
             setting._FINISHINGCALLBACK()
         except RestartSignal:
             # 복구 래퍼(RestartableSequenceExecution 등) 밖으로 전파된 재시작 신호의 최후 방어선.
             # 잡지 않으면 작업 스레드가 죽고 _FINISHINGCALLBACK 미호출로 GUI가 실행 중 상태로 고착된다.
             logger.warning(_("게임 재시작 신호가 복구 범위 밖으로 전파되었습니다. 작업을 종료합니다."))
+            if runtime is not None and runtime.exit_reason is None:
+                runtime.mark_exit(TaskExitReason.ERROR, "게임 재시작 신호로 작업이 종료되었습니다.", "restart_signal")
             setting._FINISHINGCALLBACK()
     return Farm
