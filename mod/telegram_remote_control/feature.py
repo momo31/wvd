@@ -8,9 +8,10 @@ import threading
 import time
 import uuid
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 
-from .command_service import TelegramCommandService
+from .command_service import COMMAND_MENU_TEXT, TelegramCommandService
 from .config import (
     TelegramConfigError,
     clear_telegram_secrets,
@@ -42,10 +43,16 @@ from .models import (
     TelegramSettings,
 )
 from .runtime_bridge import RemoteRuntime
+from .recent_logs import (
+    TELEGRAM_SAFE_MESSAGE_CHARS,
+    fit_tail_text,
+    read_recent_log,
+    redact_log_text,
+)
 
 
 ALLOWED_TRANSITIONS = {
-    ControlState.IDLE: {ControlState.STARTING, ControlState.RUNNING},
+    ControlState.IDLE: {ControlState.STARTING, ControlState.RUNNING, ControlState.ERROR},
     ControlState.STARTING: {
         ControlState.RUNNING,
         ControlState.STOP_REQUESTED,
@@ -99,6 +106,7 @@ class TelegramRemoteFeature:
         self._finished_waiting_for_force: dict[str, TaskFinishedPayload] = {}
         self._last_test_request_id: str | None = None
         self._started = False
+        self.log_directory = Path.cwd() / "logs"
 
     def start(self) -> None:
         try:
@@ -191,6 +199,10 @@ class TelegramRemoteFeature:
             self._handle_stop(payload)
         elif payload.command is RemoteCommand.STATUS:
             self._handle_status(payload)
+        elif payload.command is RemoteCommand.STAT:
+            self._handle_stat(payload)
+        elif payload.command is RemoteCommand.MENU:
+            self._handle_menu(payload)
 
     def _handle_start(self, payload: TelegramCommandPayload) -> None:
         if self.state not in {ControlState.IDLE, ControlState.AT_TITLE, ControlState.GAME_STOPPED_FALLBACK, ControlState.ERROR} or self.ports.task_is_alive():
@@ -253,6 +265,48 @@ class TelegramRemoteFeature:
             f"마지막 오류: {snapshot.last_error or '없음'}"
         )
         self.service.enqueue(OutboundMessage(f"status:{payload.update_id}", payload.chat_id, text, NotificationPriority.ACKNOWLEDGEMENT))
+
+    def _handle_stat(self, payload: TelegramCommandPayload) -> None:
+        snapshot = self.status_snapshot()
+        target = snapshot.farm_target_text or "없음"
+        excerpt = read_recent_log(self.log_directory)
+        source = excerpt.file_name or "없음"
+        header = (
+            "📋 WvDAS 최근 60초 로그\n"
+            f"상태: {self.translate(snapshot.state.value)}\n"
+            f"매크로: {target}\n"
+            f"로그: {source}"
+        )
+        if excerpt.text:
+            body = excerpt.text
+            if excerpt.read_truncated:
+                body = "로그가 많아 파일의 최신 구간만 읽었습니다.\n" + body
+        elif excerpt.file_name is None:
+            body = "현재 로그 파일이 없습니다."
+        else:
+            body = "최근 60초 내 로그가 없습니다."
+            if excerpt.latest_timestamp is not None:
+                body += f"\n마지막 로그 시각: {excerpt.latest_timestamp:%Y-%m-%d %H:%M:%S}"
+
+        secrets = (self.current_settings.bot_token, self.current_settings.allowed_chat_id)
+        header = redact_log_text(header, secrets)
+        body = redact_log_text(body, secrets)
+        body, _ = fit_tail_text(
+            body,
+            TELEGRAM_SAFE_MESSAGE_CHARS - len(header) - 2,
+        )
+        text = f"{header}\n\n{body}"
+        self.service.enqueue(
+            OutboundMessage(
+                f"stat:{payload.update_id}",
+                payload.chat_id,
+                text,
+                NotificationPriority.ACKNOWLEDGEMENT,
+            )
+        )
+
+    def _handle_menu(self, payload: TelegramCommandPayload) -> None:
+        self._send_ack(payload.chat_id, COMMAND_MENU_TEXT, payload.update_id)
 
     def _handle_reconfigure(self, _value) -> None:
         try:
@@ -321,14 +375,14 @@ class TelegramRemoteFeature:
             if force_result is None or not force_result.game_stopped:
                 self._transition(ControlState.ERROR)
                 self.last_error = "게임 종료 확인에 실패했습니다."
+                self._send_abnormal_exit(payload, detail=self.last_error)
             else:
                 self._transition(ControlState.GAME_STOPPED_FALLBACK)
                 self._send_terminal(payload, "종료 작업 비정상 완료")
         elif payload.reason is TaskExitReason.ERROR:
             self._transition(ControlState.ERROR)
             self.last_error = payload.detail
-            if payload.notification_chat_id:
-                self._send_terminal(payload, f"오류: {payload.detail}")
+            self._send_abnormal_exit(payload)
         else:
             self._transition(ControlState.IDLE)
         if self.current_runtime is not None and self.current_runtime.run_id == payload.run_id:
@@ -376,6 +430,32 @@ class TelegramRemoteFeature:
                 key,
                 payload.notification_chat_id,
                 f"{title}\n매크로: {payload.farm_target_text}\n경과 시간: {self._format_elapsed(payload.elapsed_seconds)}",
+                NotificationPriority.TERMINAL,
+            )
+        )
+
+    def _send_abnormal_exit(
+        self,
+        payload: TaskFinishedPayload,
+        *,
+        detail: str | None = None,
+    ) -> None:
+        if not self.current_settings.enabled or not self.current_settings.allowed_chat_id:
+            return
+        detail = detail or payload.detail or "알 수 없는 오류"
+        phase = payload.failure_phase or "알 수 없음"
+        self.service.enqueue(
+            OutboundMessage(
+                f"abnormal-exit:{payload.run_id}",
+                self.current_settings.allowed_chat_id,
+                (
+                    "⚠️ 매크로 비정상 종료\n"
+                    f"매크로: {payload.farm_target_text or '없음'}\n"
+                    f"오류: {detail}\n"
+                    f"실패 단계: {phase}\n"
+                    f"경과 시간: {self._format_elapsed(payload.elapsed_seconds)}\n"
+                    "최근 실행 내용은 stat 명령으로 확인할 수 있습니다."
+                ),
                 NotificationPriority.TERMINAL,
             )
         )

@@ -191,7 +191,7 @@ class Upstream249MergeTests(unittest.TestCase):
 
     def test_fork_version_keeps_upstream_update_comparison(self):
         version = assigned_string(SRC / "main.py", "__version__")
-        self.assertEqual(version, "2.5.4-momo.1")
+        self.assertEqual(version, "2.5.4-momo.5")
 
         from auto_updater import AutoUpdater
 
@@ -422,7 +422,7 @@ class Upstream249MergeTests(unittest.TestCase):
             ROOT / "resources" / "quest" / "quest.json"
         )
 
-        self.assertEqual(assigned_string(SRC / "main.py", "__version__"), "2.5.4-momo.1")
+        self.assertEqual(assigned_string(SRC / "main.py", "__version__"), "2.5.4-momo.5")
         self.assertIn('DeviceShell("dumpsys window | grep mCurrentFocus")', source)
         self.assertIn('else "screencap 2>/dev/null"', source)
         self.assertIn("Multiple displays were found", source)

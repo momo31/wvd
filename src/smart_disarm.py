@@ -123,6 +123,7 @@ class DisarmConfig:
     # --- 안전/폴백 ---
     max_total_samples = 40     # 전체 캡처 상한(무한루프 방지). 탭 경험 시 동적 확장(아래 tap_extend 참조).
     max_total_samples_extended = 60  # 탭 실행 경험이 있는 세션에서의 확장 상한 (다중 자물쇠 대응)
+    max_no_progress_samples = 20  # 탭 없이 이만큼 캡처하면 QTE 시간초과 전에 구식 연타로 복구
     max_consecutive_miss = 6   # (막대를 한 번이라도 본 뒤) 연속 검출 실패 허용
     nobar_max_miss = 2         # 막대를 한 번도 못 본 상태의 미검출 허용. 초과 시 비게임 화면으로 보고 즉시 반환.
     bypass_fast_game = False   # [옵션] 빠른(어려운) 게임은 폴백으로 우회 (사용자 선택)
@@ -392,6 +393,7 @@ class SmartDisarm:
         v_est = 0.0
         last_dt = cfg.sample_interval or cfg.capture_dt_prior
         shots = 0
+        shots_since_progress = 0
         miss = 0
         tapped = False         # 이번 세션에서 탭을 한 번이라도 실행했는가 (동적 상한 확장용)
         fast_hits = 0
@@ -421,6 +423,7 @@ class SmartDisarm:
             # 종료 시각을 그대로 쓰면 측정 시각이 계통적으로 늦어져 탭이 통째로 늦는다.
             t = t0 + cfg.capture_grab_frac * (t1 - t0)
             shots += 1
+            shots_since_progress += 1
 
             if img is None:
                 miss += 1
@@ -489,6 +492,15 @@ class SmartDisarm:
                     return self._give_up("커서 연속 미검출")
                 continue
             miss = 0
+
+            # 캡처가 느리거나 커서 주기와 동기화되면 추정이 계속 폐기될 수 있다.
+            # QTE 자체가 끝날 때까지 아무 입력도 하지 않는 대신, 활성 막대가 확인된
+            # 상태에서만 제한 시간 전에 구식 연타로 복구한다.
+            if (cfg.max_no_progress_samples > 0
+                    and shots_since_progress >= cfg.max_no_progress_samples
+                    and self.fallback):
+                return self._do_fallback("샘플 상한 초과")
+
             samples.append((t, cx))
             if self.audit: self.audit.on_sample(t, cx, abs(v_est), 1 if v_est >= 0 else -1)
             if prev_x is not None and t > t0:
@@ -502,8 +514,12 @@ class SmartDisarm:
             est = self.estimate(samples, xmin, xmax)
             if est is not None and len(samples) >= 4 and not self._est_consistent(est, samples, xmin, xmax):
                 self.log.debug(self._t("추정 검증 실패(4점 fold 잔차 초과). 재측정."))
-                samples.clear()  # 지연으로 오염된 이전 샘플들을 완전 폐기
-                prev_x = None    # 이전 x 좌표 초기화
+                # 비중첩 4점 묶음을 전부 버리면 우연히 나쁜 위상으로 시작한 세션이
+                # 40샘플 내내 같은 실패를 반복한다. 최근 3점을 남겨 다음 프레임에서
+                # 슬라이딩 윈도우로 다시 검증한다. 동일한 fold 검증을 통과해야 하므로
+                # 느린 캡처의 앨리어싱 방어 수준은 유지된다.
+                samples = samples[-3:]
+                prev_x = samples[-1][1]
                 v_est = 0.0      # 속도 추정값 초기화
                 est = None
             if est is None:
@@ -519,11 +535,16 @@ class SmartDisarm:
                 fast_hits += 1
                 self.log.debug(self._t("빠른 게임 의심(반주기 {a:.2f}s, Δt {b:.2f}s)")
                                .format(a=half_period, b=last_dt))
-                if cfg.bypass_fast_game and fast_hits >= cfg.fast_game_fail_limit:
+                if fast_hits < cfg.fast_game_fail_limit:
+                    # 한두 번의 오판으로 조준하지 않도록 추가 표본으로 확인한다.
+                    self._pace(t0)
+                    continue
+                if cfg.bypass_fast_game:
                     return self._do_fallback("빠른 게임 우회(옵션)")
-                # 우회 안 하면 그래도 시도(샘플 신뢰 낮음) — 한 점 더 모아 재시도
-                self._pace(t0)
-                continue
+                # 우회 옵션이 꺼져 있으면 확인된 고속 구간도 스마트 조준을 시도한다.
+                # 기존 코드는 여기서 매번 continue 하여 빠른 게임에서 탭이 0회였다.
+            else:
+                fast_hits = 0
 
             # 판정은 '정지 위치' 기준: 주입 후에도 커서가 v*stop_time/2 만큼 미끄러지므로
             # 그만큼(정지 리드) 이르게 탭해야 한다. 리드 때문에 실행 불가해진 가까운 후보는
@@ -556,6 +577,8 @@ class SmartDisarm:
             p1 = self.now()
             self._update_press_latency(p1 - p0)
             tapped = True
+            shots_since_progress = 0
+            fast_hits = 0
             # 탭 경험 발생 시 캡처 상한을 확장 (다중 자물쇠/재시도 여유)
             sample_limit = max(sample_limit, cfg.max_total_samples_extended)
             self.log.info(self._t("개봉 탭: 목표구간중심x={a:.0f} margin={b:.0f} pw={c:.3f}s 속도={d:.0f}px/s press={e:.3f}s 리드={f:.3f}s")
@@ -775,7 +798,9 @@ class SmartDisarm:
             # 아직 진행 중이면 상태 리셋하고 계속 (함정이 여러 단계일 수 있음)
             samples.clear(); prev_x = None; v_est = 0.0
 
-        return self._give_up("샘플 상한 초과")
+        if self.fallback:
+            return self._do_fallback("샘플 상한 초과")
+        return self._give_up("샘플 상한 초과", allow_fallback=False)
 
     def _frame_cursor(self, img, content_t, safes, d):
         """단일 프레임에서 신뢰 가능한 커서 x 추출. 반환 (x, 사유, 커서만불특정).
@@ -1052,10 +1077,10 @@ class SmartDisarm:
         return self._give_up(reason + self._t(" (폴백 미설정)"))
 
     def _give_up(self, reason, allow_fallback=True):
+        if allow_fallback and self.cfg.bypass_fast_game and self.fallback:
+            return self._do_fallback(reason)
         self.log.warning(self._t("스마트 개봉 중단: {a}").format(a=reason))
         if self.audit: self.audit.on_result(self._t("중단: ") + reason)
-        if allow_fallback and self.cfg.bypass_fast_game and self.fallback:
-            self.fallback()
         return False
 
 

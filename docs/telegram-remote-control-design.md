@@ -2,7 +2,7 @@
 
 - 문서 상태: 구현 기준 확정
 - 작성일: 2026-08-12
-- 대상 애플리케이션: WvDAS `2.5.4-momo.3` 이후
+- 대상 애플리케이션: WvDAS `2.5.4-momo.5` 이후
 - 참고 사양: [Telegram Bot API](https://core.telegram.org/bots/api)
 
 ## 1. 목적
@@ -107,6 +107,7 @@ mod/
     ├── models.py                # 명령·상태·결과 Enum 및 dataclass
     ├── bot_api.py               # Telegram Bot API HTTPS 클라이언트
     ├── command_service.py       # long polling, 인증, 수신·송신 큐
+    ├── recent_logs.py           # 최근 로그 시간 필터·크기 제한·비밀 마스킹
     ├── config.py                # 설정 키, 검증, 토큰 마스킹
     ├── adapters.py              # 기존 게임 자동화 함수의 호출 계약
     ├── settings_ui.py           # GUI 설정 영역과 연결 테스트
@@ -257,6 +258,8 @@ IDLE ── start ──▶ STARTING ── ready ──▶ RUNNING
 | `/stop` | `정지` | 원격 안전 정지 요청 |
 | `/start` | `동작` | 최신 저장 설정으로 새 실행 시작 |
 | `/status` | `상태` | 현재 제어 상태 조회 |
+| `/stat`, `stat` | 없음 | 현재 로그의 최근 60초 조회 |
+| `/menu`, `menu` | `메뉴` | 지원 명령 목록 조회 |
 
 앞뒤 공백은 제거하고 슬래시 명령은 대소문자를 구분하지 않는다. 개인 채팅에서 `/start@bot_name` 형태가 들어오면 `@bot_name`을 제거한 뒤 판정한다. 한국어 별칭은 완전히 일치할 때만 허용한다.
 
@@ -269,7 +272,7 @@ IDLE ── start ──▶ STARTING ── ready ──▶ RUNNING
 | `AT_TITLE`, `GAME_STOPPED_FALLBACK`, `IDLE` | 이미 정지됨 응답 | 실행 시작 |
 | `ERROR` | 이미 정지됨 응답 | 설정 재검증 후 재시도 |
 
-알 수 없는 명령은 허가된 채팅에만 간단한 사용법을 응답한다. 비허가 채팅에는 어떠한 응답도 보내지 않는다.
+알 수 없는 명령은 허가된 채팅에만 `menu`를 입력하라는 안내를 응답한다. 명령 목록 전체는 `menu`에서만 제공한다. 비허가 채팅에는 어떠한 응답도 보내지 않는다.
 
 ### 7.3 상태 응답
 
@@ -282,6 +285,10 @@ IDLE ── start ──▶ STARTING ── ready ──▶ RUNNING
 - 마지막 오류의 비민감 요약
 
 Bot Token, 전체 설정 경로, ADB 명령 출력, 스택 트레이스는 포함하지 않는다.
+
+`stat`은 실행 디렉터리의 `logs`에서 수정 시각이 가장 최신인 `log_*.txt`를 현재 로그로 선택한다. 각 레코드의 `YYYY-MM-DD HH:MM:SS` 시각을 기준으로 요청 시점 직전 60초만 포함하고, traceback 같은 연속 줄은 앞 레코드의 시각을 상속한다. 파일 읽기는 끝부분 512 KiB로 제한하며 Telegram 응답은 헤더를 보존한 채 3,900자 이하의 최신 줄로 제한한다. 잘린 경우 그 사실을 응답에 표시한다. 설정된 Bot Token·허용 Chat ID와 token 형태 문자열은 전송 전에 마스킹한다. 최근 기록이 없으면 현재 로그 파일명과 마지막 기록 시각을 응답한다.
+
+`menu`는 `/start`, `/stop`, `/status`, `stat`, `menu`와 한국어 별칭의 설명을 반환한다.
 
 ## 8. 설정과 GUI
 
@@ -667,7 +674,7 @@ def return_town_to_title(adapter, runtime):
 
 | 이벤트 | 생산자 | 소비자 | 용도 |
 | --- | --- | --- | --- |
-| `telegram_command` | Telegram 서비스 | `AppController` | 시작·정지·상태 명령 |
+| `telegram_command` | Telegram 서비스 | `AppController` | 시작·정지·상태·최근 로그·메뉴 명령 |
 | `telegram_reconfigure` | GUI | `AppController` | 수신기 설정 갱신 |
 | `telegram_test_connection` | GUI | `AppController` | 현재 입력값으로 일회성 연결 시험 |
 | `telegram_test_result` | 연결 시험 worker | `AppController` | 연결 시험 결과 표시 |
@@ -733,13 +740,14 @@ Farm 스레드는 Tk 위젯을 직접 호출하지 않는다. 작업 종료 콜�
 
 ### 16.1 단위 테스트
 
-- `/start`, `/stop`, `/status`와 한국어 별칭 파싱
+- `/start`, `/stop`, `/status`, `stat`, `menu`와 한국어 별칭 파싱
 - 공백, 대소문자, `@bot_name` 처리
 - 개인 채팅·Chat ID·봇 발신자 인증
 - 비허가 채팅 무응답
 - 시작 시 이전 update 폐기 및 offset 증가
 - 중복 update와 중복 명령의 멱등 처리
 - 토큰 마스킹과 예외 문자열 정제
+- 최신 로그 선택, 최근 60초 필터, 연속 줄, 3,900자 제한, 비밀 마스킹
 - 네트워크 백오프, 401·409·429 처리
 - `ControlState` 전이와 금지된 전이
 - GUI와 텔레그램 동시 시작 시 단일 작업 보장
@@ -896,7 +904,7 @@ TITLE_TEMPLATE_THRESHOLD = 0.88
 
 ```text
 L0  constants
-L1  models, i18n
+L1  models, i18n, recent_logs
 L2  config, bot_api, adapters, runtime_bridge
 L3  command_service, worker, fallback, settings_ui
 L4  return_to_town, title_transition, login_transition
@@ -919,6 +927,7 @@ L5  stop_orchestrator, feature
 | `config.py` | `extend_config_var_list`, `read_telegram_settings`, `load_latest_farm_setting`, `resolve_adb_executable`, 설정 검증 함수 |
 | `bot_api.py` | `TelegramBotClient`, 정규화된 API 예외 클래스 |
 | `command_service.py` | `TelegramCommandService.start/stop/reconfigure/enqueue` |
+| `recent_logs.py` | `read_recent_log`, `redact_log_text`, `fit_tail_text` |
 | `adapters.py` | `GameAutomationAdapter`, `ControllerPorts` |
 | `runtime_bridge.py` | `RemoteRuntime`, `RemoteStopSignal`, `RemoteRecoverySuppressed`, `BoundedOperationTimeout`, `remote_stop_checkpoint`, `request_task_handoff`, `raise_if_remote_recovery_disallowed`, `run_bounded_operation` |
 | `worker.py` | `TaskCompletionLatch`, `run_farm_worker` |
@@ -939,6 +948,8 @@ class RemoteCommand(str, Enum):
     START = "start"
     STOP = "stop"
     STATUS = "status"
+    STAT = "stat"
+    MENU = "menu"
 
 class StartReason(str, Enum):
     LOCAL = "local"
@@ -1216,9 +1227,9 @@ polling loop는 매 요청 전에 lock 안에서 `(generation, settings)`를 sna
 2. 슬래시 명령이면 첫 공백 전 토큰만 사용
 3. `/stop@BotName` 형태에서 `@BotName` 제거
 4. 슬래시 명령만 `.lower()` 적용
-5. `/start`, `/stop`, `/status`, `동작`, `정지`, `상태`에 정확히 매핑
+5. `/start`, `/stop`, `/status`, `/stat`, `/menu`, `stat`, `menu`, `동작`, `정지`, `상태`, `메뉴`에 정확히 매핑
 
-허가된 채팅의 알 수 없는 텍스트에는 사용법 한 번을 응답한다. 비허가 채팅에는 응답과 본문 로그를 모두 남기지 않는다.
+허가된 채팅의 알 수 없는 텍스트에는 `menu` 안내를 한 번 응답한다. 명령 목록은 `menu` 명령에서만 응답한다. 비허가 채팅에는 응답과 본문 로그를 모두 남기지 않는다.
 
 유효 명령은 `controller_queue.put(("telegram_command", payload))`로만 전달한다. polling 스레드는 상태를 변경하거나 작업을 시작하지 않는다.
 
@@ -1585,7 +1596,7 @@ class TelegramRemoteFeature:
 
 | 이벤트 | 처리 |
 | --- | --- |
-| `telegram_command` | 명령 상태 검사 후 시작·정지·상태 처리 |
+| `telegram_command` | 명령 상태 검사 후 시작·정지·상태·최근 로그·메뉴 처리 |
 | `telegram_reconfigure` | 파일에서 설정 재로드 후 서비스 재구성 |
 | `telegram_test_connection` | background 연결 테스트 시작 |
 | `telegram_test_result` | 요청 ID가 현재 GUI 테스트와 일치하면 결과 표시 |
@@ -1602,7 +1613,7 @@ canonical 상태의 허용 전이는 다음 표로 고정한다. 표에 없는 �
 
 | 현재 상태 | 허용 다음 상태 |
 | --- | --- |
-| `IDLE` | `STARTING`, `RUNNING` |
+| `IDLE` | `STARTING`, `RUNNING`, `ERROR` |
 | `STARTING` | `RUNNING`, `STOP_REQUESTED`, `ERROR`, `IDLE` |
 | `RUNNING` | `STOP_REQUESTED`, `IDLE`, `ERROR` |
 | `STOP_REQUESTED` | `RETURNING_TO_TOWN`, `RETURNING_TO_TITLE`, `AT_TITLE`, `GAME_STOPPED_FALLBACK`, `ERROR`, `IDLE` |
@@ -1620,13 +1631,15 @@ canonical 상태의 허용 전이는 다음 표로 고정한다. 표에 없는 �
 | `LOCAL_STOP` | `IDLE` | 원격 정지 요청이 있었으면 취소 안내, 아니면 없음 |
 | `REMOTE_STOP` | `AT_TITLE` | 정상 종료 완료 |
 | `REMOTE_STOP_FALLBACK` | `GAME_STOPPED_FALLBACK` | 비정상 완료 |
-| `ERROR` | `ERROR` | 원격 명령으로 시작·정지 중이었다면 오류 안내 |
+| `ERROR` | `ERROR` | Telegram 활성 시 현재 허용 채팅에 오류 안내 |
 
 로컬 GUI에서 시작한 작업도 `RemoteRuntime(StartReason.LOCAL)`을 가진다. 따라서 실행 도중 Telegram `/stop`을 받을 수 있다. 로컬 시작은 `on_task_started`에서 즉시 `RUNNING`으로 전이하고 로그인 gate를 건너뛴다. Telegram `/start`만 `STARTING`으로 전이한 뒤 READY 확인 후 `RUNNING`이 된다.
 
 폴백 terminal 알림은 `ForceStopResult.game_stopped=True`와 `TaskFinishedPayload.reason=REMOTE_STOP_FALLBACK`가 같은 `run_id`로 모두 도착해야 생성한다. 도착 순서는 상관없으며 feature가 먼저 온 값을 보관한다. 한쪽이 없으면 `GAME_STOPPED_FALLBACK`으로 확정하거나 완료 알림을 보내지 않는다.
 
 정상·폴백 완료 알림은 `TaskFinishedPayload.notification_chat_id`가 현재 활성 Telegram 설정의 `allowed_chat_id`와 같을 때만 큐에 넣는다. 작업 중 허용 Chat ID가 변경되거나 기능이 비활성화되면 이전 채팅으로 결과를 보내지 않으며 새 채팅으로도 과거 작업 결과를 전달하지 않는다. GUI와 로컬 로그에는 완료 상태를 그대로 반영한다.
+
+`ERROR` 종료는 시작 경로가 로컬 GUI인지 Telegram인지와 관계없이 Telegram이 활성화된 경우 현재 `allowed_chat_id`로 한 번 알린다. 알림에는 매크로명, 정제된 오류 문장, `failure_phase`, 경과 시간과 `stat` 안내를 넣고 traceback·토큰·ADB 원문은 넣지 않는다. 전체 WvDAS 프로세스가 즉시 종료되어 송신 스레드까지 사라진 경우에는 이 알림을 보장할 수 없다.
 
 feature 시작 시 `read_telegram_settings`로 설정을 읽는다. `enabled=False`이면 서비스 스레드를 만들지 않고 `DISABLED`로 표시한다. `enabled=True`이고 설정이 유효하면 매크로 실행 여부와 무관하게 즉시 polling·송신 스레드를 시작한다. 따라서 `IDLE`, 실행 중, 안전 정지 중, `AT_TITLE` 상태 모두에서 명령을 계속 받는다.
 
@@ -1639,7 +1652,7 @@ feature 시작 시 `read_telegram_settings`로 설정을 읽는다. `enabled=Fal
 | 시작 완료 | `start-complete:{run_id}` | TERMINAL | Telegram 시작이 READY 후 RUNNING 진입 |
 | 정상 정지 완료 | `remote-stop-complete:{run_id}` | TERMINAL | worker 종료 확인 후 AT_TITLE |
 | 폴백 정지 완료 | `remote-stop-fallback:{run_id}` | TERMINAL | 게임 종료와 worker 종료 모두 확인 |
-| 오류 | `error:{run_id}:{failure_phase}` | TERMINAL | 재시도 불가능한 종료 |
+| 비정상 종료 | `abnormal-exit:{run_id}` | TERMINAL | `TaskExitReason.ERROR`, 로컬·원격 시작 공통 |
 
 `/status`는 중복 방지 대상이 아니며 요청마다 다음 형식으로 즉시 응답한다. 빈 값은 `없음`으로 표시한다.
 
@@ -1651,6 +1664,8 @@ feature 시작 시 `read_telegram_settings`로 설정을 읽는다. `enabled=Fal
 정지 단계: {progress_detail_or_none}
 마지막 오류: {last_error_or_none}
 ```
+
+`stat`과 `menu`도 `update_id`를 key에 포함해 요청마다 한 번 응답한다. `stat`은 상태·매크로·현재 로그 파일명 헤더 뒤에 최근 60초 로그를 붙인다. 알 수 없는 텍스트는 명령 목록 대신 `menu` 안내만 반환한다.
 
 진행 알림은 한 상태당 한 번만 보낸다. 동일 상태의 detail 변경만으로 새 메시지를 보내지 않아 네트워크 장애나 화면 재판정 중 Telegram 메시지가 폭주하지 않게 한다.
 
@@ -2316,7 +2331,7 @@ Luna 구현자는 다음 순서를 바꾸지 않는다.
 15. PyInstaller workflow 갱신 → onedir 스모크 테스트 통과
 16. 실제 에뮬레이터에서 16.4의 10개 시나리오 수행
 17. `README.md`에 설정법·명령·WvDAS 상주 제한을 추가하고 `CHANGES_LOG.md`에 새 기능과 보안 제한을 기록
-18. `src/main.py` 버전을 `2.5.4-momo.3`로 올리고 UI·업데이트 표시를 확인
+18. `src/main.py` 버전을 `2.5.4-momo.5`로 올리고 UI·업데이트 표시를 확인
 19. 텔레그램 관련 파일만 명시적으로 stage·commit하고 저장소 규칙에 따라 origin PR을 갱신
 
 각 단계에서 실패한 테스트를 건너뛰고 다음 단계로 진행하지 않는다.

@@ -52,7 +52,7 @@ from mod.telegram_remote_control.runtime_bridge import RemoteRuntime
 from mod.telegram_remote_control.worker import TaskCompletionLatch, run_farm_worker
 
 
-__version__ = '2.5.4-momo.3'
+__version__ = '2.5.4-momo.5'
 OWNER = "arnold2957"
 REPO = "wvd"
 
@@ -162,10 +162,13 @@ class AppController(tk.Tk):
     def _start_task(self, setting, start_reason, run_id, runtime) -> bool:
         if self._task_is_alive():
             return False
-        handoff = self._active_runtime is runtime and runtime.is_handoff_requested(HANDOFF_TARGET_7000G)
         if runtime is None:
             runtime = self._new_local_runtime(setting)
             run_id = runtime.run_id
+        handoff = (
+            self._active_runtime is runtime
+            and runtime.is_handoff_requested(HANDOFF_TARGET_7000G)
+        )
         if runtime is not self._active_runtime:
             self._active_runtime = runtime
             self._active_latch = TaskCompletionLatch(self.msg_queue, run_id)

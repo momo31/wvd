@@ -45,10 +45,26 @@ COMMAND_ALIASES = {
     "/start": RemoteCommand.START,
     "/stop": RemoteCommand.STOP,
     "/status": RemoteCommand.STATUS,
+    "/stat": RemoteCommand.STAT,
+    "/menu": RemoteCommand.MENU,
+    "stat": RemoteCommand.STAT,
+    "menu": RemoteCommand.MENU,
     "동작": RemoteCommand.START,
     "정지": RemoteCommand.STOP,
     "상태": RemoteCommand.STATUS,
+    "메뉴": RemoteCommand.MENU,
 }
+
+COMMAND_MENU_TEXT = (
+    "📋 WvDAS 명령 메뉴\n"
+    "/start 또는 동작: 매크로 시작\n"
+    "/stop 또는 정지: 안전 정지 후 타이틀 복귀\n"
+    "/status 또는 상태: 제어 상태 요약\n"
+    "stat 또는 /stat: 최근 60초 실행 로그\n"
+    "menu 또는 /menu 또는 메뉴: 명령 목록"
+)
+
+UNKNOWN_COMMAND_TEXT = "알 수 없는 명령입니다. menu를 입력해 명령 목록을 확인하세요."
 
 
 def normalize_command(text: str) -> str | None:
@@ -278,9 +294,9 @@ class TelegramCommandService:
                         elif unknown:
                             self.enqueue(
                                 OutboundMessage(
-                                    key=f"usage:{update_id}",
+                                    key=f"unknown:{update_id}",
                                     chat_id=settings.allowed_chat_id,
-                                    text="사용법: /start, /stop, /status",
+                                    text=UNKNOWN_COMMAND_TEXT,
                                     priority=NotificationPriority.ACKNOWLEDGEMENT,
                                 )
                             )

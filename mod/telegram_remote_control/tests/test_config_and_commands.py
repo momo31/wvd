@@ -4,6 +4,8 @@ import unittest
 from datetime import datetime, timezone
 
 from mod.telegram_remote_control.command_service import (
+    COMMAND_MENU_TEXT,
+    UNKNOWN_COMMAND_TEXT,
     normalize_command,
     parse_command,
     parse_update_command,
@@ -20,6 +22,15 @@ class ConfigAndCommandTests(unittest.TestCase):
     def test_command_normalization_and_authorization(self):
         self.assertEqual(normalize_command("  /start@my_bot args"), "/start")
         self.assertIs(parse_command("/start"), RemoteCommand.START)
+        self.assertIs(parse_command("stat"), RemoteCommand.STAT)
+        self.assertIs(parse_command("/STAT@my_bot"), RemoteCommand.STAT)
+        self.assertIs(parse_command("menu"), RemoteCommand.MENU)
+        self.assertIs(parse_command("/menu"), RemoteCommand.MENU)
+        self.assertIs(parse_command("메뉴"), RemoteCommand.MENU)
+        self.assertIn("/start", COMMAND_MENU_TEXT)
+        self.assertIn("stat", COMMAND_MENU_TEXT)
+        self.assertIn("menu", UNKNOWN_COMMAND_TEXT)
+        self.assertNotIn("/start", UNKNOWN_COMMAND_TEXT)
         settings = TelegramSettings(True, "123:" + "x" * 20, "987")
         update = {
             "update_id": 5,

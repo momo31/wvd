@@ -11,6 +11,8 @@ class RemoteCommand(str, Enum):
     START = "start"
     STOP = "stop"
     STATUS = "status"
+    STAT = "stat"
+    MENU = "menu"
 
 
 class StartReason(str, Enum):
@@ -185,4 +187,3 @@ def _sanitize_phase(value: str) -> str:
     value = str(value or "unknown")
     sanitized = "".join(ch if ch.isalnum() or ch in "_-" else "_" for ch in value)
     return sanitized[:80] or "unknown"
-

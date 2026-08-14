@@ -2,6 +2,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import numpy as np
 
@@ -82,6 +83,154 @@ class SmartDisarmCalibrationTests(unittest.TestCase):
         self.assertTrue(second._prev_tap_meas)
         self.assertIsNone(second._resid_ewma)
         self.assertEqual(second._blind_fail_step(0.0), (0.0, None))
+
+
+class SmartDisarmRunRecoveryTests(unittest.TestCase):
+    def setUp(self):
+        self.previous_press_latency = smart_disarm._PRESS_LAT["ema"]
+        self.previous_adjustment = smart_disarm._STOP_LEAD["adj"]
+        smart_disarm._PRESS_LAT["ema"] = None
+        smart_disarm._STOP_LEAD["adj"] = 0.0
+
+    def tearDown(self):
+        smart_disarm._PRESS_LAT["ema"] = self.previous_press_latency
+        smart_disarm._STOP_LEAD["adj"] = self.previous_adjustment
+
+    def make_running_disarm(self, config, positions, fallback_fn=None):
+        state = {"captures": 0, "presses": 0, "done": False, "fallbacks": 0}
+
+        def capture():
+            state["captures"] += 1
+            return np.full((260, 900, 3), state["captures"], dtype=np.uint8)
+
+        def press(_position):
+            state["presses"] += 1
+            state["done"] = True
+            return True
+
+        def fallback():
+            state["fallbacks"] += 1
+            if fallback_fn is not None:
+                fallback_fn()
+
+        class Clock:
+            value = 0.0
+
+            def __call__(self):
+                self.value += 0.01
+                return self.value
+
+        disarm = smart_disarm.SmartDisarm(
+            capture,
+            press,
+            Clock(),
+            RecordingLogger(),
+            is_done_fn=lambda _image: state["done"],
+            fallback_fn=fallback,
+            config=config,
+        )
+
+        def detect(image):
+            marker = int(image[0, 0, 0])
+            cursor = positions[min(marker - 1, len(positions) - 1)]
+            return {
+                "bar": (16, 896),
+                "y": (40, 140),
+                "cursors": [(cursor, 10)],
+                "safes": [(180, 300), (600, 740)],
+            }
+
+        disarm.detect = detect
+        disarm._measure_after_tap = lambda *args, **kwargs: None
+        return disarm, state
+
+    @staticmethod
+    def base_config():
+        config = smart_disarm.DisarmConfig()
+        config.sample_interval = 0.0
+        config.input_delay = 0.0
+        config.stop_time = 0.0
+        config.pw_thresh = 3.0
+        config.settle_after_tap = 0.0
+        config.settle_extra_checks = 0
+        config.max_no_progress_samples = 0
+        return config
+
+    def test_fold_failure_retries_with_overlapping_window(self):
+        config = self.base_config()
+        config.max_total_samples = 5
+        config.max_total_samples_extended = 5
+        disarm, state = self.make_running_disarm(
+            config,
+            [100, 220, 340, 460, 580],
+        )
+        consistency_checks = []
+        disarm.estimate = lambda *_args: {"x": 460, "speed": 500.0, "dir": 1}
+
+        def is_consistent(*_args):
+            consistency_checks.append(True)
+            return len(consistency_checks) > 1
+
+        disarm._est_consistent = is_consistent
+        disarm.plan_tap = lambda *_args, min_reach=0.0, **_kwargs: {
+            "reach": min_reach + 0.2,
+            "center": 240.0,
+            "half": 60.0,
+            "margin": 6.0,
+        }
+
+        with mock.patch.object(smart_disarm.os.path, "exists", return_value=True), \
+                mock.patch.object(smart_disarm.time, "sleep", return_value=None):
+            self.assertTrue(disarm.run())
+
+        self.assertEqual(len(consistency_checks), 2)
+        self.assertEqual(state["presses"], 1)
+
+    def test_confirmed_fast_game_still_aims_when_bypass_is_disabled(self):
+        config = self.base_config()
+        config.max_total_samples = 5
+        config.max_total_samples_extended = 5
+        config.fast_game_fail_limit = 2
+        config.fast_game_k = 100.0
+        config.bypass_fast_game = False
+        disarm, state = self.make_running_disarm(
+            config,
+            [100, 260, 420, 580, 740],
+        )
+        disarm.estimate = lambda *_args: {"x": 580, "speed": 2000.0, "dir": 1}
+        disarm._est_consistent = lambda *_args: True
+        disarm.plan_tap = lambda *_args, min_reach=0.0, **_kwargs: {
+            "reach": min_reach + 0.2,
+            "center": 670.0,
+            "half": 70.0,
+            "margin": 7.0,
+        }
+
+        with mock.patch.object(smart_disarm.os.path, "exists", return_value=True), \
+                mock.patch.object(smart_disarm.time, "sleep", return_value=None):
+            self.assertTrue(disarm.run())
+
+        self.assertEqual(state["presses"], 1)
+        self.assertEqual(state["fallbacks"], 0)
+
+    def test_no_progress_uses_fallback_before_full_sample_cap(self):
+        config = self.base_config()
+        config.max_total_samples = 40
+        config.max_no_progress_samples = 4
+        config.bypass_fast_game = False
+        disarm, state = self.make_running_disarm(
+            config,
+            [100, 220, 340, 460],
+        )
+        disarm.estimate = lambda *_args: None
+
+        with mock.patch.object(smart_disarm.os.path, "exists", return_value=True), \
+                mock.patch.object(smart_disarm.time, "sleep", return_value=None):
+            self.assertTrue(disarm.run())
+
+        self.assertEqual(state["captures"], 4)
+        self.assertEqual(state["presses"], 0)
+        self.assertEqual(state["fallbacks"], 1)
 
 
 class SmartDisarmAuditTests(unittest.TestCase):
