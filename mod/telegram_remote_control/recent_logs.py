@@ -14,7 +14,12 @@ MAX_LOG_READ_BYTES = 512 * 1024
 TELEGRAM_SAFE_MESSAGE_CHARS = 3900
 
 _LOG_TIMESTAMP = re.compile(r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\s+-\s+")
+_LOG_RECORD = re.compile(
+    r"^(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\s+-\s+"
+    r"(?P<level>[A-Z]+)\s+-\s+\[[^\]]*\]\s+-\s+(?P<message>.*)$"
+)
 _BOT_TOKEN = re.compile(r"(?<![A-Za-z0-9_-])\d{6,}:[A-Za-z0-9_-]{20,}")
+_UI_LEVELS = frozenset({"INFO", "WARNING", "ERROR", "CRITICAL"})
 
 
 @dataclass(frozen=True)
@@ -50,20 +55,24 @@ def read_recent_log(
 
     selected: list[str] = []
     current_timestamp: datetime | None = None
+    current_ui_message = False
     latest_timestamp: datetime | None = None
     for line in raw_text.splitlines():
-        match = _LOG_TIMESTAMP.match(line)
+        record = _LOG_RECORD.match(line)
+        match = record or _LOG_TIMESTAMP.match(line)
         if match:
             try:
-                current_timestamp = datetime.strptime(match.group(1), "%Y-%m-%d %H:%M:%S")
+                timestamp_text = record.group("timestamp") if record else match.group(1)
+                current_timestamp = datetime.strptime(timestamp_text, "%Y-%m-%d %H:%M:%S")
             except ValueError:
                 current_timestamp = None
+            current_ui_message = bool(record is None or record.group("level") in _UI_LEVELS)
             if current_timestamp is not None and (
                 latest_timestamp is None or current_timestamp > latest_timestamp
             ):
                 latest_timestamp = current_timestamp
-        if current_timestamp is not None and current_timestamp >= cutoff:
-            selected.append(line)
+        if current_timestamp is not None and current_timestamp >= cutoff and current_ui_message:
+            selected.append(record.group("message") if record else line)
 
     return RecentLogExcerpt(
         file_name=path.name,

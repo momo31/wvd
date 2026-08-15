@@ -106,23 +106,33 @@ class FeatureTests(unittest.TestCase):
                 f"{now - timedelta(seconds=5):%Y-%m-%d %H:%M:%S} - INFO - running token={token} chat={chat_id}\n",
                 encoding="utf-8",
             )
-            payload = TelegramCommandPayload(
+            stat_payload = TelegramCommandPayload(
                 RemoteCommand.STAT,
                 10,
                 chat_id,
                 datetime.now(timezone.utc),
                 feature.service.generation,
             )
-            feature.handle_event("telegram_command", payload)
+            feature.handle_event("telegram_command", stat_payload)
+            status_payload = TelegramCommandPayload(
+                RemoteCommand.STATUS,
+                11,
+                chat_id,
+                datetime.now(timezone.utc),
+                feature.service.generation,
+            )
+            feature.handle_event("telegram_command", status_payload)
 
-        message = feature.service.messages[-1]
-        self.assertEqual(message.key, "stat:10")
-        self.assertIn("최근 60초 로그", message.text)
-        self.assertIn("running", message.text)
-        self.assertNotIn("old entry", message.text)
-        self.assertNotIn(token, message.text)
-        self.assertNotIn(chat_id, message.text)
-        self.assertLessEqual(len(message.text), 3900)
+        messages = {message.key: message for message in feature.service.messages}
+        self.assertEqual(set(messages), {"stat:10", "status:11"})
+        for message in messages.values():
+            self.assertIn("최근 60초", message.text)
+            self.assertIn("UI 메시지", message.text)
+            self.assertIn("running", message.text)
+            self.assertNotIn("old entry", message.text)
+            self.assertNotIn(token, message.text)
+            self.assertNotIn(chat_id, message.text)
+            self.assertLessEqual(len(message.text), 3900)
 
     def test_menu_owns_command_list(self):
         feature, _ports = self.make_feature()

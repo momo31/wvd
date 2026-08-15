@@ -2,7 +2,7 @@
 
 - 문서 상태: 구현 기준 확정
 - 작성일: 2026-08-12
-- 대상 애플리케이션: WvDAS `2.5.4-momo.5` 이후
+- 대상 애플리케이션: WvDAS `2.5.4-momo.6` 이후
 - 참고 사양: [Telegram Bot API](https://core.telegram.org/bots/api)
 
 ## 1. 목적
@@ -257,8 +257,8 @@ IDLE ── start ──▶ STARTING ── ready ──▶ RUNNING
 | --- | --- | --- |
 | `/stop` | `정지` | 원격 안전 정지 요청 |
 | `/start` | `동작` | 최신 저장 설정으로 새 실행 시작 |
-| `/status` | `상태` | 현재 제어 상태 조회 |
-| `/stat`, `stat` | 없음 | 현재 로그의 최근 60초 조회 |
+| `/status` | `상태` | UI 메시지의 최근 60초 조회 |
+| `/stat`, `stat` | 없음 | UI 메시지의 최근 60초 조회 |
 | `/menu`, `menu` | `메뉴` | 지원 명령 목록 조회 |
 
 앞뒤 공백은 제거하고 슬래시 명령은 대소문자를 구분하지 않는다. 개인 채팅에서 `/start@bot_name` 형태가 들어오면 `@bot_name`을 제거한 뒤 판정한다. 한국어 별칭은 완전히 일치할 때만 허용한다.
@@ -276,17 +276,11 @@ IDLE ── start ──▶ STARTING ── ready ──▶ RUNNING
 
 ### 7.3 상태 응답
 
-`/status` 응답에는 다음만 포함한다.
-
-- 현재 `ControlState`
-- 실행 중인 매크로 이름 또는 `없음`
-- 실행 경과 시간
-- 안전 정지 진행 단계
-- 마지막 오류의 비민감 요약
+`/status`와 `/stat` 응답에는 UI 로그 창과 같은 메시지 본문만 최근 60초 순서로 포함한다. 파일 formatter의 시각·레벨·모듈 접두사는 제거하고 `INFO` 이상만 보낸다. 메시지 자체가 여러 줄이면 연속 줄을 유지한다.
 
 Bot Token, 전체 설정 경로, ADB 명령 출력, 스택 트레이스는 포함하지 않는다.
 
-`stat`은 실행 디렉터리의 `logs`에서 수정 시각이 가장 최신인 `log_*.txt`를 현재 로그로 선택한다. 각 레코드의 `YYYY-MM-DD HH:MM:SS` 시각을 기준으로 요청 시점 직전 60초만 포함하고, traceback 같은 연속 줄은 앞 레코드의 시각을 상속한다. 파일 읽기는 끝부분 512 KiB로 제한하며 Telegram 응답은 헤더를 보존한 채 3,900자 이하의 최신 줄로 제한한다. 잘린 경우 그 사실을 응답에 표시한다. 설정된 Bot Token·허용 Chat ID와 token 형태 문자열은 전송 전에 마스킹한다. 최근 기록이 없으면 현재 로그 파일명과 마지막 기록 시각을 응답한다.
+`status`와 `stat`은 실행 디렉터리의 `logs`에서 수정 시각이 가장 최신인 `log_*.txt`를 현재 로그로 선택한다. 각 레코드의 `YYYY-MM-DD HH:MM:SS` 시각을 기준으로 요청 시점 직전 60초만 포함하고, traceback 같은 연속 줄은 앞 레코드의 시각을 상속한다. 파일 읽기는 끝부분 512 KiB로 제한하며 Telegram 응답은 헤더를 보존한 채 3,900자 이하의 최신 줄로 제한한다. 잘린 경우 그 사실을 응답에 표시한다. 설정된 Bot Token·허용 Chat ID와 token 형태 문자열은 전송 전에 마스킹한다. 최근 기록이 없으면 `최근 60초 내 UI 메시지가 없습니다.`를 응답한다.
 
 `menu`는 `/start`, `/stop`, `/status`, `stat`, `menu`와 한국어 별칭의 설명을 반환한다.
 
@@ -1654,18 +1648,15 @@ feature 시작 시 `read_telegram_settings`로 설정을 읽는다. `enabled=Fal
 | 폴백 정지 완료 | `remote-stop-fallback:{run_id}` | TERMINAL | 게임 종료와 worker 종료 모두 확인 |
 | 비정상 종료 | `abnormal-exit:{run_id}` | TERMINAL | `TaskExitReason.ERROR`, 로컬·원격 시작 공통 |
 
-`/status`는 중복 방지 대상이 아니며 요청마다 다음 형식으로 즉시 응답한다. 빈 값은 `없음`으로 표시한다.
+`/status`와 `/stat`은 중복 방지 대상이 아니며 요청마다 다음 형식으로 즉시 응답한다.
 
 ```text
-ℹ️ WvDAS 상태
-상태: {localized_control_state}
-매크로: {farm_target_text_or_none}
-실행 시간: {elapsed_hh_mm_ss}
-정지 단계: {progress_detail_or_none}
-마지막 오류: {last_error_or_none}
+📋 WvDAS UI 메시지 (최근 60초)
+
+{ui_message_body_lines}
 ```
 
-`stat`과 `menu`도 `update_id`를 key에 포함해 요청마다 한 번 응답한다. `stat`은 상태·매크로·현재 로그 파일명 헤더 뒤에 최근 60초 로그를 붙인다. 알 수 없는 텍스트는 명령 목록 대신 `menu` 안내만 반환한다.
+`status`, `stat`, `menu`는 `update_id`를 key에 포함해 요청마다 한 번 응답한다. 알 수 없는 텍스트는 명령 목록 대신 `menu` 안내만 반환한다.
 
 진행 알림은 한 상태당 한 번만 보낸다. 동일 상태의 detail 변경만으로 새 메시지를 보내지 않아 네트워크 장애나 화면 재판정 중 Telegram 메시지가 폭주하지 않게 한다.
 
@@ -2331,7 +2322,7 @@ Luna 구현자는 다음 순서를 바꾸지 않는다.
 15. PyInstaller workflow 갱신 → onedir 스모크 테스트 통과
 16. 실제 에뮬레이터에서 16.4의 10개 시나리오 수행
 17. `README.md`에 설정법·명령·WvDAS 상주 제한을 추가하고 `CHANGES_LOG.md`에 새 기능과 보안 제한을 기록
-18. `src/main.py` 버전을 `2.5.4-momo.5`로 올리고 UI·업데이트 표시를 확인
+18. `src/main.py` 버전을 `2.5.4-momo.6`로 올리고 UI·업데이트 표시를 확인
 19. 텔레그램 관련 파일만 명시적으로 stage·commit하고 저장소 규칙에 따라 origin PR을 갱신
 
 각 단계에서 실패한 테스트를 건너뛰고 다음 단계로 진행하지 않는다.

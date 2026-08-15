@@ -42,6 +42,11 @@ from combat_strategy import (
 from post_combat import PostCombatDecision, PostCombatTracker
 from recovery import RecoveryPlan, RecoveryReason, RecoverySupervisor
 from screen_health import ScreenHealth, classify_screen, is_pause_overlay
+from chest_guard import (
+    ChestGuardAction,
+    MAX_DIALOGUE_SKIP_ATTEMPTS,
+    decide_chest_guard_action,
+)
 from mod.telegram_remote_control.adapters import GameAutomationAdapter
 from mod.telegram_remote_control.config import extend_config_var_list
 from mod.telegram_remote_control.constants import HANDOFF_TARGET_7000G
@@ -1998,6 +2003,22 @@ def Factory():
                 runtimeContext.mark_stable()
                 return State.Dungeon, DungeonState.Combat, screen
 
+            # 자정 이후 첫 복귀 때 표시되는 하켄의 가호 선택창은 일반 상태
+            # 표식이 없다. 기존 blessing 템플릿을 대화 스킵과 무작위 복구 탭보다
+            # 먼저 처리해야 선택 후 returnText/returntoTown 흐름으로 넘어갈 수 있다.
+            if blessing_pos := CheckIf(screen, "blessing"):
+                logger.info("Harken blessing choice detected; selecting a blessing")
+                Press(blessing_pos)
+                Sleep(2)
+                counter += 1
+                if counter >= setting.MAX_TRY_LIMIT:
+                    logger.warning(
+                        "Harken blessing choice persisted; restarting the game"
+                    )
+                    restartGame()
+                    counter = 0
+                continue
+
             # 성향(카르마) 선택 화면은 dialogueNext 스킵보다 먼저 처리한다.
             # 이 화면에는 진행 아이콘이 함께 떠 dialogueNext에 매칭되는데, 스킵을 먼저 두면
             # next만 계속 눌러 선택 로직(아래 counter>=10 블록)에 영영 도달하지 못하고 무한 정지에 빠진다.
@@ -3000,6 +3021,7 @@ def Factory():
         disarm = [515,934]  # 527,920会按到接受死亡 450 1000会按到技能 445,1050还是会按到技能
         haveBeenTried = False
         smartFailStreak = 0            # 스마트 개봉 연속 실패 횟수 (스턱 감지용)
+        dialogueSkipAttempts = 0       # 결과창 오탐 시 동일 좌표 반복 탭 방지
         chestGuardTimer = time.time()  # 상자 처리 전체 시간 가드 (실측: 가드 부재로 약 8시간 연속 스턱 사례)
 
         def _noteStuckRestart():
@@ -3050,21 +3072,39 @@ def Factory():
             if CheckIf(scn, "totitle"):
                 logger.info("title screen while opening chest; re-identifying state")
                 return None
-            found_target = False
-            for pattern in ["dungFlag", "combatActive", "chestOpening", "whowillopenit", "RiseAgain", "ambush"]:
+
+            # 상자 상호작용 표식은 작은 dialogueNext 아이콘보다 항상 우선한다.
+            # dialogueNext는 움직이는 던전 배경에서 0.83대로 오탐된 실측 사례가 있다.
+            guard_decision = decide_chest_guard_action(
+                scn,
+                CheckIf,
+                CheckIfAtThreshold,
+            )
+            if guard_decision.action is ChestGuardAction.OPEN_CHEST:
+                dialogueSkipAttempts = 0
+                Press(guard_decision.position)
+                chestGuardTimer = time.time()
+                Sleep(1)
+                continue
+
+            found_target = (
+                guard_decision.action is ChestGuardAction.KEEP_CHEST_STATE
+            )
+            for pattern in ["dungFlag", "combatActive", "RiseAgain", "ambush"]:
                 if (pattern.startswith("combatActive") and StateCombatCheck(scn)) or CheckIf(scn, pattern):
                     found_target = True
                     break
 
             if not found_target:
                 # 결과/대화창(골드 획득 등)의 진행 아이콘은 즉시 눌러 스킵한다.
-                # 가드의 found_target 목록엔 dialogueNext가 없어, 그대로 두면 결과창이
-                # 150초까지 방치돼 chest stuck(실측 최대 75초 지연)이 된다.
-                if Press(CheckIf(scn, "dialogueNext", [[750, 1400, 150, 200]])):
+                # 단, 상자 표식이 모두 없고 95% 이상인 경우에만 최대 3회 시도한다.
+                if guard_decision.action is ChestGuardAction.SKIP_DIALOGUE:
+                    dialogueSkipAttempts += 1
+                    Press(guard_decision.position)
                     logger.info(_("[상자 가드] 결과창 감지, 스킵합니다."))
-                    # 타이머는 리셋하지 않는다. 결과창이 정상 스킵되면 곧 found_target으로 탈출하고,
-                    # 혹시 넘어가지 않는 화면이면 300초 가드가 최후 안전망으로 남아야 하기 때문.
                     Sleep(1)
+                    if dialogueSkipAttempts >= MAX_DIALOGUE_SKIP_ATTEMPTS:
+                        return None
                     continue
                 # 공통 시스템 복구 (재시도 및 배속 확인)
                 if TryPressRetry(scn):
@@ -3093,15 +3133,11 @@ def Factory():
                     PressReturn()       # 안드로이드 백버튼 좌표 터치
                     Sleep(1)
 
-                chest_pos = CheckIf(scn, "chestFlag")
-                if chest_pos:
-                    Press(chest_pos)     # Open 버튼 매칭 좌표 클릭
-                    chestGuardTimer = time.time()  # 액션 진행 시 가드 타이머 리셋
-                    Sleep(1)
-                else:
-                    Press([1, 1])
-                    Sleep(1)
+                Press([1, 1])
+                Sleep(1)
                 continue
+
+            dialogueSkipAttempts = 0
 
             scn = ScreenShot()
 

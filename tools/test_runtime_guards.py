@@ -1,10 +1,86 @@
 import ast
+import sys
 import unittest
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
+sys.path.insert(0, str(SRC))
+
+from chest_guard import (  # noqa: E402
+    ChestGuardAction,
+    DIALOGUE_NEXT_ROI,
+    DIALOGUE_NEXT_THRESHOLD,
+    MAX_DIALOGUE_SKIP_ATTEMPTS,
+    decide_chest_guard_action,
+)
+
+
+class ChestGuardDecisionTests(unittest.TestCase):
+    def test_chest_selection_wins_over_false_dialogue_match(self):
+        calls = {"markers": [], "dialogue": []}
+
+        def check_if(_screen, marker):
+            calls["markers"].append(marker)
+            if marker == "chestFlag":
+                return [450, 1264]
+            return None
+
+        def check_dialogue(*args, **kwargs):
+            calls["dialogue"].append((args, kwargs))
+            return [783, 1554]
+
+        decision = decide_chest_guard_action(
+            "chest-selection-screen",
+            check_if,
+            check_dialogue,
+        )
+
+        self.assertIs(decision.action, ChestGuardAction.OPEN_CHEST)
+        self.assertEqual(decision.position, [450, 1264])
+        self.assertEqual(calls["dialogue"], [])
+
+    def test_other_chest_phases_also_block_dialogue_probe(self):
+        for active_marker in ("whowillopenit", "chestOpening"):
+            with self.subTest(active_marker=active_marker):
+                dialogue_calls = []
+
+                def check_if(_screen, marker):
+                    return [400, 800] if marker == active_marker else None
+
+                decision = decide_chest_guard_action(
+                    "chest-phase-screen",
+                    check_if,
+                    lambda *args, **kwargs: dialogue_calls.append((args, kwargs)),
+                )
+
+                self.assertIs(
+                    decision.action,
+                    ChestGuardAction.KEEP_CHEST_STATE,
+                )
+                self.assertEqual(dialogue_calls, [])
+
+    def test_dialogue_probe_uses_strict_threshold_after_chest_markers_fail(self):
+        calls = []
+
+        def check_dialogue(_screen, marker, *, threshold, roi):
+            calls.append((marker, threshold, roi))
+            return [834, 1487]
+
+        decision = decide_chest_guard_action(
+            "result-screen",
+            lambda _screen, _marker: None,
+            check_dialogue,
+        )
+
+        self.assertIs(decision.action, ChestGuardAction.SKIP_DIALOGUE)
+        self.assertEqual(
+            calls,
+            [("dialogueNext", DIALOGUE_NEXT_THRESHOLD, DIALOGUE_NEXT_ROI)],
+        )
+        self.assertEqual(DIALOGUE_NEXT_THRESHOLD, 0.95)
+        self.assertEqual(MAX_DIALOGUE_SKIP_ATTEMPTS, 3)
 
 
 class RuntimeGuardSourceTests(unittest.TestCase):
@@ -126,6 +202,31 @@ class RuntimeGuardSourceTests(unittest.TestCase):
         )
         self.assertIn('"spellskill/skillDetail", threshold=0.70', self.source)
 
+    def test_harken_blessing_choice_precedes_dialogue_and_blind_taps(self):
+        identify_start = self.source.index("def IdentifyState():")
+        identify_end = self.source.index("def GameFrozenCheck(", identify_start)
+        identify = self.source[identify_start:identify_end]
+
+        blessing_start = identify.index(
+            'if blessing_pos := CheckIf(screen, "blessing"):'
+        )
+        blessing_end = identify.index(
+            'if CheckIf(screen,"ambush") or CheckIf(screen,"ignore"):',
+            blessing_start,
+        )
+        blessing = identify[blessing_start:blessing_end]
+
+        self.assertLess(
+            blessing_start,
+            identify.index('CheckIf(screen, "dialogueNext"'),
+        )
+        self.assertLess(blessing_start, identify.index("if counter>=5:"))
+        self.assertIn("Press(blessing_pos)", blessing)
+        self.assertIn("counter += 1", blessing)
+        self.assertIn("counter >= setting.MAX_TRY_LIMIT", blessing)
+        self.assertIn("restartGame()", blessing)
+        self.assertIn("continue", blessing)
+
     def test_return_dialog_is_not_misclassified_as_a_close_overlay(self):
         overlay_start = self.source.index("def HandleBlockingOverlay(")
         overlay_end = self.source.index("def IdentifyState():", overlay_start)
@@ -168,6 +269,27 @@ class RuntimeGuardSourceTests(unittest.TestCase):
         identify_end = self.source.index("for pattern, state in identifyConfig:", identify_start)
         identify_config = self.source[identify_start:identify_end]
         self.assertIn('("chestOpening",  DungeonState.Chest)', identify_config)
+
+    def test_state_chest_prioritizes_open_and_bounds_dialogue_taps(self):
+        chest_start = self.source.index("def StateChest():")
+        chest_end = self.source.index("def StateDungeon(", chest_start)
+        chest = self.source[chest_start:chest_end]
+
+        self.assertIn("decide_chest_guard_action(", chest)
+        self.assertIn("ChestGuardAction.OPEN_CHEST", chest)
+        self.assertIn("ChestGuardAction.SKIP_DIALOGUE", chest)
+        self.assertLess(
+            chest.index("ChestGuardAction.OPEN_CHEST"),
+            chest.index("ChestGuardAction.SKIP_DIALOGUE"),
+        )
+        self.assertIn(
+            "dialogueSkipAttempts >= MAX_DIALOGUE_SKIP_ATTEMPTS",
+            chest,
+        )
+        self.assertNotIn(
+            'Press(CheckIf(scn, "dialogueNext", [[750, 1400, 150, 200]]))',
+            chest,
+        )
 
     def test_real_blocking_modal_still_closes(self):
         handler, calls = self.build_overlay_handler(close_position=[269, 1314])

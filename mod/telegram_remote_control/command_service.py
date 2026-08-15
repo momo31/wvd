@@ -59,8 +59,8 @@ COMMAND_MENU_TEXT = (
     "📋 WvDAS 명령 메뉴\n"
     "/start 또는 동작: 매크로 시작\n"
     "/stop 또는 정지: 안전 정지 후 타이틀 복귀\n"
-    "/status 또는 상태: 제어 상태 요약\n"
-    "stat 또는 /stat: 최근 60초 실행 로그\n"
+    "/status 또는 상태: 최근 60초 UI 메시지\n"
+    "stat 또는 /stat: 최근 60초 UI 메시지\n"
     "menu 또는 /menu 또는 메뉴: 명령 목록"
 )
 

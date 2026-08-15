@@ -33,6 +33,7 @@ class ReturnScreen(str, Enum):
     TITLE = "title"
     COMBAT = "combat"
     CHEST = "chest"
+    BLESSING = "blessing"
     DIALOGUE = "dialogue"
     RETURN_TEXT = "return_text"
     EDGE_TO_TOWN = "edge_to_town"
@@ -83,6 +84,18 @@ def return_to_town(adapter: Any, runtime: Any, signal: RemoteStopSignal) -> Tran
                     )
                 except BoundedOperationTimeout:
                     return force_stop_game_once(adapter, runtime, failure_phase=phase)
+                continue
+            if state is ReturnScreen.BLESSING:
+                # The selected blessing can briefly remain visible behind its
+                # detail popup. Prefer a real close button when present, as the
+                # legacy global handler did, then select the blessing otherwise.
+                position = (
+                    _match(adapter, screen, "combatClose")
+                    or _match(adapter, screen, "close")
+                    or _match(adapter, screen, "blessing")
+                )
+                _press_if_allowed(adapter, runtime, position)
+                adapter.sleep(DIALOGUE_ADVANCE_INTERVAL_SECONDS)
                 continue
             if state is ReturnScreen.DIALOGUE:
                 _press_if_allowed(
@@ -178,6 +191,10 @@ def _classify(adapter, screen) -> ReturnScreen:
         return ReturnScreen.COMBAT
     if any(_has(adapter, screen, name) for name in ("chestFlag", "whowillopenit", "chestOpening")):
         return ReturnScreen.CHEST
+    # The first return after the daily reset can show Harken's blessing
+    # choices. It must win over dialogueNext and blind recovery taps.
+    if _has(adapter, screen, "blessing"):
+        return ReturnScreen.BLESSING
     # Loot/result pages can appear after the chest handler has returned and a
     # remote stop has already transferred ownership to this state machine.
     # Handle them before the expensive town/map probes so each result page is

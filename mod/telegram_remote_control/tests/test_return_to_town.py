@@ -50,6 +50,12 @@ class _Adapter:
 
     def match_base(self, screen, name, roi, threshold):
         self.base_calls.append((screen, name, roi, threshold))
+        if screen in {"blessing", "blessing-and-dialogue"} and name == "blessing":
+            return [377, 1100]
+        if screen == "blessing-and-dialogue" and name == "dialogueNext":
+            return [834, 1487]
+        if screen == "return-text" and name == "ReturnText":
+            return [450, 1110]
         if screen == "loot" and name == "dialogueNext":
             return [834, 1487]
         if screen == "chest-and-dialogue" and name in {"chestOpening", "dialogueNext"}:
@@ -116,6 +122,27 @@ class ReturnToTownTests(unittest.TestCase):
 
         self.assertEqual(state, ReturnScreen.CHEST)
         checked = [call[1] for call in adapter.base_calls]
+        self.assertNotIn("dialogueNext", checked)
+
+    def test_blessing_choice_precedes_dialogue_and_reaches_town(self):
+        adapter = _Adapter(["blessing", "return-text", "town", "town"])
+        runtime = _Runtime()
+
+        result = return_to_town(
+            adapter,
+            runtime,
+            RemoteStopSignal(CheckpointKind.BETWEEN_OPERATIONS),
+        )
+
+        self.assertEqual(result.status, TransitionStatus.TOWN_READY)
+        self.assertEqual(adapter.presses, [[377, 1100], [450, 1110]])
+
+        priority_adapter = _Adapter([])
+        self.assertEqual(
+            _classify(priority_adapter, "blessing-and-dialogue"),
+            ReturnScreen.BLESSING,
+        )
+        checked = [call[1] for call in priority_adapter.base_calls]
         self.assertNotIn("dialogueNext", checked)
 
 

@@ -26,6 +26,7 @@ class RecentLogTests(unittest.TestCase):
             current_file = log_dir / "log_260814-115900.txt"
             current_file.write_text(
                 "2026-08-14 11:58:00 - INFO - [macro:run:1] - too old\n"
+                "2026-08-14 11:59:10 - DEBUG - [macro:run:1] - debug not shown in UI\n"
                 "2026-08-14 11:59:20 - INFO - [macro:run:2] - recent A\n"
                 "continued detail\n"
                 "2026-08-14 11:59:59 - ERROR - [macro:run:3] - recent B\n",
@@ -39,7 +40,11 @@ class RecentLogTests(unittest.TestCase):
         self.assertEqual(result.file_name, current_file.name)
         self.assertNotIn("too old", result.text)
         self.assertNotIn("wrong file", result.text)
-        self.assertIn("recent A", result.text)
+        self.assertNotIn("debug not shown in UI", result.text)
+        self.assertEqual(
+            result.text,
+            "recent A\ncontinued detail\nrecent B",
+        )
         self.assertIn("continued detail", result.text)
         self.assertIn("recent B", result.text)
         self.assertEqual(result.latest_timestamp, datetime(2026, 8, 14, 11, 59, 59))

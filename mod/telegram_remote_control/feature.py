@@ -251,42 +251,22 @@ class TelegramRemoteFeature:
         self._send_ack(payload.chat_id, text, payload.update_id)
 
     def _handle_status(self, payload: TelegramCommandPayload) -> None:
-        snapshot = self.status_snapshot()
-        elapsed = "없음"
-        if snapshot.started_at:
-            elapsed = self._format_elapsed(max(0.0, (datetime.now(timezone.utc) - snapshot.started_at).total_seconds()))
-        target = snapshot.farm_target_text or "없음"
-        text = (
-            "ℹ️ WvDAS 상태\n"
-            f"상태: {self.translate(snapshot.state.value)}\n"
-            f"매크로: {target}\n"
-            f"실행 시간: {elapsed}\n"
-            f"정지 단계: {self.progress_detail or '없음'}\n"
-            f"마지막 오류: {snapshot.last_error or '없음'}"
-        )
-        self.service.enqueue(OutboundMessage(f"status:{payload.update_id}", payload.chat_id, text, NotificationPriority.ACKNOWLEDGEMENT))
+        self._handle_recent_ui_messages(payload, f"status:{payload.update_id}")
 
     def _handle_stat(self, payload: TelegramCommandPayload) -> None:
-        snapshot = self.status_snapshot()
-        target = snapshot.farm_target_text or "없음"
+        self._handle_recent_ui_messages(payload, f"stat:{payload.update_id}")
+
+    def _handle_recent_ui_messages(self, payload: TelegramCommandPayload, key: str) -> None:
         excerpt = read_recent_log(self.log_directory)
-        source = excerpt.file_name or "없음"
-        header = (
-            "📋 WvDAS 최근 60초 로그\n"
-            f"상태: {self.translate(snapshot.state.value)}\n"
-            f"매크로: {target}\n"
-            f"로그: {source}"
-        )
+        header = "📋 WvDAS UI 메시지 (최근 60초)"
         if excerpt.text:
             body = excerpt.text
             if excerpt.read_truncated:
-                body = "로그가 많아 파일의 최신 구간만 읽었습니다.\n" + body
+                body = "메시지가 많아 최신 구간만 표시합니다.\n" + body
         elif excerpt.file_name is None:
-            body = "현재 로그 파일이 없습니다."
+            body = "현재 UI 메시지가 없습니다."
         else:
-            body = "최근 60초 내 로그가 없습니다."
-            if excerpt.latest_timestamp is not None:
-                body += f"\n마지막 로그 시각: {excerpt.latest_timestamp:%Y-%m-%d %H:%M:%S}"
+            body = "최근 60초 내 UI 메시지가 없습니다."
 
         secrets = (self.current_settings.bot_token, self.current_settings.allowed_chat_id)
         header = redact_log_text(header, secrets)
@@ -298,7 +278,7 @@ class TelegramRemoteFeature:
         text = f"{header}\n\n{body}"
         self.service.enqueue(
             OutboundMessage(
-                f"stat:{payload.update_id}",
+                key,
                 payload.chat_id,
                 text,
                 NotificationPriority.ACKNOWLEDGEMENT,
