@@ -1,5 +1,9 @@
 # Repository Automation Rules
 
+## 실행 파일 빌드 시 필수 참조
+
+실행 파일을 빌드하거나 `dist\\wvd`에 배포할 때는 먼저 [`docs/build-and-release.md`](docs/build-and-release.md)를 확인한다. 문서에 정의된 Python 3.14 빌드 환경, `tkinter` 포함 확인, exe 실행 스모크 테스트 및 배포 절차를 반드시 따른다.
+
 ## GitHub pull request automation
 
 - 개발 작업을 Git 커밋한 경우, 별도의 사용자 요청을 기다리지 말고 해당 작업 브랜치를 사용자 저장소인 `origin`에 푸시한 뒤 PR을 자동으로 생성하거나 갱신한다.

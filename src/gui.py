@@ -641,8 +641,11 @@ class ConfigPanelApp(tk.Toplevel):
         super().__init__(master_controller)
         self.controller = master_controller
         self.msg_queue = msg_queue
-        self.geometry('630x700')
-        self.minsize(630, 700)
+        # The Telegram settings section increased the amount of content shown
+        # on first launch.  Keep the complete controls visible without
+        # requiring the user to scroll immediately.
+        self.geometry('630x850')
+        self.minsize(630, 850)
         
         self.title(self.TITLE)
 
@@ -799,7 +802,7 @@ class ConfigPanelApp(tk.Toplevel):
         self.main_frame.rowconfigure(0, weight=1) 
         self.main_frame.columnconfigure(0, weight=1)
 
-        self.scroll_view = ScrollableFrame(self.main_frame, height=570)
+        self.scroll_view = ScrollableFrame(self.main_frame, height=720)
         self.scroll_view.grid(row=0, column=0, sticky="nsew")
         content_root = self.scroll_view.scrollable_frame
 
