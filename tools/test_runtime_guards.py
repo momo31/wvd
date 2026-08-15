@@ -15,6 +15,10 @@ from chest_guard import (  # noqa: E402
     MAX_DIALOGUE_SKIP_ATTEMPTS,
     decide_chest_guard_action,
 )
+from network_guard import (  # noqa: E402
+    NETWORK_PROBE_COOLDOWN_SECONDS,
+    NETWORK_STALL_SECONDS,
+)
 
 
 class ChestGuardDecisionTests(unittest.TestCase):
@@ -178,13 +182,31 @@ class RuntimeGuardSourceTests(unittest.TestCase):
         self.assertIn("BLACK_FRAME_MAX = 45", self.source)
         self.assertIn("POST_RESTART_STARTUP_MAX = 90", self.source)
 
-    def test_emulator_recovery_rebinds_adb_and_uses_backoff_without_a_hard_limit(self):
+    def test_emulator_recovery_rebinds_adb_and_uses_bounded_backoff(self):
         self.assertIn("if not ResetDevice(force_restart_emu=True):", self.source)
-        self.assertIn("supervisor.request_emulator_restart()", self.source)
+        self.assertIn("if not supervisor.request_emulator_restart():", self.source)
         self.assertIn("supervisor.emulator_restart_delay_seconds", self.source)
         self.assertIn("supervisor.app_restart_cooldown", self.source)
-        self.assertNotIn("recovery circuit breaker tripped", self.source)
-        self.assertNotIn("if not supervisor.request_emulator_restart()", self.source)
+        self.assertIn('"emulator_recovery_limit"', self.source)
+
+    def test_adb_boot_wait_is_bounded_but_allows_slow_boot(self):
+        self.assertIn("boot_timeout_seconds = 180", self.source)
+        self.assertIn("boot_probe_timeout_seconds = 5", self.source)
+        self.assertIn("max_transport_reconnects = 6", self.source)
+        self.assertIn("probe_adb_boot_state(", self.source)
+        self.assertNotIn('device.shell("getprop sys.boot_completed")', self.source)
+        self.assertIn('"adb_boot_timeout"', self.source)
+
+    def test_adb_connect_retries_do_not_reboot_a_slow_emulator(self):
+        start = self.source.index("for attempt in range(MAXRETRIES):")
+        end = self.source.index(
+            "# A newly-started emulator can need several minutes",
+            start,
+        )
+        connect_loop = self.source[start:end]
+        self.assertNotIn("KillEmulator()", connect_loop)
+        self.assertIn("emulator_start_attempted", connect_loop)
+        self.assertIn("WaitForDeviceRecovery(5)", connect_loop)
 
     def test_blocking_overlays_are_handled_before_state_templates(self):
         identify_start = self.source.index("def IdentifyState():")
@@ -290,6 +312,33 @@ class RuntimeGuardSourceTests(unittest.TestCase):
             'Press(CheckIf(scn, "dialogueNext", [[750, 1400, 150, 200]]))',
             chest,
         )
+
+    def test_chest_network_probe_uses_semantic_thirty_second_stall(self):
+        chest_start = self.source.index("def StateChest():")
+        chest_end = self.source.index("def StateDungeon(", chest_start)
+        chest = self.source[chest_start:chest_end]
+
+        self.assertEqual(NETWORK_STALL_SECONDS, 30.0)
+        self.assertGreater(NETWORK_PROBE_COOLDOWN_SECONDS, 0.0)
+        self.assertIn("NetworkStallTracker", chest)
+        self.assertIn("stall_seconds=NETWORK_STALL_SECONDS", chest)
+        self.assertIn("TryPressNetworkRetry(scn, chestNetworkStallTracker)", chest)
+        self.assertIn('"connection"', chest if '"connection"' in chest else self.source)
+        self.assertIn('threshold=0.90', self.source)
+
+        decision_index = chest.index("guard_decision = decide_chest_guard_action(")
+        probe_index = chest.index("TryPressNetworkRetry(scn, chestNetworkStallTracker)")
+        open_index = chest.index("ChestGuardAction.OPEN_CHEST", decision_index)
+        self.assertLess(decision_index, probe_index)
+        self.assertLess(probe_index, open_index)
+
+        open_block = chest[open_index:chest.index("found_target =", open_index)]
+        self.assertNotIn("chestGuardTimer = time.time()", open_block)
+
+        choose_start = chest.index('if CheckIf(scn,"whowillopenit"):', open_index)
+        choose_end = chest.index('if CheckIf(scn,"chestOpening"):', choose_start)
+        choose_block = chest[choose_start:choose_end]
+        self.assertNotIn("chestGuardTimer = time.time()", choose_block)
 
     def test_real_blocking_modal_still_closes(self):
         handler, calls = self.build_overlay_handler(close_position=[269, 1314])

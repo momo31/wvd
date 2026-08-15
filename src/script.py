@@ -7,6 +7,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from ppadb.client import Client as AdbClient
+from ppadb.device import Device as AdbDevice
 try:
     from win10toast import ToastNotifier
 except Exception:
@@ -41,11 +42,17 @@ from combat_strategy import (
 )
 from post_combat import PostCombatDecision, PostCombatTracker
 from recovery import RecoveryPlan, RecoveryReason, RecoverySupervisor
+from adb_recovery import AdbBootState, adb_device_is_online, probe_adb_boot_state
 from screen_health import ScreenHealth, classify_screen, is_pause_overlay
 from chest_guard import (
     ChestGuardAction,
     MAX_DIALOGUE_SKIP_ATTEMPTS,
     decide_chest_guard_action,
+)
+from network_guard import (
+    NETWORK_PROBE_COOLDOWN_SECONDS,
+    NETWORK_STALL_SECONDS,
+    NetworkStallTracker,
 )
 from mod.telegram_remote_control.adapters import GameAutomationAdapter
 from mod.telegram_remote_control.config import extend_config_var_list
@@ -538,22 +545,28 @@ def CheckAndRecoverDevice(setting : FarmConfig, runtimeContext: RuntimeContext, 
     MAXRETRIES = 20
 
     adb_path = GetADBPathFromEmuPath(setting.EMU_PATH)
+    emulator_start_attempted = False
+    adb_server_reset_done = bool(FORCE_RESTART_ADB)
 
     for attempt in range(MAXRETRIES):
         if not WaitForDeviceRecovery(0):
             return None
         logger.info(_("-----------------------\n开始尝试连接adb. 次数:{a}/{b}...").format(a=attempt + 1, b=MAXRETRIES))
 
-        if attempt == 3:
+        if attempt == 3 and not adb_server_reset_done:
             logger.info(_("失败次数过多, 尝试关闭adb."))
             KillAdb()
+            adb_server_reset_done = True
 
             # 我们不起手就关, 但是如果2次链接还是尝试失败, 那就触发一次强制重启.
         
         try:
             logger.info(_("检查adb服务..."))
             result = CMDLine(f"\"{adb_path}\" devices")
-            if ("daemon not running" in result.stderr) or ("offline" in result.stdout):
+            if (
+                not adb_server_reset_done
+                and (("daemon not running" in result.stderr) or ("offline" in result.stdout))
+            ):
                 if not WaitForDeviceRecovery(2):
                     return None
                 result = CMDLine(f"\"{adb_path}\" devices")
@@ -561,6 +574,7 @@ def CheckAndRecoverDevice(setting : FarmConfig, runtimeContext: RuntimeContext, 
                     logger.info("adb服务未启动!\n启动adb服务...")
                     CMDLine(f"\"{adb_path}\" kill-server")
                     CMDLine(f"\"{adb_path}\" start-server")
+                    adb_server_reset_done = True
                     if not WaitForDeviceRecovery(2):
                         return None
 
@@ -568,7 +582,7 @@ def CheckAndRecoverDevice(setting : FarmConfig, runtimeContext: RuntimeContext, 
             result = CMDLine(f"\"{adb_path}\" connect {setting.ADB_ADRESS}")
 
             result = CMDLine(f"\"{adb_path}\" devices")
-            if ("{a}").format(a=setting.ADB_ADRESS) in result.stdout:
+            if adb_device_is_online(result.stdout, setting.ADB_ADRESS):
                 logger.info(_("成功连接到模拟器!"))
                 results_list = CheckEmulator()
                 logger.debug("{a}".format(a=results_list))
@@ -579,69 +593,126 @@ def CheckAndRecoverDevice(setting : FarmConfig, runtimeContext: RuntimeContext, 
                     logger.info(_("\n\n***********\n有多个模拟器已经启动, 无法识别进程号. 当需要重启模拟器的时候, 会重启所有模拟器.\n为了避免此问题, 请关闭目标模拟器, 并使用本脚本自动启动模拟器.\n\n"))
                 break
 
-            if (not runtimeContext._RUNNING_EMU_PID) or (runtimeContext._RUNNING_EMU_PID not in CheckEmulator()):
-                logger.info(_("模拟器未运行，尝试启动..."))
-                StartEmulator()
-                logger.info(_("模拟器(应该)启动完毕.\n 尝试连接到模拟器..."))
-                result = CMDLine(f"\"{adb_path}\" connect {setting.ADB_ADRESS}")
-                if result.returncode == 0 and ("connected" in result.stdout or "already" in result.stdout):
-                    logger.info(_("成功连接到模拟器"))
-                    break
-                logger.info(_("无法连接. 检查adb端口."))
+            emulator_running = (
+                runtimeContext._RUNNING_EMU_PID
+                and runtimeContext._RUNNING_EMU_PID in CheckEmulator()
+            )
+            if not emulator_running:
+                if not emulator_start_attempted:
+                    emulator_start_attempted = True
+                    logger.info(_("模拟器未运行，尝试启动..."))
+                    StartEmulator()
+                    logger.info(_("模拟器(应该)启动完毕.\n 尝试连接到模拟器..."))
+                    result = CMDLine(f"\"{adb_path}\" connect {setting.ADB_ADRESS}")
+                    if result.returncode == 0 and (
+                        "connected" in result.stdout or "already" in result.stdout
+                    ):
+                        logger.info(_("成功连接到模拟器"))
+                        break
+                    logger.info(_("无法连接. 检查adb端口."))
+                else:
+                    logger.info(
+                        "에뮬레이터 시작 요청을 이미 보냈습니다. ADB 포트가 "
+                        "열릴 때까지 기다립니다."
+                    )
 
             logger.info(_("连接失败: {a}").format(a=result.stderr.strip()))
-            if not WaitForDeviceRecovery(2):
-                return None
-            KillEmulator()
-            KillAdb()
-            if not WaitForDeviceRecovery(2):
+            if not WaitForDeviceRecovery(5):
                 return None
         except Exception as e:
             logger.error(_("重启ADB服务时出错: {a}").format(a=e))
-            if not WaitForDeviceRecovery(2):
+            if not WaitForDeviceRecovery(5):
                 return None
-            KillEmulator()
-            KillAdb()
-            if not WaitForDeviceRecovery(2):
-                return None
-            # Keep the bounded recovery loop alive. A transient ADB daemon
-            # failure must not leave ScreenShot using a stale device handle.
+            # Keep the bounded recovery loop alive without repeatedly killing
+            # a slow-booting emulator. This function starts it at most once.
             continue
     else:
         logger.info(_("达到最大重试次数，连接失败"))
         return None
 
-    try:
-        client = AdbClient(host="127.0.0.1", port=5037)
-        devices = client.devices()
-        
-        # 查找匹配的设备
-        target_device = "{a}".format(a=setting.ADB_ADRESS)
-        for device in devices:
-            if device.serial == target_device:
-                logger.info(_("成功创建设备对象: {a}").format(a=device.serial))
-                # 等待 Android 启动 (sys.boot_completed == 1)
-                boot_timeout = 60
-                boot_start = time.time()
-                boot_completed = False
-                while time.time() - boot_start < boot_timeout:
-                    try:
-                        res = device.shell("getprop sys.boot_completed").strip()
-                        if res == "1":
-                            boot_completed = True
-                            logger.info(_("Android 시스템 부팅 완료 확인."))
-                            break
-                    except Exception as e:
-                        logger.debug(f"부팅 상태 확인 중 예외 발생: {e}")
-                    logger.info(_("Android 시스템 부팅 대기 중..."))
-                    if not WaitForDeviceRecovery(3):
-                        return None
-                if not boot_completed:
-                    logger.warning(_("경고: Android 부팅 대기 시간이 초과되었습니다."))
-                return device
-    except Exception as e:
-        logger.error(_("创建ADB设备时出错: {a}").format(a=e))
+    # A newly-started emulator can need several minutes before Android and
+    # its ADB transport are both usable. Probe through the adb executable so
+    # a stalled pure-python-adb shell call cannot freeze the macro forever.
+    target_device = str(setting.ADB_ADRESS)
+    boot_timeout_seconds = 180
+    boot_probe_timeout_seconds = 5
+    boot_retry_seconds = 5
+    max_transport_reconnects = 6
+    transport_reconnects = 0
+    boot_deadline = time.monotonic() + boot_timeout_seconds
 
+    logger.info(
+        "Android와 ADB가 준비될 때까지 최대 %s초 기다립니다.",
+        boot_timeout_seconds,
+        extra={"summary": True},
+    )
+    while time.monotonic() < boot_deadline:
+        if not WaitForDeviceRecovery(0):
+            return None
+
+        probe = probe_adb_boot_state(
+            adb_path,
+            target_device,
+            timeout_seconds=boot_probe_timeout_seconds,
+        )
+        if probe.state is AdbBootState.READY:
+            logger.info(
+                "Android 부팅과 ADB 연결 준비가 완료되었습니다.",
+                extra={"summary": True},
+            )
+            # Construct the lightweight handle only after the bounded probe
+            # succeeds. AdbClient.devices() can itself hang on a bad transport.
+            return AdbDevice(
+                AdbClient(host="127.0.0.1", port=5037),
+                target_device,
+            )
+
+        if probe.state is AdbBootState.TRANSPORT_ERROR:
+            if transport_reconnects < max_transport_reconnects:
+                transport_reconnects += 1
+                logger.warning(
+                    "ADB 부팅 확인 실패 (%s): 전송 연결을 다시 설정합니다 (%s/%s).",
+                    probe.detail,
+                    transport_reconnects,
+                    max_transport_reconnects,
+                )
+                try:
+                    subprocess.run(
+                        [adb_path, "disconnect", target_device],
+                        capture_output=True,
+                        timeout=5,
+                        check=False,
+                    )
+                    if not WaitForDeviceRecovery(2):
+                        return None
+                    subprocess.run(
+                        [adb_path, "connect", target_device],
+                        capture_output=True,
+                        timeout=10,
+                        check=False,
+                    )
+                except (OSError, subprocess.TimeoutExpired) as exc:
+                    logger.warning("ADB 전송 재연결 실패: %s", exc)
+            elif transport_reconnects == max_transport_reconnects:
+                transport_reconnects += 1
+                logger.error(
+                    "ADB 전송 재연결 한도에 도달했습니다. 에뮬레이터를 다시 "
+                    "재시작하지 않고 남은 부팅 대기 시간 동안 기다립니다.",
+                    extra={"summary": True},
+                )
+        else:
+            remaining = max(0, int(boot_deadline - time.monotonic()))
+            logger.info("Android 부팅 중입니다. 최대 %s초 더 기다립니다.", remaining)
+
+        if not WaitForDeviceRecovery(boot_retry_seconds):
+            return None
+
+    logger.error(
+        "Android/ADB가 %s초 안에 준비되지 않았습니다. 에뮬레이터를 다시 "
+        "재시작하지 않고 자동 복구를 중단합니다.",
+        boot_timeout_seconds,
+        extra={"summary": True},
+    )
     return None
 ##################################################################
 def CutRoI(screenshot, roi):
@@ -1295,6 +1366,64 @@ def Factory():
             logger.info(_("发现并点击了\"重试\". 你遇到了网络波动."))
             return True
         return False
+
+    def TryPressNetworkRetry(scn, stall_tracker):
+        """Retry a verified network modal after a semantic phase stalls.
+
+        A Retry button can belong to more than one game dialog.  Require the
+        dedicated connection message and the Retry button in the same frame,
+        then confirm both on a fresh frame before pressing.  The tracker is
+        marked before matching so a missing/partial modal cannot cause a tight
+        template-matching loop.
+        """
+
+        now = time.monotonic()
+        if not stall_tracker.should_probe(now):
+            return False
+        stall_tracker.mark_probe(now)
+
+        connection_pos = CheckIfAtThreshold(
+            scn,
+            "connection",
+            threshold=0.90,
+            roi=[[180, 650, 540, 250]],
+        )
+        retry_pos = CheckIfAtThreshold(
+            scn,
+            "retry",
+            threshold=0.90,
+            roi=[[300, 830, 300, 180]],
+        )
+        if not (connection_pos and retry_pos):
+            logger.debug(
+                "30초 정체 후 네트워크 오류창을 확인했지만 connection/Retry 조합을 찾지 못했습니다."
+            )
+            return False
+
+        Sleep(0.25)
+        confirmation_scn = ScreenShot()
+        confirmed_connection = CheckIfAtThreshold(
+            confirmation_scn,
+            "connection",
+            threshold=0.90,
+            roi=[[180, 650, 540, 250]],
+        )
+        confirmed_retry = CheckIfAtThreshold(
+            confirmation_scn,
+            "retry",
+            threshold=0.90,
+            roi=[[300, 830, 300, 180]],
+        )
+        if not (confirmed_connection and confirmed_retry):
+            logger.debug("네트워크 오류창이 연속 프레임에서 확인되지 않아 Retry를 보류합니다.")
+            return False
+
+        Press(confirmed_retry)
+        logger.warning(
+            "30초 동안 상자 처리 단계가 진행되지 않아 네트워크 Retry를 실행했습니다.",
+            extra={"summary": True},
+        )
+        return True
     def AddImportantInfo(str):
         nonlocal runtimeContext
         if runtimeContext._IMPORTANTINFO == "":
@@ -1437,9 +1566,22 @@ def Factory():
                 extra={"summary": True},
             )
         if emulator_restart_requested:
-            # 안정 화면을 아직 확인하지 못했더라도 복구 시도를 중단하지 않는다.
-            # 대신 시도 횟수에 따라 대기 시간을 지수적으로 늘려 재시작 폭주를 막는다.
-            supervisor.request_emulator_restart()
+            # Give each recovery ample boot time, but never reboot forever.
+            # A stable actionable screen resets this bounded counter.
+            if not supervisor.request_emulator_restart():
+                detail = (
+                    "에뮬레이터가 안정 화면 없이 3회 재시작되어 자동 복구를 "
+                    "중단했습니다. 무한 재부팅을 방지하기 위해 수동 확인이 필요합니다."
+                )
+                logger.error(detail, extra={"summary": True})
+                remote_runtime = getattr(setting, "_REMOTE_RUNTIME", None)
+                if remote_runtime is not None:
+                    remote_runtime.mark_exit(
+                        TaskExitReason.ERROR,
+                        detail,
+                        "emulator_recovery_limit",
+                    )
+                raise RuntimeError(detail)
             emulator_restart_delay = supervisor.emulator_restart_delay_seconds
             logger.warning(
                 "에뮬레이터 복구 #%s를 %.1f초 후 시도합니다.",
@@ -1456,8 +1598,18 @@ def Factory():
             # object.  Keeping the old adbutils handle after an emulator
             # restart makes the next screenshot operate on a stale transport.
             if not ResetDevice(force_restart_emu=True):
-                setting._FORCESTOPING.set()
-                raise TaskStoppedException()
+                detail = (
+                    "에뮬레이터 재시작 후 180초 동안 Android/ADB가 준비되지 "
+                    "않아 자동 복구를 중단했습니다."
+                )
+                remote_runtime = getattr(setting, "_REMOTE_RUNTIME", None)
+                if remote_runtime is not None:
+                    remote_runtime.mark_exit(
+                        TaskExitReason.ERROR,
+                        detail,
+                        "adb_boot_timeout",
+                    )
+                raise RuntimeError(detail)
             Sleep(5)
 
         DeviceShell("logcat -c")
@@ -3023,6 +3175,10 @@ def Factory():
         smartFailStreak = 0            # 스마트 개봉 연속 실패 횟수 (스턱 감지용)
         dialogueSkipAttempts = 0       # 결과창 오탐 시 동일 좌표 반복 탭 방지
         chestGuardTimer = time.time()  # 상자 처리 전체 시간 가드 (실측: 가드 부재로 약 8시간 연속 스턱 사례)
+        chestNetworkStallTracker = NetworkStallTracker(
+            stall_seconds=NETWORK_STALL_SECONDS,
+            probe_cooldown_seconds=NETWORK_PROBE_COOLDOWN_SECONDS,
+        )
 
         def _noteStuckRestart():
             # 재시작 후 같은 상자에서 또 가드가 발동하는 순환(해체 불가 미니게임 변종 등)을
@@ -3080,10 +3236,23 @@ def Factory():
                 CheckIf,
                 CheckIfAtThreshold,
             )
+            if guard_decision.marker:
+                chestNetworkStallTracker.observe(
+                    (
+                        "chest",
+                        guard_decision.action.value,
+                        guard_decision.marker,
+                    ),
+                    time.monotonic(),
+                )
+                if TryPressNetworkRetry(scn, chestNetworkStallTracker):
+                    Sleep(1)
+                    continue
             if guard_decision.action is ChestGuardAction.OPEN_CHEST:
                 dialogueSkipAttempts = 0
                 Press(guard_decision.position)
-                chestGuardTimer = time.time()
+                # 입력 자체는 진행 증거가 아니다. 같은 chestFlag가 오류창
+                # 뒤에 계속 보일 수 있으므로 30초 정체 감시 시각을 유지한다.
                 Sleep(1)
                 continue
 
@@ -3161,7 +3330,9 @@ def Factory():
                             availableChar.remove(whowillopenit) # 如果发现了恐惧, 删除这个角色.
                     else:
                         Press(pos)
-                        chestGuardTimer = time.time()  # 액션 진행 시 가드 타이머 리셋
+                        # 캐릭터 선택 입력만으로는 화면 단계가 바뀌었다는
+                        # 증거가 아니다. 동일 선택창에서 재탭되면 전체 가드도
+                        # 계속 연장되지 않도록 한다.
                         Sleep(1.5)
                         if (not setting.SMART_DISARM_CHEST) or runtimeContext._SMARTDISARM_DEGRADED:
                             for underscore in range(8):

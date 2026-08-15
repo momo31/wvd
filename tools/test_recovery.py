@@ -54,18 +54,21 @@ class RecoverySupervisorTests(unittest.TestCase):
         self.assertTrue(supervisor.note_app_restart(90.0))
         self.assertEqual(supervisor.restart_times, (0.0, 30.0, 60.0, 90.0))
 
-    def test_repeated_emulator_recovery_is_not_hard_capped(self):
+    def test_repeated_emulator_recovery_is_hard_capped(self):
         supervisor = RecoverySupervisor(
             emulator_restart_backoff_seconds=5.0,
             max_emulator_restart_backoff_seconds=20.0,
+            max_emulator_restarts_without_stable=3,
         )
 
-        for expected_delay in (5.0, 10.0, 20.0, 20.0):
+        for expected_delay in (5.0, 10.0, 20.0):
             self.assertTrue(supervisor.request_emulator_restart())
             self.assertEqual(
                 supervisor.emulator_restart_delay_seconds,
                 expected_delay,
             )
+        self.assertFalse(supervisor.request_emulator_restart())
+        self.assertEqual(supervisor.emulator_restarts_without_stable, 3)
 
     def test_app_restarts_have_a_minimum_interval(self):
         supervisor = RecoverySupervisor(minimum_restart_interval_seconds=30.0)

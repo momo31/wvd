@@ -37,14 +37,7 @@ class RecoveryPlan:
 
 
 class RecoverySupervisor:
-    """Track repeated recovery and pace retries until a stable screen appears.
-
-    A transient game or emulator failure should be recoverable even when it
-    happens more than once.  Rather than permanently stopping after a fixed
-    number of emulator resets, the supervisor records the attempts and exposes
-    cooldown/backoff values to the runtime.  This keeps retries observable and
-    progressively slower without imposing a hard recovery ceiling.
-    """
+    """Track, pace, and cap recovery until a stable screen appears."""
 
     def __init__(
         self,
@@ -54,6 +47,7 @@ class RecoverySupervisor:
         minimum_restart_interval_seconds=90.0,
         emulator_restart_backoff_seconds=45.0,
         max_emulator_restart_backoff_seconds=360.0,
+        max_emulator_restarts_without_stable=3,
         clock=None,
     ):
         self.restart_window_seconds = float(restart_window_seconds)
@@ -67,6 +61,9 @@ class RecoverySupervisor:
         self.max_emulator_restart_backoff_seconds = max(
             self.emulator_restart_backoff_seconds,
             float(max_emulator_restart_backoff_seconds),
+        )
+        self.max_emulator_restarts_without_stable = max(
+            1, int(max_emulator_restarts_without_stable)
         )
         self._clock = clock or time.monotonic
         self._restart_times = []
@@ -124,8 +121,13 @@ class RecoverySupervisor:
         return len(self._restart_times) >= self.rapid_restart_limit
 
     def request_emulator_restart(self):
-        """Record and allow an emulator escalation with no hard attempt limit."""
+        """Allow a bounded emulator reset until a stable screen is observed."""
 
+        if (
+            self._emulator_restarts_without_stable
+            >= self.max_emulator_restarts_without_stable
+        ):
+            return False
         self._emulator_restarts_without_stable += 1
         return True
 
