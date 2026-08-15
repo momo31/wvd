@@ -184,8 +184,10 @@ class Upstream249MergeTests(unittest.TestCase):
         script_source = (SRC / "script.py").read_text(encoding="utf-8")
         self.assertIn("os.path.abspath(sys.executable)", utils_source)
         self.assertIn("def _config_has_runtime_settings(config_data):", utils_source)
+        self.assertIn("WVDAS_CONFIG_PATH", utils_source)
+        self.assertIn("LOCALAPPDATA", utils_source)
         self.assertIn("def _find_config_fallback():", utils_source)
-        self.assertIn("and not _config_has_runtime_settings(config_data)", utils_source)
+        self.assertIn("def _merge_telegram_settings(config_data, fallback_data):", utils_source)
         self.assertIn("GetOneVarInGeneralConfig('LANGUAGE', \"ko_KR\")", utils_source)
         self.assertIn('["GENERAL",   "LANGUAGE",                 tk.StringVar, "ko_KR"]', script_source)
 

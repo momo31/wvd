@@ -214,14 +214,35 @@ def LoadImage(path):
 
 ############################################
 def _config_file_path():
-    """Return the writable config path beside the executable or project root."""
+    """Return the persistent config path used by the application.
+
+    A PyInstaller ``dist`` directory is replaceable build output. Keeping the
+    only copy of the user's settings beside ``wvd.exe`` therefore loses the
+    Telegram Chat ID whenever a clean build replaces that directory. Frozen
+    builds use a per-user path instead, while still allowing an explicit path
+    for portable/test deployments. The old executable-side file is read as a
+    migration fallback by :func:`LoadRawConfigFromFile`.
+    """
     if getattr(sys, "frozen", False):
+        configured_path = os.environ.get("WVDAS_CONFIG_PATH")
+        if configured_path:
+            return os.path.abspath(os.path.expandvars(os.path.expanduser(configured_path)))
+
+        user_data_directory = (
+            os.environ.get("LOCALAPPDATA")
+            or os.environ.get("APPDATA")
+        )
+        if user_data_directory:
+            return os.path.join(user_data_directory, "WvDAS", "config.json")
+
+        # Keep a useful fallback for portable environments without the normal
+        # Windows per-user environment variables.
         return os.path.join(os.path.dirname(os.path.abspath(sys.executable)), "config.json")
     return os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "config.json"))
 
 
 def _config_has_runtime_settings(config_data):
-    """Return whether a config contains a user-selected emulator/task setup."""
+    """Return whether a config contains user-selected runtime settings."""
     general = config_data.get("GENERAL", {}) if isinstance(config_data, dict) else {}
     if not isinstance(general, dict):
         return False
@@ -239,7 +260,53 @@ def _config_has_runtime_settings(config_data):
         return True
 
     farm_target = general.get("FARM_TARGET")
-    return farm_target not in (None, "", "None")
+    if farm_target not in (None, "", "None"):
+        return True
+
+    # Telegram-only settings are still user data. Treating them as an empty
+    # first-run config made the fallback select another config and dropped the
+    # saved Chat ID after a rebuild.
+    if general.get("TELEGRAM_ENABLED") is True:
+        return True
+    return any(
+        isinstance(general.get(name), str) and general.get(name).strip()
+        for name in ("TELEGRAM_BOT_TOKEN", "TELEGRAM_ALLOWED_CHAT_ID")
+    )
+
+
+def _config_has_telegram_keys(config_data):
+    """Return whether the config has been initialized with Telegram fields."""
+    general = config_data.get("GENERAL", {}) if isinstance(config_data, dict) else {}
+    return isinstance(general, dict) and any(
+        name in general
+        for name in (
+            "TELEGRAM_ENABLED",
+            "TELEGRAM_BOT_TOKEN",
+            "TELEGRAM_ALLOWED_CHAT_ID",
+        )
+    )
+
+
+def _config_candidate_score(config_data):
+    """Rank fallback configs, preferring the one with Telegram credentials."""
+    general = config_data.get("GENERAL", {}) if isinstance(config_data, dict) else {}
+    if not isinstance(general, dict):
+        return -1
+
+    score = 0
+    if _config_has_runtime_settings(config_data):
+        score += 1
+    if isinstance(general.get("EMU_PATH"), str) and general["EMU_PATH"].strip():
+        score += 2
+    if general.get("FARM_TARGET") not in (None, "", "None"):
+        score += 1
+    if isinstance(general.get("TELEGRAM_BOT_TOKEN"), str) and general["TELEGRAM_BOT_TOKEN"].strip():
+        score += 4
+    if isinstance(general.get("TELEGRAM_ALLOWED_CHAT_ID"), str) and general["TELEGRAM_ALLOWED_CHAT_ID"].strip():
+        score += 6
+    if general.get("TELEGRAM_ENABLED") is True:
+        score += 1
+    return score
 
 
 def _config_fallback_candidates():
@@ -264,6 +331,11 @@ def _config_fallback_candidates():
     for _ in range(4):
         add_candidate(directory)
         parent = os.path.dirname(directory)
+        if os.path.basename(parent).lower() == "dist":
+            # Local rebuilds are often staged as <repo>\dist\<new-build>\wvd.
+            # Also inspect the conventional <repo>\dist\wvd installation so
+            # the first staged run can migrate its previous Chat ID.
+            add_candidate(os.path.join(parent, "wvd"))
         if parent == directory:
             break
         directory = parent
@@ -272,21 +344,90 @@ def _config_fallback_candidates():
 
 
 def _find_config_fallback():
-    """Find a nearby non-empty config when a frozen config is only defaults."""
+    """Find the best nearby config to migrate into a frozen build."""
+    best_path = None
+    best_score = -1
     for candidate in _config_fallback_candidates():
         if os.path.abspath(candidate) == os.path.abspath(CONFIG_FILE):
             continue
         data = LoadJson(candidate)
-        if _config_has_runtime_settings(data):
-            return candidate
-    return None
+        score = _config_candidate_score(data)
+        if score > best_score:
+            best_path = candidate
+            best_score = score
+    return best_path if best_score >= 1 else None
+
+
+def _merge_telegram_settings(config_data, fallback_data):
+    """Fill missing Telegram values without overwriting newer user changes."""
+    if not isinstance(config_data, dict):
+        return copy.deepcopy(fallback_data) if isinstance(fallback_data, dict) else {}
+    if not isinstance(fallback_data, dict):
+        return copy.deepcopy(config_data)
+
+    merged = copy.deepcopy(config_data)
+    general = merged.setdefault("GENERAL", {})
+    fallback_general = fallback_data.get("GENERAL", {})
+    if not isinstance(general, dict) or not isinstance(fallback_general, dict):
+        return merged
+
+    telegram_names = (
+        "TELEGRAM_ENABLED",
+        "TELEGRAM_BOT_TOKEN",
+        "TELEGRAM_ALLOWED_CHAT_ID",
+    )
+    current_has_telegram = bool(general.get("TELEGRAM_ENABLED")) or any(
+        isinstance(general.get(name), str) and general.get(name).strip()
+        for name in telegram_names[1:]
+    )
+
+    # A newly generated config contains False/empty defaults for all three
+    # fields. In that case migrate the complete legacy Telegram section.
+    if not current_has_telegram:
+        for name in telegram_names:
+            if name in fallback_general:
+                general[name] = copy.deepcopy(fallback_general[name])
+        return merged
+
+    # If the user has already changed any Telegram value in the new location,
+    # retain it and only fill fields that are genuinely absent/empty.
+    for name in telegram_names[1:]:
+        current_value = general.get(name)
+        fallback_value = fallback_general.get(name)
+        if (
+            isinstance(fallback_value, str)
+            and fallback_value.strip()
+            and (name not in general or not isinstance(current_value, str) or not current_value.strip())
+        ):
+            general[name] = fallback_value
+    if "TELEGRAM_ENABLED" not in general and "TELEGRAM_ENABLED" in fallback_general:
+        general["TELEGRAM_ENABLED"] = copy.deepcopy(fallback_general["TELEGRAM_ENABLED"])
+    return merged
+
+
+def _write_config_file(config_path, config_data):
+    """Write a config atomically, creating the per-user directory if needed."""
+    absolute_path = os.path.abspath(config_path)
+    directory = os.path.dirname(absolute_path)
+    if directory:
+        os.makedirs(directory, exist_ok=True)
+    temporary_path = f"{absolute_path}.tmp-{os.getpid()}"
+    try:
+        with open(temporary_path, 'w', encoding='utf-8') as f:
+            json.dump(config_data, f, ensure_ascii=False, indent=4)
+        os.replace(temporary_path, absolute_path)
+    finally:
+        if os.path.exists(temporary_path):
+            try:
+                os.remove(temporary_path)
+            except OSError:
+                pass
 
 
 CONFIG_FILE = _config_file_path()
 def SaveConfigToFile(config_data):
     try:
-        with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
-            json.dump(config_data, f, ensure_ascii=False, indent=4)
+        _write_config_file(CONFIG_FILE, config_data)
         logger.info(_("配置已保存。"))
         return True
     except Exception as e:
@@ -297,19 +438,31 @@ def LoadRawConfigFromFile(config_file_path = CONFIG_FILE):
         config_file_path = CONFIG_FILE
     config_data = LoadJson(config_file_path)
 
-    # Keep writes beside a frozen executable, but recover the user's existing
-    # repository config when the executable folder contains the generated
-    # first-run defaults (the usual dist/wvd layout).
+    # A clean build can leave either a first-run config or an older config that
+    # predates the Telegram fields beside the executable. Recover and migrate
+    # the best legacy file into the stable per-user location in both cases.
     if (
         getattr(sys, "frozen", False)
         and os.path.abspath(config_file_path) == os.path.abspath(CONFIG_FILE)
-        and not _config_has_runtime_settings(config_data)
+        and (
+            not _config_has_runtime_settings(config_data)
+            or not _config_has_telegram_keys(config_data)
+        )
     ):
         fallback_path = _find_config_fallback()
         if fallback_path:
             fallback_data = LoadJson(fallback_path)
             if fallback_data:
-                return fallback_data
+                if _config_has_runtime_settings(config_data):
+                    migrated_data = _merge_telegram_settings(config_data, fallback_data)
+                else:
+                    migrated_data = fallback_data
+                if migrated_data != config_data:
+                    try:
+                        _write_config_file(CONFIG_FILE, migrated_data)
+                    except Exception as exc:
+                        logger.warning("Config migration failed: %s", exc)
+                return migrated_data
 
     return config_data
 def SetOneVarInGeneralConfig(var, value):

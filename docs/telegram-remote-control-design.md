@@ -1125,7 +1125,7 @@ def load_latest_farm_setting(config_path, load_raw, build_setting):
     return setting
 ```
 
-- GUI 모드에서는 `config_path=None`으로 기존 실행 파일 옆 `config.json`을 사용한다.
+- GUI 모드에서는 `config_path=None`으로 frozen 실행 파일의 사용자 데이터 경로(`%LOCALAPPDATA%\WvDAS\config.json`, `WVDAS_CONFIG_PATH`로 재정의 가능)를 사용한다. 기존 실행 파일 옆 `config.json`은 새 빌드 첫 실행 시 자동으로 이 경로로 이관한다.
 - 헤드리스 모드에서만 CLI `-config` 값을 `Path.resolve(strict=False)`한 뒤 사용한다.
 - 명시한 파일이 없거나 JSON이 손상됐으면 기본 설정으로 폴백하지 않고 시작을 거부한다.
 - Farm 스레드에 넘기기 직전에 `TELEGRAM_BOT_TOKEN`과 `TELEGRAM_ALLOWED_CHAT_ID` 속성을 빈 문자열로 바꿔 작업 객체가 비밀 값을 보유하지 않게 한다.
