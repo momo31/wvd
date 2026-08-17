@@ -12,6 +12,7 @@ import queue
 import numpy as np
 import glob
 import gettext
+from datetime import datetime
 
 # 基础模块包括:
 # LOGGER. 将输入写入到logger.txt文件中.
@@ -211,6 +212,24 @@ def LoadImage(path):
         logger.error(f"加载图片失败: {str(e)}")
         return None
     return img
+
+
+def SaveImage(scn, name=None):
+    """Save a diagnostic screenshot below the configured runtime log directory."""
+    if scn is None:
+        return None
+
+    os.makedirs(LOGS_FOLDER_NAME, exist_ok=True)
+    if name is None:
+        name = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    name = os.path.basename(str(name))
+    if not name.lower().endswith(".png"):
+        name += ".png"
+
+    file_path = os.path.join(LOGS_FOLDER_NAME, name)
+    if not cv2.imwrite(file_path, scn):
+        raise IOError(f"failed to save diagnostic screenshot: {file_path}")
+    return file_path
 
 ############################################
 def _config_file_path():

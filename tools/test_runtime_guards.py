@@ -240,9 +240,12 @@ class RuntimeGuardSourceTests(unittest.TestCase):
 
         self.assertLess(
             blessing_start,
-            identify.index('CheckIf(screen, "dialogueNext"'),
+            identify.index("dialogue_decision = decide_chest_guard_action("),
         )
-        self.assertLess(blessing_start, identify.index("if counter>=5:"))
+        self.assertLess(
+            blessing_start,
+            identify.index("if counter>=5 and not dialogueSkipExhausted:"),
+        )
         self.assertIn("Press(blessing_pos)", blessing)
         self.assertIn("counter += 1", blessing)
         self.assertIn("counter >= setting.MAX_TRY_LIMIT", blessing)
@@ -312,6 +315,39 @@ class RuntimeGuardSourceTests(unittest.TestCase):
             'Press(CheckIf(scn, "dialogueNext", [[750, 1400, 150, 200]]))',
             chest,
         )
+        self.assertNotIn('CheckIf(scn, "dialogueNext")', chest)
+        self.assertNotIn("Press([845, 1501])", chest)
+        self.assertIn("def _smart_disarm_done(im):", chest)
+        self.assertIn(
+            "for skip_idx in range(MAX_DIALOGUE_SKIP_ATTEMPTS):",
+            chest,
+        )
+        self.assertIn(
+            "unknownNudgeAttempts < MAX_DIALOGUE_SKIP_ATTEMPTS",
+            chest,
+        )
+        self.assertIn("recoveryBackAttempts < 2", chest)
+
+    def test_all_result_dialogue_paths_use_the_strict_chest_guard(self):
+        identify_start = self.source.index("def IdentifyState():")
+        identify_end = self.source.index("def GameFrozenCheck(", identify_start)
+        identify = self.source[identify_start:identify_end]
+        self.assertIn("dialogue_decision = decide_chest_guard_action(", identify)
+        self.assertIn(
+            "dialogueSkipAttempts < MAX_DIALOGUE_SKIP_ATTEMPTS",
+            identify,
+        )
+        self.assertNotIn('CheckIf(screen, "dialogueNext"', identify)
+
+        post_start = self.source.index("def ResolvePostCombatState(")
+        post_end = self.source.index("def StateInn(", post_start)
+        post_combat = self.source[post_start:post_end]
+        self.assertIn("guard_decision = decide_chest_guard_action(", post_combat)
+        self.assertIn(
+            "dialogueSkipAttempts >= MAX_DIALOGUE_SKIP_ATTEMPTS",
+            post_combat,
+        )
+        self.assertNotIn('CheckIf(screen, "dialogueNext"', post_combat)
 
     def test_chest_network_probe_uses_semantic_thirty_second_stall(self):
         chest_start = self.source.index("def StateChest():")

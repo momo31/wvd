@@ -2484,3 +2484,81 @@ msgstr "잘못된 영어 퀘스트 이름으로 스크립트가 실행되지 않
 #: CHANGES_LOG.md:6
 msgid "Added English descriptions for the mining quest. Enjoy!"
 msgstr "채굴 퀘스트에 영어 설명을 추가했습니다. 즐겨 보세요!"
+
+msgid "Integrated upstream 2.5.11 mining-position checks and restart recovery."
+msgstr "업스트림 2.5.11의 채굴 위치 확인과 재시작 복구를 반영했습니다."
+
+msgid "Improved the combat Next target image and mining result detection."
+msgstr "전투 Next 대상 이미지와 채굴 결과 판별을 개선했습니다."
+
+msgid "Preserved Telegram control, persistent settings, and network recovery."
+msgstr "기존 텔레그램 제어, 설정 영속화, 네트워크 복구 기능은 유지합니다."
+
+msgid "Simplified route-readiness detection so slow screenshots do not misclassify transient route errors."
+msgstr "느린 스크린샷 환경에서 일시적인 경로 오류를 오탐하지 않도록 경로 준비 판별을 단순화했습니다."
+
+msgid "Added a recovery boundary so mining can continue after a game restart during dungeon entry."
+msgstr "던전 입장 중 게임이 재시작되어도 채굴 작업을 이어갈 수 있도록 복구 경계를 보강했습니다."
+
+msgid "Mining results are now checked in both the pre-click and post-click frames."
+msgstr "채굴 결과를 클릭 전·후 두 화면에서 확인하도록 수정했습니다."
+
+msgid "Updated the Next image and mining-result detection."
+msgstr "Next 이미지와 채굴 결과 판별을 갱신했습니다."
+
+msgid "Centralized diagnostic screenshots and adjusted the mining wait interval."
+msgstr "진단 스크린샷 저장을 공통 함수로 통합하고 채굴 대기 시간을 조정했습니다."
+
+msgid "Combat now uses bounded fallback targeting when the Next marker remains visible."
+msgstr "전투에서 Next 표시가 남는 경우에도 제한된 보조 선택을 수행합니다."
+
+#: src/script.py
+msgid "Obtained {a}."
+msgstr "{a} 획득."
+
+#: src/script.py
+msgid "Detected an all-refined ore reward."
+msgstr "전체 개조 광석 보상을 감지했습니다."
+
+#: src/script.py
+msgid "Unrecognized ore reward; screenshot saved to {a}."
+msgstr "광석 보상을 판별하지 못했습니다. 스크린샷을 {a}에 저장했습니다."
+
+#: src/script.py
+msgid "No usable pickaxe was detected in the {a} frame; leaving the dungeon."
+msgstr "{a} 프레임에서 사용할 곡괭이가 없음을 감지해 던전에서 나갑니다."
+
+#: src/script.py
+msgid "No ore to mine was detected in the {a} frame; leaving the dungeon."
+msgstr "{a} 프레임에서 채굴할 광석이 없음을 감지해 던전에서 나갑니다."
+
+#: src/script.py
+msgid "Mining position was not confirmed; restarting the mining cycle."
+msgstr "채굴 위치를 확인하지 못해 채굴 사이클을 다시 시작합니다."
+
+#: src/script.py
+msgid "pre-click"
+msgstr "클릭 전"
+
+#: src/script.py
+msgid "post-click"
+msgstr "클릭 후"
+
+msgid "Kept chest interaction markers ahead of bounded result-dialogue skips."
+msgstr "상자 상호작용 표식을 제한된 결과창 스킵보다 우선하도록 유지했습니다."
+
+#: src/script.py
+msgid "The result dialogue did not change after {a} skip attempts; re-identifying the screen."
+msgstr "결과창 스킵을 {a}회 시도했지만 화면이 바뀌지 않아 화면 상태를 다시 식별합니다."
+
+#: src/script.py
+msgid "The post-combat result dialogue did not change after the bounded skips; re-identifying the screen."
+msgstr "제한된 전투 결과창 스킵 후에도 화면이 바뀌지 않아 화면 상태를 다시 식별합니다."
+
+#: src/script.py
+msgid "The chest screen remained unidentified for 150 seconds; returning to state detection."
+msgstr "상자 화면을 150초 동안 식별하지 못해 상태 판정으로 돌아갑니다."
+
+#: src/script.py
+msgid "Chest markers are still visible; stopping result skips and re-identifying the chest state."
+msgstr "상자 표식이 남아 있어 결과창 스킵을 중단하고 상자 상태를 다시 식별합니다."

@@ -52,17 +52,13 @@ class Upstream2410MergeTests(unittest.TestCase):
         )
         block = self.script_source[start:end]
 
-        return_action = (
-            'lambda: Press(FindCoordsOrElseExecuteFallbackAndWait('
-            '"ReturnText",[[1,1],"leaveDung","donothing"],1))'
-        )
-        world_map_action = (
-            'lambda: Press(FindCoordsOrElseExecuteFallbackAndWait('
-            '"OpenWorldMap",[[1,1],"leaveDung","donothing"],1))'
-        )
-        self.assertEqual(block.count(return_action), 2)
-        self.assertEqual(block.count(world_map_action), 1)
-        self.assertIn('logger.info(_("没东西了, 撤退"))', block)
+        self.assertIn("def LeaveMiningDungeon(result, phase):", block)
+        self.assertIn('"ReturnText", [[1,1], "leaveDung", "donothing"], 1', block)
+        self.assertIn('"OpenWorldMap",', block)
+        self.assertIn("TeleportFromDungeonToCity(*quest._RTT)", block)
+        self.assertIn("def RunMiningCycle():", block)
+        self.assertIn("RestartableSequenceExecution(RunMiningCycle)", block)
+        self.assertEqual(block.count('LeaveMiningDungeon(result, _("'), 2)
 
     def test_ffxi_mining_tip_is_localized(self):
         tip = self.quests["FFXI-Org"]["_TIPS"]

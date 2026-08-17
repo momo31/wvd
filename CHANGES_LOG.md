@@ -1,4 +1,28 @@
 **新版本!**
+==v2.5.11-momo.1==
+Integrated upstream 2.5.11 mining-position checks and restart recovery.
+Improved the combat Next target image and mining result detection.
+Preserved Telegram control, persistent settings, and network recovery.
+Kept chest interaction markers ahead of bounded result-dialogue skips.
+
+==v2.5.10==
+Simplified route-readiness detection so slow screenshots do not misclassify transient route errors.
+
+==v2.5.9==
+Added a recovery boundary so mining can continue after a game restart during dungeon entry.
+
+==v2.5.8==
+Mining results are now checked in both the pre-click and post-click frames.
+
+==v2.5.7==
+Updated the Next image and mining-result detection.
+
+==v2.5.6==
+Centralized diagnostic screenshots and adjusted the mining wait interval.
+
+==v2.5.5==
+Combat now uses bounded fallback targeting when the Next marker remains visible.
+
 ==v2.5.4==
 修复了战斗中next无法点击的问题.
 修复了偶发的无法识别到镐子数量不足的问题.

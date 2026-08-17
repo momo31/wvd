@@ -1092,9 +1092,9 @@ def Factory():
             return None, 0.0
 
         if outputMatchResult:
-            cv2.imwrite("origin.png", search_area)
+            SaveImage(search_area, "origin.png")
             cv2.rectangle(search_area, max_loc, (max_loc[0] + template.shape[1], max_loc[1] + template.shape[0]), (0, 255, 0), 2)
-            cv2.imwrite("matched.png", search_area)
+            SaveImage(search_area, "matched.png")
 
         if roi is None or len(roi) == 0:
             pos=[max_loc[0] + template.shape[1]//2,
@@ -1530,8 +1530,7 @@ def Factory():
         # 保存重启前截图作为备份
         if not skip_screenshot:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")  # 格式：20230825_153045
-            file_path = os.path.join(LOGS_FOLDER_NAME, f"{timestamp}.png")
-            cv2.imwrite(file_path, ScreenShot())
+            file_path = SaveImage(ScreenShot(), f"{timestamp}.png")
             logger.info(_("重启前截图已保存在{a}中.").format(a=file_path))
 
         package_name = "jp.co.drecom.wizardry.daphne"
@@ -2025,6 +2024,8 @@ def Factory():
         nonlocal setting # 修改因果
         counter = 0
         anomaly_saved = False
+        dialogueSkipAttempts = 0
+        dialogueSkipExhausted = False
         loading_wait = 0            # 재시작 후 로딩 화면 대기 카운터
         black_wait = 0
         startup_wait = 0
@@ -2202,19 +2203,36 @@ def Factory():
                     counter = 0
                 continue
 
-            # 핵심 상태가 모두 아닐 때만 대화/결과창 스킵 진행 (상자 열기 가로채기 방지)
-            if pos := CheckIf(screen, "dialogueNext", [[750, 1400, 150, 200]]):
-                logger.info(_("대화/결과창 감지, 클릭하여 스킵 시도."))
-                Press(pos)
-                Sleep(1.0)
-                counter += 1
-                # next만 계속 눌러도 넘어가지 않는 화면(선택 필요 등)에서 무한 정지 방지.
-                # continue가 아래 재시작 안전장치(counter>=MAX_TRY_LIMIT)를 우회하므로 여기서 직접 처리한다.
-                if counter >= setting.MAX_TRY_LIMIT:
-                    logger.info(_("看起来遇到了一些非同寻常的情况...重启游戏."))
-                    restartGame()
-                    counter = 0
-                continue
+            # 모든 상자 표식이 없는 프레임에서만 높은 임계값으로 결과창을
+            # 확인한다. 동일 결과창은 최대 3회만 누르고 이후 상태 재식별/
+            # 재시작 경로에 맡겨 움직이는 배경의 오탐 좌표를 반복하지 않는다.
+            dialogue_decision = decide_chest_guard_action(
+                screen,
+                CheckIf,
+                CheckIfAtThreshold,
+            )
+            if dialogue_decision.action in (
+                ChestGuardAction.OPEN_CHEST,
+                ChestGuardAction.KEEP_CHEST_STATE,
+            ):
+                runtimeContext._STATE_RESET_REQUIRED = False
+                runtimeContext.mark_stable()
+                return State.Dungeon, DungeonState.Chest, screen
+            if dialogue_decision.action is ChestGuardAction.SKIP_DIALOGUE:
+                if dialogueSkipAttempts < MAX_DIALOGUE_SKIP_ATTEMPTS:
+                    dialogueSkipAttempts += 1
+                    logger.info(_("대화/결과창 감지, 클릭하여 스킵 시도."))
+                    Press(dialogue_decision.position)
+                    Sleep(1.0)
+                    counter += 1
+                    continue
+                dialogueSkipExhausted = True
+                logger.warning(
+                    _(
+                        "The result dialogue did not change after {a} skip "
+                        "attempts; re-identifying the screen."
+                    ).format(a=MAX_DIALOGUE_SKIP_ATTEMPTS)
+                )
 
             screen = ScreenShot()
 
@@ -2313,8 +2331,7 @@ def Factory():
                     logger.info(_("看起来遇到了一些不太寻常的情况..."))
                     try:
                         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                        file_path = os.path.join(LOGS_FOLDER_NAME, f"anomaly_{timestamp}.png")
-                        cv2.imwrite(file_path, screen)
+                        file_path = SaveImage(screen, f"anomaly_{timestamp}.png")
                         logger.info(_("已保存异常屏幕截图至 {a}").format(a=file_path))
                         anomaly_saved = True
                     except Exception as e:
@@ -2357,13 +2374,13 @@ def Factory():
                 logger.info(_("看起来遇到了一些非同寻常的情况...重启游戏."))
                 restartGame()
                 counter = 0
-            if counter>=5:
+            if counter>=5 and not dialogueSkipExhausted:
                 # [안전장치] 초기 경고화면, 주의사항(Attention), 미성년자 경고(To Minors) 및 타이틀 화면(Tap to Start)을 넘기기 위해 화면 중앙 터치
                 Press([450, 800])
                 Sleep(0.25)
                 Press([450, 800])
                 Sleep(0.25)
-            if counter>=10:
+            if counter>=10 and not dialogueSkipExhausted:
                 Press([1,1])
                 Sleep(0.25)
                 Press([1,1])
@@ -2417,6 +2434,7 @@ def Factory():
         # 2.5초 연속 유지될 때만 상자 없는 정상 던전 화면으로 확정한다.
         tracker = PostCombatTracker(stable_dungeon_seconds=2.5)
         deadline = time.monotonic() + max_wait_seconds
+        dialogueSkipAttempts = 0
 
         while time.monotonic() < deadline:
             if setting._FORCESTOPING.is_set():
@@ -2426,17 +2444,31 @@ def Factory():
             if DismissSetTrapScreen(screen):
                 tracker.observe(time.monotonic())
                 continue
-            chest_active = bool(CheckIf(screen, "chestFlag"))
-            if not chest_active:
-                chest_active = bool(CheckIf(screen, "whowillopenit"))
-
-            if chest_active:
+            guard_decision = decide_chest_guard_action(
+                screen,
+                CheckIf,
+                CheckIfAtThreshold,
+            )
+            if guard_decision.action in (
+                ChestGuardAction.OPEN_CHEST,
+                ChestGuardAction.KEEP_CHEST_STATE,
+            ):
                 logger.info(_("战斗结束后检测到宝箱. 开箱后再恢复."))
                 return DungeonState.Chest
 
             # 결과창이 던전 UI 위에 겹쳐 보이면 dungFlag를 안정 상태로 세지 않고
-            # 즉시 넘겨 상자 유무가 드러나게 한다.
-            if Press(CheckIf(screen, "dialogueNext", [[750, 1400, 150, 200]])):
+            # 높은 임계값으로 최대 3회만 넘겨 상자 유무가 드러나게 한다.
+            if guard_decision.action is ChestGuardAction.SKIP_DIALOGUE:
+                if dialogueSkipAttempts >= MAX_DIALOGUE_SKIP_ATTEMPTS:
+                    logger.warning(
+                        _(
+                            "The post-combat result dialogue did not change after "
+                            "the bounded skips; re-identifying the screen."
+                        )
+                    )
+                    return None
+                dialogueSkipAttempts += 1
+                Press(guard_decision.position)
                 tracker.observe(time.monotonic())
                 Sleep(0.2)
                 continue
@@ -2791,11 +2823,12 @@ def Factory():
                     Sleep(2)
                 elif next_pos:
                     target_selected = False
-                    # The 2.5.4 combat layout places the selectable arrow
-                    # directly below the Next marker.  Try that upstream
-                    # location first, then keep the bounded local probes for
-                    # emulator frames where the marker is offset.
+                    # The 2.5.7 combat template moved the selectable arrow
+                    # slightly to the right and below the Next marker. Keep
+                    # the former local point as a bounded fallback because
+                    # older emulator frames can still use the original offset.
                     target_positions = (
+                        (next_pos[0] + 15, next_pos[1] + 50),
                         (next_pos[0], next_pos[1] + 40),
                     ) + target_probe_points(next_pos)
                     for target_pos in target_positions:
@@ -3174,6 +3207,8 @@ def Factory():
         haveBeenTried = False
         smartFailStreak = 0            # 스마트 개봉 연속 실패 횟수 (스턱 감지용)
         dialogueSkipAttempts = 0       # 결과창 오탐 시 동일 좌표 반복 탭 방지
+        unknownNudgeAttempts = 0       # 미식별 화면 좌상단 탭 횟수 제한
+        recoveryBackAttempts = 0       # 미식별 화면 Back 복구 횟수 제한
         chestGuardTimer = time.time()  # 상자 처리 전체 시간 가드 (실측: 가드 부재로 약 8시간 연속 스턱 사례)
         chestNetworkStallTracker = NetworkStallTracker(
             stall_seconds=NETWORK_STALL_SECONDS,
@@ -3250,6 +3285,8 @@ def Factory():
                     continue
             if guard_decision.action is ChestGuardAction.OPEN_CHEST:
                 dialogueSkipAttempts = 0
+                unknownNudgeAttempts = 0
+                recoveryBackAttempts = 0
                 Press(guard_decision.position)
                 # 입력 자체는 진행 증거가 아니다. 같은 chestFlag가 오류창
                 # 뒤에 계속 보일 수 있으므로 30초 정체 감시 시각을 유지한다.
@@ -3291,22 +3328,34 @@ def Factory():
                         import cv2
                         from datetime import datetime
                         time_str = datetime.now().strftime("%H%M%S")
-                        cv2.imwrite(f"logs/anomaly_chest_stuck_{time_str}.png", scn)
+                        SaveImage(scn, f"anomaly_chest_stuck_{time_str}.png")
                         logger.warning(_("[Audit] 상자 열기 {a:.0f}초 초과 지연 중. 디버그 이미지 저장 완료.").format(a=elapsed))
                 
-                # [복구력 제고] 80초/150초 경과 시 스마트 탭 주입
+                # 150초가 지나도 상태를 식별하지 못하면 StateChest 내부에서
+                # 결과창 좌표를 추측하지 않고 상위 상태 판정으로 되돌린다.
                 if elapsed > 150:
-                    Press([845, 1501])  # dialogueNext 영역 강제 터치
+                    logger.warning(
+                        _(
+                            "The chest screen remained unidentified for 150 seconds; "
+                            "returning to state detection."
+                        )
+                    )
+                    return None
+                if elapsed > 80 and recoveryBackAttempts < 2:
+                    recoveryBackAttempts += 1
+                    PressReturn()
                     Sleep(1)
-                elif elapsed > 80:
-                    PressReturn()       # 안드로이드 백버튼 좌표 터치
-                    Sleep(1)
+                    continue
 
-                Press([1, 1])
+                if unknownNudgeAttempts < MAX_DIALOGUE_SKIP_ATTEMPTS:
+                    unknownNudgeAttempts += 1
+                    Press([1, 1])
                 Sleep(1)
                 continue
 
             dialogueSkipAttempts = 0
+            unknownNudgeAttempts = 0
+            recoveryBackAttempts = 0
 
             scn = ScreenShot()
 
@@ -3357,6 +3406,24 @@ def Factory():
                             Press(disarm)
                             if time.time()-t<0.3:
                                 Sleep(0.3-(time.time()-t))
+                    def _smart_disarm_done(im):
+                        decision = decide_chest_guard_action(
+                            im,
+                            CheckIf,
+                            CheckIfAtThreshold,
+                        )
+                        if decision.action in (
+                            ChestGuardAction.OPEN_CHEST,
+                            ChestGuardAction.KEEP_CHEST_STATE,
+                        ):
+                            return False
+                        return bool(
+                            decision.action is ChestGuardAction.SKIP_DIALOGUE
+                            or CheckIf(im, "dungFlag")
+                            or CheckIf(im, "ambush")
+                            or StateCombatCheck(im)
+                            or CheckIf(im, "RiseAgain")
+                        )
                     auditor = None
                     try:
                         # audit 모듈(개발용). 이 파일을 삭제하면 auditor=None -> audit 미동작.
@@ -3366,7 +3433,7 @@ def Factory():
                         auditor = None
                     ok = SmartDisarm(
                         ScreenShot, Press, time.time, logger,
-                        is_done_fn=lambda im: bool(CheckIf(im,"dungFlag")) or bool(CheckIf(im,"dialogueNext")) or (not CheckIf(im,"chestOpening")),
+                        is_done_fn=_smart_disarm_done,
                         fallback_fn=_disarm_fallback,
                         config=cfg, _=_, auditor=auditor,
                     ).run()
@@ -3374,19 +3441,41 @@ def Factory():
                         smartFailStreak = 0
                         chestGuardTimer = time.time()  # 개봉 성공 완료 시 가드 타이머 리셋
                         # 전리품/결과 화면 고속 스킵 파이프라인
-                        for skip_idx in range(5):
+                        for skip_idx in range(MAX_DIALOGUE_SKIP_ATTEMPTS):
                             Sleep(0.2)
                             scn = ScreenShot()
-                            next_btn = CheckIf(scn, "dialogueNext")
-                            if next_btn:
-                                Press(next_btn)
+                            skip_decision = decide_chest_guard_action(
+                                scn,
+                                CheckIf,
+                                CheckIfAtThreshold,
+                            )
+                            if skip_decision.action is ChestGuardAction.SKIP_DIALOGUE:
+                                Press(skip_decision.position)
                                 logger.info(_("[스마트 개봉] 전리품 결과 화면 즉시 스킵"))
+                            elif skip_decision.action in (
+                                ChestGuardAction.OPEN_CHEST,
+                                ChestGuardAction.KEEP_CHEST_STATE,
+                            ):
+                                logger.warning(
+                                    _(
+                                        "Chest markers are still visible; stopping "
+                                        "result skips and re-identifying the chest state."
+                                    )
+                                )
+                                break
                             elif CheckIf(scn, "dungFlag") or CheckIf(scn, "ambush") or StateCombatCheck(scn):
                                 break
                     else:
                         smartFailStreak += 1
                         # 결과/대화 오버레이가 상자 UI를 덮은 경우 스킵을 먼저 시도
-                        if Press(CheckIf(ScreenShot(), "dialogueNext")):
+                        failure_scn = ScreenShot()
+                        failure_decision = decide_chest_guard_action(
+                            failure_scn,
+                            CheckIf,
+                            CheckIfAtThreshold,
+                        )
+                        if failure_decision.action is ChestGuardAction.SKIP_DIALOGUE:
+                            Press(failure_decision.position)
                             logger.info(_("대화/결과창 감지, 클릭하여 스킵 시도."))
                             Sleep(1)
                         if smartFailStreak >= 3:
@@ -4787,101 +4876,177 @@ def Factory():
                 counter = {key: 0 for key in ore_labels}
                 start_time = time.time()
                 # reunionParty("FFXI/FFXIStone")
-                resetBag = False
+
+                def CheckMiningState(scn, record_reward=True):
+                    """Classify one mining frame and record a reward at most once."""
+
+                    if TryPressRetry(scn):
+                        Sleep(1)
+                        return "retry"
+
+                    if CheckIf(scn, "FFXI/receive", [[4,664,890,283]]):
+                        if not record_reward:
+                            return "receive"
+
+                        vals = {
+                            "fine_ore": CheckHow(scn, "FFXI/org_fine", [[4,664,890,283]]),
+                            "high_ore": CheckHow(scn, "FFXI/org_high", [[4,664,890,283]]),
+                            "mid_ore": CheckHow(scn, "FFXI/org_mid", [[4,664,890,283]]),
+                            "low_ore": CheckHow(scn, "FFXI/org_low", [[4,664,890,283]]),
+                            "refine_stone": CheckHow(scn, "FFXI/org_refine", [[4,664,890,283]]),
+                            "modify_stone": CheckHow(scn, "FFXI/org_alter", [[4,664,890,283]]),
+                            "silver_ore": CheckHow(scn, "FFXI/org_sliver", [[4,664,890,283]]),
+                            "ouroboros": CheckHow(scn, "FFXI/org_ouro", [[4,664,890,283]]),
+                            "lesser_refined": CheckHow(scn, "FFXI/org_lesser_full", [[4,664,890,283]]),
+                        }
+                        all_refined_match = CheckHow(
+                            scn, "FFXI/org_full", [[4,664,890,283]]
+                        )
+
+                        best = max(vals, key=vals.get)
+                        if vals[best] > 0.9:
+                            counter[best] += 1
+                            logger.info(_("Obtained {a}.").format(a=ore_label(best)))
+                        elif (
+                            vals["lesser_refined"] < 0.8
+                            and all_refined_match > 0.9
+                        ):
+                            counter["all_refined"] += 1
+                            logger.info(_("Detected an all-refined ore reward."))
+                        else:
+                            counter["other"] += 1
+                            file_path = SaveImage(scn)
+                            logger.warning(
+                                _(
+                                    "Unrecognized ore reward; screenshot saved to {a}."
+                                ).format(a=file_path)
+                            )
+                        return "receive"
+
+                    if (
+                        CheckIf(scn, "FFXI/nothingToDig", [[320,667,423,474]])
+                        or CheckIf(scn, "FFXI/nothingToDig2", [[320,667,423,474]])
+                        or CheckIf(scn, "FFXI/nothingToDig3", [[320,667,423,474]])
+                    ):
+                        return "end"
+                    if CheckIf(scn, "FFXI/needpickaxe", [[4,664,890,283]]):
+                        return "pickaxe"
+                    return "none"
+
+                def LeaveMiningDungeon(result, phase):
+                    Press(
+                        FindCoordsOrElseExecuteFallbackAndWait(
+                            "ReturnText", [[1,1], "leaveDung", "donothing"], 1
+                        )
+                    )
+                    if result == "pickaxe":
+                        logger.info(
+                            _(
+                                "No usable pickaxe was detected in the {a} frame; "
+                                "leaving the dungeon."
+                            ).format(a=phase)
+                        )
+                    else:
+                        logger.info(
+                            _(
+                                "No ore to mine was detected in the {a} frame; "
+                                "leaving the dungeon."
+                            ).format(a=phase)
+                        )
+
+                cycle_completed = False
+
+                def RunMiningCycle():
+                    """Run one mining visit inside a restartable recovery boundary."""
+
+                    nonlocal cycle_completed
+                    cycle_completed = False
+                    needs_refill = False
+
+                    logger.info(_("出发!"))
+                    StateEoT()
+                    Sleep(2)
+
+                    logger.info(_("前往目标地点..."))
+                    FindCoordsOrElseExecuteFallbackAndWait(
+                        ["theRouteToTheDestinationCannotBeFound", "openworldmap"],
+                        [[1,1], "mark_auto", "donothing"],
+                        0.5,
+                    )
+
+                    route_scn = ScreenShot()
+                    if CheckIf(route_scn, "openworldmap") or not CheckIf(
+                        route_scn,
+                        "FFXI/org_position",
+                        [[692,68,140,140]],
+                    ):
+                        logger.info(
+                            _(
+                                "Mining position was not confirmed; restarting the "
+                                "mining cycle."
+                            )
+                        )
+                        return
+
+                    reward_visible = False
+                    while not setting._FORCESTOPING.is_set():
+                        result = CheckMiningState(
+                            ScreenShot(), record_reward=not reward_visible
+                        )
+                        if result == "retry":
+                            continue
+                        if result == "receive":
+                            reward_visible = True
+                        else:
+                            reward_visible = False
+
+                        if result in ("end", "pickaxe"):
+                            needs_refill = result == "pickaxe"
+                            LeaveMiningDungeon(result, _("pre-click"))
+                            break
+
+                        Press([450,600])
+                        Sleep(0.5)
+
+                        result = CheckMiningState(
+                            ScreenShot(), record_reward=not reward_visible
+                        )
+                        if result == "retry":
+                            continue
+                        reward_visible = result == "receive"
+                        if result == "receive":
+                            continue
+                        if result in ("end", "pickaxe"):
+                            needs_refill = result == "pickaxe"
+                            LeaveMiningDungeon(result, _("post-click"))
+                            break
+
+                        Sleep(2)
+
+                    if setting._FORCESTOPING.is_set():
+                        return
+
+                    if needs_refill:
+                        Press(
+                            FindCoordsOrElseExecuteFallbackAndWait(
+                                "OpenWorldMap",
+                                [[1,1], "leaveDung", "donothing"],
+                                1,
+                            )
+                        )
+                        TeleportFromDungeonToCity(*quest._RTT)
+                        reunionParty("FFXI/FFXIStone")
+
+                    cycle_completed = True
+
                 while 1:
                     if setting._FORCESTOPING.is_set():
                         break
-                    logger.info(_("出发!"))
-                    RestartableSequenceExecution(
-                        lambda: StateEoT()
-                        )
-
-                    logger.info(_("前往目标地点..."))
-                    RestartableSequenceExecution(
-                        lambda: FindCoordsOrElseExecuteFallbackAndWait("theRouteToTheDestinationCannotBeFound",[[1,1],"mark_auto","donothing"],0.5)
-                    )
-
-                    while 1:
-                        if setting._FORCESTOPING.is_set():
-                            break
-                        scn = ScreenShot()
-                        Sleep(0.2)
-                        Press([450,600])
-
-                        if TryPressRetry(scn):
-                            Sleep(1)
-                            continue
-
-                        if CheckIf(scn, "FFXI/receive", [[4,664,890,283]]):
-                            vals = {
-                                "fine_ore": CheckHow(scn, "FFXI/org_fine", [[4,664,890,283]]),
-                                "high_ore": CheckHow(scn, "FFXI/org_high", [[4,664,890,283]]),
-                                "mid_ore": CheckHow(scn, "FFXI/org_mid", [[4,664,890,283]]),
-                                "low_ore": CheckHow(scn, "FFXI/org_low", [[4,664,890,283]]),
-                                "refine_stone": CheckHow(scn, "FFXI/org_refine", [[4,664,890,283]]),
-                                "modify_stone": CheckHow(scn, "FFXI/org_alter", [[4,664,890,283]]),
-                                "silver_ore": CheckHow(scn, "FFXI/org_sliver", [[4,664,890,283]]),
-                                "ouroboros": CheckHow(scn, "FFXI/org_ouro", [[4,664,890,283]]),
-                                "lesser_refined": CheckHow(scn, "FFXI/org_lesser_full", [[4,664,890,283]]),
-                            }
-                            all_refined_match = CheckHow(
-                                scn, "FFXI/org_full", [[4,664,890,283]]
-                            )
-
-                            best = max(vals, key=vals.get)
-                            if vals[best] > 0.9:
-                                counter[best] += 1
-                                logger.info("Obtained %s.", ore_label(best))
-                            elif (
-                                vals["lesser_refined"] < 0.8
-                                and all_refined_match > 0.9
-                            ):
-                                counter["all_refined"] += 1
-                                logger.info("Detected an all-refined ore reward.")
-                            else:
-                                counter["other"] += 1
-                                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                                file_path = os.path.join(LOGS_FOLDER_NAME, f"{timestamp}.png")
-                                logger.info(_(
-                                    "遇到了一些状况之外的情况. 已保存在{a}中."
-                                ).format(a=file_path))
-                                cv2.imwrite(file_path, scn)
-                                logger.warning(
-                                    "Unrecognized ore reward; screenshot saved to %s.",
-                                    file_path,
-                                )
-
-                        if (
-                            CheckIf(scn, "FFXI/nothingToDig", [[320,667,423,474]])
-                            or CheckIf(scn, "FFXI/nothingToDig2", [[320,667,423,474]])
-                            or CheckIf(scn, "FFXI/nothingToDig3", [[320,667,423,474]])
-                        ):
-                            logger.info(_("没东西了, 撤退"))
-                            RestartableSequenceExecution(
-                                lambda: Press(FindCoordsOrElseExecuteFallbackAndWait("ReturnText",[[1,1],"leaveDung","donothing"],1))
-                            )
-                            break
-
-                        if CheckIf(scn,"FFXI/needpickaxe",[[4,664,890,283]]):
-                            resetBag = True
-                            logger.info("Pickaxe exhausted; returning to town.")
-                            RestartableSequenceExecution(
-                                lambda: Press(FindCoordsOrElseExecuteFallbackAndWait("ReturnText",[[1,1],"leaveDung","donothing"],1))
-                            )
-                            break
-
-                        Sleep(1.7)
-
-                    if resetBag:
-                        RestartableSequenceExecution(
-                            lambda: Press(FindCoordsOrElseExecuteFallbackAndWait("OpenWorldMap",[[1,1],"leaveDung","donothing"],1))
-                        )
-                        RestartableSequenceExecution(
-                            lambda: TeleportFromDungeonToCity(*quest._RTT)
-                        )
-
-                        reunionParty("FFXI/FFXIStone")
-                        resetBag = False
+                    RestartableSequenceExecution(RunMiningCycle)
+                    if setting._FORCESTOPING.is_set():
+                        break
+                    if not cycle_completed:
+                        continue
 
                     output_parts = [
                         f"{ore_label(key)}: {value}"

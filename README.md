@@ -63,7 +63,7 @@ wvd.exe의 바로가기를 생성하고, 바로가기 속성의 "대상" 필드 
 ### 게임 종합 설정
 - 게임 언어는 **영어판(English)**으로 설정해야 합니다.
 - 그래픽 품질 설정은 **중간(Medium / 속도 우선)**으로 설정합니다.
-- 프레임 레이트는 **30 FPS**, 던전 밝기는 **가장 어두움(-25% 밝기)**으로 설정합니다.
+- 프레임 레이트는 **30 FPS**, 던전 밝기는 **가장 어두움부터 25% 밝기 사이**로 설정합니다.
 - 자동 회복(Auto-Recovery) 설정에서 "스킬을 사용하여 이상 상태 해제(Use skills to dispel abnormal statuses)"를 체크합니다.
 - 인벤토리 보충(Refill) 설정에서 "보충 대상이 아닌 아이템을 창고에 보관(Place all non-refill items in storage)" 및 "여관 투숙 시 자동 보충(Automatically refill when staying at the inn.)"을 체크합니다. (구분이 안 갈 경우, "하켄의 갈고리 발톱 1개 소지(Carry 1 Hook of Harken)"를 체크하세요.)
 - 자동 이동(Auto-Move) 설정에서 **"의뢰 진행을 피하는 경로 우선(Prioritize routes that avoid advancing the request)"을 비활성화(OFF)**합니다. 단, 일부 특수 맵을 파밍하고자 하는 경우에는 활성화하는 것을 권장합니다. 활성화 시 뼈 줍는 사람(Bone Picker)을 피하게 되므로 필요할 때에만 적절히 끄고 켜시기 바랍니다.

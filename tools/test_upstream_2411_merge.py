@@ -15,7 +15,7 @@ class Upstream2411MergeTests(unittest.TestCase):
         cls.mining_block = cls.script_source[start:]
 
     def test_version_and_mining_templates_are_integrated(self):
-        self.assertIn("__version__ = '2.5.4-momo.6'", self.main_source)
+        self.assertIn("__version__ = '2.5.11-momo.1'", self.main_source)
         for template in (
             "FFXI/receive",
             "FFXI/nothingToDig2",
@@ -32,9 +32,9 @@ class Upstream2411MergeTests(unittest.TestCase):
 
     def test_unknown_reward_screenshot_path_is_created_before_logging(self):
         warning = self.mining_block.index(
-            '"Unrecognized ore reward; screenshot saved to %s."'
+            '"Unrecognized ore reward; screenshot saved to {a}."'
         )
-        assignment = self.mining_block.rfind("file_path = os.path.join", 0, warning)
+        assignment = self.mining_block.rfind("file_path = SaveImage(scn)", 0, warning)
         self.assertGreaterEqual(assignment, 0)
 
     def test_upstream_2414_and_2415_changelog_entries_are_preserved(self):

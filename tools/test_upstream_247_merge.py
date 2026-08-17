@@ -193,7 +193,7 @@ class Upstream249MergeTests(unittest.TestCase):
 
     def test_fork_version_keeps_upstream_update_comparison(self):
         version = assigned_string(SRC / "main.py", "__version__")
-        self.assertEqual(version, "2.5.4-momo.6")
+        self.assertEqual(version, "2.5.11-momo.1")
 
         from auto_updater import AutoUpdater
 
@@ -209,7 +209,9 @@ class Upstream249MergeTests(unittest.TestCase):
         self.assertFalse(updater._is_newer_version("2.5.1"))
         self.assertFalse(updater._is_newer_version("2.5.2"))
         self.assertFalse(updater._is_newer_version("2.5.4"))
-        self.assertTrue(updater._is_newer_version("2.5.5"))
+        self.assertFalse(updater._is_newer_version("2.5.5"))
+        self.assertFalse(updater._is_newer_version("2.5.11"))
+        self.assertTrue(updater._is_newer_version("2.5.12"))
 
     def test_per_combat_strategy_reload_happens_after_combat(self):
         source = (SRC / "script.py").read_text(encoding="utf-8")
@@ -257,9 +259,9 @@ class Upstream249MergeTests(unittest.TestCase):
         mining_end = source.index('##########################', mining_start)
         mining_block = source[mining_start:mining_end]
         self.assertIn("if setting._FORCESTOPING.is_set():", mining_block)
-        self.assertIn('CheckHow(\n                                scn, "FFXI/org_full"', mining_block)
+        self.assertIn('all_refined_match = CheckHow(\n                            scn, "FFXI/org_full"', mining_block)
         self.assertIn(
-            "lambda: TeleportFromDungeonToCity(*quest._RTT)",
+            "TeleportFromDungeonToCity(*quest._RTT)",
             mining_block,
         )
 
@@ -424,7 +426,7 @@ class Upstream249MergeTests(unittest.TestCase):
             ROOT / "resources" / "quest" / "quest.json"
         )
 
-        self.assertEqual(assigned_string(SRC / "main.py", "__version__"), "2.5.4-momo.6")
+        self.assertEqual(assigned_string(SRC / "main.py", "__version__"), "2.5.11-momo.1")
         self.assertIn('DeviceShell("dumpsys window | grep mCurrentFocus")', source)
         self.assertIn('else "screencap 2>/dev/null"', source)
         self.assertIn("Multiple displays were found", source)

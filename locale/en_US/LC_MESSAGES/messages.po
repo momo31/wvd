@@ -2515,3 +2515,81 @@ msgstr "Fixed an issue where the script failed to launch due to an incorrect Eng
 #: CHANGES_LOG.md:6
 msgid "Added English descriptions for the mining quest. Enjoy!"
 msgstr "Added English descriptions for the mining quest. Enjoy!"
+
+msgid "Integrated upstream 2.5.11 mining-position checks and restart recovery."
+msgstr "Integrated upstream 2.5.11 mining-position checks and restart recovery."
+
+msgid "Improved the combat Next target image and mining result detection."
+msgstr "Improved the combat Next target image and mining result detection."
+
+msgid "Preserved Telegram control, persistent settings, and network recovery."
+msgstr "Preserved Telegram control, persistent settings, and network recovery."
+
+msgid "Simplified route-readiness detection so slow screenshots do not misclassify transient route errors."
+msgstr "Simplified route-readiness detection so slow screenshots do not misclassify transient route errors."
+
+msgid "Added a recovery boundary so mining can continue after a game restart during dungeon entry."
+msgstr "Added a recovery boundary so mining can continue after a game restart during dungeon entry."
+
+msgid "Mining results are now checked in both the pre-click and post-click frames."
+msgstr "Mining results are now checked in both the pre-click and post-click frames."
+
+msgid "Updated the Next image and mining-result detection."
+msgstr "Updated the Next image and mining-result detection."
+
+msgid "Centralized diagnostic screenshots and adjusted the mining wait interval."
+msgstr "Centralized diagnostic screenshots and adjusted the mining wait interval."
+
+msgid "Combat now uses bounded fallback targeting when the Next marker remains visible."
+msgstr "Combat now uses bounded fallback targeting when the Next marker remains visible."
+
+#: src/script.py
+msgid "Obtained {a}."
+msgstr "Obtained {a}."
+
+#: src/script.py
+msgid "Detected an all-refined ore reward."
+msgstr "Detected an all-refined ore reward."
+
+#: src/script.py
+msgid "Unrecognized ore reward; screenshot saved to {a}."
+msgstr "Unrecognized ore reward; screenshot saved to {a}."
+
+#: src/script.py
+msgid "No usable pickaxe was detected in the {a} frame; leaving the dungeon."
+msgstr "No usable pickaxe was detected in the {a} frame; leaving the dungeon."
+
+#: src/script.py
+msgid "No ore to mine was detected in the {a} frame; leaving the dungeon."
+msgstr "No ore to mine was detected in the {a} frame; leaving the dungeon."
+
+#: src/script.py
+msgid "Mining position was not confirmed; restarting the mining cycle."
+msgstr "Mining position was not confirmed; restarting the mining cycle."
+
+#: src/script.py
+msgid "pre-click"
+msgstr "pre-click"
+
+#: src/script.py
+msgid "post-click"
+msgstr "post-click"
+
+msgid "Kept chest interaction markers ahead of bounded result-dialogue skips."
+msgstr "Kept chest interaction markers ahead of bounded result-dialogue skips."
+
+#: src/script.py
+msgid "The result dialogue did not change after {a} skip attempts; re-identifying the screen."
+msgstr "The result dialogue did not change after {a} skip attempts; re-identifying the screen."
+
+#: src/script.py
+msgid "The post-combat result dialogue did not change after the bounded skips; re-identifying the screen."
+msgstr "The post-combat result dialogue did not change after the bounded skips; re-identifying the screen."
+
+#: src/script.py
+msgid "The chest screen remained unidentified for 150 seconds; returning to state detection."
+msgstr "The chest screen remained unidentified for 150 seconds; returning to state detection."
+
+#: src/script.py
+msgid "Chest markers are still visible; stopping result skips and re-identifying the chest state."
+msgstr "Chest markers are still visible; stopping result skips and re-identifying the chest state."

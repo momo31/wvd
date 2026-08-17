@@ -2405,3 +2405,81 @@ msgstr "Fixed an issue where the script failed to launch due to an incorrect Eng
 #: CHANGES_LOG.md:6
 msgid "Added English descriptions for the mining quest. Enjoy!"
 msgstr "Added English descriptions for the mining quest. Enjoy!"
+
+msgid "Integrated upstream 2.5.11 mining-position checks and restart recovery."
+msgstr "已合并上游2.5.11的采矿位置检查和重启恢复。"
+
+msgid "Improved the combat Next target image and mining result detection."
+msgstr "改进了战斗Next目标图片和采矿结果识别。"
+
+msgid "Preserved Telegram control, persistent settings, and network recovery."
+msgstr "保留了Telegram控制、设置持久化和网络恢复功能。"
+
+msgid "Simplified route-readiness detection so slow screenshots do not misclassify transient route errors."
+msgstr "简化了路线准备检测，避免慢截图将短暂的路线错误误判为失败。"
+
+msgid "Added a recovery boundary so mining can continue after a game restart during dungeon entry."
+msgstr "增加了恢复边界，使游戏在进入副本时重启后仍可继续采矿。"
+
+msgid "Mining results are now checked in both the pre-click and post-click frames."
+msgstr "现在会在点击前和点击后的画面中检查采矿结果。"
+
+msgid "Updated the Next image and mining-result detection."
+msgstr "更新了Next图片和采矿结果检测。"
+
+msgid "Centralized diagnostic screenshots and adjusted the mining wait interval."
+msgstr "统一了诊断截图保存方式并调整了采矿等待间隔。"
+
+msgid "Combat now uses bounded fallback targeting when the Next marker remains visible."
+msgstr "当Next标记仍然可见时，战斗现在会使用有界的备用目标选择。"
+
+#: src/script.py
+msgid "Obtained {a}."
+msgstr "获得了{a}。"
+
+#: src/script.py
+msgid "Detected an all-refined ore reward."
+msgstr "检测到全改矿石奖励。"
+
+#: src/script.py
+msgid "Unrecognized ore reward; screenshot saved to {a}."
+msgstr "无法识别矿石奖励；截图已保存至{a}。"
+
+#: src/script.py
+msgid "No usable pickaxe was detected in the {a} frame; leaving the dungeon."
+msgstr "在{a}画面中检测到没有可用的镐子；正在退出副本。"
+
+#: src/script.py
+msgid "No ore to mine was detected in the {a} frame; leaving the dungeon."
+msgstr "在{a}画面中检测到无矿可挖；正在退出副本。"
+
+#: src/script.py
+msgid "Mining position was not confirmed; restarting the mining cycle."
+msgstr "未确认到采矿位置；重新开始采矿循环。"
+
+#: src/script.py
+msgid "pre-click"
+msgstr "点击前"
+
+#: src/script.py
+msgid "post-click"
+msgstr "点击后"
+
+msgid "Kept chest interaction markers ahead of bounded result-dialogue skips."
+msgstr "确保宝箱交互标记优先于有界的结果对话框跳过。"
+
+#: src/script.py
+msgid "The result dialogue did not change after {a} skip attempts; re-identifying the screen."
+msgstr "结果对话框跳过{a}次后画面仍未变化；重新识别画面状态。"
+
+#: src/script.py
+msgid "The post-combat result dialogue did not change after the bounded skips; re-identifying the screen."
+msgstr "在有界次数内跳过战斗结果对话框后画面仍未变化；重新识别画面状态。"
+
+#: src/script.py
+msgid "The chest screen remained unidentified for 150 seconds; returning to state detection."
+msgstr "宝箱画面持续150秒无法识别；返回状态检测。"
+
+#: src/script.py
+msgid "Chest markers are still visible; stopping result skips and re-identifying the chest state."
+msgstr "宝箱标记仍然可见；停止跳过结果并重新识别宝箱状态。"
