@@ -193,7 +193,7 @@ class Upstream249MergeTests(unittest.TestCase):
 
     def test_fork_version_keeps_upstream_update_comparison(self):
         version = assigned_string(SRC / "main.py", "__version__")
-        self.assertEqual(version, "2.5.11-momo.1")
+        self.assertEqual(version, "2.6.0-momo.1")
 
         from auto_updater import AutoUpdater
 
@@ -211,7 +211,9 @@ class Upstream249MergeTests(unittest.TestCase):
         self.assertFalse(updater._is_newer_version("2.5.4"))
         self.assertFalse(updater._is_newer_version("2.5.5"))
         self.assertFalse(updater._is_newer_version("2.5.11"))
-        self.assertTrue(updater._is_newer_version("2.5.12"))
+        self.assertFalse(updater._is_newer_version("2.5.12"))
+        self.assertFalse(updater._is_newer_version("2.6.0"))
+        self.assertTrue(updater._is_newer_version("2.6.1"))
 
     def test_per_combat_strategy_reload_happens_after_combat(self):
         source = (SRC / "script.py").read_text(encoding="utf-8")
@@ -227,8 +229,12 @@ class Upstream249MergeTests(unittest.TestCase):
         dungeon_end = source.index('case "darkLight":', dungeon_start)
         dungeon_block = source[dungeon_start:dungeon_end]
         self.assertIn(
-            '(runtimeContext._TIME_COMBAT !=0) and '
-            '(setting.RELOAD_STRATEGY_WHEN == _("每场战斗前"))',
+            'runtimeContext.CURRENT_STRATEGY.get(\n'
+            '                            "need_reload_when_combat_begins", False',
+            dungeon_block,
+        )
+        self.assertNotIn(
+            'setting.RELOAD_STRATEGY_WHEN == _("每场战斗前")',
             dungeon_block,
         )
 
@@ -426,7 +432,7 @@ class Upstream249MergeTests(unittest.TestCase):
             ROOT / "resources" / "quest" / "quest.json"
         )
 
-        self.assertEqual(assigned_string(SRC / "main.py", "__version__"), "2.5.11-momo.1")
+        self.assertEqual(assigned_string(SRC / "main.py", "__version__"), "2.6.0-momo.1")
         self.assertIn('DeviceShell("dumpsys window | grep mCurrentFocus")', source)
         self.assertIn('else "screencap 2>/dev/null"', source)
         self.assertIn("Multiple displays were found", source)

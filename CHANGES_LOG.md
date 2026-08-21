@@ -1,4 +1,19 @@
 **新版本!**
+==v2.6.0-momo.1==
+Integrated upstream 2.5.12 through 2.6.0 while preserving local recovery, Telegram control, and chest guards.
+Combat reset and completion behavior can now be configured per strategy.
+Custom task-point strategies switch immediately after each point is completed.
+Added the left-side FFXI 5F elite route and updated party-management detection.
+All-refined mining rewards now save a diagnostic screenshot.
+
+==v2.5.13==
+Temporarily disabled the legacy per-combat reset and saved screenshots for all-refined mining rewards.
+
+==v2.5.12==
+Recovered cleanly when a game restart is triggered during screenshot capture.
+Improved party switching when the sixth party slot is used without a pickaxe.
+Added the left-side two-elite FFXI 5F route.
+
 ==v2.5.11-momo.1==
 Integrated upstream 2.5.11 mining-position checks and restart recovery.
 Improved the combat Next target image and mining result detection.

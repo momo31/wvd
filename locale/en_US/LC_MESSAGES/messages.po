@@ -2593,3 +2593,70 @@ msgstr "The chest screen remained unidentified for 150 seconds; returning to sta
 #: src/script.py
 msgid "Chest markers are still visible; stopping result skips and re-identifying the chest state."
 msgstr "Chest markers are still visible; stopping result skips and re-identifying the chest state."
+
+#: src/gui.py
+msgid "该策略需要在进入地下城时进行重置."
+msgstr "Reload this strategy when entering a dungeon."
+
+#: src/gui.py
+msgid ""
+"[高级]该策略需要在战斗开始前进行重置.\n"
+"确保你了解\"重复上一次\"功能, 否则请勿开启."
+msgstr ""
+"[Advanced] Reload this strategy before combat.\n"
+"Enable this only if you understand Repeat Previous Action and still need it."
+
+#: src/gui.py
+msgid "[高级]该策略释放任一即视为完成."
+msgstr "[Advanced] Completing any configured action completes this strategy."
+
+#: src/script.py
+msgid "A game restart was triggered during screenshot capture; retrying the capture."
+msgstr "A game restart was triggered during screenshot capture; retrying the capture."
+
+#: src/script.py
+msgid "The next task-point strategy is now active."
+msgstr "The next task-point strategy is now active."
+
+#: src/script.py
+msgid "The strategy was reloaded after entering the dungeon."
+msgstr "The strategy was reloaded after entering the dungeon."
+
+#: src/script.py
+msgid "The strategy was reloaded before combat."
+msgstr "The strategy was reloaded before combat."
+
+#: src/script.py
+msgid "One configured action completed, so the remaining strategy queue was cleared."
+msgstr "One configured action completed, so the remaining strategy queue was cleared."
+
+#: src/script.py
+msgid "All-refined ore detected; screenshot saved to {a}."
+msgstr "All-refined ore detected; screenshot saved to {a}."
+
+msgid "Integrated upstream 2.5.12 through 2.6.0 while preserving local recovery, Telegram control, and chest guards."
+msgstr "Integrated upstream 2.5.12 through 2.6.0 while preserving local recovery, Telegram control, and chest guards."
+
+msgid "Combat reset and completion behavior can now be configured per strategy."
+msgstr "Combat reset and completion behavior can now be configured per strategy."
+
+msgid "Custom task-point strategies switch immediately after each point is completed."
+msgstr "Custom task-point strategies switch immediately after each point is completed."
+
+msgid "Added the left-side FFXI 5F elite route and updated party-management detection."
+msgstr "Added the left-side FFXI 5F elite route and updated party-management detection."
+
+msgid "All-refined mining rewards now save a diagnostic screenshot."
+msgstr "All-refined mining rewards now save a diagnostic screenshot."
+
+msgid "Temporarily disabled the legacy per-combat reset and saved screenshots for all-refined mining rewards."
+msgstr "Temporarily disabled the legacy per-combat reset and saved screenshots for all-refined mining rewards."
+
+msgid "Recovered cleanly when a game restart is triggered during screenshot capture."
+msgstr "Recovered cleanly when a game restart is triggered during screenshot capture."
+
+msgid "Improved party switching when the sixth party slot is used without a pickaxe."
+msgstr "Improved party switching when the sixth party slot is used without a pickaxe."
+
+msgid "Added the left-side two-elite FFXI 5F route."
+msgstr "Added the left-side two-elite FFXI 5F route."

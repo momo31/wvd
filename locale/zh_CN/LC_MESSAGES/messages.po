@@ -2483,3 +2483,70 @@ msgstr "宝箱画面持续150秒无法识别；返回状态检测。"
 #: src/script.py
 msgid "Chest markers are still visible; stopping result skips and re-identifying the chest state."
 msgstr "宝箱标记仍然可见；停止跳过结果并重新识别宝箱状态。"
+
+#: src/gui.py
+msgid "该策略需要在进入地下城时进行重置."
+msgstr "该策略需要在进入地下城时进行重置。"
+
+#: src/gui.py
+msgid ""
+"[高级]该策略需要在战斗开始前进行重置.\n"
+"确保你了解\"重复上一次\"功能, 否则请勿开启."
+msgstr ""
+"[高级]该策略需要在战斗开始前进行重置。\n"
+"确保你了解\"重复上一次\"功能，否则请勿开启。"
+
+#: src/gui.py
+msgid "[高级]该策略释放任一即视为完成."
+msgstr "[高级]该策略释放任一即视为完成。"
+
+#: src/script.py
+msgid "A game restart was triggered during screenshot capture; retrying the capture."
+msgstr "截图过程中触发了游戏重启；正在重新截图。"
+
+#: src/script.py
+msgid "The next task-point strategy is now active."
+msgstr "已切换到下一个任务点对应的策略。"
+
+#: src/script.py
+msgid "The strategy was reloaded after entering the dungeon."
+msgstr "进入副本后已重置战斗策略。"
+
+#: src/script.py
+msgid "The strategy was reloaded before combat."
+msgstr "战斗开始前已重置战斗策略。"
+
+#: src/script.py
+msgid "One configured action completed, so the remaining strategy queue was cleared."
+msgstr "一个已配置动作完成，因此已清空剩余策略队列。"
+
+#: src/script.py
+msgid "All-refined ore detected; screenshot saved to {a}."
+msgstr "检测到全改矿石；截图已保存到{a}。"
+
+msgid "Integrated upstream 2.5.12 through 2.6.0 while preserving local recovery, Telegram control, and chest guards."
+msgstr "在保留本地恢复、Telegram控制和宝箱保护逻辑的同时，整合了上游2.5.12至2.6.0。"
+
+msgid "Combat reset and completion behavior can now be configured per strategy."
+msgstr "现在可以为每个策略分别配置重置和完成行为。"
+
+msgid "Custom task-point strategies switch immediately after each point is completed."
+msgstr "自定义任务点策略会在每个任务点完成后立即切换。"
+
+msgid "Added the left-side FFXI 5F elite route and updated party-management detection."
+msgstr "新增FFXI 5F左侧精英路线，并更新了队伍管理画面检测。"
+
+msgid "All-refined mining rewards now save a diagnostic screenshot."
+msgstr "检测到全改采矿奖励时会保存诊断截图。"
+
+msgid "Temporarily disabled the legacy per-combat reset and saved screenshots for all-refined mining rewards."
+msgstr "暂时停用了旧版每场战斗重置，并为全改采矿奖励增加截图保存。"
+
+msgid "Recovered cleanly when a game restart is triggered during screenshot capture."
+msgstr "截图过程中触发游戏重启时现在可以正常恢复。"
+
+msgid "Improved party switching when the sixth party slot is used without a pickaxe."
+msgstr "没有镐子且使用第六个队伍栏位时，队伍切换现已改进。"
+
+msgid "Added the left-side two-elite FFXI 5F route."
+msgstr "新增FFXI 5F左侧两个精英路线。"

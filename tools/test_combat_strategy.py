@@ -14,6 +14,7 @@ from combat_strategy import (  # noqa: E402
     SkillExecutionResult,
     clear_skill_failure,
     complete_strategy_skill,
+    normalize_strategy_options,
     register_skill_failure,
     should_activate_auto_combat,
     should_preserve_strategy_progress,
@@ -23,6 +24,38 @@ from combat_strategy import (  # noqa: E402
 
 
 class CombatStrategyQueueTests(unittest.TestCase):
+    def test_legacy_global_reload_options_migrate_without_mutating_input(self):
+        source = [{"group_name": "custom", "skill_settings": []}]
+
+        normalized = normalize_strategy_options(
+            source,
+            legacy_dungeon_reload=True,
+            legacy_combat_reload=False,
+        )
+
+        self.assertNotIn("need_reload_when_dungeon_begins", source[0])
+        self.assertTrue(normalized[0]["need_reload_when_dungeon_begins"])
+        self.assertFalse(normalized[0]["need_reload_when_combat_begins"])
+        self.assertFalse(normalized[0]["complete_one_as_all"])
+
+    def test_explicit_per_strategy_options_win_over_legacy_defaults(self):
+        normalized = normalize_strategy_options(
+            [
+                {
+                    "group_name": "custom",
+                    "need_reload_when_dungeon_begins": False,
+                    "need_reload_when_combat_begins": False,
+                    "complete_one_as_all": True,
+                }
+            ],
+            legacy_dungeon_reload=True,
+            legacy_combat_reload=True,
+        )
+
+        self.assertFalse(normalized[0]["need_reload_when_dungeon_begins"])
+        self.assertFalse(normalized[0]["need_reload_when_combat_begins"])
+        self.assertTrue(normalized[0]["complete_one_as_all"])
+
     def test_target_probe_points_are_bounded_and_deterministic(self):
         self.assertEqual(
             target_probe_points([500, 900]),
@@ -230,6 +263,33 @@ class CombatStrategyQueueTests(unittest.TestCase):
             complete_strategy_skill(strategy, skill, SkillExecutionResult.SUCCESS)
         )
         self.assertTrue(should_activate_auto_combat(strategy, "full-auto"))
+
+    def test_complete_one_as_all_clears_the_queue_after_success(self):
+        first = {"role_var": "first"}
+        second = {"role_var": "second"}
+        strategy = {
+            "group_name": "custom",
+            "complete_one_as_all": True,
+            "skill_settings": [first, second],
+        }
+
+        self.assertTrue(
+            complete_strategy_skill(strategy, first, SkillExecutionResult.SUCCESS)
+        )
+        self.assertEqual(strategy["skill_settings"], [])
+
+    def test_complete_one_as_all_keeps_the_queue_after_failure(self):
+        skill = {"role_var": "first"}
+        strategy = {
+            "group_name": "custom",
+            "complete_one_as_all": True,
+            "skill_settings": [skill],
+        }
+
+        self.assertFalse(
+            complete_strategy_skill(strategy, skill, SkillExecutionResult.FAILED)
+        )
+        self.assertEqual(strategy["skill_settings"], [skill])
 
     def test_explicit_fallback_resolves_an_unusable_skill(self):
         skill = {"role_var": "unusable"}

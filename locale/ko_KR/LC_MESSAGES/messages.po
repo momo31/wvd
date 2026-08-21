@@ -2562,3 +2562,70 @@ msgstr "상자 화면을 150초 동안 식별하지 못해 상태 판정으로 �
 #: src/script.py
 msgid "Chest markers are still visible; stopping result skips and re-identifying the chest state."
 msgstr "상자 표식이 남아 있어 결과창 스킵을 중단하고 상자 상태를 다시 식별합니다."
+
+#: src/gui.py
+msgid "该策略需要在进入地下城时进行重置."
+msgstr "이 전략은 던전 입장 시 초기화합니다."
+
+#: src/gui.py
+msgid ""
+"[高级]该策略需要在战斗开始前进行重置.\n"
+"确保你了解\"重复上一次\"功能, 否则请勿开启."
+msgstr ""
+"[고급] 이 전략은 전투 시작 전에 초기화합니다.\n"
+"\"이전 행동 반복\" 기능을 이해하고 필요한 경우에만 활성화하세요."
+
+#: src/gui.py
+msgid "[高级]该策略释放任一即视为完成."
+msgstr "[고급] 이 전략은 설정 행동 하나를 실행하면 모두 완료한 것으로 처리합니다."
+
+#: src/script.py
+msgid "A game restart was triggered during screenshot capture; retrying the capture."
+msgstr "스크린샷 처리 중 게임 재시작이 발생해 캡처를 다시 시도합니다."
+
+#: src/script.py
+msgid "The next task-point strategy is now active."
+msgstr "다음 작업 지점에 지정된 전략으로 전환했습니다."
+
+#: src/script.py
+msgid "The strategy was reloaded after entering the dungeon."
+msgstr "던전 입장 후 전략을 초기화했습니다."
+
+#: src/script.py
+msgid "The strategy was reloaded before combat."
+msgstr "전투 시작 전에 전략을 초기화했습니다."
+
+#: src/script.py
+msgid "One configured action completed, so the remaining strategy queue was cleared."
+msgstr "설정 행동 하나가 완료되어 남은 전략 대기열을 비웠습니다."
+
+#: src/script.py
+msgid "All-refined ore detected; screenshot saved to {a}."
+msgstr "전체 개조 광석을 감지해 스크린샷을 {a}에 저장했습니다."
+
+msgid "Integrated upstream 2.5.12 through 2.6.0 while preserving local recovery, Telegram control, and chest guards."
+msgstr "로컬 복구, Telegram 제어, 상자 보호 로직을 유지하면서 업스트림 2.5.12부터 2.6.0까지 통합했습니다."
+
+msgid "Combat reset and completion behavior can now be configured per strategy."
+msgstr "이제 전략별로 초기화 및 완료 동작을 설정할 수 있습니다."
+
+msgid "Custom task-point strategies switch immediately after each point is completed."
+msgstr "사용자 지정 작업 지점 전략이 각 지점 완료 직후 전환됩니다."
+
+msgid "Added the left-side FFXI 5F elite route and updated party-management detection."
+msgstr "FFXI 5F 좌측 엘리트 경로를 추가하고 파티 관리 화면 감지를 개선했습니다."
+
+msgid "All-refined mining rewards now save a diagnostic screenshot."
+msgstr "전체 개조 채굴 보상 감지 시 진단 스크린샷을 저장합니다."
+
+msgid "Temporarily disabled the legacy per-combat reset and saved screenshots for all-refined mining rewards."
+msgstr "기존 전투별 초기화를 일시 중단하고 전체 개조 채굴 보상의 스크린샷 저장을 추가했습니다."
+
+msgid "Recovered cleanly when a game restart is triggered during screenshot capture."
+msgstr "스크린샷 처리 중 게임이 재시작되어도 정상적으로 복구합니다."
+
+msgid "Improved party switching when the sixth party slot is used without a pickaxe."
+msgstr "곡괭이가 없고 여섯 번째 파티 슬롯을 사용할 때의 파티 전환을 개선했습니다."
+
+msgid "Added the left-side two-elite FFXI 5F route."
+msgstr "FFXI 5F 좌측 엘리트 2마리 경로를 추가했습니다."

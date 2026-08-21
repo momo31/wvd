@@ -34,6 +34,7 @@ from combat_strategy import (
     SkillExecutionResult,
     clear_skill_failure,
     complete_strategy_skill,
+    normalize_strategy_options,
     register_skill_failure,
     should_activate_auto_combat,
     should_preserve_strategy_progress,
@@ -856,11 +857,19 @@ def Factory():
 
         focus_check_at = time.monotonic()
         if focus_check_at - runtimeContext._LAST_GAME_FOCUS_CHECK >= 5.0:
-            focus_window = DeviceShell("dumpsys window | grep mCurrentFocus")
-            runtimeContext._LAST_GAME_FOCUS_CHECK = focus_check_at
-            if focus_window and "wizardry" not in focus_window.lower():
-                logger.error(_("游戏未启动!"))
-                restartGame(skip_screenshot=True)
+            try:
+                focus_window = DeviceShell("dumpsys window | grep mCurrentFocus")
+                runtimeContext._LAST_GAME_FOCUS_CHECK = focus_check_at
+                if focus_window and "wizardry" not in focus_window.lower():
+                    logger.error(_("游戏未启动!"))
+                    restartGame(skip_screenshot=True)
+            except RestartSignal:
+                logger.warning(
+                    _(
+                        "A game restart was triggered during screenshot capture; "
+                        "retrying the capture."
+                    )
+                )
 
         t = time.time()
         class AppKeepAliveError(Exception):
@@ -1739,17 +1748,21 @@ def Factory():
 
         if not partyName:
             RestartableSequenceExecution(
-                        lambda: Press(FindCoordsOrElseExecuteFallbackAndWait("Edit",["guild",[1,1]],1)),
-                        lambda: Press(FindCoordsOrElseExecuteFallbackAndWait("PartyManagement",["Edit",[1,1]],1)),
-                        lambda: FindCoordsOrElseExecuteFallbackAndWait("AdventurerGuild",["PartyManagement",[1,1]],1),
+                        lambda: FindCoordsOrElseExecuteFallbackAndWait(
+                            "PartyManagementTitle",
+                            ["PartyManagement", "Edit", "guild", [1,1]],
+                            1,
+                        ),
                         lambda: Press(FindCoordsOrElseExecuteFallbackAndWait("ok",[[137,290],"AssembleParty"],1)),
                         lambda: FindCoordsOrElseExecuteFallbackAndWait("Inn","return",1)
                 )
         else:
             RestartableSequenceExecution(
-                                    lambda: Press(FindCoordsOrElseExecuteFallbackAndWait("Edit",["guild",[1,1]],1)),
-                                    lambda: Press(FindCoordsOrElseExecuteFallbackAndWait("PartyManagement",["Edit",[1,1]],1)),
-                                    lambda: FindCoordsOrElseExecuteFallbackAndWait("AdventurerGuild",["PartyManagement",[1,1]],1),
+                                    lambda: FindCoordsOrElseExecuteFallbackAndWait(
+                                        "PartyManagementTitle",
+                                        ["PartyManagement", "Edit", "guild", [1,1]],
+                                        1,
+                                    ),
                                     lambda: Press(FindCoordsOrElseExecuteFallbackAndWait("ok",[partyName,"AssembleParty"],1)),
                                     lambda: FindCoordsOrElseExecuteFallbackAndWait("Inn","return",1)
                             )
@@ -3041,10 +3054,25 @@ def Factory():
                 DefendThisChar()
 
         # 9. 확인된 시전 또는 명시적인 자동 대체가 끝난 항목만 완료 처리한다.
+        pending_before_completion = len(
+            runtimeContext.CURRENT_STRATEGY.get("skill_settings", [])
+        )
         if complete_strategy_skill(
             runtimeContext.CURRENT_STRATEGY, target_skill, action_result
         ):
             clear_skill_failure(runtimeContext._STRATEGY_FAILURE_COUNTS, target_skill)
+            if (
+                pending_before_completion > 1
+                and runtimeContext.CURRENT_STRATEGY.get(
+                    "complete_one_as_all", False
+                )
+            ):
+                logger.info(
+                    _(
+                        "One configured action completed, so the remaining "
+                        "strategy queue was cleared."
+                    )
+                )
             if action_result is SkillExecutionResult.FALLBACK:
                 logger.warning(
                     "%s 항목을 스킬 성공이 아닌 자동 행동 대체로 완료 처리했습니다.",
@@ -3523,11 +3551,19 @@ def Factory():
             logger.info(f"任务点完成: {targetInfoList[0].target} {targetInfoList[0].roi}")
             targetInfoList.pop(0)
             runtimeContext.TASK_STEP_INDEX += 1
+
+            if setting.TASK_POINT_STRATEGY.get("overall_strategy", "") == _(
+                "自定义任务点策略"
+            ):
+                logger.info(_("The next task-point strategy is now active."))
+                ReloadStrategy()
             return
         
         runtimeContext.NEED_RECOVER_WHEN_BEGINNING = True
 
-        if setting.RELOAD_STRATEGY_WHEN in [_("每次副本开始"), _("每次副本开始(自动)")]:
+        if runtimeContext.CURRENT_STRATEGY.get(
+            "need_reload_when_dungeon_begins", False
+        ):
             if should_skip_dungeon_strategy_reload(
                 setting.RELOAD_STRATEGY_WHEN,
                 _("每次副本开始(自动)"),
@@ -3542,8 +3578,9 @@ def Factory():
                     remaining,
                 )
             else:
+                logger.info(_("The strategy was reloaded after entering the dungeon."))
                 ReloadStrategy()
-            runtimeContext._STRATEGY_RECOVERY_PENDING = False
+        runtimeContext._STRATEGY_RECOVERY_PENDING = False
         
         ##############################################
         while 1:
@@ -3603,7 +3640,13 @@ def Factory():
                     )
                     Press([1,1])
                     ########### 重置战斗策略
-                    if (runtimeContext._TIME_COMBAT !=0) and (setting.RELOAD_STRATEGY_WHEN == _("每场战斗前")):
+                    if (
+                        runtimeContext._TIME_COMBAT != 0
+                        and runtimeContext.CURRENT_STRATEGY.get(
+                            "need_reload_when_combat_begins", False
+                        )
+                    ):
+                        logger.info(_("The strategy was reloaded before combat."))
                         ReloadStrategy()
                     ########### TIMER
                     if (runtimeContext._TIME_CHEST !=0) or (runtimeContext._TIME_COMBAT!=0):
@@ -4912,7 +4955,12 @@ def Factory():
                             and all_refined_match > 0.9
                         ):
                             counter["all_refined"] += 1
-                            logger.info(_("Detected an all-refined ore reward."))
+                            file_path = SaveImage(scn)
+                            logger.info(
+                                _(
+                                    "All-refined ore detected; screenshot saved to {a}."
+                                ).format(a=file_path)
+                            )
                         else:
                             counter["other"] += 1
                             file_path = SaveImage(scn)

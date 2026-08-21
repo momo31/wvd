@@ -81,9 +81,26 @@ ALLOWED_TRANSITIONS = {
         ControlState.ERROR,
         ControlState.IDLE,
     },
-    ControlState.AT_TITLE: {ControlState.STARTING, ControlState.IDLE},
-    ControlState.GAME_STOPPED_FALLBACK: {ControlState.STARTING, ControlState.IDLE},
-    ControlState.ERROR: {ControlState.STARTING, ControlState.IDLE},
+    # Telegram starts pass through STARTING while a local button start is
+    # already running by the time on_task_started() is notified.  Both paths
+    # must be legal after any terminal state; otherwise the worker starts but
+    # the UI is synchronized from the stale terminal state and keeps showing
+    # the Start label.
+    ControlState.AT_TITLE: {
+        ControlState.STARTING,
+        ControlState.RUNNING,
+        ControlState.IDLE,
+    },
+    ControlState.GAME_STOPPED_FALLBACK: {
+        ControlState.STARTING,
+        ControlState.RUNNING,
+        ControlState.IDLE,
+    },
+    ControlState.ERROR: {
+        ControlState.STARTING,
+        ControlState.RUNNING,
+        ControlState.IDLE,
+    },
 }
 
 

@@ -75,6 +75,34 @@ class FeatureTests(unittest.TestCase):
         feature.current_settings = TelegramSettings(True, "123456:" + "x" * 20, "123456789")
         return feature, ports
 
+    def test_local_start_from_terminal_state_transitions_to_running(self):
+        terminal_states = (
+            ControlState.AT_TITLE,
+            ControlState.GAME_STOPPED_FALLBACK,
+            ControlState.ERROR,
+        )
+        for index, terminal_state in enumerate(terminal_states):
+            with self.subTest(terminal_state=terminal_state):
+                events = []
+                feature, _ports = self.make_feature(events)
+                feature.state = terminal_state
+                runtime = RemoteRuntime(
+                    f"local-restart-{index}",
+                    StartReason.LOCAL,
+                    "Task",
+                    feature.event_queue,
+                    threading.Event(),
+                    None,
+                    "",
+                    datetime.now(timezone.utc),
+                    0.0,
+                )
+
+                feature.on_task_started(runtime)
+
+                self.assertEqual(feature.state, ControlState.RUNNING)
+                self.assertEqual(events[-1], ControlState.RUNNING)
+
     def test_remote_stop_transitions_to_at_title_after_finished(self):
         events = []
         feature, _ports = self.make_feature(events)

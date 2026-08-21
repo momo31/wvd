@@ -31,6 +31,7 @@ KO_TARGET_TRANSLATIONS = {
     "[恶名]FFXI 5F 2精英": "[악명] FFXI 5F 엘리트 2마리",
     "[恶名]FFXI 5F 中部2精英": "[악명] FFXI 5F 중부 엘리트 2마리",
     "[恶名]FFXI 5F 底部2精英": "[악명] FFXI 5F 하단 엘리트 2마리",
+    "[恶名]FFXI 5F 左侧2精英": "[악명] FFXI 5F 좌측 엘리트 2마리",
     "[恶名]FFXI 5F 单恶魔": "[악명] FFXI 5F 엘리트 1마리",
     "无限刷怪": "[몬스터] 무한 사냥 (제자리)",
     "[宝箱]水路一号街": "[상자] 무역수로 1번가",
@@ -96,6 +97,26 @@ def trans_tgt(tgt):
     if LANGUAGE == 'ko_KR':
         return KO_TARGET_TRANSLATIONS.get(tgt, tgt)
     return tgt
+
+
+def _legacy_strategy_reload_defaults(reload_mode):
+    """Map the pre-2.6 global reload mode to per-strategy defaults."""
+
+    dungeon_modes = {
+        "每次副本开始",
+        "每次副本开始(自动)",
+        _("每次副本开始"),
+        _("每次副本开始(自动)"),
+    }
+    combat_modes = {"每场战斗前", _("每场战斗前")}
+    return reload_mode in dungeon_modes, reload_mode in combat_modes
+
+
+def task_button_text(busy):
+    """Return one canonical, localized label for the task toggle button."""
+
+    return _("停止") if busy else _("脚本, 启动!")
+
 
 ORIG_SKILLS = ["左上技能", "右上技能", "左下技能", "右下技能", "防御", "双击自动"]
 ORIG_TARGETS = ["左上角色", "中上角色", "右上角色", "左下角色", "右下角色", "中下角色", "不可用", "低生命值"]
@@ -349,6 +370,10 @@ class SkillConfigPanel(CollapsibleSection):
         self.TARGET_OPTIONS = [_("左上角色"), _("中上角色"), _("右上角色"), _("左下角色"), _("右下角色"), _("中下角色"), _("不可用")]
         self.SKILL_LVL = [1, 2, 3, 4, 5, 6, 7]
 
+        self.need_reload_var = tk.BooleanVar(value=False)
+        self.need_reload_combat_var = tk.BooleanVar(value=False)
+        self.complete_one_as_all_var = tk.BooleanVar(value=False)
+
         # 用初始化内容构建
         self._setup_body_ui(init_config)
         
@@ -368,6 +393,39 @@ class SkillConfigPanel(CollapsibleSection):
 
             btn_edit = ttk.Button(action_bar, text=_("✎重命名"), command=self.edit_title, width=9.5)
             btn_edit.pack(side=tk.RIGHT, padx=(5, 0))
+
+            reload_frame = tk.Frame(self.content_frame, background=self.bg_color)
+            reload_frame.pack(fill=tk.X, pady=(2, 0))
+
+            self.reload_check = ttk.Checkbutton(
+                reload_frame,
+                variable=self.need_reload_var,
+                text=_("该策略需要在进入地下城时进行重置."),
+                command=self.on_config_change if self.on_config_change else None,
+                style="Custom.TCheckbutton",
+            )
+            self.reload_check.pack(anchor=tk.W, padx=5)
+
+            self.reload_combat_check = ttk.Checkbutton(
+                reload_frame,
+                variable=self.need_reload_combat_var,
+                text=_(
+                    "[高级]该策略需要在战斗开始前进行重置.\n"
+                    "确保你了解\"重复上一次\"功能, 否则请勿开启."
+                ),
+                command=self.on_config_change if self.on_config_change else None,
+                style="Custom.TCheckbutton",
+            )
+            self.reload_combat_check.pack(anchor=tk.W, padx=5, pady=(2, 0))
+
+            self.complete_one_as_all_check = ttk.Checkbutton(
+                reload_frame,
+                variable=self.complete_one_as_all_var,
+                text=_("[高级]该策略释放任一即视为完成."),
+                command=self.on_config_change if self.on_config_change else None,
+                style="Custom.TCheckbutton",
+            )
+            self.complete_one_as_all_check.pack(anchor=tk.W, padx=5, pady=(2, 0))
 
             ttk.Separator(self.content_frame, orient='horizontal').pack(fill='x', pady=2)
 
@@ -390,6 +448,16 @@ class SkillConfigPanel(CollapsibleSection):
             # 2. 设置组名
             if 'group_name' in init_config:
                 self.label.config(text=init_config['group_name'])
+
+            self.need_reload_var.set(
+                bool(init_config.get("need_reload_when_dungeon_begins", False))
+            )
+            self.need_reload_combat_var.set(
+                bool(init_config.get("need_reload_when_combat_begins", False))
+            )
+            self.complete_one_as_all_var.set(
+                bool(init_config.get("complete_one_as_all", False))
+            )
             
             # 3. 创建新的自定义行
             if 'skill_settings' in init_config:
@@ -574,6 +642,9 @@ class SkillConfigPanel(CollapsibleSection):
         # 返回指定格式，不包含默认行
         return {
             'group_name': self.label.cget("text"),
+            'need_reload_when_dungeon_begins': self.need_reload_var.get(),
+            'need_reload_when_combat_begins': self.need_reload_combat_var.get(),
+            'complete_one_as_all': self.complete_one_as_all_var.get(),
             'skill_settings': skill_settings
         }
 ############################################
@@ -585,6 +656,15 @@ def LoadSettingFromDict(input_dict):
             setattr(setting, attr_name, default_value)
         else:
             setattr(setting, attr_name, input_dict[attr_name])
+
+    legacy_dungeon_reload, legacy_combat_reload = _legacy_strategy_reload_defaults(
+        input_dict.get("RELOAD_STRATEGY_WHEN", "不需要")
+    )
+    setting.STRATEGY = normalize_strategy_options(
+        setting.STRATEGY,
+        legacy_dungeon_reload=legacy_dungeon_reload,
+        legacy_combat_reload=legacy_combat_reload,
+    )
 
     if hasattr(setting, 'STRATEGY') and isinstance(setting.STRATEGY, list):
         setting.STRATEGY = [translate_single_strategy(g) for g in setting.STRATEGY]
@@ -667,7 +747,7 @@ class ConfigPanelApp(tk.Toplevel):
 
         # --- ttk Style ---
         self.style = ttk.Style()
-        self.style.configure("custom.TCheckbutton")
+        self.style.configure("Custom.TCheckbutton", background="#FFFFFF")
         self.style.map("Custom.TCheckbutton",
             foreground=[("disabled selected", "#8CB7DF"),("disabled", "#A0A0A0"), ("selected", "#196FBF")])
         self.style.configure("BoldFont.TCheckbutton", font=("微软雅黑", 9,"bold"))
@@ -693,6 +773,15 @@ class ConfigPanelApp(tk.Toplevel):
                 setattr(self, attr_name, var_type(value = (config_dict[attr_name] if (attr_name in config_dict)and(config_dict[attr_name] is not None) else default_value)))
             else:
                 setattr(self, attr_name, var_type(config_dict[attr_name] if (attr_name in config_dict)and(config_dict[attr_name] is not None) else default_value))  
+
+        legacy_dungeon_reload, legacy_combat_reload = _legacy_strategy_reload_defaults(
+            self.RELOAD_STRATEGY_WHEN.get()
+        )
+        self.STRATEGY = normalize_strategy_options(
+            self.STRATEGY,
+            legacy_dungeon_reload=legacy_dungeon_reload,
+            legacy_combat_reload=legacy_combat_reload,
+        )
 
         # --- 创建组件 ---
         self.create_widgets()
@@ -1426,17 +1515,6 @@ class ConfigPanelApp(tk.Toplevel):
         ttk.Label(container, text=_("战斗方案会在每次重启游戏, 以及任意角色死亡后重置."), width=20, anchor=tk.W).grid(row=row_counter, column=0, sticky=tk.EW)
 
         row_counter += 1
-        frame_row = ttk.Frame(container)
-        frame_row.grid(row=row_counter, column=0, sticky="ew", pady=2)
-
-        ttk.Label(frame_row, text=_("你也可以增加额外的重置:")).grid(row=0, column=0, sticky=tk.W, pady=5)
-        self.reload_strategy_combobox = ttk.Combobox(frame_row, textvariable=self.RELOAD_STRATEGY_WHEN,
-                                                     values=[_("不需要"), _("每场战斗前"), _("每次副本开始"), _("不需要(自动)"), _("每次副本开始(自动)")],
-                                                     state="readonly", width=12)
-        self.reload_strategy_combobox.grid(row=0, column=1, sticky=tk.W, pady=5)
-        self.reload_strategy_combobox.bind("<<ComboboxSelected>>", lambda e: self.save_config())
-
-        row_counter += 1
         self.strategy_panels = {}  # 改为字典 {panel: name}
 
         def save_strategy():
@@ -1909,7 +1987,7 @@ class ConfigPanelApp(tk.Toplevel):
             self.toggle_start_stop()
         self.start_stop_btn = ttk.Button(
             button_frame,
-            text=_("脚本, 启动!"),
+            text=task_button_text(False),
             command=btn_command,
             style='start.TButton',
         )
@@ -2017,7 +2095,6 @@ class ConfigPanelApp(tk.Toplevel):
             self.official_org_website_1,
             self.AM_switch,
             self.farm_target_category_combo,
-            self.reload_strategy_combobox, 
             self.reassemble_party_check,
             ]
 
@@ -2080,12 +2157,12 @@ class ConfigPanelApp(tk.Toplevel):
         }
         busy = state in busy_states
         self.quest_active = busy
-        self.start_stop_btn.config(text=_("중지") if busy else _("시작"))
+        self.start_stop_btn.config(text=task_button_text(busy))
         self.set_controls_state(tk.DISABLED if busy else tk.NORMAL)
 
     def toggle_start_stop(self):
         if not self.quest_active:
-            self.start_stop_btn.config(text=_("停止"))
+            self.start_stop_btn.config(text=task_button_text(True))
             self.set_controls_state(tk.DISABLED)
             setting = LoadSettingFromDict(LoadConfig())
             setting._FINISHINGCALLBACK = self.finishingcallback
@@ -2099,7 +2176,7 @@ class ConfigPanelApp(tk.Toplevel):
 
     def real_finishingcallback(self):
         logger.info(_("已停止."))
-        self.start_stop_btn.config(text=_("脚本, 启动!"))
+        self.start_stop_btn.config(text=task_button_text(False))
         self.set_controls_state(tk.NORMAL)
         
         config = LoadConfig()

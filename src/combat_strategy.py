@@ -170,6 +170,41 @@ def should_activate_auto_combat(current_strategy, full_auto_group_name):
     return not current_strategy.get("skill_settings", [])
 
 
+def normalize_strategy_options(
+    strategies,
+    *,
+    legacy_dungeon_reload=False,
+    legacy_combat_reload=False,
+):
+    """Add the per-strategy 2.6 options without overwriting newer settings.
+
+    Versions before 2.6 stored dungeon/combat reload behavior in one global
+    setting.  Existing user strategies therefore need defaults derived from
+    that legacy value, while strategies already saved by 2.6 must retain their
+    explicit choices.
+    """
+
+    if not isinstance(strategies, list):
+        return strategies
+
+    normalized = []
+    for strategy in strategies:
+        if not isinstance(strategy, dict):
+            normalized.append(strategy)
+            continue
+
+        item = strategy.copy()
+        item.setdefault(
+            "need_reload_when_dungeon_begins", bool(legacy_dungeon_reload)
+        )
+        item.setdefault(
+            "need_reload_when_combat_begins", bool(legacy_combat_reload)
+        )
+        item.setdefault("complete_one_as_all", False)
+        normalized.append(item)
+    return normalized
+
+
 def should_preserve_strategy_progress(
     reload_mode, per_dungeon_auto_mode, reason, current_strategy
 ):
@@ -207,6 +242,8 @@ def complete_strategy_skill(current_strategy, target_skill, result):
     for index, queued_skill in enumerate(queue):
         if queued_skill is target_skill:
             queue.pop(index)
+            if current_strategy.get("complete_one_as_all", False):
+                queue.clear()
             return True
     return False
 

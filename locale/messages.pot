@@ -2446,3 +2446,68 @@ msgstr ""
 #: src/script.py
 msgid "Chest markers are still visible; stopping result skips and re-identifying the chest state."
 msgstr ""
+
+#: src/gui.py
+msgid "该策略需要在进入地下城时进行重置."
+msgstr ""
+
+#: src/gui.py
+msgid ""
+"[高级]该策略需要在战斗开始前进行重置.\n"
+"确保你了解\"重复上一次\"功能, 否则请勿开启."
+msgstr ""
+
+#: src/gui.py
+msgid "[高级]该策略释放任一即视为完成."
+msgstr ""
+
+#: src/script.py
+msgid "A game restart was triggered during screenshot capture; retrying the capture."
+msgstr ""
+
+#: src/script.py
+msgid "The next task-point strategy is now active."
+msgstr ""
+
+#: src/script.py
+msgid "The strategy was reloaded after entering the dungeon."
+msgstr ""
+
+#: src/script.py
+msgid "The strategy was reloaded before combat."
+msgstr ""
+
+#: src/script.py
+msgid "One configured action completed, so the remaining strategy queue was cleared."
+msgstr ""
+
+#: src/script.py
+msgid "All-refined ore detected; screenshot saved to {a}."
+msgstr ""
+
+msgid "Integrated upstream 2.5.12 through 2.6.0 while preserving local recovery, Telegram control, and chest guards."
+msgstr ""
+
+msgid "Combat reset and completion behavior can now be configured per strategy."
+msgstr ""
+
+msgid "Custom task-point strategies switch immediately after each point is completed."
+msgstr ""
+
+msgid "Added the left-side FFXI 5F elite route and updated party-management detection."
+msgstr ""
+
+msgid "All-refined mining rewards now save a diagnostic screenshot."
+msgstr ""
+
+msgid "Temporarily disabled the legacy per-combat reset and saved screenshots for all-refined mining rewards."
+msgstr ""
+
+msgid "Recovered cleanly when a game restart is triggered during screenshot capture."
+msgstr ""
+
+msgid "Improved party switching when the sixth party slot is used without a pickaxe."
+msgstr ""
+
+msgid "Added the left-side two-elite FFXI 5F route."
+msgstr ""

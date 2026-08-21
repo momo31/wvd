@@ -76,6 +76,17 @@ class _Controller:
 
 
 class MainControllerTests(unittest.TestCase):
+    def test_task_button_uses_one_localized_label_source(self):
+        gui_source = (SRC / "gui.py").read_text(encoding="utf-8")
+
+        self.assertIn(
+            'return _("停止") if busy else _("脚本, 启动!")',
+            gui_source,
+        )
+        self.assertNotIn('_("중지") if busy else _("시작")', gui_source)
+        self.assertIn("text=task_button_text(False)", gui_source)
+        self.assertIn("text=task_button_text(busy)", gui_source)
+
     def test_local_start_creates_runtime_before_handoff_check(self):
         runtime = _Runtime()
         controller = _Controller(runtime)
