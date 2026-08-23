@@ -626,6 +626,23 @@ def BuildQuestReflection():
         
         quest_reflect_map = {}
         seen_names = set()
+
+        # questCategory is the stable category identity. A localized category
+        # field is only its display label; treating it as a separate key splits
+        # one category when only some quests have been localized.
+        localized_category_key = f"questCategory_{LANGUAGE}"
+        category_labels = {}
+        for quest_info in data.values():
+            raw_category = quest_info["questCategory"]
+            localized_category = quest_info.get(localized_category_key)
+            if raw_category not in category_labels:
+                category_labels[raw_category] = localized_category or None
+            elif category_labels[raw_category] is None and localized_category:
+                category_labels[raw_category] = localized_category
+
+        for raw_category, category_label in category_labels.items():
+            if not category_label:
+                category_labels[raw_category] = raw_category
         
         # 遍历所有任务代号
         for quest_code, quest_info in data.items():
@@ -638,7 +655,7 @@ def BuildQuestReflection():
             seen_names.add(quest_name)
             
             # 添加到映射表和已见集合
-            category = quest_info.get(f"questCategory_{LANGUAGE}", quest_info["questCategory"])
+            category = category_labels[quest_info["questCategory"]]
             quest_reflect_map.setdefault(category, {})[quest_name] = quest_code
             
         

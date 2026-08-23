@@ -71,6 +71,27 @@ class Upstream260MergeTests(unittest.TestCase):
             self.gui,
         )
 
+    def test_korean_category_reflection_merges_localized_category_aliases(self):
+        import utils
+
+        previous_language = utils.LANGUAGE
+        try:
+            utils.LANGUAGE = "ko_KR"
+            categories = utils.BuildQuestReflection()
+        finally:
+            utils.LANGUAGE = previous_language
+
+        self.assertNotIn("最新洞窟", categories)
+        self.assertIn("최신 던전", categories)
+        self.assertIn("FFXI-5F-2Elite-left", categories["최신 던전"].values())
+        self.assertEqual(
+            len([category for category in categories if category == "최신 던전"]),
+            1,
+        )
+        self.assertIn("dict.fromkeys", self.gui)
+        self.assertIn("_category_keys_for_display", self.gui)
+        self.assertIn("_quest_code_for_target_display", self.gui)
+
     def test_per_strategy_controls_replace_the_visible_global_control(self):
         for option in (
             "need_reload_when_dungeon_begins",

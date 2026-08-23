@@ -99,6 +99,46 @@ def trans_tgt(tgt):
     return tgt
 
 
+def _category_keys_for_display(category_display):
+    """Return all internal categories represented by one visible label."""
+
+    return [
+        category
+        for category in DUNGEON_TARGETS
+        if trans_cat(category) == category_display
+    ]
+
+
+def _targets_for_category_display(category_display):
+    targets = []
+    for category in _category_keys_for_display(category_display):
+        targets.extend(DUNGEON_TARGETS[category].keys())
+    return targets
+
+
+def _target_matches_display(target, target_display):
+    return target_display in {
+        target,
+        trans_tgt(target),
+        REVERSE_TARGET_MAP.get(target, target),
+    }
+
+
+def _category_for_target_display(target_display):
+    for category, targets in DUNGEON_TARGETS.items():
+        if any(_target_matches_display(target, target_display) for target in targets):
+            return category
+    return ""
+
+
+def _quest_code_for_target_display(target_display):
+    for targets in DUNGEON_TARGETS.values():
+        for target, quest_code in targets.items():
+            if _target_matches_display(target, target_display):
+                return quest_code
+    return None
+
+
 def _legacy_strategy_reload_defaults(reload_mode):
     """Map the pre-2.6 global reload mode to per-strategy defaults."""
 
@@ -810,13 +850,7 @@ class ConfigPanelApp(tk.Toplevel):
         self.EMU_PATH.set(emu_path)
 
         # farm target
-        selected_target_chinese = REVERSE_TARGET_MAP.get(self.FARM_TARGET_TEXT.get(), self.FARM_TARGET_TEXT.get())
-        for category in DUNGEON_TARGETS.keys():
-            if selected_target_chinese in DUNGEON_TARGETS[category]:
-                self.FARM_TARGET.set(DUNGEON_TARGETS[category][selected_target_chinese])
-                break
-            else:
-                self.FARM_TARGET.set(None)
+        self.FARM_TARGET.set(_quest_code_for_target_display(self.FARM_TARGET_TEXT.get()))
         
         ##################
         existing_config = LoadRawConfigFromFile() or {}
@@ -997,14 +1031,12 @@ class ConfigPanelApp(tk.Toplevel):
         # 分类目标, 我们先写行, 等下面再写这行有什么
         frame_row = ttk.Frame(container)
         frame_row.grid(row=row_counter, column=0, sticky="ew", pady=2)
-        current_quest_cate = ""
-        current_target_chinese = REVERSE_TARGET_MAP.get(self.FARM_TARGET_TEXT.get(), self.FARM_TARGET_TEXT.get())
-        for k in DUNGEON_TARGETS.keys():
-            if current_target_chinese in DUNGEON_TARGETS[k]:
-                current_quest_cate = k
+        current_quest_cate = _category_for_target_display(self.FARM_TARGET_TEXT.get())
         ttk.Label(frame_row, text=_("任务类别:")).grid(row=0, column=0, sticky=tk.W, pady=5)
         self.farm_target_category_combo = ttk.Combobox(frame_row,
-                                              values=[trans_cat(k) for k in DUNGEON_TARGETS.keys()],
+                                              values=list(dict.fromkeys(
+                                                  trans_cat(k) for k in DUNGEON_TARGETS.keys()
+                                              )),
                                               state="readonly")
         self.farm_target_category_combo.set(trans_cat(current_quest_cate))
         self.farm_target_category_combo.grid(row=0, column=1, sticky=(tk.W, tk.E), pady=5)
@@ -1094,11 +1126,15 @@ class ConfigPanelApp(tk.Toplevel):
 
         ttk.Label(frame_row, text=_("任务目标:")).grid(row=0, column=0, sticky=tk.W, pady=5)
         category_translated = self.farm_target_category_combo.get()
-        category = REVERSE_CATEGORY_MAP.get(category_translated, category_translated)
-        if category not in DUNGEON_TARGETS.keys():
-            dungeon_target_list = [trans_tgt(key) for k in DUNGEON_TARGETS.keys() for key in DUNGEON_TARGETS[k].keys()]
+        category_targets = _targets_for_category_display(category_translated)
+        if category_targets:
+            dungeon_target_list = [trans_tgt(key) for key in category_targets]
         else:
-            dungeon_target_list = [trans_tgt(key) for key in DUNGEON_TARGETS[category].keys()]
+            dungeon_target_list = [
+                trans_tgt(key)
+                for category in DUNGEON_TARGETS
+                for key in DUNGEON_TARGETS[category].keys()
+            ]
         self.farm_target_combo = ttk.Combobox(frame_row,
                                               textvariable=self.FARM_TARGET_TEXT, 
                                               values=dungeon_target_list,
@@ -1110,8 +1146,14 @@ class ConfigPanelApp(tk.Toplevel):
         # 这是分类那个combobox
         def on_category_change(event=None):
             category_translated = self.farm_target_category_combo.get()
-            category = REVERSE_CATEGORY_MAP.get(category_translated, category_translated)
-            self.farm_target_combo['values'] = [trans_tgt(key) for key in DUNGEON_TARGETS[category].keys()]
+            category_targets = _targets_for_category_display(category_translated)
+            if not category_targets:
+                category_targets = [
+                    key
+                    for category in DUNGEON_TARGETS
+                    for key in DUNGEON_TARGETS[category].keys()
+                ]
+            self.farm_target_combo['values'] = [trans_tgt(key) for key in category_targets]
             current_target = self.farm_target_combo.get()
             if current_target not in self.farm_target_combo['values']:
                 self.farm_target_combo.set(self.farm_target_combo['values'][0])
