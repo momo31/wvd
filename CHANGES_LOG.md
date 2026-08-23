@@ -1,4 +1,9 @@
 **新版本!**
+==v2.6.1-momo.1==
+Integrated upstream 2.6.1 checkbox styling and positive recovery controls.
+Existing skip-recovery settings are migrated automatically without changing behavior.
+Preserved local recovery orchestration, Telegram control, chest guards, and localized quest categories.
+
 ==v2.6.0-momo.1==
 Integrated upstream 2.5.12 through 2.6.0 while preserving local recovery, Telegram control, and chest guards.
 Combat reset and completion behavior can now be configured per strategy.

@@ -308,16 +308,16 @@ msgid "跳过高难度"
 msgstr ""
 
 #: src/gui.py:1089
-msgid "跳过战后恢复"
-msgstr ""
+msgid "在战斗结束后进行恢复."
+msgstr "战斗结束后进行恢复。"
 
 #: src/gui.py:1095
-msgid "跳过开箱后恢复"
-msgstr ""
+msgid "在开箱后进行恢复."
+msgstr "开启宝箱后进行恢复。"
 
 #: src/gui.py:1103
-msgid "刚进入地下城时恢复一次."
-msgstr ""
+msgid "在进入地下城时进行恢复."
+msgstr "进入地下城时进行恢复。"
 
 #: src/gui.py:1113
 msgid "启用旅店休息"
@@ -2550,3 +2550,12 @@ msgstr "没有镐子且使用第六个队伍栏位时，队伍切换现已改进
 
 msgid "Added the left-side two-elite FFXI 5F route."
 msgstr "新增FFXI 5F左侧两个精英路线。"
+
+msgid "Integrated upstream 2.6.1 checkbox styling and positive recovery controls."
+msgstr "集成了上游2.6.1的复选框样式和正向恢复选项。"
+
+msgid "Existing skip-recovery settings are migrated automatically without changing behavior."
+msgstr "现有的跳过恢复设置将自动迁移，行为保持不变。"
+
+msgid "Preserved local recovery orchestration, Telegram control, chest guards, and localized quest categories."
+msgstr "保留了本地恢复编排、Telegram控制、宝箱保护和本地化任务分类。"

@@ -310,16 +310,16 @@ msgid "跳过高难度"
 msgstr "Skip high difficulty"
 
 #: src/gui.py:1089
-msgid "跳过战后恢复"
-msgstr "Skip Post-Combat Recovery"
+msgid "在战斗结束后进行恢复."
+msgstr "Recover after combat."
 
 #: src/gui.py:1095
-msgid "跳过开箱后恢复"
-msgstr "Skip Post-Chest Recovery"
+msgid "在开箱后进行恢复."
+msgstr "Recover after opening a chest."
 
 #: src/gui.py:1103
-msgid "刚进入地下城时恢复一次."
-msgstr "Recover once upon entering dungeon."
+msgid "在进入地下城时进行恢复."
+msgstr "Recover when entering the dungeon."
 
 #: src/gui.py:1113
 msgid "启用旅店休息"
@@ -2660,3 +2660,12 @@ msgstr "Improved party switching when the sixth party slot is used without a pic
 
 msgid "Added the left-side two-elite FFXI 5F route."
 msgstr "Added the left-side two-elite FFXI 5F route."
+
+msgid "Integrated upstream 2.6.1 checkbox styling and positive recovery controls."
+msgstr "Integrated upstream 2.6.1 checkbox styling and positive recovery controls."
+
+msgid "Existing skip-recovery settings are migrated automatically without changing behavior."
+msgstr "Existing skip-recovery settings are migrated automatically without changing behavior."
+
+msgid "Preserved local recovery orchestration, Telegram control, chest guards, and localized quest categories."
+msgstr "Preserved local recovery orchestration, Telegram control, chest guards, and localized quest categories."

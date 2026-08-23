@@ -424,6 +424,33 @@ def _merge_telegram_settings(config_data, fallback_data):
     return merged
 
 
+_RECOVERY_SETTING_MIGRATIONS = (
+    ("SKIP_COMBAT_RECOVER", "DO_COMBAT_RECOVER"),
+    ("SKIP_CHEST_RECOVER", "DO_CHEST_RECOVER"),
+)
+
+
+def _migrate_recovery_settings(config_data):
+    """Convert legacy skip flags without changing effective behavior."""
+
+    if not isinstance(config_data, dict):
+        return config_data, False
+
+    migrated = copy.deepcopy(config_data)
+    changed = False
+    for section in migrated.values():
+        if not isinstance(section, dict):
+            continue
+        for legacy_name, current_name in _RECOVERY_SETTING_MIGRATIONS:
+            if current_name not in section and legacy_name in section:
+                section[current_name] = not bool(section[legacy_name])
+                changed = True
+            if legacy_name in section:
+                del section[legacy_name]
+                changed = True
+    return migrated, changed
+
+
 def _write_config_file(config_path, config_data):
     """Write a config atomically, creating the per-user directory if needed."""
     absolute_path = os.path.abspath(config_path)
@@ -452,10 +479,11 @@ def SaveConfigToFile(config_data):
     except Exception as e:
         logger.error(f"保存配置时发生错误: {e}")
         return False
-def LoadRawConfigFromFile(config_file_path = CONFIG_FILE):
+def LoadRawConfigFromFile(config_file_path = CONFIG_FILE, migrate_recovery = True):
     if config_file_path == None:
         config_file_path = CONFIG_FILE
     config_data = LoadJson(config_file_path)
+    should_persist = False
 
     # A clean build can leave either a first-run config or an older config that
     # predates the Telegram fields beside the executable. Recover and migrate
@@ -477,11 +505,17 @@ def LoadRawConfigFromFile(config_file_path = CONFIG_FILE):
                 else:
                     migrated_data = fallback_data
                 if migrated_data != config_data:
-                    try:
-                        _write_config_file(CONFIG_FILE, migrated_data)
-                    except Exception as exc:
-                        logger.warning("Config migration failed: %s", exc)
-                return migrated_data
+                    config_data = migrated_data
+                    should_persist = True
+
+    if migrate_recovery:
+        config_data, recovery_settings_changed = _migrate_recovery_settings(config_data)
+        should_persist = should_persist or recovery_settings_changed
+    if should_persist:
+        try:
+            _write_config_file(config_file_path, config_data)
+        except Exception as exc:
+            logger.warning("Config migration failed: %s", exc)
 
     return config_data
 def SetOneVarInGeneralConfig(var, value):
@@ -489,7 +523,10 @@ def SetOneVarInGeneralConfig(var, value):
     data['GENERAL'][var] = value
     SaveConfigToFile(data)
 def GetOneVarInGeneralConfig(var, default_value):
-    data = LoadRawConfigFromFile()
+    # Locale setup runs while this module is imported. Defer recovery-key
+    # persistence until the application explicitly loads its farm settings so
+    # imports and test discovery never rewrite the user's config by themselves.
+    data = LoadRawConfigFromFile(migrate_recovery=False)
     if 'GENERAL' in data:
         if var in data['GENERAL']:
             return data['GENERAL'][var]

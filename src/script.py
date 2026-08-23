@@ -122,8 +122,8 @@ CONFIG_VAR_LIST = [
             ["TEMPLATE",   "SMART_DISARM_CHEST",      tk.BooleanVar, False],
             ["TEMPLATE",   "BYPASS_FAST_GAME",        tk.BooleanVar, False],
             ["TEMPLATE",   "WHO_WILL_OPEN_IT",        tk.IntVar,     0],
-            ["TEMPLATE",   "SKIP_COMBAT_RECOVER",     tk.BooleanVar, False],
-            ["TEMPLATE",   "SKIP_CHEST_RECOVER",      tk.BooleanVar, False],
+            ["TEMPLATE",   "DO_COMBAT_RECOVER",       tk.BooleanVar, True],
+            ["TEMPLATE",   "DO_CHEST_RECOVER",        tk.BooleanVar, True],
             ["TEMPLATE",   "RECOVER_WHEN_BEGINNING",  tk.BooleanVar, False],
             ["TEMPLATE",   "ACTIVE_REST",             tk.BooleanVar, True],
             ["TEMPLATE",   "ACTIVE_ROYALSUITE_REST",  tk.BooleanVar, False],
@@ -3676,7 +3676,7 @@ def Factory():
                         runtimeContext._MEET_CHEST_OR_COMBAT = True
                         if not recoveryPlan.request(
                             RecoveryReason.CHEST,
-                            enabled=not setting.SKIP_CHEST_RECOVER,
+                            enabled=setting.DO_CHEST_RECOVER,
                         ):
                             logger.info(_("由于面板配置, 跳过了开启宝箱后恢复."))
                     if needRecoverBecauseCombat:
@@ -3685,7 +3685,7 @@ def Factory():
                         runtimeContext._MEET_CHEST_OR_COMBAT = True
                         if not recoveryPlan.request(
                             RecoveryReason.COMBAT,
-                            enabled=not setting.SKIP_COMBAT_RECOVER,
+                            enabled=setting.DO_COMBAT_RECOVER,
                         ):
                             logger.info(_("由于面板配置, 跳过了战后恢复."))
                     if setting.RECOVER_WHEN_BEGINNING and runtimeContext.NEED_RECOVER_WHEN_BEGINNING:
@@ -4230,7 +4230,7 @@ def Factory():
                                 runtimeContext._MEET_CHEST_OR_COMBAT = True
                                 if not recoveryPlan.request(
                                     RecoveryReason.CHEST,
-                                    enabled=not setting.SKIP_CHEST_RECOVER,
+                                    enabled=setting.DO_CHEST_RECOVER,
                                 ):
                                     logger.info(_("由于面板配置, 跳过了开启宝箱后恢复."))
                             if needRecoverBecauseCombat:
@@ -4239,7 +4239,7 @@ def Factory():
                                 runtimeContext._MEET_CHEST_OR_COMBAT = True
                                 if not recoveryPlan.request(
                                     RecoveryReason.COMBAT,
-                                    enabled=not setting.SKIP_COMBAT_RECOVER,
+                                    enabled=setting.DO_COMBAT_RECOVER,
                                 ):
                                     logger.info(_("由于面板配置, 跳过了战后恢复."))
                             if recoveryPlan.should_recover:

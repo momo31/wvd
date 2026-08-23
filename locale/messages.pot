@@ -307,15 +307,15 @@ msgid "跳过高难度"
 msgstr ""
 
 #: src/gui.py:1089
-msgid "跳过战后恢复"
+msgid "在战斗结束后进行恢复."
 msgstr ""
 
 #: src/gui.py:1095
-msgid "跳过开箱后恢复"
+msgid "在开箱后进行恢复."
 msgstr ""
 
 #: src/gui.py:1103
-msgid "刚进入地下城时恢复一次."
+msgid "在进入地下城时进行恢复."
 msgstr ""
 
 #: src/gui.py:1113
@@ -2510,4 +2510,13 @@ msgid "Improved party switching when the sixth party slot is used without a pick
 msgstr ""
 
 msgid "Added the left-side two-elite FFXI 5F route."
+msgstr ""
+
+msgid "Integrated upstream 2.6.1 checkbox styling and positive recovery controls."
+msgstr ""
+
+msgid "Existing skip-recovery settings are migrated automatically without changing behavior."
+msgstr ""
+
+msgid "Preserved local recovery orchestration, Telegram control, chest guards, and localized quest categories."
 msgstr ""

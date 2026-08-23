@@ -171,12 +171,14 @@ class Upstream249MergeTests(unittest.TestCase):
         isolated_module = ast.Module(body=[function], type_ignores=[])
         ast.fix_missing_locations(isolated_module)
 
-        namespace = {"LoadRawConfigFromFile": lambda: {"GENERAL": {}}}
+        namespace = {
+            "LoadRawConfigFromFile": lambda **_kwargs: {"GENERAL": {}}
+        }
         exec(compile(isolated_module, str(utils_path), "exec"), namespace)
         getter = namespace["GetOneVarInGeneralConfig"]
 
         self.assertEqual(getter("LANGUAGE", "zh_CN"), "zh_CN")
-        namespace["LoadRawConfigFromFile"] = lambda: {}
+        namespace["LoadRawConfigFromFile"] = lambda **_kwargs: {}
         self.assertEqual(getter("LANGUAGE", "zh_CN"), "zh_CN")
 
     def test_packaged_config_path_and_korean_default_are_stable(self):
@@ -193,7 +195,7 @@ class Upstream249MergeTests(unittest.TestCase):
 
     def test_fork_version_keeps_upstream_update_comparison(self):
         version = assigned_string(SRC / "main.py", "__version__")
-        self.assertEqual(version, "2.6.0-momo.1")
+        self.assertEqual(version, "2.6.1-momo.1")
 
         from auto_updater import AutoUpdater
 
@@ -213,7 +215,8 @@ class Upstream249MergeTests(unittest.TestCase):
         self.assertFalse(updater._is_newer_version("2.5.11"))
         self.assertFalse(updater._is_newer_version("2.5.12"))
         self.assertFalse(updater._is_newer_version("2.6.0"))
-        self.assertTrue(updater._is_newer_version("2.6.1"))
+        self.assertFalse(updater._is_newer_version("2.6.1"))
+        self.assertTrue(updater._is_newer_version("2.6.2"))
 
     def test_per_combat_strategy_reload_happens_after_combat(self):
         source = (SRC / "script.py").read_text(encoding="utf-8")
@@ -432,7 +435,7 @@ class Upstream249MergeTests(unittest.TestCase):
             ROOT / "resources" / "quest" / "quest.json"
         )
 
-        self.assertEqual(assigned_string(SRC / "main.py", "__version__"), "2.6.0-momo.1")
+        self.assertEqual(assigned_string(SRC / "main.py", "__version__"), "2.6.1-momo.1")
         self.assertIn('DeviceShell("dumpsys window | grep mCurrentFocus")', source)
         self.assertIn('else "screencap 2>/dev/null"', source)
         self.assertIn("Multiple displays were found", source)

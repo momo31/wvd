@@ -165,6 +165,74 @@ class ConfigPersistenceTests(unittest.TestCase):
 
             self.assertEqual(loaded["GENERAL"]["TELEGRAM_ALLOWED_CHAT_ID"], "")
 
+    def test_recovery_flags_migrate_without_changing_effective_behavior(self):
+        source = {
+            "GENERAL": {
+                "TELEGRAM_ENABLED": True,
+                "TELEGRAM_BOT_TOKEN": "test-token",
+                "TELEGRAM_ALLOWED_CHAT_ID": "123456789",
+            },
+            "DEFAULT": {
+                "SKIP_COMBAT_RECOVER": False,
+                "SKIP_CHEST_RECOVER": True,
+                "MAX_TRY_LIMIT": 25,
+            },
+            "task-a": {
+                "SKIP_COMBAT_RECOVER": True,
+                "SKIP_CHEST_RECOVER": False,
+            },
+            "task-with-new-key": {
+                "SKIP_COMBAT_RECOVER": False,
+                "DO_COMBAT_RECOVER": False,
+            },
+            "unrelated": "keep-me",
+        }
+
+        migrated, changed = utils._migrate_recovery_settings(source)
+
+        self.assertTrue(changed)
+        self.assertTrue(migrated["DEFAULT"]["DO_COMBAT_RECOVER"])
+        self.assertFalse(migrated["DEFAULT"]["DO_CHEST_RECOVER"])
+        self.assertFalse(migrated["task-a"]["DO_COMBAT_RECOVER"])
+        self.assertTrue(migrated["task-a"]["DO_CHEST_RECOVER"])
+        self.assertFalse(migrated["task-with-new-key"]["DO_COMBAT_RECOVER"])
+        for section in migrated.values():
+            if isinstance(section, dict):
+                self.assertNotIn("SKIP_COMBAT_RECOVER", section)
+                self.assertNotIn("SKIP_CHEST_RECOVER", section)
+        self.assertEqual(migrated["GENERAL"], source["GENERAL"])
+        self.assertEqual(migrated["DEFAULT"]["MAX_TRY_LIMIT"], 25)
+        self.assertEqual(migrated["unrelated"], "keep-me")
+        self.assertIn("SKIP_COMBAT_RECOVER", source["DEFAULT"])
+
+        migrated_again, changed_again = utils._migrate_recovery_settings(migrated)
+        self.assertFalse(changed_again)
+        self.assertEqual(migrated_again, migrated)
+
+    def test_loading_legacy_recovery_flags_persists_canonical_keys(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            config_path = Path(temporary_directory) / "config.json"
+            config_path.write_text(
+                json.dumps(
+                    {
+                        "DEFAULT": {
+                            "SKIP_COMBAT_RECOVER": True,
+                            "SKIP_CHEST_RECOVER": False,
+                        }
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            loaded = utils.LoadRawConfigFromFile(str(config_path))
+            persisted = json.loads(config_path.read_text(encoding="utf-8"))
+
+            self.assertEqual(loaded, persisted)
+            self.assertFalse(persisted["DEFAULT"]["DO_COMBAT_RECOVER"])
+            self.assertTrue(persisted["DEFAULT"]["DO_CHEST_RECOVER"])
+            self.assertNotIn("SKIP_COMBAT_RECOVER", persisted["DEFAULT"])
+            self.assertNotIn("SKIP_CHEST_RECOVER", persisted["DEFAULT"])
+
 
 if __name__ == "__main__":
     unittest.main()

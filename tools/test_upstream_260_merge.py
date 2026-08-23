@@ -34,8 +34,8 @@ class Upstream260MergeTests(unittest.TestCase):
 
     def test_version_changelog_and_party_management_asset(self):
         main = (SRC / "main.py").read_text(encoding="utf-8")
-        self.assertIn("__version__ = '2.6.0-momo.1'", main)
-        for version in ("2.6.0-momo.1", "2.5.13", "2.5.12"):
+        self.assertIn("__version__ = '2.6.1-momo.1'", main)
+        for version in ("2.6.1-momo.1", "2.6.0-momo.1", "2.5.13", "2.5.12"):
             self.assertIn(f"==v{version}==", self.changelog)
 
         new_asset = ROOT / "resources" / "images" / "PartyManagementTitle.png"

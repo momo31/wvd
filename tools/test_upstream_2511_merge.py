@@ -39,7 +39,7 @@ class Upstream2511MergeTests(unittest.TestCase):
         cls.mining_block = cls.script_source[mining_start:mining_end]
 
     def test_version_and_upstream_images_are_integrated(self):
-        self.assertIn("__version__ = '2.6.0-momo.1'", self.main_source)
+        self.assertIn("__version__ = '2.6.1-momo.1'", self.main_source)
 
         next_image = ROOT / "resources" / "images" / "next.png"
         position_image = (
