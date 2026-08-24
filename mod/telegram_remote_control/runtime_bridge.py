@@ -56,6 +56,7 @@ class RemoteRuntime:
 
         self._lock = threading.RLock()
         self.stop_event = threading.Event()
+        self.stop_transition_started = threading.Event()
         self.stop_requested_at: datetime | None = None
         self.stop_deadline_monotonic: float | None = None
         self.exit_reason: TaskExitReason | None = None
@@ -203,7 +204,7 @@ class RemoteRuntime:
 
 
 def remote_stop_checkpoint(runtime: RemoteRuntime | None, kind: CheckpointKind) -> None:
-    if runtime is None or not runtime.is_stop_requested():
+    if runtime is None or not runtime.is_stop_requested() or runtime.stop_transition_started.is_set():
         return
     kind = CheckpointKind(kind)
     if kind in (CheckpointKind.DUNGEON_STABLE, CheckpointKind.TOWN_STABLE):

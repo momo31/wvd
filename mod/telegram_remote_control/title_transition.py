@@ -7,6 +7,12 @@ from enum import Enum
 from typing import Any
 
 from .constants import (
+    APP_CLOSE_TIMEOUT_SECONDS,
+    CLOSE_APP_OK_ROI,
+    CLOSE_APP_OK_THRESHOLD,
+    CLOSE_APP_PROMPT_ROI,
+    CLOSE_APP_PROMPT_TEMPLATE,
+    CLOSE_APP_PROMPT_THRESHOLD,
     EXIT_MENU_TIMEOUT_SECONDS,
     INPUT_COOLDOWN_SECONDS,
     MAX_EXIT_MENU_BACK_PRESSES,
@@ -16,17 +22,20 @@ from .constants import (
     TOWN_CONFIRM_TIMEOUT_SECONDS,
 )
 from .fallback import force_stop_game_once
+from .login_transition import _process_running, _resolve_activity
 from .models import ControlState, RemoteRecoverySuppressed, TransitionOutcome, TransitionStatus
-from .title_screen import title_visible
+from .title_screen import match_startup_disclaimer, title_visible
 
 
 class TitleTransitionPhase(str, Enum):
     VERIFY_TOWN = "verify_town"
     OPEN_EXIT_MENU = "open_exit_menu"
     WAIT_FOR_TITLE = "wait_for_title"
+    RESTART_TO_TITLE = "restart_to_title"
 
 
 class TitleTransitionScreen(str, Enum):
+    CLOSE_APP_CONFIRMATION = "close_app_confirmation"
     TITLE = "title"
     TO_TITLE_BUTTON = "to_title_button"
     TOWN = "town"
@@ -36,6 +45,14 @@ class TitleTransitionScreen(str, Enum):
 
 
 def classify_title_transition_screen(adapter: Any, screen: Any) -> tuple[TitleTransitionScreen, list[int] | None]:
+    if adapter.match_base(
+        screen,
+        CLOSE_APP_PROMPT_TEMPLATE,
+        CLOSE_APP_PROMPT_ROI,
+        CLOSE_APP_PROMPT_THRESHOLD,
+    ):
+        position = adapter.match_base(screen, "OK", CLOSE_APP_OK_ROI, CLOSE_APP_OK_THRESHOLD)
+        return TitleTransitionScreen.CLOSE_APP_CONFIRMATION, position
     if title_visible(adapter, screen):
         return TitleTransitionScreen.TITLE, None
     position = adapter.match_base(screen, "totitle", ((300, 820, 300, 170),), 0.86)
@@ -68,6 +85,7 @@ def return_town_to_title(adapter: Any, runtime: Any) -> TransitionOutcome:
     stable_title = 0
     last_input_at = -float("inf")
     title_reopen_used = False
+    restart_disclaimer_tapped = False
     last_screen = None
     runtime.report_progress(ControlState.RETURNING_TO_TITLE, "타이틀 화면으로 이동 중입니다.")
     try:
@@ -78,6 +96,16 @@ def return_town_to_title(adapter: Any, runtime: Any) -> TransitionOutcome:
                 return force_stop_game_once(adapter, runtime, failure_phase=phase.value)
             screen = adapter.screenshot()
             last_screen = screen
+            if phase is TitleTransitionPhase.RESTART_TO_TITLE:
+                disclaimer = match_startup_disclaimer(adapter, screen)
+                if disclaimer:
+                    stable_title = 0
+                    stable_town = 0
+                    if not restart_disclaimer_tapped:
+                        _press(adapter, runtime, disclaimer)
+                        restart_disclaimer_tapped = True
+                    adapter.sleep(1)
+                    continue
             state, position = classify_title_transition_screen(adapter, screen)
             if state is TitleTransitionScreen.TITLE:
                 stable_title += 1
@@ -93,6 +121,19 @@ def return_town_to_title(adapter: Any, runtime: Any) -> TransitionOutcome:
                     phase_deadline = min(overall_deadline, time.monotonic() + EXIT_MENU_TIMEOUT_SECONDS)
                     continue
             elif phase is TitleTransitionPhase.OPEN_EXIT_MENU:
+                if state is TitleTransitionScreen.CLOSE_APP_CONFIRMATION:
+                    if position is None:
+                        adapter.save_failure_frame(screen, "close_app_ok_missing")
+                        return force_stop_game_once(adapter, runtime, failure_phase="close_app_ok_missing")
+                    _press(adapter, runtime, position)
+                    if not _wait_for_game_exit(adapter, runtime, overall_deadline):
+                        adapter.save_failure_frame(screen, "close_app_exit")
+                        return force_stop_game_once(adapter, runtime, failure_phase="close_app_exit")
+                    adapter.control_shell(["am", "start", "-n", _resolve_activity(adapter)])
+                    phase = TitleTransitionPhase.RESTART_TO_TITLE
+                    phase_deadline = min(overall_deadline, time.monotonic() + TITLE_LOAD_TIMEOUT_SECONDS)
+                    stable_town = 0
+                    continue
                 if state is TitleTransitionScreen.TO_TITLE_BUTTON:
                     _press(adapter, runtime, position)
                     phase = TitleTransitionPhase.WAIT_FOR_TITLE
@@ -104,7 +145,7 @@ def return_town_to_title(adapter: Any, runtime: Any) -> TransitionOutcome:
                     last_input_at = time.monotonic()
                     adapter.sleep(2)
                     continue
-            else:
+            elif phase is TitleTransitionPhase.WAIT_FOR_TITLE:
                 if state is TitleTransitionScreen.RETRY_DIALOG:
                     _press(adapter, runtime, position)
                 elif state is TitleTransitionScreen.TOWN and not title_reopen_used:
@@ -114,6 +155,21 @@ def return_town_to_title(adapter: Any, runtime: Any) -> TransitionOutcome:
                     continue
                 elif state is TitleTransitionScreen.LOADING:
                     adapter.sleep(0.75)
+            else:
+                if state is TitleTransitionScreen.TOWN:
+                    stable_town += 1
+                    if stable_town >= STABLE_FRAME_COUNT:
+                        adapter.save_failure_frame(screen, "restart_bypassed_title")
+                        return force_stop_game_once(adapter, runtime, failure_phase="restart_bypassed_title")
+                else:
+                    stable_town = 0
+                    if state is TitleTransitionScreen.TO_TITLE_BUTTON and time.monotonic() - last_input_at >= INPUT_COOLDOWN_SECONDS:
+                        _press(adapter, runtime, position)
+                        last_input_at = time.monotonic()
+                    elif state is TitleTransitionScreen.RETRY_DIALOG:
+                        _press(adapter, runtime, position)
+                    elif state is TitleTransitionScreen.LOADING:
+                        adapter.sleep(0.75)
             if time.monotonic() >= phase_deadline:
                 break
             adapter.sleep(0.5)
@@ -140,4 +196,17 @@ def _press_back(adapter, runtime):
     if adapter.local_stop_requested() or runtime.worker_force_stop_event.is_set():
         raise adapter.local_stop_exception_type()
     adapter.press_back()
+
+
+def _wait_for_game_exit(adapter, runtime, overall_deadline):
+    deadline = min(overall_deadline, time.monotonic() + APP_CLOSE_TIMEOUT_SECONDS)
+    while time.monotonic() < deadline:
+        if adapter.local_stop_requested() or runtime.worker_force_stop_event.is_set():
+            raise adapter.local_stop_exception_type()
+        if runtime.is_timeout_fallback_started():
+            return False
+        if not _process_running(adapter):
+            return True
+        adapter.sleep(0.5)
+    return False
 

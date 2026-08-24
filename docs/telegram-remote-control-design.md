@@ -395,8 +395,10 @@ class TitleTransitionPhase(Enum):
     VERIFY_TOWN = "verify_town"
     OPEN_EXIT_MENU = "open_exit_menu"
     WAIT_FOR_TITLE = "wait_for_title"
+    RESTART_TO_TITLE = "restart_to_title"
 
 class TitleTransitionScreen(Enum):
+    CLOSE_APP_CONFIRMATION = "close_app_confirmation"
     TITLE = "title"
     TO_TITLE_BUTTON = "to_title_button"
     TOWN = "town"
@@ -411,12 +413,13 @@ class TitleTransitionScreen(Enum):
 
 `classify_title_transition_screen(adapter, screen)`은 다음 순서로 단 한 가지 상태만 반환한다.
 
-1. 안정적인 `titlelogo`가 보이면 `TITLE`
-2. 기존 `totitle` 버튼이 보이면 `TO_TITLE_BUTTON`
-3. `abyssReadying`, 검은 프레임 또는 화면 평균 밝기 기반 로딩이면 `LOADING`
-4. 기존 네트워크 `retry`가 보이면 `RETRY_DIALOG`
-5. `Inn` 또는 지원 도시 표식이 보이면 `TOWN`
-6. 나머지는 `UNKNOWN`
+1. 전용 `closeAppPrompt`가 보이면 제한된 좌측 버튼 영역에서 `OK`를 함께 확인하고 `CLOSE_APP_CONFIRMATION`
+2. 안정적인 `titlelogo`가 보이면 `TITLE`
+3. 기존 `totitle` 버튼이 보이면 `TO_TITLE_BUTTON`
+4. `abyssReadying`, 검은 프레임 또는 화면 평균 밝기 기반 로딩이면 `LOADING`
+5. 기존 네트워크 `retry`가 보이면 `RETRY_DIALOG`
+6. `Inn` 또는 지원 도시 표식이 보이면 `TOWN`
+7. 나머지는 `UNKNOWN`
 
 `TO_TITLE_BUTTON`을 `TOWN`보다 먼저 검사한다. 종료 메뉴가 마을 화면 위에 겹쳐 표시되면 배경의 도시 표식도 동시에 인식될 수 있기 때문이다.
 
@@ -424,6 +427,8 @@ class TitleTransitionScreen(Enum):
 
 | 표식 | 검색 범위 | 임계값 | 추가 조건 |
 | --- | --- | --- | --- |
+| `closeAppPrompt` | `[250, 650, 400, 180]` | `0.90` | 이 표식이 먼저 검출된 프레임만 종료 확인창으로 취급 |
+| `OK` | `[130, 820, 320, 150]` | `0.95` | 같은 프레임에서 `closeAppPrompt`가 검출된 경우에만 검색·입력 |
 | `totitle` | 우선 `[300, 820, 300, 170]`, 실패 시 중앙 대화창 `[180, 650, 540, 500]` | 첫 ROI `0.86`, 확장 ROI `0.92` | 중앙 대화창 밖 일치는 거부 |
 | `titlelogo` | 화면 상단 60% | `0.88` | 0.5초 간격 2회 연속 일치 시 타이틀 확정 |
 | `tabtostart` | 화면 하단 50% | `0.88` | 시작 입력 좌표용 보조 표식이며 타이틀 확정에는 불필요 |
@@ -437,10 +442,12 @@ class TitleTransitionScreen(Enum):
 2. `VERIFY_TOWN`에서 `Inn` 또는 도시 표식을 0.5초 간격으로 2회 확인한다.
 3. `OPEN_EXIT_MENU`에서 Android `KEYCODE_BACK`을 한 번 전송하고 2초 동안 화면 변화를 기다린다.
 4. `TO_TITLE_BUTTON`이 보이면 버튼 중심을 한 번만 누르고 `WAIT_FOR_TITLE`로 이동한다.
-5. Back 이후에도 `TOWN`이 유지되면 하위 마을 패널이 한 단계 닫힌 것으로 보고 1초 후 Back을 다시 보낸다. Back 입력은 최대 3회다.
-6. `WAIT_FOR_TITLE`에서는 검은 화면과 `abyssReadying`을 정상 로딩으로 처리하고 입력 없이 기다린다.
-7. `RETRY_DIALOG`만 예외적으로 기존 `TryPressRetry`로 처리한다. 일반 `OK`, `close`, `dialogueNext` 또는 화면 중앙을 추측해서 누르지 않는다.
-8. 타이틀을 2회 연속 확인하면 `AT_TITLE`을 반환한다.
+5. 전용 종료 확인 문구와 제한된 좌측 `OK`가 함께 보이면 `OK`를 한 번 누른다. 게임 프로세스 종료를 최대 10초 확인한 뒤 앱을 다시 실행하고 `RESTART_TO_TITLE`로 이동한다.
+6. `RESTART_TO_TITLE`에서는 시작 고지 화면만 한 번 넘기고, `Tap to Start`는 누르지 않은 채 타이틀을 기다린다. 재실행 후 마을이 2회 연속 보이면 타이틀을 건너뛴 것으로 보고 폴백한다.
+7. Back 이후에도 `TOWN`이 유지되면 하위 마을 패널이 한 단계 닫힌 것으로 보고 1초 후 Back을 다시 보낸다. Back 입력은 최대 3회다.
+8. `WAIT_FOR_TITLE`에서는 검은 화면과 `abyssReadying`을 정상 로딩으로 처리하고 입력 없이 기다린다.
+9. `RETRY_DIALOG`만 예외적으로 기존 `TryPressRetry`로 처리한다. 종료 전용 문구가 없는 일반 `OK`, `close`, `dialogueNext` 또는 화면 중앙을 추측해서 누르지 않는다.
+10. 타이틀을 2회 연속 확인하면 `AT_TITLE`을 반환한다.
 
 단계별 제한은 다음과 같다. 모든 제한은 원격 정지 접수 시 계산한 600초 `overall_deadline`을 넘을 수 없다.
 
@@ -448,7 +455,9 @@ class TitleTransitionScreen(Enum):
 | --- | --- |
 | 마을 안정 확인 | 10초 |
 | 종료 메뉴 열기 및 `To Title` 탐색 | 30초, Back 최대 3회 |
+| 종료 확인 후 프로세스 종료 확인 | 10초 |
 | `To Title` 클릭 후 타이틀 로딩 | 120초 |
+| 앱 재실행 후 타이틀 로딩 | 120초 |
 
 동일 버튼을 연속으로 누르지 않도록 마지막 입력 종류·좌표·시각을 기록한다. 같은 좌표 입력은 화면 판정 상태가 바뀌거나 2초가 지나기 전에는 다시 보내지 않는다.
 
@@ -507,6 +516,16 @@ def return_town_to_title(adapter, runtime):
                 continue
 
         elif phase is TitleTransitionPhase.OPEN_EXIT_MENU:
+            if state is TitleTransitionScreen.CLOSE_APP_CONFIRMATION:
+                if action_pos is None:
+                    return force_stop_game_once(adapter, runtime, failure_phase="close_app_ok_missing")
+                adapter.press(action_pos)
+                if not wait_for_game_exit(timeout=10):
+                    return force_stop_game_once(adapter, runtime, failure_phase="close_app_exit")
+                adapter.start_game()
+                phase = TitleTransitionPhase.RESTART_TO_TITLE
+                phase_deadline = min(overall_deadline, monotonic() + 120)
+                continue
             if state is TitleTransitionScreen.TO_TITLE_BUTTON:
                 adapter.press(action_pos)
                 phase = TitleTransitionPhase.WAIT_FOR_TITLE
@@ -531,6 +550,20 @@ def return_town_to_title(adapter, runtime):
             if state is TitleTransitionScreen.LOADING:
                 adapter.sleep(0.75)
             # UNKNOWN에서는 오입력을 피하고 화면만 다시 확인한다.
+
+        elif phase is TitleTransitionPhase.RESTART_TO_TITLE:
+            if startup_disclaimer_visible() and not disclaimer_tapped:
+                adapter.press(startup_disclaimer_position)
+                disclaimer_tapped = True
+                continue
+            stable_town_frames = (
+                stable_town_frames + 1
+                if state is TitleTransitionScreen.TOWN
+                else 0
+            )
+            if stable_town_frames >= 2:
+                return force_stop_game_once(adapter, runtime, failure_phase="restart_bypassed_title")
+            # TITLE 성공 판정은 위의 공통 2회 연속 검증을 사용한다.
 
         if monotonic() >= phase_deadline:
             break
@@ -558,7 +591,8 @@ def return_town_to_title(adapter, runtime):
 - 세션 만료로 이미 타이틀에 도착한 경우 마을 복귀를 더 시도하지 않고 `AT_TITLE`로 완료하되, 텔레그램에는 `세션이 먼저 종료되어 타이틀에서 정지했습니다.`라고 알린다.
 - Back을 눌렀는데 종료 메뉴가 아닌 마을 하위 패널이 닫히면 `TOWN` 재검출 후 다음 Back을 보낸다.
 - `To Title` 버튼을 누른 뒤 다시 마을이 보이면 클릭이 반영되지 않은 것으로 보고 `OPEN_EXIT_MENU`로 한 번만 되돌아간다. 전체 Back 횟수는 초기화하지 않는다.
-- 확인되지 않은 `OK`나 `Close` 버튼은 누르지 않는다. 30초 내 `To Title`을 확인하지 못하면 실패 프레임을 저장하고 폴백한다.
+- 전용 `closeAppPrompt`가 없는 `OK`나 `Close` 버튼은 누르지 않는다. 문구가 있어도 제한된 좌측 ROI에서 `OK`가 함께 검출되지 않으면 입력 없이 폴백한다.
+- 종료 확인 후 프로세스가 10초 안에 사라지지 않거나 재실행 후 120초 안에 안정적인 타이틀을 확인하지 못하면 실패 프레임을 저장하고 폴백한다.
 - 타이틀 로딩 중 검은 화면은 120초 동안 기다리되 화면 탭을 보내지 않는다.
 
 #### 10.4.6 완료 처리
@@ -1355,7 +1389,7 @@ def remote_stop_checkpoint(
     ...
 ```
 
-runtime이 없거나 stop 요청이 없으면 즉시 반환한다. 안전 화면이면 `RemoteStopSignal(kind)`을 발생시키고, 그 외에는 반환한다.
+runtime이 없거나 stop 요청이 없으면 즉시 반환한다. 안전 화면이면 `RemoteStopSignal(kind)`을 발생시키고, 그 외에는 반환한다. `execute_remote_stop`이 전환 소유권을 얻은 뒤에는 내부 레거시 동작의 체크포인트가 두 번째 정지 신호를 발생시키지 않고 즉시 반환한다.
 
 ```python
 def request_task_handoff(

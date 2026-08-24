@@ -1466,6 +1466,10 @@ def Factory():
             for underscore in range(setting.MAX_TRY_LIMIT):
                 if setting._FORCESTOPING.is_set():
                     raise TaskStoppedException()
+                remote_stop_checkpoint(
+                    getattr(setting, "_REMOTE_RUNTIME", None),
+                    CheckpointKind.BETWEEN_OPERATIONS,
+                )
                 scn = ScreenShot()
                 if DismissSetTrapScreen(scn):
                     continue

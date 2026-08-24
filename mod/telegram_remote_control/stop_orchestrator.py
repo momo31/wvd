@@ -17,6 +17,7 @@ from .title_transition import return_town_to_title
 
 
 def execute_remote_stop(adapter: Any, runtime: Any, signal: RemoteStopSignal) -> TransitionOutcome:
+    runtime.stop_transition_started.set()
     result = return_to_town(adapter, runtime, signal)
     if result.status is TransitionStatus.TOWN_READY:
         result = return_town_to_title(adapter, runtime)

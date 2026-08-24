@@ -4,17 +4,21 @@ import queue
 import threading
 import unittest
 from datetime import datetime, timezone
+from unittest.mock import patch
 
 from mod.telegram_remote_control.models import (
     CheckpointKind,
     RemoteStopSignal,
     StartReason,
     TaskExitReason,
+    TransitionOutcome,
+    TransitionStatus,
 )
 from mod.telegram_remote_control.runtime_bridge import (
     RemoteRuntime,
     remote_stop_checkpoint,
 )
+from mod.telegram_remote_control.stop_orchestrator import execute_remote_stop
 from mod.telegram_remote_control.worker import TaskCompletionLatch, run_farm_worker
 
 
@@ -44,6 +48,22 @@ class RuntimeWorkerTests(unittest.TestCase):
         runtime.request_stop(datetime.now(timezone.utc), 1.0, "1")
         with self.assertRaises(RemoteStopSignal):
             remote_stop_checkpoint(runtime, CheckpointKind.DUNGEON_STABLE)
+
+    def test_stop_transition_does_not_raise_a_second_stop_signal(self):
+        runtime = self.make_runtime()
+        runtime.request_stop(datetime.now(timezone.utc), 1.0, "1")
+        outcome = TransitionOutcome(TransitionStatus.AT_TITLE, "done")
+        with patch(
+            "mod.telegram_remote_control.stop_orchestrator.return_to_town",
+            side_effect=lambda *_: (
+                remote_stop_checkpoint(runtime, CheckpointKind.DUNGEON_STABLE),
+                outcome,
+            )[1],
+        ):
+            self.assertIs(
+                execute_remote_stop(None, runtime, RemoteStopSignal(CheckpointKind.BETWEEN_OPERATIONS)),
+                outcome,
+            )
 
     def test_worker_completion_callback_is_exactly_once(self):
         runtime = self.make_runtime()

@@ -111,6 +111,12 @@ class RecoveryScreenReturnTests(unittest.TestCase):
             if isinstance(node, ast.FunctionDef)
             and node.name == "DismissSetTrapScreen"
         )
+        cls.fallback_node = next(
+            node
+            for node in ast.walk(tree)
+            if isinstance(node, ast.FunctionDef)
+            and node.name == "FindCoordsOrElseExecuteFallbackAndWait"
+        )
 
     def build_function(self, screens):
         screen_iter = iter(screens)
@@ -218,6 +224,42 @@ class RecoveryScreenReturnTests(unittest.TestCase):
                 )
 
         self.assertTrue((ROOT / "resources" / "images" / "settrap.png").is_file())
+
+    def test_fallback_loop_checks_remote_stop_before_screenshot(self):
+        calls = []
+        runtime = object()
+
+        class StopRequested(Exception):
+            pass
+
+        class Event:
+            @staticmethod
+            def is_set():
+                return False
+
+        class Setting:
+            MAX_TRY_LIMIT = 25
+            _FORCESTOPING = Event()
+            _REMOTE_RUNTIME = runtime
+
+        def checkpoint(current_runtime, kind):
+            calls.append((current_runtime, kind))
+            raise StopRequested()
+
+        namespace = {
+            "setting": Setting(),
+            "TaskStoppedException": RuntimeError,
+            "remote_stop_checkpoint": checkpoint,
+            "CheckpointKind": type("CheckpointKind", (), {"BETWEEN_OPERATIONS": "between"}),
+        }
+        module = ast.Module(body=[self.fallback_node], type_ignores=[])
+        ast.fix_missing_locations(module)
+        exec(compile(module, "<fallback-stop-checkpoint>", "exec"), namespace)
+
+        with self.assertRaises(StopRequested):
+            namespace["FindCoordsOrElseExecuteFallbackAndWait"]("target", None, 0)
+
+        self.assertEqual(calls, [(runtime, "between")])
 
     def test_recovery_log_reports_only_the_final_decision(self):
         self.assertNotIn('logger.info(_("进行开启宝箱后的恢复."))', self.source)
