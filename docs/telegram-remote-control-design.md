@@ -2077,12 +2077,14 @@ local stop event가 설정됐거나 adapter callback에서 `local_stop_exception
 
 | 화면 | 동작 |
 | --- | --- |
+| 기존 `totitle` 세션 만료 버튼 | 배경 표식보다 먼저 버튼을 누르고 타이틀 대기 |
 | `Inn`, 도시, `dungFlag`, 전투, 상자, `worldmapflag`, `openworldmap`, `returntotown` | READY 반환 |
 | 타이틀 로고 + Tap to Start | Tap to Start 중심을 한 번 누름 |
-| 기존 `totitle` 세션 만료 버튼 | 버튼을 누르고 타이틀 대기 |
 | `startdownload`, `retry`, `retry_blank` | 기존 retry 처리 |
 | `abyssReadying`, 검은 화면 | 입력 없이 대기 |
 | unknown | 입력 없이 대기하고 시도 timeout 시 실패 프레임 저장 |
+
+세션 만료 팝업 뒤의 타이틀 로고나 게임 표식도 동시에 검출될 수 있으므로 `totitle`은 모든 배경 상태보다 먼저 판정한다.
 
 180초 안에 READY가 아니면 `am force-stop`, `am start`로 게임을 한 번 재시작하고 두 번째 180초 시도를 수행한다. 두 번째도 실패하면 실패 프레임을 저장하고 `ERROR`로 종료한다.
 

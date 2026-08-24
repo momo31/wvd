@@ -1,15 +1,18 @@
 from __future__ import annotations
 
 import unittest
+from unittest.mock import patch
 
 from mod.telegram_remote_control.adapters import image_root
 from mod.telegram_remote_control.constants import (
+    DEFAULT_GAME_ACTIVITY,
+    GAME_PACKAGE,
     STARTUP_DISCLAIMER_TEMPLATE,
     TITLE_LOGO_TEMPLATE,
     TITLE_TAP_FALLBACK_POSITION,
     TITLE_TAP_TEMPLATE,
 )
-from mod.telegram_remote_control.login_transition import _wait_for_ready
+from mod.telegram_remote_control.login_transition import _wait_for_ready, ensure_game_ready
 from mod.telegram_remote_control.models import TransitionStatus
 from mod.telegram_remote_control.title_screen import title_visible
 from mod.telegram_remote_control.title_transition import (
@@ -30,6 +33,8 @@ class _Adapter:
         self.screens = iter(screens)
         self.presses = []
         self.mod_calls = []
+        self.shell_commands = []
+        self.failure_frames = []
 
     def screenshot(self):
         return next(self.screens)
@@ -40,6 +45,8 @@ class _Adapter:
             return [450, 597]
         if screen == "title" and name == TITLE_LOGO_TEMPLATE:
             return [452, 497]
+        if screen == "expired" and name == TITLE_LOGO_TEMPLATE:
+            return [452, 497]
         # Simulate a blink frame where the title is stable but the prompt is
         # temporarily invisible.
         if screen == "title" and name == TITLE_TAP_TEMPLATE:
@@ -47,6 +54,8 @@ class _Adapter:
         return None
 
     def match_base(self, screen, name, _roi, _threshold):
+        if screen == "expired" and name == "totitle":
+            return [447, 897]
         if screen == "ready" and name == "Inn":
             return [100, 100]
         return None
@@ -66,6 +75,14 @@ class _Adapter:
 
     def try_press_retry(self, _screen):
         return False
+
+    def control_shell(self, command):
+        self.shell_commands.append(list(command))
+        return ""
+
+    def save_failure_frame(self, screen, phase):
+        self.failure_frames.append((screen, phase))
+        return "failure.png"
 
 
 class TitleAndLoginTransitionTests(unittest.TestCase):
@@ -99,6 +116,42 @@ class TitleAndLoginTransitionTests(unittest.TestCase):
             adapter.presses,
             [[450, 597], list(TITLE_TAP_FALLBACK_POSITION)],
         )
+
+    def test_login_prioritizes_session_expiry_over_background_title(self):
+        adapter = _Adapter(["expired", "expired", "ready"])
+
+        with patch(
+            "mod.telegram_remote_control.login_transition.time.monotonic",
+            side_effect=[0.0, 0.0, 0.0, 1.0, 1.0, 2.0],
+        ):
+            result = _wait_for_ready(adapter, _Runtime())
+
+        self.assertEqual(result.status, TransitionStatus.GAME_READY)
+        self.assertEqual(adapter.presses, [[447, 897]])
+        self.assertNotIn(
+            ("expired", TITLE_LOGO_TEMPLATE),
+            [(screen, name) for screen, name, _roi, _threshold in adapter.mod_calls],
+        )
+
+    def test_login_restarts_once_then_saves_final_failure(self):
+        adapter = _Adapter(["failure"])
+        with (
+            patch("mod.telegram_remote_control.login_transition._process_running", side_effect=[True, False]),
+            patch("mod.telegram_remote_control.login_transition._resolve_activity", return_value=DEFAULT_GAME_ACTIVITY),
+            patch("mod.telegram_remote_control.login_transition._interruptible_sleep"),
+            patch("mod.telegram_remote_control.login_transition._wait_for_ready", return_value=None),
+        ):
+            result = ensure_game_ready(adapter, _Runtime())
+
+        self.assertEqual(result.status, TransitionStatus.ERROR)
+        self.assertEqual(
+            adapter.shell_commands,
+            [
+                ["am", "force-stop", GAME_PACKAGE],
+                ["am", "start", "-n", DEFAULT_GAME_ACTIVITY],
+            ],
+        )
+        self.assertEqual(adapter.failure_frames, [("failure", "login_gate")])
 
 
 if __name__ == "__main__":

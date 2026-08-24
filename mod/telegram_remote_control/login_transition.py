@@ -14,6 +14,10 @@ from .constants import (
     LOGIN_ATTEMPT_TIMEOUT_SECONDS,
     MAX_LOGIN_ATTEMPTS,
     TITLE_TAP_FALLBACK_POSITION,
+    TO_TITLE_DIALOG_ROI,
+    TO_TITLE_DIALOG_THRESHOLD,
+    TO_TITLE_PRIMARY_ROI,
+    TO_TITLE_PRIMARY_THRESHOLD,
 )
 from .models import (
     CheckpointKind,
@@ -46,12 +50,16 @@ def ensure_game_ready(adapter: Any, runtime: Any) -> TransitionOutcome:
         except adapter.local_stop_exception_type:
             return TransitionOutcome(TransitionStatus.LOCAL_ABORT, "로컬 중지가 요청되었습니다.", "local_stop")
         except Exception:
-            if attempt + 1 >= MAX_LOGIN_ATTEMPTS:
-                break
+            pass
+        if attempt + 1 < MAX_LOGIN_ATTEMPTS:
             try:
                 adapter.control_shell(["am", "force-stop", GAME_PACKAGE])
             except Exception:
                 pass
+    try:
+        adapter.save_failure_frame(adapter.screenshot(), "login_gate")
+    except Exception:
+        pass
     return TransitionOutcome(TransitionStatus.ERROR, "저장된 게임 세션으로 자동 진입하지 못했습니다.", "login_gate")
 
 
@@ -74,15 +82,23 @@ def prepare_telegram_run(adapter: Any, runtime: Any) -> bool:
 def _wait_for_ready(adapter, runtime) -> TransitionOutcome | None:
     deadline = time.monotonic() + LOGIN_ATTEMPT_TIMEOUT_SECONDS
     startup_disclaimer_tapped = False
+    last_session_expiry_tap_at = -float("inf")
     last_title_tap_at = -float("inf")
     while time.monotonic() < deadline:
         if runtime.is_stop_requested():
             _raise_stop_for_current_screen(adapter, runtime)
         screen = adapter.screenshot()
-        if _ready_screen(adapter, screen):
+        position = _match(adapter, screen, "totitle", TO_TITLE_PRIMARY_ROI, TO_TITLE_PRIMARY_THRESHOLD)
+        if position is None:
+            position = _match(adapter, screen, "totitle", TO_TITLE_DIALOG_ROI, TO_TITLE_DIALOG_THRESHOLD)
+        if position:
+            now = time.monotonic()
+            if now - last_session_expiry_tap_at >= INPUT_COOLDOWN_SECONDS:
+                _tap_if_allowed(adapter, runtime, position)
+                last_session_expiry_tap_at = now
+        elif _ready_screen(adapter, screen):
             return TransitionOutcome(TransitionStatus.GAME_READY, "게임 화면을 확인했습니다.")
-        disclaimer = match_startup_disclaimer(adapter, screen)
-        if disclaimer:
+        elif disclaimer := match_startup_disclaimer(adapter, screen):
             # The disclaimer accepts one tap. Do not repeat it while a delayed
             # transition leaves the same frame visible.
             if not startup_disclaimer_tapped:
@@ -98,8 +114,6 @@ def _wait_for_ready(adapter, runtime) -> TransitionOutcome | None:
                     position = list(TITLE_TAP_FALLBACK_POSITION)
                 _tap_if_allowed(adapter, runtime, position)
                 last_title_tap_at = now
-        elif position := _match(adapter, screen, "totitle"):
-            _tap_if_allowed(adapter, runtime, position)
         elif _match(adapter, screen, "retry") or _match(adapter, screen, "retry_blank"):
             adapter.try_press_retry(screen)
         elif _is_loading(adapter, screen):
@@ -175,9 +189,9 @@ def _is_loading(adapter, screen):
         return False
 
 
-def _match(adapter, screen, name):
+def _match(adapter, screen, name, roi=None, threshold=0.80):
     try:
-        return adapter.match_base(screen, name, None, 0.80)
+        return adapter.match_base(screen, name, roi, threshold)
     except Exception:
         return None
 
