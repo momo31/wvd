@@ -117,6 +117,8 @@ class RuntimeGuardSourceTests(unittest.TestCase):
 
         def check_at_threshold(_screen, pattern, threshold, roi=None):
             calls["threshold"].append((pattern, threshold, roi))
+            if pattern == "startdownload" and pattern in active_patterns:
+                return [458, 944]
             if pattern in {"combatClose", "close"}:
                 return close_position
             return False
@@ -131,6 +133,7 @@ class RuntimeGuardSourceTests(unittest.TestCase):
             "Press": calls["press"].append,
             "Sleep": calls["sleep"].append,
             "np": FakeNumpy,
+            "_": lambda message: message,
             "logger": type(
                 "FakeLogger",
                 (),
@@ -189,6 +192,16 @@ class RuntimeGuardSourceTests(unittest.TestCase):
         self.assertIn("supervisor.app_restart_cooldown", self.source)
         self.assertIn('"emulator_recovery_limit"', self.source)
 
+    def test_known_emulator_pid_uses_valid_forced_taskkill(self):
+        start = self.source.index("def KillEmulator():")
+        end = self.source.index("def StartEmulator():", start)
+        kill_emulator = self.source[start:end]
+        self.assertIn(
+            '["taskkill", "/F", "/PID", str(runtimeContext._RUNNING_EMU_PID)]',
+            kill_emulator,
+        )
+        self.assertNotIn("taskkill /IM /pid", kill_emulator)
+
     def test_adb_boot_wait_is_bounded_but_allows_slow_boot(self):
         self.assertIn("boot_timeout_seconds = 180", self.source)
         self.assertIn("boot_probe_timeout_seconds = 5", self.source)
@@ -197,7 +210,7 @@ class RuntimeGuardSourceTests(unittest.TestCase):
         self.assertNotIn('device.shell("getprop sys.boot_completed")', self.source)
         self.assertIn('"adb_boot_timeout"', self.source)
 
-    def test_adb_connect_retries_do_not_reboot_a_slow_emulator(self):
+    def test_adb_connect_retries_do_not_reboot_a_slow_emulator_during_retries(self):
         start = self.source.index("for attempt in range(MAXRETRIES):")
         end = self.source.index(
             "# A newly-started emulator can need several minutes",
@@ -207,6 +220,10 @@ class RuntimeGuardSourceTests(unittest.TestCase):
         self.assertNotIn("KillEmulator()", connect_loop)
         self.assertIn("emulator_start_attempted", connect_loop)
         self.assertIn("WaitForDeviceRecovery(5)", connect_loop)
+
+    def test_adb_connect_exhaustion_restarts_emulator_only_once(self):
+        self.assertIn("if not FORCE_RESTART_EMU:", self.source)
+        self.assertEqual(self.source.count("FORCE_RESTART_EMU=True,"), 1)
 
     def test_blocking_overlays_are_handled_before_state_templates(self):
         identify_start = self.source.index("def IdentifyState():")
@@ -223,6 +240,21 @@ class RuntimeGuardSourceTests(unittest.TestCase):
             identify_block.index("identifyConfig ="),
         )
         self.assertIn('"spellskill/skillDetail", threshold=0.70', self.source)
+
+    def test_resource_download_starts_before_generic_close(self):
+        handler, calls = self.build_overlay_handler(
+            active_patterns={"startdownload"},
+            close_position=[439, 1073],
+        )
+
+        self.assertTrue(handler("resource-download-screen"))
+        self.assertEqual(calls["press"], [[458, 944]])
+        self.assertEqual(calls["sleep"], [2])
+        self.assertEqual(
+            calls["threshold"],
+            [("startdownload", 0.90, [[222, 901, 465, 84]])],
+        )
+        self.assertTrue((ROOT / "resources" / "images" / "startdownload.png").is_file())
 
     def test_harken_blessing_choice_precedes_dialogue_and_blind_taps(self):
         identify_start = self.source.index("def IdentifyState():")

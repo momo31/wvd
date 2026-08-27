@@ -2520,3 +2520,9 @@ msgstr ""
 
 msgid "Preserved local recovery orchestration, Telegram control, chest guards, and localized quest categories."
 msgstr ""
+
+msgid "Integrated upstream 2.6.2's narrower random single-target fallback area."
+msgstr ""
+
+msgid "Use per-combat strategy reset only after understanding the in-game \"Repeat Previous Action\" behavior."
+msgstr ""

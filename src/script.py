@@ -426,8 +426,7 @@ def CheckAndRecoverDevice(setting : FarmConfig, runtimeContext: RuntimeContext, 
                 if runtimeContext._RUNNING_EMU_PID:
                     logger.info(_("使用已知进程号{a}关闭模拟器...").format(a=runtimeContext._RUNNING_EMU_PID))
                     subprocess.run(
-                        f"taskkill /IM /pid {runtimeContext._RUNNING_EMU_PID}", 
-                        shell=True,
+                        ["taskkill", "/F", "/PID", str(runtimeContext._RUNNING_EMU_PID)],
                         stdout=subprocess.DEVNULL,
                         stderr=subprocess.DEVNULL,
                         check=False  # 不检查命令是否成功（进程可能不存在）
@@ -629,6 +628,12 @@ def CheckAndRecoverDevice(setting : FarmConfig, runtimeContext: RuntimeContext, 
             continue
     else:
         logger.info(_("达到最大重试次数，连接失败"))
+        if not FORCE_RESTART_EMU:
+            return CheckAndRecoverDevice(
+                setting,
+                runtimeContext,
+                FORCE_RESTART_EMU=True,
+            )
         return None
 
     # A newly-started emulator can need several minutes before Android and
@@ -1970,6 +1975,15 @@ def Factory():
         interpreted as a modal.
         """
 
+        download_pos = CheckIfAtThreshold(
+            screen, "startdownload", threshold=0.90, roi=[[222, 901, 465, 84]]
+        )
+        if download_pos:
+            logger.info(_("开始下载……"))
+            Press(download_pos)
+            Sleep(2)
+            return True
+
         if DismissSetTrapScreen(screen):
             return True
 
@@ -2115,11 +2129,8 @@ def Factory():
             loading_wait = 0
 
             if TryPressRetry(screen):
-                    Sleep(2)
-
-            if Press(CheckIf(screen,"startdownload",[[222,901,465,84]])):
-                logger.info(_("确认, 下载, 确认."))
                 Sleep(2)
+                continue
 
             # The post-restart title/disclaimer screen has no dungeon marker.
             # Handle its control explicitly instead of counting it as a
@@ -2872,12 +2883,11 @@ def Factory():
                         "스킬 확인 또는 Next 대상 화면을 판별하지 못했습니다. "
                         "제한된 무작위 대상 선택으로 복구합니다."
                     )
-                    x0, y0 = 75, 296
-                    width, height = 827, 600
-                    cols = 4
+                    x0, y0 = 0, 560
+                    cols = 8
                     rows = 3
-                    cell_w = width / cols
-                    cell_h = height / rows
+                    cell_w = 110
+                    cell_h = 110
                     # Do not use ``_`` here: it is the gettext lookup function
                     # used throughout this nested function.
                     for random_pass in range(2):

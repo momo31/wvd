@@ -2638,3 +2638,9 @@ msgstr "기존 회복 건너뛰기 설정은 동작이 바뀌지 않도록 자�
 
 msgid "Preserved local recovery orchestration, Telegram control, chest guards, and localized quest categories."
 msgstr "로컬 회복 순서 제어, Telegram 제어, 상자 보호 로직, 현지화된 퀘스트 분류를 유지했습니다."
+
+msgid "Integrated upstream 2.6.2's narrower random single-target fallback area."
+msgstr "업스트림 2.6.2의 축소된 무작위 단일 대상 선택 예비 영역을 통합했습니다."
+
+msgid "Use per-combat strategy reset only after understanding the in-game \"Repeat Previous Action\" behavior."
+msgstr "게임 내 \"이전 행동 반복\" 동작을 이해한 경우에만 매 전투 전략 초기화를 사용하세요."

@@ -52,7 +52,7 @@ from mod.telegram_remote_control.runtime_bridge import RemoteRuntime
 from mod.telegram_remote_control.worker import TaskCompletionLatch, run_farm_worker
 
 
-__version__ = '2.6.1-momo.1'
+__version__ = '2.6.2-momo.1'
 OWNER = "arnold2957"
 REPO = "wvd"
 

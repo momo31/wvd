@@ -15,7 +15,7 @@ class Upstream2411MergeTests(unittest.TestCase):
         cls.mining_block = cls.script_source[start:]
 
     def test_version_and_mining_templates_are_integrated(self):
-        self.assertIn("__version__ = '2.6.1-momo.1'", self.main_source)
+        self.assertIn("__version__ = '2.6.2-momo.1'", self.main_source)
         for template in (
             "FFXI/receive",
             "FFXI/nothingToDig2",

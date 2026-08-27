@@ -2559,3 +2559,9 @@ msgstr "现有的跳过恢复设置将自动迁移，行为保持不变。"
 
 msgid "Preserved local recovery orchestration, Telegram control, chest guards, and localized quest categories."
 msgstr "保留了本地恢复编排、Telegram控制、宝箱保护和本地化任务分类。"
+
+msgid "Integrated upstream 2.6.2's narrower random single-target fallback area."
+msgstr "集成了上游2.6.2缩小后的随机单体目标备用选择区域。"
+
+msgid "Use per-combat strategy reset only after understanding the in-game \"Repeat Previous Action\" behavior."
+msgstr "仅在了解游戏内“重复上一次”功能后使用每场战斗前策略重置。"

@@ -1,4 +1,8 @@
 **新版本!**
+==v2.6.2-momo.1==
+Integrated upstream 2.6.2's narrower random single-target fallback area.
+Use per-combat strategy reset only after understanding the in-game "Repeat Previous Action" behavior.
+
 ==v2.6.1-momo.1==
 Fixed Telegram `/start` getting stuck behind the session-expired dialog and restored its one-time login restart fallback.
 Fixed Telegram `/stop` during navigation and close-app confirmation, then relaunched safely to the title screen.

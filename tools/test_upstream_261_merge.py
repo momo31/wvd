@@ -27,7 +27,7 @@ class Upstream261MergeTests(unittest.TestCase):
 
     def test_version_and_changelog_identify_the_fork_release(self):
         main = (SRC / "main.py").read_text(encoding="utf-8")
-        self.assertIn("__version__ = '2.6.1-momo.1'", main)
+        self.assertIn("__version__ = '2.6.2-momo.1'", main)
         self.assertIn("==v2.6.1-momo.1==", self.changelog)
         self.assertIn(
             "Integrated upstream 2.6.1 checkbox styling and positive recovery controls.",

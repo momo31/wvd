@@ -2669,3 +2669,9 @@ msgstr "Existing skip-recovery settings are migrated automatically without chang
 
 msgid "Preserved local recovery orchestration, Telegram control, chest guards, and localized quest categories."
 msgstr "Preserved local recovery orchestration, Telegram control, chest guards, and localized quest categories."
+
+msgid "Integrated upstream 2.6.2's narrower random single-target fallback area."
+msgstr "Integrated upstream 2.6.2's narrower random single-target fallback area."
+
+msgid "Use per-combat strategy reset only after understanding the in-game \"Repeat Previous Action\" behavior."
+msgstr "Use per-combat strategy reset only after understanding the in-game \"Repeat Previous Action\" behavior."
