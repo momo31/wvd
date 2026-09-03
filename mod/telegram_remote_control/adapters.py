@@ -16,6 +16,7 @@ except Exception:  # pragma: no cover - only exercised in minimal environments
     np = None
 
 from .constants import TITLE_TEMPLATE_THRESHOLD
+from .models import QuestTarget
 
 
 class ModResourceError(RuntimeError):
@@ -140,3 +141,6 @@ class ControllerPorts:
     sync_ui_state: Callable[[Any], None]
     schedule_after: Callable[[int, Callable[[], None]], None]
     show_test_result: Callable[[Any], None] | None = None
+    reboot_emulator: Callable[[], bool] | None = None
+    list_quest_targets: Callable[[], Sequence[QuestTarget]] | None = None
+    select_quest_target: Callable[[str], bool] | None = None

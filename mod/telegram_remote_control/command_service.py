@@ -36,6 +36,7 @@ from .models import (
     RemoteCommand,
     ServiceStatus,
     ServiceStatusPayload,
+    TelegramCallbackPayload,
     TelegramCommandPayload,
     TelegramSettings,
 )
@@ -44,21 +45,27 @@ from .models import (
 COMMAND_ALIASES = {
     "/start": RemoteCommand.START,
     "/stop": RemoteCommand.STOP,
+    "/reboot": RemoteCommand.REBOOT,
+    "/quest": RemoteCommand.QUEST,
     "/status": RemoteCommand.STATUS,
     "/stat": RemoteCommand.STAT,
     "/menu": RemoteCommand.MENU,
+    "reboot": RemoteCommand.REBOOT,
     "stat": RemoteCommand.STAT,
     "menu": RemoteCommand.MENU,
     "동작": RemoteCommand.START,
     "정지": RemoteCommand.STOP,
     "상태": RemoteCommand.STATUS,
     "메뉴": RemoteCommand.MENU,
+    "퀘스트": RemoteCommand.QUEST,
 }
 
 COMMAND_MENU_TEXT = (
     "📋 WvDAS 명령 메뉴\n"
     "/start 또는 동작: 매크로 시작\n"
     "/stop 또는 정지: 안전 정지 후 타이틀 복귀\n"
+    "reboot 또는 /reboot: 매크로 중지 후 에뮬레이터 재부팅\n"
+    "/quest 또는 퀘스트: 퀘스트 목표 선택\n"
     "/status 또는 상태: 최근 60초 UI 메시지\n"
     "stat 또는 /stat: 최근 60초 UI 메시지\n"
     "menu 또는 /menu 또는 메뉴: 명령 목록"
@@ -127,6 +134,48 @@ def parse_update_command(
             service_generation=int(generation),
         ),
         False,
+    )
+
+
+def parse_update_callback(
+    update: dict[str, Any],
+    settings: TelegramSettings,
+    generation: int,
+    *,
+    received_at: datetime | None = None,
+) -> TelegramCallbackPayload | None:
+    callback = update.get("callback_query") if isinstance(update, dict) else None
+    if not isinstance(callback, dict):
+        return None
+    message = callback.get("message")
+    chat = message.get("chat") if isinstance(message, dict) else None
+    sender = callback.get("from")
+    data = callback.get("data")
+    callback_query_id = callback.get("id")
+    if not isinstance(chat, dict) or chat.get("type") != "private":
+        return None
+    if str(chat.get("id")) != settings.allowed_chat_id:
+        return None
+    if not isinstance(sender, dict) or sender.get("is_bot") is not False:
+        return None
+    if str(sender.get("id")) != settings.allowed_chat_id:
+        return None
+    if not isinstance(data, str) or not data or not isinstance(callback_query_id, str):
+        return None
+    try:
+        update_id = int(update["update_id"])
+    except (KeyError, TypeError, ValueError):
+        return None
+    when = received_at or datetime.now(timezone.utc)
+    if when.tzinfo is None:
+        when = when.replace(tzinfo=timezone.utc)
+    return TelegramCallbackPayload(
+        data=data,
+        callback_query_id=callback_query_id,
+        update_id=update_id,
+        chat_id=settings.allowed_chat_id,
+        received_at=when,
+        service_generation=int(generation),
     )
 
 
@@ -289,8 +338,21 @@ class TelegramCommandService:
                             continue
                         max_id = update_id if max_id is None else max(max_id, update_id)
                         payload, unknown = parse_update_command(update, settings, generation)
+                        callback = parse_update_callback(update, settings, generation)
                         if payload is not None:
                             self._events.put(("telegram_command", payload))
+                        elif callback is not None:
+                            try:
+                                client.answer_callback_query(callback.callback_query_id)
+                            except Exception as exc:
+                                try:
+                                    self._logger.warning(
+                                        "Telegram callback acknowledgement failed: %s",
+                                        type(exc).__name__,
+                                    )
+                                except Exception:
+                                    pass
+                            self._events.put(("telegram_callback", callback))
                         elif unknown:
                             self.enqueue(
                                 OutboundMessage(
@@ -341,7 +403,14 @@ class TelegramCommandService:
                     continue
             try:
                 client = self._client_factory(settings.bot_token, self._logger)
-                client.send_message(message.chat_id, message.text)
+                if message.reply_markup is None:
+                    client.send_message(message.chat_id, message.text)
+                else:
+                    client.send_message(
+                        message.chat_id,
+                        message.text,
+                        reply_markup=message.reply_markup,
+                    )
             except TelegramRateLimitError as exc:
                 self._retry_message(message, exc.retry_after or SEND_BACKOFF_SECONDS[0])
             except TelegramTransientError:

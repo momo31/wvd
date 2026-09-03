@@ -182,7 +182,7 @@ class RuntimeGuardSourceTests(unittest.TestCase):
             self.source,
         )
         self.assertIn("runtimeContext.mark_stable()", self.source)
-        self.assertIn("BLACK_FRAME_MAX = 45", self.source)
+        self.assertIn("BLACK_FRAME_MAX = 90", self.source)
         self.assertIn("POST_RESTART_STARTUP_MAX = 90", self.source)
 
     def test_emulator_recovery_rebinds_adb_and_uses_bounded_backoff(self):
@@ -220,6 +220,15 @@ class RuntimeGuardSourceTests(unittest.TestCase):
         self.assertNotIn("KillEmulator()", connect_loop)
         self.assertIn("emulator_start_attempted", connect_loop)
         self.assertIn("WaitForDeviceRecovery(5)", connect_loop)
+
+    def test_forced_emulator_restart_starts_before_stale_adb_can_succeed(self):
+        forced_restart = self.source.index("if FORCE_RESTART_EMU:")
+        connect_loop = self.source.index("for attempt in range(MAXRETRIES):", forced_restart)
+        restart_block = self.source[forced_restart:connect_loop]
+
+        self.assertIn("KillEmulator()", restart_block)
+        self.assertIn("if StartEmulator() is False:", restart_block)
+        self.assertLess(restart_block.index("KillEmulator()"), restart_block.index("StartEmulator()"))
 
     def test_adb_connect_exhaustion_restarts_emulator_only_once(self):
         self.assertIn("if not FORCE_RESTART_EMU:", self.source)
@@ -262,7 +271,7 @@ class RuntimeGuardSourceTests(unittest.TestCase):
         identify = self.source[identify_start:identify_end]
 
         blessing_start = identify.index(
-            'if blessing_pos := CheckIf(screen, "blessing"):'
+            'if (\n                not CheckIf(screen, "returnText")'
         )
         blessing_end = identify.index(
             'if CheckIf(screen,"ambush") or CheckIf(screen,"ignore"):',
@@ -278,6 +287,7 @@ class RuntimeGuardSourceTests(unittest.TestCase):
             blessing_start,
             identify.index("if counter>=5 and not dialogueSkipExhausted:"),
         )
+        self.assertIn('not CheckIf(screen, "returnText")', blessing)
         self.assertIn("Press(blessing_pos)", blessing)
         self.assertIn("counter += 1", blessing)
         self.assertIn("counter >= setting.MAX_TRY_LIMIT", blessing)
@@ -326,6 +336,18 @@ class RuntimeGuardSourceTests(unittest.TestCase):
         identify_end = self.source.index("for pattern, state in identifyConfig:", identify_start)
         identify_config = self.source[identify_start:identify_end]
         self.assertIn('("chestOpening",  DungeonState.Chest)', identify_config)
+
+    def test_dark_dungeon_is_not_misclassified_as_close_overlay(self):
+        handler, calls = self.build_overlay_handler(
+            active_patterns={"dungFlag"},
+            close_position=[470, 938],
+        )
+
+        self.assertFalse(handler("dark-dungeon-screen"))
+        self.assertEqual(calls["press"], [])
+        self.assertFalse(
+            any(threshold == 0.60 for _, threshold, _ in calls["threshold"])
+        )
 
     def test_state_chest_prioritizes_open_and_bounds_dialogue_taps(self):
         chest_start = self.source.index("def StateChest():")

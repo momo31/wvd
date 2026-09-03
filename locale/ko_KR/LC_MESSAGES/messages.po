@@ -2644,3 +2644,39 @@ msgstr "업스트림 2.6.2의 축소된 무작위 단일 대상 선택 예비 �
 
 msgid "Use per-combat strategy reset only after understanding the in-game \"Repeat Previous Action\" behavior."
 msgstr "게임 내 \"이전 행동 반복\" 동작을 이해한 경우에만 매 전투 전략 초기화를 사용하세요."
+
+msgid "选择可执行文件"
+msgstr "실행 파일 선택"
+
+msgid ""
+"警告: 设置的模拟器路径可能不正确.\n"
+"如果你遇到无法启动模拟器, 请尝试重新设置路径."
+msgstr ""
+"경고: 선택한 에뮬레이터 경로가 올바르지 않을 수 있습니다.\n"
+"에뮬레이터가 시작되지 않으면 실행 파일을 다시 선택하세요."
+
+msgid "由于触发了特殊对话, 使用了回调函数."
+msgstr "특수 대화 선택지가 선택되어 콜백을 실행합니다."
+
+msgid "楼层错误."
+msgstr "잘못된 던전 층이 감지되었습니다."
+
+#, python-brace-format
+msgid ""
+"已完成{a}次沙人缘.\n"
+"用时{b:.2f}秒."
+msgstr ""
+"샌드맨 인연을 {a}회 완료했습니다.\n"
+"경과 시간: {b:.2f}초."
+
+msgid "Integrated upstream 2.7.1's Sandman bondmate quest and dungeon-floor validation."
+msgstr "업스트림 2.7.1의 샌드맨 인연 퀘스트와 던전 층 검증을 통합했습니다."
+
+msgid "Sandman now performs its time leap only after all three bondmate encounters are complete."
+msgstr "이제 샌드맨은 세 번의 인연 조우를 모두 완료한 뒤에만 시간 도약을 수행합니다."
+
+msgid "Warns when an unsupported emulator executable is selected without blocking the saved setting."
+msgstr "지원되지 않는 에뮬레이터 실행 파일을 선택하면 설정 저장을 막지 않고 경고합니다."
+
+msgid "Removed the unused SciPy dependency while preserving the local smart-chest implementation and standard logging pipeline."
+msgstr "로컬 스마트 상자 구현과 표준 로깅 파이프라인을 유지하면서 사용하지 않는 SciPy 의존성을 제거했습니다."

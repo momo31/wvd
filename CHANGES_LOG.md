@@ -1,7 +1,15 @@
 **新版本!**
+==v2.7.1-momo.1==
+Integrated upstream 2.7.1's Sandman bondmate quest and dungeon-floor validation.
+Sandman now performs its time leap only after all three bondmate encounters are complete.
+Warns when an unsupported emulator executable is selected without blocking the saved setting.
+Removed the unused SciPy dependency while preserving the local smart-chest implementation and standard logging pipeline.
+
 ==v2.6.2-momo.1==
 Integrated upstream 2.6.2's narrower random single-target fallback area.
 Use per-combat strategy reset only after understanding the in-game "Repeat Previous Action" behavior.
+Added Telegram `/quest` category and target buttons for every available quest.
+Telegram target selection now updates the saved target without starting the macro.
 
 ==v2.6.1-momo.1==
 Fixed Telegram `/start` getting stuck behind the session-expired dialog and restored its one-time login restart fallback.

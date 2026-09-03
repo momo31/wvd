@@ -2565,3 +2565,39 @@ msgstr "集成了上游2.6.2缩小后的随机单体目标备用选择区域。"
 
 msgid "Use per-combat strategy reset only after understanding the in-game \"Repeat Previous Action\" behavior."
 msgstr "仅在了解游戏内“重复上一次”功能后使用每场战斗前策略重置。"
+
+msgid "选择可执行文件"
+msgstr "选择可执行文件"
+
+msgid ""
+"警告: 设置的模拟器路径可能不正确.\n"
+"如果你遇到无法启动模拟器, 请尝试重新设置路径."
+msgstr ""
+"警告：设置的模拟器路径可能不正确。\n"
+"如果无法启动模拟器，请重新选择执行文件。"
+
+msgid "由于触发了特殊对话, 使用了回调函数."
+msgstr "已选择特殊对话选项，正在执行回调函数。"
+
+msgid "楼层错误."
+msgstr "检测到错误的地下城楼层。"
+
+#, python-brace-format
+msgid ""
+"已完成{a}次沙人缘.\n"
+"用时{b:.2f}秒."
+msgstr ""
+"已完成{a}次沙人缘。\n"
+"用时{b:.2f}秒。"
+
+msgid "Integrated upstream 2.7.1's Sandman bondmate quest and dungeon-floor validation."
+msgstr "集成了上游2.7.1的沙人缘任务和地下城楼层验证。"
+
+msgid "Sandman now performs its time leap only after all three bondmate encounters are complete."
+msgstr "现在只有完成全部三次沙人缘后才会进行时空跳跃。"
+
+msgid "Warns when an unsupported emulator executable is selected without blocking the saved setting."
+msgstr "选择不受支持的模拟器执行文件时会发出警告，但不会阻止保存设置。"
+
+msgid "Removed the unused SciPy dependency while preserving the local smart-chest implementation and standard logging pipeline."
+msgstr "移除了未使用的SciPy依赖，同时保留本地智能开箱实现和标准日志管道。"

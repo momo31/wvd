@@ -471,9 +471,9 @@ def _write_config_file(config_path, config_data):
 
 
 CONFIG_FILE = _config_file_path()
-def SaveConfigToFile(config_data):
+def SaveConfigToFile(config_data, config_file_path=CONFIG_FILE):
     try:
-        _write_config_file(CONFIG_FILE, config_data)
+        _write_config_file(config_file_path or CONFIG_FILE, config_data)
         logger.info(_("配置已保存。"))
         return True
     except Exception as e:

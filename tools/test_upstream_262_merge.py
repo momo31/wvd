@@ -21,7 +21,7 @@ class Upstream262MergeTests(unittest.TestCase):
         cls.changelog = (ROOT / "CHANGES_LOG.md").read_text(encoding="utf-8")
 
     def test_release_and_narrow_random_target_fallback_are_integrated(self):
-        self.assertIn("__version__ = '2.6.2-momo.1'", self.main)
+        self.assertIn("__version__ = '2.7.1-momo.1'", self.main)
         self.assertIn("==v2.6.2-momo.1==", self.changelog)
 
         start = self.script.index("# Upstream 2.4.14 fallback:")

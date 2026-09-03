@@ -1,4 +1,4 @@
-# 텔레그램 원격 정지·재개 기능 설계
+# 텔레그램 원격 정지·재개·에뮬레이터 재부팅 기능 설계
 
 - 문서 상태: 구현 기준 확정
 - 작성일: 2026-08-12
@@ -13,6 +13,7 @@ WvDAS가 실행 중일 때 허가된 텔레그램 개인 채팅에서 원격 명
 2. 던전 이동을 중단하고 마을로 돌아간다.
 3. 게임을 타이틀 화면으로 이동시키되 WvDAS와 텔레그램 수신기는 계속 실행한다.
 4. 이후 `동작` 명령을 받으면 게임 진입을 시도하고 최신 저장 설정의 매크로를 새 실행 세션으로 시작한다.
+5. `reboot` 명령을 받으면 실행 중인 매크로를 즉시 중지하고 기존 복구 경로로 에뮬레이터를 재부팅한다.
 
 이 기능의 핵심은 기존 UI 정지와 다른 **안전 정지(graceful stop)** 경로를 제공하는 것이다. 기존 UI 정지는 `_FORCESTOPING` 이벤트를 통해 ADB 작업까지 즉시 중단하므로 마을 복귀와 타이틀 전환에 사용할 수 없다.
 
@@ -41,6 +42,8 @@ WvDAS가 실행 중일 때 허가된 텔레그램 개인 채팅에서 원격 명
 - Telegram Bot API long polling 수신기
 - 개인 채팅 및 채팅 ID 기반 명령 인증
 - 원격 시작·안전 정지·상태 조회
+- 원격 에뮬레이터 재부팅
+- 분류별 텔레그램 버튼을 통한 퀘스트 목표 선택
 - 텔레그램 단계별 결과 통지
 - GUI 설정 및 연결 테스트
 - 원격 명령과 GUI 작업 상태 동기화
@@ -55,7 +58,7 @@ WvDAS가 실행 중일 때 허가된 텔레그램 개인 채팅에서 원격 명
 - 그룹·채널에서의 제어
 - 실제 계정 로그아웃 및 자격 증명 입력
 - 여러 사용자 또는 여러 채팅 동시 허용
-- 텔레그램을 통한 매크로 설정 변경
+- 퀘스트 목표 외 텔레그램을 통한 매크로 설정 변경
 - 이미지·로그 파일 전송
 
 ## 4. 현재 구조와 제약
@@ -257,6 +260,8 @@ IDLE ── start ──▶ STARTING ── ready ──▶ RUNNING
 | --- | --- | --- |
 | `/stop` | `정지` | 원격 안전 정지 요청 |
 | `/start` | `동작` | 최신 저장 설정으로 새 실행 시작 |
+| `/reboot`, `reboot` | 없음 | 실행 중인 매크로 중지 후 에뮬레이터 재부팅 |
+| `/quest` | `퀘스트` | 분류별 버튼으로 저장할 퀘스트 목표 선택 |
 | `/status` | `상태` | UI 메시지의 최근 60초 조회 |
 | `/stat`, `stat` | 없음 | UI 메시지의 최근 60초 조회 |
 | `/menu`, `menu` | `메뉴` | 지원 명령 목록 조회 |
@@ -272,6 +277,8 @@ IDLE ── start ──▶ STARTING ── ready ──▶ RUNNING
 | `AT_TITLE`, `GAME_STOPPED_FALLBACK`, `IDLE` | 이미 정지됨 응답 | 실행 시작 |
 | `ERROR` | 이미 정지됨 응답 | 설정 재검증 후 재시도 |
 
+`reboot`은 모든 상태에서 한 번만 접수한다. 실행 중인 worker에는 로컬 중지 이벤트를 먼저 설정하고, 기존 `CheckAndRecoverDevice(..., FORCE_RESTART_EMU=True)` 경로를 백그라운드에서 실행한다. 재부팅 중 추가 `reboot`과 시작 요청은 거절한다.
+
 알 수 없는 명령은 허가된 채팅에만 `menu`를 입력하라는 안내를 응답한다. 명령 목록 전체는 `menu`에서만 제공한다. 비허가 채팅에는 어떠한 응답도 보내지 않는다.
 
 ### 7.3 상태 응답
@@ -282,7 +289,13 @@ Bot Token, 전체 설정 경로, ADB 명령 출력, 스택 트레이스는 포�
 
 `status`와 `stat`은 실행 디렉터리의 `logs`에서 수정 시각이 가장 최신인 `log_*.txt`를 현재 로그로 선택한다. 각 레코드의 `YYYY-MM-DD HH:MM:SS` 시각을 기준으로 요청 시점 직전 60초만 포함하고, traceback 같은 연속 줄은 앞 레코드의 시각을 상속한다. 파일 읽기는 끝부분 512 KiB로 제한하며 Telegram 응답은 헤더를 보존한 채 3,900자 이하의 최신 줄로 제한한다. 잘린 경우 그 사실을 응답에 표시한다. 설정된 Bot Token·허용 Chat ID와 token 형태 문자열은 전송 전에 마스킹한다. 최근 기록이 없으면 `최근 60초 내 UI 메시지가 없습니다.`를 응답한다.
 
-`menu`는 `/start`, `/stop`, `/status`, `stat`, `menu`와 한국어 별칭의 설명을 반환한다.
+`menu`는 `/start`, `/stop`, `reboot`, `/quest`, `/status`, `stat`, `menu`와 한국어 별칭의 설명을 반환한다.
+
+### 7.4 퀘스트 목표 선택
+
+`/quest` 또는 `퀘스트`는 현재 GUI와 같은 전체 퀘스트 목록을 현 언어의 분류 버튼으로 표시한다. 분류를 누르면 해당 목표와 `분류로 돌아가기` 버튼을 표시한다. 목표를 선택하면 `GENERAL.FARM_TARGET`과 `FARM_TARGET_TEXT`를 저장하고, GUI 목표 선택을 동기화하며, 기존 GUI 동작과 같이 `TASK_SPECIFIC_CONFIG`를 끈다. 저장된 목표별 설정 데이터와 다른 설정은 삭제하지 않는다.
+
+목표 선택은 worker와 에뮬레이터 재부팅이 모두 정지되고 상태가 `IDLE`, `AT_TITLE`, `GAME_STOPPED_FALLBACK`, `ERROR` 중 하나일 때만 허용한다. 선택만으로 매크로를 시작하지 않으며 사용자는 `/start`를 별도로 보내야 한다. callback 데이터는 목표 코드 대신 64바이트 미만의 안정적인 토큰을 사용하고, 현재 목록에서 확인되지 않는 토큰은 저장하지 않는다.
 
 ## 8. 설정과 GUI
 
@@ -318,8 +331,10 @@ GUI에는 접을 수 있는 `텔레그램 원격 제어` 영역을 추가한다.
 
 - `getUpdates`의 `timeout`은 25초로 사용한다.
 - HTTP 읽기 제한은 long polling보다 긴 35초로 설정한다.
-- `allowed_updates`는 `["message"]`로 제한한다.
+- `allowed_updates`는 `["message", "callback_query"]`로 제한한다.
 - 각 응답에서 가장 큰 `update_id + 1`을 다음 `offset`으로 사용한다.
+
+허가된 callback query는 즉시 `answerCallbackQuery`로 응답해 Telegram 버튼의 진행 표시를 끝낸 뒤 메인 큐에서 처리한다. 비허가 채팅, 봇 발신자, 변조되거나 만료된 callback은 설정을 변경하지 않는다.
 
 수신기 시작 시 `offset=-1`, `timeout=0`으로 마지막 대기 업데이트를 읽되 실행하지 않는다. 반환된 마지막 `update_id + 1`부터 정상 polling을 시작하여 WvDAS 실행 전 명령을 모두 폐기한다. Telegram은 `getUpdates`의 높은 `offset`으로 이전 업데이트를 확인 처리한다.
 
@@ -710,6 +725,7 @@ def return_town_to_title(adapter, runtime):
 | `remote_progress` | Farm 스레드 | `AppController` | 복귀 단계 변경 |
 | `task_completion_requested` | Farm 스레드 | `AppController` | worker 종료 확인 시작 |
 | `task_finished` | `AppController` | Telegram feature | worker 종료가 확인된 최종 결과 |
+| `emulator_reboot_finished` | 재부팅 worker | Telegram feature | 에뮬레이터 재부팅 완료·실패 결과 |
 
 Farm 스레드는 Tk 위젯을 직접 호출하지 않는다. 작업 종료 콜백은 반드시 메인 큐를 거쳐 한 번만 처리한다.
 
@@ -768,10 +784,13 @@ Farm 스레드는 Tk 위젯을 직접 호출하지 않는다. 작업 종료 콜�
 
 ### 16.1 단위 테스트
 
-- `/start`, `/stop`, `/status`, `stat`, `menu`와 한국어 별칭 파싱
+- `/start`, `/stop`, `reboot`, `/quest`, `/status`, `stat`, `menu`와 한국어 별칭 파싱
 - 공백, 대소문자, `@bot_name` 처리
 - 개인 채팅·Chat ID·봇 발신자 인증
 - 비허가 채팅 무응답
+- callback query 인증, 즉시 응답, 64바이트 제한, 변조·만료 토큰 거절
+- 전체 퀘스트 분류·목표 버튼과 한국어 목록의 중국어 폴백 부재
+- 실행 중 목표 선택 차단과 선택 후 config·GUI 동기화 및 비자동 시작
 - 시작 시 이전 update 폐기 및 offset 증가
 - 중복 update와 중복 명령의 멱등 처리
 - 토큰 마스킹과 예외 문자열 정제
@@ -975,6 +994,8 @@ L5  stop_orchestrator, feature
 class RemoteCommand(str, Enum):
     START = "start"
     STOP = "stop"
+    REBOOT = "reboot"
+    QUEST = "quest"
     STATUS = "status"
     STAT = "stat"
     MENU = "menu"
@@ -1046,6 +1067,28 @@ class TelegramCommandPayload:
     service_generation: int
 
 @dataclass(frozen=True)
+class TelegramCallbackPayload:
+    data: str
+    callback_query_id: str
+    update_id: int
+    chat_id: str
+    received_at: datetime
+    service_generation: int
+
+@dataclass(frozen=True)
+class QuestTarget:
+    code: str
+    category: str
+    display_name: str
+
+@dataclass(frozen=True)
+class EmulatorRebootResult:
+    update_id: int
+    chat_id: str
+    service_generation: int
+    succeeded: bool
+
+@dataclass(frozen=True)
 class RemoteProgressPayload:
     run_id: str
     state: ControlState
@@ -1079,6 +1122,7 @@ class OutboundMessage:
     chat_id: str
     text: str
     priority: NotificationPriority
+    reply_markup: dict | None = None
 
 @dataclass(frozen=True)
 class TransitionOutcome:
@@ -1183,14 +1227,16 @@ class TelegramBotClient:
     def __init__(self, token, logger, urlopen=urllib.request.urlopen): ...
     def get_me(self) -> dict: ...
     def get_updates(self, offset, timeout=25) -> list[dict]: ...
-    def send_message(self, chat_id, text) -> dict: ...
+    def send_message(self, chat_id, text, reply_markup=None) -> dict: ...
+    def answer_callback_query(self, callback_query_id) -> bool: ...
 ```
 
 모든 호출은 `Content-Type: application/json; charset=utf-8`의 POST 요청을 사용한다.
 
 - `getMe`: 빈 JSON 객체
-- `getUpdates`: `offset`, `timeout`, `allowed_updates=["message"]`; `offset == -1`인 startup 폐기 호출에만 `limit=1` 추가
-- `sendMessage`: `chat_id`, `text`; Markdown/HTML parse mode는 사용하지 않음
+- `getUpdates`: `offset`, `timeout`, `allowed_updates=["message", "callback_query"]`; `offset == -1`인 startup 폐기 호출에만 `limit=1` 추가
+- `sendMessage`: `chat_id`, `text`, 선택적 `reply_markup`; Markdown/HTML parse mode는 사용하지 않음
+- `answerCallbackQuery`: 허가된 인라인 버튼 입력을 수신한 즉시 callback query ID로 응답
 - `getUpdates` HTTP timeout: 35초
 - 다른 호출 HTTP timeout: 15초
 
@@ -1255,7 +1301,7 @@ polling loop는 매 요청 전에 lock 안에서 `(generation, settings)`를 sna
 2. 슬래시 명령이면 첫 공백 전 토큰만 사용
 3. `/stop@BotName` 형태에서 `@BotName` 제거
 4. 슬래시 명령만 `.lower()` 적용
-5. `/start`, `/stop`, `/status`, `/stat`, `/menu`, `stat`, `menu`, `동작`, `정지`, `상태`, `메뉴`에 정확히 매핑
+5. `/start`, `/stop`, `/reboot`, `/status`, `/stat`, `/menu`, `reboot`, `stat`, `menu`, `동작`, `정지`, `상태`, `메뉴`에 정확히 매핑
 
 허가된 채팅의 알 수 없는 텍스트에는 `menu` 안내를 한 번 응답한다. 명령 목록은 `menu` 명령에서만 응답한다. 비허가 채팅에는 응답과 본문 로그를 모두 남기지 않는다.
 
@@ -1362,7 +1408,7 @@ class GameAutomationAdapter:
 
 세 화면 상태 머신은 각 loop의 callback 호출 구간을 `try/except adapter.local_stop_exception_type`으로 감싸 `TransitionStatus.LOCAL_ABORT`로 바꾼다. `RemoteRecoverySuppressed`는 잡지 않고 orchestrator까지 전달한다. 그 밖의 예외는 해당 상태 머신에서 failure frame을 저장한 뒤 fallback해야 하는 경우만 변환하며, 단순 프로그래밍 오류를 `LOCAL_ABORT`로 숨기지 않는다.
 
-`ControllerPorts`는 Tk 메인 스레드에서만 호출한다.
+`ControllerPorts`는 Tk 메인 스레드에서 호출한다. 단, 장시간 걸리는 `reboot_emulator` 구현은 feature가 만든 전용 background worker에서만 호출하며 Tk API를 사용하지 않는다.
 
 ```python
 @dataclass(frozen=True)
@@ -1373,6 +1419,10 @@ class ControllerPorts:
     task_is_alive: Callable[[], bool]
     sync_ui_state: Callable[[ControlState], None]
     schedule_after: Callable[[int, Callable[[], None]], None]
+    show_test_result: Callable[[Any], None] | None = None
+    reboot_emulator: Callable[[], bool] | None = None
+    list_quest_targets: Callable[[], Sequence[QuestTarget]] | None = None
+    select_quest_target: Callable[[str], bool] | None = None
 ```
 
 ### 19.8 `runtime_bridge.py`와 작업 종료 계약
@@ -1624,7 +1674,7 @@ class TelegramRemoteFeature:
 
 | 이벤트 | 처리 |
 | --- | --- |
-| `telegram_command` | 명령 상태 검사 후 시작·정지·상태·최근 로그·메뉴 처리 |
+| `telegram_command` | 명령 상태 검사 후 시작·정지·재부팅·상태·최근 로그·메뉴 처리 |
 | `telegram_reconfigure` | 파일에서 설정 재로드 후 서비스 재구성 |
 | `telegram_test_connection` | background 연결 테스트 시작 |
 | `telegram_test_result` | 요청 ID가 현재 GUI 테스트와 일치하면 결과 표시 |
@@ -1632,6 +1682,7 @@ class TelegramRemoteFeature:
 | `remote_progress` | 상태 전이, GUI와 Telegram 진행 알림 |
 | `task_finished` | 최종 상태와 terminal 알림 처리 |
 | `remote_force_stop_result` | watchdog 폴백 결과 반영 |
+| `emulator_reboot_finished` | 재부팅 완료·실패 응답 후 시작 차단 해제 |
 
 처리하지 않은 이벤트에는 `False`, 처리한 이벤트에는 `True`를 반환한다.
 

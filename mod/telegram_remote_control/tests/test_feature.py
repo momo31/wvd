@@ -8,12 +8,17 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from mod.telegram_remote_control.adapters import ControllerPorts
-from mod.telegram_remote_control.feature import TelegramRemoteFeature
+from mod.telegram_remote_control.feature import (
+    PERIODIC_SUMMARY_SECONDS,
+    TelegramRemoteFeature,
+)
 from mod.telegram_remote_control.models import (
     ControlState,
     ForceStopResult,
+    QuestTarget,
     RemoteCommand,
     StartReason,
+    TelegramCallbackPayload,
     TelegramCommandPayload,
     TelegramSettings,
     TaskExitReason,
@@ -25,6 +30,14 @@ class _Ports:
     def __init__(self, events):
         self.events = events
         self.started = None
+        self.reboot_calls = 0
+        self.alive_value = False
+        self.selected_targets = []
+        self.quest_targets = [
+            QuestTarget("quest-a", "분류 A", "목표 A"),
+            QuestTarget("quest-b", "분류 A", "목표 B"),
+            QuestTarget("custom", "사용자 정의", "사용자 목표"),
+        ]
 
     def load_raw(self, _path):
         return {"GENERAL": {"TELEGRAM_ENABLED": False}}
@@ -37,13 +50,24 @@ class _Ports:
         return True
 
     def alive(self):
-        return False
+        return self.alive_value
 
     def sync(self, state):
         self.events.append(state)
 
     def after(self, _delay, callback):
         callback()
+
+    def reboot_emulator(self):
+        self.reboot_calls += 1
+        return True
+
+    def list_targets(self):
+        return self.quest_targets
+
+    def select_target(self, code):
+        self.selected_targets.append(code)
+        return True
 
 
 class _RecordingService:
@@ -67,13 +91,94 @@ class FeatureTests(unittest.TestCase):
         feature = TelegramRemoteFeature(
             queue.Queue(),
             None,
-            ControllerPorts(ports.load_raw, ports.load_setting, ports.start_task, ports.alive, ports.sync, ports.after),
+            ControllerPorts(
+                ports.load_raw,
+                ports.load_setting,
+                ports.start_task,
+                ports.alive,
+                ports.sync,
+                ports.after,
+                reboot_emulator=ports.reboot_emulator,
+                list_quest_targets=ports.list_targets,
+                select_quest_target=ports.select_target,
+            ),
             None,
             "ko_KR",
         )
         feature.service = _RecordingService()
         feature.current_settings = TelegramSettings(True, "123456:" + "x" * 20, "123456789")
         return feature, ports
+
+    @staticmethod
+    def callback_payload(data, update_id, feature):
+        return TelegramCallbackPayload(
+            data,
+            f"callback-{update_id}",
+            update_id,
+            "123456789",
+            datetime.now(timezone.utc),
+            feature.service.generation,
+        )
+
+    def test_quest_menu_selects_and_saves_without_starting(self):
+        feature, ports = self.make_feature()
+        feature.handle_event(
+            "telegram_command",
+            TelegramCommandPayload(
+                RemoteCommand.QUEST,
+                20,
+                "123456789",
+                datetime.now(timezone.utc),
+                feature.service.generation,
+            ),
+        )
+        categories = feature.service.messages[-1]
+        category_buttons = categories.reply_markup["inline_keyboard"]
+        self.assertEqual([row[0]["text"] for row in category_buttons], ["분류 A", "사용자 정의"])
+        self.assertTrue(all(len(row[0]["callback_data"].encode("utf-8")) <= 64 for row in category_buttons))
+
+        feature.handle_event(
+            "telegram_callback",
+            self.callback_payload(category_buttons[0][0]["callback_data"], 21, feature),
+        )
+        targets = feature.service.messages[-1]
+        target_buttons = targets.reply_markup["inline_keyboard"]
+        self.assertEqual([row[0]["text"] for row in target_buttons[:-1]], ["목표 A", "목표 B"])
+        self.assertTrue(all(len(row[0]["callback_data"].encode("utf-8")) <= 64 for row in target_buttons))
+        self.assertEqual(target_buttons[-1][0]["callback_data"], "quest:root")
+
+        feature.handle_event(
+            "telegram_callback",
+            self.callback_payload(target_buttons[0][0]["callback_data"], 22, feature),
+        )
+
+        self.assertEqual(ports.selected_targets, ["quest-a"])
+        self.assertIsNone(ports.started)
+        self.assertIn("/start", feature.service.messages[-1].text)
+
+    def test_quest_selection_is_blocked_while_busy_and_rejects_stale_data(self):
+        feature, ports = self.make_feature()
+        ports.alive_value = True
+        feature.handle_event(
+            "telegram_command",
+            TelegramCommandPayload(
+                RemoteCommand.QUEST,
+                30,
+                "123456789",
+                datetime.now(timezone.utc),
+                feature.service.generation,
+            ),
+        )
+        self.assertIsNone(feature.service.messages[-1].reply_markup)
+        self.assertIn("완전히 정지", feature.service.messages[-1].text)
+
+        ports.alive_value = False
+        feature.handle_event(
+            "telegram_callback",
+            self.callback_payload("quest:target:stale", 31, feature),
+        )
+        self.assertEqual(ports.selected_targets, [])
+        self.assertIn("다시 여세요", feature.service.messages[-1].text)
 
     def test_local_start_from_terminal_state_transitions_to_running(self):
         terminal_states = (
@@ -102,6 +207,36 @@ class FeatureTests(unittest.TestCase):
 
                 self.assertEqual(feature.state, ControlState.RUNNING)
                 self.assertEqual(events[-1], ControlState.RUNNING)
+
+    def test_periodic_summary_sends_latest_dungeon_update_every_three_hours(self):
+        feature, _ports = self.make_feature()
+        runtime = RemoteRuntime(
+            "summary-run",
+            StartReason.LOCAL,
+            "Task",
+            feature.event_queue,
+            threading.Event(),
+            None,
+            "",
+            datetime.now(timezone.utc),
+            100.0,
+        )
+        feature.on_task_started(runtime)
+        feature.handle_event("dungeon_summary", (runtime.run_id, "첫 번째 요약"))
+        feature.handle_event("dungeon_summary", ("stale-run", "다른 실행의 요약"))
+
+        feature.tick(100.0 + PERIODIC_SUMMARY_SECONDS - 0.1)
+        self.assertEqual(feature.service.messages, [])
+
+        feature.handle_event("dungeon_summary", (runtime.run_id, "최신 요약"))
+        feature.tick(100.0 + PERIODIC_SUMMARY_SECONDS)
+        feature.tick(100.0 + PERIODIC_SUMMARY_SECONDS + 1.0)
+
+        self.assertEqual(len(feature.service.messages), 1)
+        message = feature.service.messages[0]
+        self.assertEqual(message.chat_id, "123456789")
+        self.assertEqual(message.text, "최신 요약")
+        self.assertEqual(message.key, "periodic-summary:summary-run:0")
 
     def test_remote_stop_transitions_to_at_title_after_finished(self):
         events = []
@@ -175,7 +310,44 @@ class FeatureTests(unittest.TestCase):
         message = feature.service.messages[-1]
         self.assertIn("명령 메뉴", message.text)
         self.assertIn("stat", message.text)
+        self.assertIn("reboot", message.text)
+        self.assertIn("/quest", message.text)
         self.assertIn("menu", message.text)
+
+    def test_reboot_runs_emulator_port_and_reports_completion(self):
+        feature, ports = self.make_feature()
+        payload = TelegramCommandPayload(
+            RemoteCommand.REBOOT,
+            12,
+            "123456789",
+            datetime.now(timezone.utc),
+            feature.service.generation,
+        )
+
+        feature.handle_event("telegram_command", payload)
+
+        self.assertTrue(feature.emulator_reboot_in_progress)
+        self.assertIn("재부팅을 시작", feature.service.messages[-1].text)
+        feature.handle_event(
+            "telegram_command",
+            TelegramCommandPayload(
+                RemoteCommand.START,
+                13,
+                payload.chat_id,
+                datetime.now(timezone.utc),
+                feature.service.generation,
+            ),
+        )
+        self.assertIsNone(ports.started)
+        self.assertIn("이미 진행 중", feature.service.messages[-1].text)
+        command, result = feature.event_queue.get(timeout=1)
+        self.assertEqual(command, "emulator_reboot_finished")
+        feature.handle_event(command, result)
+
+        self.assertFalse(feature.emulator_reboot_in_progress)
+        self.assertEqual(ports.reboot_calls, 1)
+        self.assertEqual(feature.service.messages[-1].key, "reboot-complete:12")
+        self.assertIn("재부팅이 완료", feature.service.messages[-1].text)
 
     def test_local_macro_error_notifies_configured_chat_once(self):
         feature, _ports = self.make_feature()

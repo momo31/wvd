@@ -232,6 +232,97 @@ class SmartDisarmRunRecoveryTests(unittest.TestCase):
         self.assertEqual(state["presses"], 0)
         self.assertEqual(state["fallbacks"], 1)
 
+    def test_second_tap_cursor_loss_waits_for_result_without_fallback(self):
+        config = self.base_config()
+        config.max_total_samples = 20
+        config.max_total_samples_extended = 20
+        positions = [
+            100, 220, 340, 460, 460, 460,
+            100, 220, 340, 460, 460, 460,
+            None, 460,
+        ]
+        disarm, state = self.make_running_disarm(config, positions)
+        disarm.press = lambda _position: state.__setitem__("presses", state["presses"] + 1) or True
+        capture = disarm.cap
+
+        def delayed_result_capture():
+            image = capture()
+            if state["presses"] >= 2 and state["captures"] >= 14:
+                state["done"] = True
+            return image
+
+        disarm.cap = delayed_result_capture
+        original_detect = disarm.detect
+        disarm.detect = lambda image: (
+            {**original_detect(image), "cursors": []}
+            if positions[min(int(image[0, 0, 0]) - 1, len(positions) - 1)] is None
+            else original_detect(image)
+        )
+        disarm.estimate = lambda *_args: {"x": 460, "speed": 500.0, "dir": 1}
+        disarm._est_consistent = lambda *_args: True
+        disarm.plan_tap = lambda *_args, min_reach=0.0, **_kwargs: {
+            "reach": min_reach + 0.2,
+            "center": 240.0,
+            "half": 60.0,
+            "margin": 6.0,
+        }
+        disarm.detect_remaining_chances = lambda _image: 2
+        auditor = mock.Mock()
+        disarm.audit = auditor
+
+        with mock.patch.object(smart_disarm.os.path, "exists", return_value=True), \
+                mock.patch.object(smart_disarm.time, "sleep", return_value=None):
+            self.assertTrue(disarm.run())
+
+        self.assertEqual(state["presses"], 2)
+        self.assertEqual(state["fallbacks"], 0)
+        auditor.on_end_frame.assert_called_once()
+
+    def test_chance_drop_is_failure_and_fallback_saves_final_frame(self):
+        config = self.base_config()
+        config.max_total_samples = 4
+        config.max_total_samples_extended = 4
+        disarm, state = self.make_running_disarm(config, [100, 220, 340, 460, 460, 460])
+        disarm.is_done = lambda _image: False
+        disarm.estimate = lambda *_args: {"x": 460, "speed": 500.0, "dir": 1}
+        disarm._est_consistent = lambda *_args: True
+        disarm.plan_tap = lambda *_args, min_reach=0.0, **_kwargs: {
+            "reach": min_reach + 0.2,
+            "center": 240.0,
+            "half": 60.0,
+            "margin": 6.0,
+        }
+        disarm.detect_remaining_chances = mock.Mock(side_effect=[2, 1])
+        auditor = mock.Mock()
+        disarm.audit = auditor
+
+        with mock.patch.object(smart_disarm.os.path, "exists", return_value=True), \
+                mock.patch.object(smart_disarm.time, "sleep", return_value=None):
+            self.assertTrue(disarm.run())
+
+        auditor.on_tap_outcome.assert_called_once_with(False)
+        auditor.on_end_frame.assert_called_once()
+
+
+class SmartDisarmChanceTemplateTests(unittest.TestCase):
+    def test_one_chance_template_is_distinct_and_detected(self):
+        disarm = smart_disarm.SmartDisarm(
+            lambda: None,
+            lambda _position: True,
+            lambda: 0.0,
+            RecordingLogger(),
+        )
+        one = smart_disarm.cv2.imread(str(ROOT / "resources" / "images" / "smallgame_1.png"))
+        two = smart_disarm.cv2.imread(str(ROOT / "resources" / "images" / "smallgame_2.png"))
+        self.assertEqual(one.shape[:2], (36, 26))
+
+        roi = np.zeros((80, 130, 3), dtype=np.uint8)
+        roi[32:68, 43:69] = one
+        self.assertEqual(disarm.detect_remaining_chances(roi), 1)
+
+        roi[32:68, 43:69] = two
+        self.assertEqual(disarm.detect_remaining_chances(roi), 2)
+
 
 class SmartDisarmAuditTests(unittest.TestCase):
     def test_game_outcome_relabels_unknown_tap_images(self):

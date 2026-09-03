@@ -79,6 +79,26 @@ class BotApiTests(unittest.TestCase):
         body = json.loads(requests[0][0].data.decode("utf-8"))
         self.assertEqual(body["offset"], -1)
         self.assertEqual(body["limit"], 1)
+        self.assertEqual(body["allowed_updates"], ["message", "callback_query"])
+
+    def test_inline_keyboard_and_callback_answer_payloads(self):
+        requests = []
+
+        def urlopen(request, timeout):
+            requests.append(request)
+            result = True if request.full_url.endswith("/answerCallbackQuery") else {"message_id": 1}
+            return _Response({"ok": True, "result": result})
+
+        client = TelegramBotClient("123:" + "x" * 20, None, urlopen=urlopen)
+        markup = {"inline_keyboard": [[{"text": "퀘스트", "callback_data": "quest:root"}]]}
+
+        client.send_message("1", "choose", reply_markup=markup)
+        self.assertTrue(client.answer_callback_query("callback-1"))
+
+        send_body = json.loads(requests[0].data.decode("utf-8"))
+        callback_body = json.loads(requests[1].data.decode("utf-8"))
+        self.assertEqual(send_body["reply_markup"], markup)
+        self.assertEqual(callback_body, {"callback_query_id": "callback-1"})
 
     def test_error_mapping_does_not_expose_token(self):
         token = "123:" + "x" * 20

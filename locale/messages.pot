@@ -2526,3 +2526,35 @@ msgstr ""
 
 msgid "Use per-combat strategy reset only after understanding the in-game \"Repeat Previous Action\" behavior."
 msgstr ""
+
+msgid "选择可执行文件"
+msgstr ""
+
+msgid ""
+"警告: 设置的模拟器路径可能不正确.\n"
+"如果你遇到无法启动模拟器, 请尝试重新设置路径."
+msgstr ""
+
+msgid "由于触发了特殊对话, 使用了回调函数."
+msgstr ""
+
+msgid "楼层错误."
+msgstr ""
+
+#, python-brace-format
+msgid ""
+"已完成{a}次沙人缘.\n"
+"用时{b:.2f}秒."
+msgstr ""
+
+msgid "Integrated upstream 2.7.1's Sandman bondmate quest and dungeon-floor validation."
+msgstr ""
+
+msgid "Sandman now performs its time leap only after all three bondmate encounters are complete."
+msgstr ""
+
+msgid "Warns when an unsupported emulator executable is selected without blocking the saved setting."
+msgstr ""
+
+msgid "Removed the unused SciPy dependency while preserving the local smart-chest implementation and standard logging pipeline."
+msgstr ""

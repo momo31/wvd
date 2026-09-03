@@ -82,6 +82,7 @@ KO_TARGET_TRANSLATIONS = {
     "[装备]半自动大恶魔": "[장비] 대악마 반자동 파밍",
     "[装备]暗灯": "[장비] 사신의 어둠 등불",
     "[刷药]喜欢睡觉": "[포션] 잠꾸러기 퀘스트",
+    "[缘]沙人": "[인연] 샌드맨",
     "mergeBlastNumber": "Tapjoy 연동 (mergeBlastNumber)"
 }
 
@@ -97,6 +98,15 @@ def trans_tgt(tgt):
     if LANGUAGE == 'ko_KR':
         return KO_TARGET_TRANSLATIONS.get(tgt, tgt)
     return tgt
+
+
+def _is_known_emulator_executable(path):
+    executable = os.path.basename(str(path or "").replace("\\", "/")).casefold()
+    return executable in {
+        "hd-player.exe",
+        "mumuplayer.exe",
+        "mumunxdevice.exe",
+    }
 
 
 def _category_keys_for_display(category_display):
@@ -953,12 +963,19 @@ class ConfigPanelApp(tk.Toplevel):
         
         def selectADB_PATH():
             path = filedialog.askopenfilename(
-                title=_("选择ADB执行文件"),
+                title=_("选择可执行文件"),
                 filetypes=[("Executable", "*.exe"), ("All files", "*.*")]
             )
             if path:
                 self.EMU_PATH.set(path)
                 self.save_config()
+                if not _is_known_emulator_executable(self.EMU_PATH.get()):
+                    logger.warning(
+                        _(
+                            "警告: 设置的模拟器路径可能不正确.\n"
+                            "如果你遇到无法启动模拟器, 请尝试重新设置路径."
+                        )
+                    )
 
         self.adb_path_change_button = ttk.Button(
             frame_row, text=_("修改"), command=selectADB_PATH, width=5
@@ -2229,6 +2246,18 @@ class ConfigPanelApp(tk.Toplevel):
             self.KARMA_ADJUST.set(config['KARMA_ADJUST'])
 
         self.quest_active = False
+
+    def select_farm_target_from_remote(self, category_display, target_display):
+        targets = [trans_tgt(name) for name in _targets_for_category_display(category_display)]
+        if target_display not in targets:
+            return False
+        self.farm_target_category_combo.set(category_display)
+        self.farm_target_combo["values"] = targets
+        self.FARM_TARGET_TEXT.set(target_display)
+        self.FARM_TARGET.set(_quest_code_for_target_display(target_display))
+        self.TASK_SPECIFIC_CONFIG.set(False)
+        self.farm_target_combo.event_generate("<<ComboboxSelected>>")
+        return True
 
     def turn_to_7000G(self):
         self.summary_log_display.config(bg="#F4C6DB" )

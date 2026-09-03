@@ -41,3 +41,39 @@ msgstr "Safe stop request accepted."
 
 msgid "즉시 중지"
 msgstr "Stop now"
+
+msgid "에뮬레이터 재부팅을 시작했습니다. 실행 중인 매크로는 먼저 중지됩니다."
+msgstr "Emulator reboot started. Any running macro will be stopped first."
+
+msgid "에뮬레이터 재부팅이 이미 진행 중입니다."
+msgstr "An emulator reboot is already in progress."
+
+msgid "에뮬레이터 재부팅이 완료되었습니다."
+msgstr "Emulator reboot completed."
+
+msgid "에뮬레이터 재부팅에 실패했습니다. stat 명령으로 로그를 확인하세요."
+msgstr "Emulator reboot failed. Check the logs with the stat command."
+
+msgid "선택할 수 있는 퀘스트 목표가 없습니다."
+msgstr "No quest targets are available."
+
+msgid "퀘스트 분류를 선택하세요."
+msgstr "Select a quest category."
+
+msgid "퀘스트 목표를 선택하세요: %s"
+msgstr "Select a quest target: %s"
+
+msgid "분류로 돌아가기"
+msgstr "Back to categories"
+
+msgid "퀘스트 목표를 '%s'(으)로 변경했습니다.\n/start 명령으로 실행하세요."
+msgstr "Quest target changed to '%s'.\nRun it with /start."
+
+msgid "퀘스트 목표 저장에 실패했습니다. stat 명령으로 로그를 확인하세요."
+msgstr "Failed to save the quest target. Check the logs with stat."
+
+msgid "퀘스트 목록이 변경되었습니다. /quest 명령으로 다시 여세요."
+msgstr "The quest list changed. Reopen it with /quest."
+
+msgid "퀘스트 목표는 매크로가 완전히 정지된 상태에서만 변경할 수 있습니다."
+msgstr "Quest targets can only be changed while the macro is fully stopped."

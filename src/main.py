@@ -44,6 +44,7 @@ from mod.telegram_remote_control.constants import (
 from mod.telegram_remote_control.feature import TelegramRemoteFeature
 from mod.telegram_remote_control.models import (
     ConnectionTestResult,
+    QuestTarget,
     StartReason,
     TaskExitReason,
     TaskFinishedPayload,
@@ -52,7 +53,7 @@ from mod.telegram_remote_control.runtime_bridge import RemoteRuntime
 from mod.telegram_remote_control.worker import TaskCompletionLatch, run_farm_worker
 
 
-__version__ = '2.6.2-momo.1'
+__version__ = '2.7.1-momo.1'
 OWNER = "arnold2957"
 REPO = "wvd"
 
@@ -85,6 +86,9 @@ class AppController(tk.Tk):
             sync_ui_state=self._sync_remote_ui,
             schedule_after=lambda delay, callback: self.after(delay, callback),
             show_test_result=self._show_connection_test_result,
+            reboot_emulator=self._reboot_emulator,
+            list_quest_targets=self._list_quest_targets,
+            select_quest_target=self._select_quest_target,
         )
         self.remote_feature = TelegramRemoteFeature(
             self.msg_queue,
@@ -140,6 +144,56 @@ class AppController(tk.Tk):
             LoadSettingFromDict,
         )
 
+    def _list_quest_targets(self):
+        return [
+            QuestTarget(str(code), trans_cat(category), trans_tgt(name))
+            for category, targets in DUNGEON_TARGETS.items()
+            for name, code in targets.items()
+        ]
+
+    def _select_quest_target(self, quest_code: str) -> bool:
+        selected = next(
+            (
+                (category, name)
+                for category, targets in DUNGEON_TARGETS.items()
+                for name, code in targets.items()
+                if str(code) == str(quest_code)
+            ),
+            None,
+        )
+        if selected is None:
+            return False
+        category, name = selected
+        category_display = trans_cat(category)
+        target_display = trans_tgt(name)
+        stored_name = (
+            REVERSE_TARGET_MAP.get(target_display, target_display)
+            if LANGUAGE == "ko_KR"
+            else target_display
+        )
+        config_path = self.config_path or CONFIG_FILE
+        raw = LoadRawConfigFromFile(config_path) or {}
+        general = raw.get("GENERAL")
+        if not isinstance(general, dict):
+            return False
+        general.update(
+            {
+                "FARM_TARGET": str(quest_code),
+                "FARM_TARGET_TEXT": stored_name,
+                "TASK_SPECIFIC_CONFIG": False,
+            }
+        )
+        if not SaveConfigToFile(raw, config_path):
+            return False
+        if self.main_window is not None:
+            return bool(
+                self.main_window.select_farm_target_from_remote(
+                    category_display,
+                    target_display,
+                )
+            )
+        return True
+
     def _task_is_alive(self) -> bool:
         return bool(self.quest_threading is not None and self.quest_threading.is_alive())
 
@@ -160,7 +214,11 @@ class AppController(tk.Tk):
         )
 
     def _start_task(self, setting, start_reason, run_id, runtime) -> bool:
-        if self._task_is_alive():
+        if self._task_is_alive() or getattr(
+            getattr(self, "remote_feature", None),
+            "emulator_reboot_in_progress",
+            False,
+        ):
             return False
         if runtime is None:
             runtime = self._new_local_runtime(setting)
@@ -218,6 +276,28 @@ class AppController(tk.Tk):
             event = getattr(self.quest_setting, "_FORCESTOPING", None)
             if event is not None:
                 event.set()
+
+    def _reboot_emulator(self) -> bool:
+        worker = self.quest_threading
+        if worker is not None and worker.is_alive():
+            self._request_local_stop()
+        runtime = getattr(self, "_active_runtime", None)
+        if runtime is not None and runtime.clear_handoff(HANDOFF_TARGET_7000G):
+            runtime.mark_exit(TaskExitReason.LOCAL_STOP, "에뮬레이터 재부팅으로 작업이 중지되었습니다.")
+            latch = getattr(self, "_active_latch", None)
+            if latch is not None:
+                latch.callback()
+        if worker is not None and worker.is_alive():
+            # ponytail: fixed grace period; add a stop handshake only if ADB work survives it.
+            worker.join(10)
+        setting = self._load_latest_setting()
+        setting._FORCESTOPING = threading.Event()
+        setting._ADBDEVICE = CheckAndRecoverDevice(
+            setting,
+            RuntimeContext(),
+            FORCE_RESTART_EMU=True,
+        )
+        return setting._ADBDEVICE is not None
 
     def _handle_task_completion_requested(self, run_id: str):
         run_id = str(run_id)
@@ -288,7 +368,15 @@ class AppController(tk.Tk):
             self._handle_task_completion_requested(value)
             return
         if command == "start_quest":
-            self._start_task(value, StartReason.LOCAL, "", None)
+            started = self._start_task(value, StartReason.LOCAL, "", None)
+            if not started and getattr(
+                self.remote_feature,
+                "emulator_reboot_in_progress",
+                False,
+            ):
+                callback = getattr(value, "_FINISHINGCALLBACK", None)
+                if callback is not None:
+                    callback()
             return
         if command == "stop_quest":
             self._request_local_stop()

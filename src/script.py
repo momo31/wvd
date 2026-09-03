@@ -14,8 +14,6 @@ except Exception:
     # win10toast는 방치된 패키지로 Python 3.12+/신버전 setuptools(pkg_resources 제거) 환경에서 import 실패.
     # 현재 toaster는 show_toast 호출 없이 생성만 되는 사실상 미사용 코드이므로 없어도 동작에 지장 없음.
     ToastNotifier = None
-from scipy.optimize import curve_fit
-from scipy.signal import find_peaks
 from enum import Enum
 from datetime import datetime
 import os
@@ -229,9 +227,10 @@ class FarmQuest:
     _TARGETINFOLIST = None
     _EOT = None
     _preEOTcheck = None
+    _FloorCheck = None
     _SPECIALDIALOGOPTION = None
+    _SPECIALDIALOGOPTION_CALLBACK = None
     _SPECIALFORCESTOPINGSYMBOL = None
-    _SPELLSEQUENCE = None
     _TYPE = None
     _RTT = None # Return To Town, 回程时执行的流程
     _TIPS = None
@@ -532,10 +531,14 @@ def CheckAndRecoverDevice(setting : FarmConfig, runtimeContext: RuntimeContext, 
     ####################################
     # 功能实现
 
+    emulator_start_attempted = False
     if FORCE_RESTART_EMU:
         KillEmulator()
         if not WaitForDeviceRecovery(1):
             return None
+        if StartEmulator() is False:
+            return None
+        emulator_start_attempted = True
     
     if FORCE_RESTART_ADB:
         KillAdb()
@@ -545,7 +548,6 @@ def CheckAndRecoverDevice(setting : FarmConfig, runtimeContext: RuntimeContext, 
     MAXRETRIES = 20
 
     adb_path = GetADBPathFromEmuPath(setting.EMU_PATH)
-    emulator_start_attempted = False
     adb_server_reset_done = bool(FORCE_RESTART_ADB)
 
     for attempt in range(MAXRETRIES):
@@ -1790,6 +1792,11 @@ def Factory():
             if runtimeContext._COUNTERCOMBAT > 0:
                 summary_text += _("累计战斗{a}次.战斗平均用时{b}秒.").format(a=runtimeContext._COUNTERCOMBAT, b=round(runtimeContext._TIME_COMBAT_TOTAL/runtimeContext._COUNTERCOMBAT,2))
             logger.info("{a}{b}".format(a=runtimeContext._IMPORTANTINFO, b=summary_text),extra={"summary": True})
+            remote_runtime = getattr(setting, "_REMOTE_RUNTIME", None)
+            if remote_runtime is not None:
+                remote_runtime.event_queue.put(
+                    ("dungeon_summary", (remote_runtime.run_id, summary_text))
+                )
         # 圈数计时器
         runtimeContext._LAPTIME = time.time()
 
@@ -2029,6 +2036,12 @@ def Factory():
             logger.debug("chest interaction detected; deferring to state matching")
             return False
 
+        # Dark dungeon scenery can weakly resemble the generic Close text.
+        # A strong dungeon marker is actionable and must win over that match.
+        if CheckIf(screen, "dungFlag"):
+            logger.debug("dungeon marker detected; deferring to state matching")
+            return False
+
         # Harken's modal is darkened, and its Close match is usually between
         # 0.60 and 0.65.  Announcements have a much stronger match.  Keep the
         # gate below the bright shrine scene's luminance to avoid clicking a
@@ -2061,7 +2074,7 @@ def Factory():
         black_wait = 0
         startup_wait = 0
         LOADING_MAX = 90            # 로딩 대기 상한(약 180초). 초과 시 무한 로딩으로 보고 재시작.
-        BLACK_FRAME_MAX = 45        # 기존 15회의 3배로 검은 프레임을 대기.
+        BLACK_FRAME_MAX = 90        # 1초 간격으로 검은 프레임을 약 90초까지 대기.
         TITLE_STARTUP_MAX = 45      # 기존 15회의 3배로 타이틀/약관 화면을 대기.
         POST_RESTART_STARTUP_MAX = 90  # 기존 30회의 3배로 재시작 후 화면을 대기.
         while 1:
@@ -2187,7 +2200,10 @@ def Factory():
             # 자정 이후 첫 복귀 때 표시되는 하켄의 가호 선택창은 일반 상태
             # 표식이 없다. 기존 blessing 템플릿을 대화 스킵과 무작위 복구 탭보다
             # 먼저 처리해야 선택 후 returnText/returntoTown 흐름으로 넘어갈 수 있다.
-            if blessing_pos := CheckIf(screen, "blessing"):
+            if (
+                not CheckIf(screen, "returnText")
+                and (blessing_pos := CheckIf(screen, "blessing"))
+            ):
                 logger.info("Harken blessing choice detected; selecting a blessing")
                 Press(blessing_pos)
                 Sleep(2)
@@ -2332,6 +2348,10 @@ def Factory():
             if quest._SPECIALDIALOGOPTION != None:
                 for option in quest._SPECIALDIALOGOPTION:
                     if Press(CheckIf(screen,option)):
+                        Press(CheckIf(screen,"bondmate_close",[[277,751,330,600]]))
+                        if quest._SPECIALDIALOGOPTION_CALLBACK is not None:
+                            logger.info(_("由于触发了特殊对话, 使用了回调函数."))
+                            quest._SPECIALDIALOGOPTION_CALLBACK(option)
                         return IdentifyState()
 
             # After a restart the first actionable screen may be a localized
@@ -3174,7 +3194,7 @@ def Factory():
                     break
             lastscreen = screen
         return dungState
-    def StateSearch(waitTimer, targetInfo):
+    def StateMapSearch(targetInfo):
         normalPlace = ["harken","chest","leaveDung","position","Bharken"]
         target = targetInfo.target
         # 地图已经打开.
@@ -3183,65 +3203,56 @@ def Factory():
         if CheckIf(map,"tooPoorToReadTheMap"):
             logger.info(_("在暴风雪中."))
             Press(CheckIf(map,"dungFlag"))
-            return StateMoving_CheckStop(),False
+            return StateMoving_CheckStop(), "FAIL"
     
         if not CheckIf(map,"mapFlag"):
             logger.info(_("没有检测到地图."))
-            return None,False # 发生了其他错误
+            return None, "FAIL" # 发生了其他错误
+
+        if (
+            quest._FloorCheck is not None
+            and target != "dungFlag"
+            and not CheckIf(map, quest._FloorCheck)
+        ):
+            logger.error(_("楼层错误."))
+            return None, "WRONGFLOOR"
 
         try:
             searchResult = StateMap_FindSwipeClick(targetInfo)
         except KeyError as e:
             logger.info(_("错误: {a}").format(a=e)) # 一般来说这里只会返回"地图不可用
-            return None, False
-    
-        if not CheckIf(map,"mapFlag"):
-                return None, False # 发生了错误, 应该是进战斗了
+            return None, "FAIL"
 
         if searchResult == None:
             if target == "chest":
                 logger.info(_("没有找到宝箱.\n停止检索宝箱."))
-                return DungeonState.Map,  True
+                return DungeonState.Map, "DONE"
             elif (target == "position" or target.startswith("stair")):
                 logger.info(_("已经抵达目标地点或目标楼层."))
-                return DungeonState.Map,  True
+                return DungeonState.Map, "DONE"
             else:
                 # 这种时候我们认为真正失败了. 所以不弹出.
                 # 当然, 更好的做法时传递finish标识()
                 logger.info(_("未找到目标{a}.").format(a=target))
-                return DungeonState.Map,  False
+                return DungeonState.Map, "FAIL"
         else:
+            if target == "dungFlag":
+                Press(searchResult)
+                return None, "DONE"
             if target in normalPlace or target.endswith("_quit") or target.startswith("stair"):
                 Press(searchResult)
                 Press([136,1431]) # automove
-                return StateMoving_CheckStop(),False
+                return StateMoving_CheckStop(), "FAIL"
             else:
                 if (CheckIf_FocusCursor(ScreenShot(),target)): #注意 这里通过二次确认 我们可以看到目标地点 而且是未选中的状态
                     logger.info(_("经过对比中心区域, 确认没有抵达."))
                     Press(searchResult)
                     Press([136,1431]) # automove
-                    return StateMoving_CheckStop(), False
+                    return StateMoving_CheckStop(), "FAIL"
                 else:
-                    # if setting._DUNGWAITTIMEOUT == 0:
-                        logger.info(_("经过对比中心区域, 判断为抵达目标地点."))
-                        logger.info(_("无需等待, 当前目标已完成."))
-                        return DungeonState.Map, True
-                    # else:
-                    #     logger.info(_("经过对比中心区域, 判断为抵达目标地点."))
-                    #     logger.info(_("开始等待...等待..."))
-                    #     PressReturn()
-                    #     Sleep(0.5)
-                    #     PressReturn()
-                    #     while 1:
-                    #         if setting._DUNGWAITTIMEOUT-time.time()+waitTimer<0:
-                    #             logger.info(_("等得够久了. 目标地点完成."))
-                    #             Sleep(1)
-                    #             Press([777,150])
-                    #             return None, True
-                    #         logger.info(_("还需要等待{a}秒.".foramt(a=setting._DUNGWAITTIMEOUT-time.time()+waitTimer)))
-                    #         if StateCombatCheck(ScreenShot()):
-                    #             return DungeonState.Combat, False
-        return DungeonState.Map, False
+                    logger.info(_("经过对比中心区域, 判断为抵达目标地点."))
+                    return DungeonState.Map, "DONE"
+        return DungeonState.Map, "FAIL"
     def StateChest():
         nonlocal runtimeContext
         availableChar = [0, 1, 2, 3, 4, 5]
@@ -3553,7 +3564,6 @@ def Factory():
         GAMEFROZEN_STATEMAPLIMIT = 20+20*len(targetInfoList)
         dungState = None
         recoveryPlan = RecoveryPlan()
-        waitTimer = time.time()
         needRecoverBecauseCombat = False
         needRecoverBecauseChest = False
         postCombatResolutionPending = False
@@ -3846,10 +3856,14 @@ def Factory():
                     Press([777,150])
                     Sleep(1)
 
-                    dungState, ifTargetPointComplete = StateSearch(waitTimer,targetInfoList[0])
+                    dungState, searchResult = StateMapSearch(targetInfoList[0])
 
-                    if ifTargetPointComplete:
-                        TargetPointComplete()
+                    match searchResult:
+                        case "DONE":
+                            TargetPointComplete()
+                        case "WRONGFLOOR":
+                            if targetInfoList[0].target != "dungFlag":
+                                targetInfoList.insert(0, TargetInfo("dungFlag"))
 
                     if (targetInfoList==None) or (targetInfoList == []):
                         logger.info(_("地下城目标完成. 地下城状态结束.(仅限任务模式.)"))
@@ -5118,6 +5132,74 @@ def Factory():
                     output_str = ", ".join(output_parts)
                     output_str += f"\nElapsed: {(time.time()-start_time):.2f}s."
                     logger.info(output_str,extra={"summary": True})
+            case "sandman":
+                setting.RE_ASSEMBLE_PARTY = False
+                setting.BYPASS_THE_WALL = False
+                sandman_complete = False
+                counter = 0
+                start_time = time.time()
+
+                quest._FloorCheck = "stair_fortress3f"
+                quest._EOT = [
+                    ["press", "impregnableFortress", ["EdgeOfTown", [1,1]], 1],
+                    ["press", "fortressb3f", "input swipe 650 250 650 900", 1],
+                ]
+                quest._SPECIALDIALOGOPTION = [
+                    "sandman/sandman_1",
+                    "sandman/sandman_2",
+                    "sandman/sandman_bondmate",
+                ]
+
+                def mark_sandman_complete(option):
+                    nonlocal sandman_complete
+                    if option == "sandman/sandman_bondmate":
+                        sandman_complete = True
+
+                quest._SPECIALDIALOGOPTION_CALLBACK = mark_sandman_complete
+                quest._TARGETINFOLIST = [
+                    TargetInfo("position", "左下", [133,814]),
+                    TargetInfo("position", "左下", [238,1076]),
+                    TargetInfo("position", "左下", [450,924]),
+                    TargetInfo("harken2", "左下"),
+                ]
+
+                while not setting._FORCESTOPING.is_set():
+                    RestartableSequenceExecution(lambda: StateEoT())
+                    if setting._FORCESTOPING.is_set():
+                        break
+                    RestartableSequenceExecution(
+                        lambda: StateDungeon(list(quest._TARGETINFOLIST))
+                    )
+                    if setting._FORCESTOPING.is_set():
+                        break
+                    if not sandman_complete:
+                        continue
+
+                    sandman_complete = False
+                    RestartableSequenceExecution(lambda: StateInn())
+                    RestartableSequenceExecution(
+                        lambda: CursedWheelTimeLeap(
+                            target="requestToRescueTheDuke",
+                            chapter="cursedwheel_impregnableFortress",
+                        )
+                    )
+                    Sleep(10)
+                    RestartableSequenceExecution(lambda: StateInn())
+                    RestartableSequenceExecution(
+                        lambda: CursedWheelTimeLeap(
+                            target="Triumph",
+                            chapter="cursedwheel_impregnableFortress",
+                        )
+                    )
+                    counter += 1
+                    logger.info(
+                        _("已完成{a}次沙人缘.\n用时{b:.2f}秒.").format(
+                            a=counter,
+                            b=time.time() - start_time,
+                        ),
+                        extra={"summary": True},
+                    )
+                    break
         ##########################
         setting._FINISHINGCALLBACK()
         return

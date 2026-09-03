@@ -2,11 +2,11 @@
 
 ## 실행 파일 빌드 시 필수 참조
 
-실행 파일을 빌드하거나 `dist\\wvd`에 배포할 때는 먼저 [`docs/build-and-release.md`](docs/build-and-release.md)를 확인한다. 문서에 정의된 Python 3.14 빌드 환경, `tkinter` 포함 확인, exe 실행 스모크 테스트 및 배포 절차를 반드시 따른다.
+실행 파일을 빌드하거나 `dist\\wvd`에 배포할 때는 먼저 [`docs/build-and-release.md`](docs/build-and-release.md)를 확인한다. 테스트는 개발 단계에서 완료된 것으로 간주한다.
 
-- 사용자 데이터가 있는 기존 `dist\\wvd`를 PyInstaller의 `--clean` 대상으로 직접 사용하지 않는다. 별도 `build\\release-stage-*` 경로에서 빌드한 뒤 `_internal`, `wvd.exe`, `CHANGES_LOG.md`만 교체하고 `config.json`, `logs`, `audit`는 보존한다.
-- 스모크 테스트는 실제 설정 파일의 복사본과 격리된 작업 디렉터리를 사용해 5초 이상 실행한다. 테스트 프로세스를 반드시 종료하고 설정·로그의 전후 상태, Tcl/Tk 리소스, 최종 SHA-256을 확인한다.
-- 제한된 Windows 자동화 환경에서 Tcl이 `C:\\Users\\...` 경로를 보지 못해 `Can't find a usable init.tcl`이 발생하면 문서의 임시 `subst` 드라이브 절차로 동일 산출물을 검증한다. 테스트 후 프로세스와 드라이브 매핑을 항상 해제한다.
+- 빌드는 별도 `build\\release-stage-*` 경로에서 수행하고 종료한다. 사용자가 배포를 명시적으로 요청하지 않으면 실행 중인 배포본과 `dist\\wvd`를 건드리지 않는다.
+- 빌드 단계에서는 테스트 스위트, exe 실행, 스모크 테스트, Tcl/Tk·리소스·해시 검증을 수행하지 않는다.
+- 배포할 때는 `_internal`, `wvd.exe`, `CHANGES_LOG.md`만 교체한다. 유일한 검증은 배포 전후 `config.json`, `logs`, `audit` 보존 확인이다.
 
 ## Git 작업 제한
 

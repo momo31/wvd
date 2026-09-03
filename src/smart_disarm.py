@@ -137,6 +137,7 @@ class DisarmConfig:
     settle_after_tap = 0.5     # 탭 후 결과 안정 대기(s)
     settle_extra_checks = 2    # settle_after_tap 후 종료 미감지 시 추가 종료 체크 횟수
     settle_extra_interval = 0.2  # 추가 종료 체크 간격(s)
+    cursor_loss_wait = 4.0     # 2차 탭 후 커서 소실 시 결과 전환/다음 커서 재판정 상한(s)
     # 입력 좌표: 게임은 막대가 아니라 고정 'Disarm' 버튼을 누른다(기존 script.py disarm=[515,934]).
     # 커서 x는 '언제 누를지' 타이밍 판단용일 뿐, 실제 탭은 이 버튼. 통합 시 오버라이드.
     disarm_button = (515, 934)
@@ -395,7 +396,7 @@ class SmartDisarm:
         shots = 0
         shots_since_progress = 0
         miss = 0
-        tapped = False         # 이번 세션에서 탭을 한 번이라도 실행했는가 (동적 상한 확장용)
+        tap_count = 0
         fast_hits = 0
         bar_seen = False      # 이번 실행에서 막대/안전구간을 한 번이라도 검출했는가
         last_safes = None
@@ -487,6 +488,16 @@ class SmartDisarm:
 
             cx = self.pick_cursor(d["cursors"], prev_x, v_est, last_dt)
             if cx is None:
+                if tap_count >= 2:
+                    transition = self._wait_after_cursor_loss(img)
+                    if transition is True:
+                        return True
+                    if transition is False:
+                        samples.clear(); prev_x = None; v_est = 0.0; miss = 0
+                        continue
+                    if self.fallback:
+                        return self._do_fallback("2차 탭 후 커서 소실/화면 전환 미확정")
+                    return self._give_up("2차 탭 후 커서 소실/화면 전환 미확정", allow_fallback=False)
                 miss += 1                       # 모션블러 등으로 커서 누락 → 재측정
                 if miss > cfg.max_consecutive_miss:
                     return self._give_up("커서 연속 미검출")
@@ -576,7 +587,7 @@ class SmartDisarm:
             self.press(list(self.cfg.disarm_button))   # 타이밍 맞춰 고정 Disarm 버튼 탭
             p1 = self.now()
             self._update_press_latency(p1 - p0)
-            tapped = True
+            tap_count += 1
             shots_since_progress = 0
             fast_hits = 0
             # 탭 경험 발생 시 캡처 상한을 확장 (다중 자물쇠/재시도 여유)
@@ -801,6 +812,30 @@ class SmartDisarm:
         if self.fallback:
             return self._do_fallback("샘플 상한 초과")
         return self._give_up("샘플 상한 초과", allow_fallback=False)
+
+    def _wait_after_cursor_loss(self, first_img):
+        """2차 탭 뒤 소실은 전환일 수 있으므로 유한 시간 동안 상태를 다시 식별한다."""
+        deadline = self.now() + self.cfg.cursor_loss_wait
+        img = first_img
+        while True:
+            if img is not None:
+                if self.is_done and self.is_done(img):
+                    self.log.info(self._t("2차 탭 후 커서 소실 대기 중 개봉 종료 감지."))
+                    if self.audit: self.audit.on_result(self._t("종료(커서 소실 대기)"))
+                    self._audit_end_frame(img)
+                    return True
+                d = self.detect(img)
+                if (d and d["safes"]
+                        and self.pick_cursor(d["cursors"], None, 0.0,
+                                             self.cfg.capture_dt_prior) is not None):
+                    self.log.info(self._t("2차 탭 후 다음 커서 재감지. 상태를 다시 추정합니다."))
+                    return False
+
+            remaining = deadline - self.now()
+            if remaining <= 0:
+                return None
+            time.sleep(min(self.cfg.settle_extra_interval, remaining))
+            img = self.cap()
 
     def _frame_cursor(self, img, content_t, safes, d):
         """단일 프레임에서 신뢰 가능한 커서 x 추출. 반환 (x, 사유, 커서만불특정).
@@ -1068,11 +1103,29 @@ class SmartDisarm:
                 self._t("[audit] 게임 판정 기록 실패: {a}").format(a=e)
             )
 
+    def _audit_fallback_frame(self):
+        """폴백 직후의 최종 관측 프레임을 bounded retry 뒤 audit에 남긴다."""
+        if not self.audit:
+            return
+        last = None
+        for retry in range(self.cfg.settle_extra_checks + 1):
+            if retry:
+                time.sleep(self.cfg.settle_extra_interval)
+            img = self.cap()
+            if img is None:
+                continue
+            last = img
+            if not self.is_done or self.is_done(img):
+                break
+        if last is not None:
+            self._audit_end_frame(last)
+
     def _do_fallback(self, reason):
         self.log.info(self._t("폴백 실행({a}).").format(a=reason))
         if self.fallback:
             if self.audit: self.audit.on_result(self._t("폴백: ") + reason)
             self.fallback()
+            self._audit_fallback_frame()
             return True
         return self._give_up(reason + self._t(" (폴백 미설정)"))
 

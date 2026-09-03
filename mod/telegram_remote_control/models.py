@@ -10,6 +10,8 @@ from enum import Enum, IntEnum
 class RemoteCommand(str, Enum):
     START = "start"
     STOP = "stop"
+    REBOOT = "reboot"
+    QUEST = "quest"
     STATUS = "status"
     STAT = "stat"
     MENU = "menu"
@@ -87,6 +89,31 @@ class TelegramCommandPayload:
 
 
 @dataclass(frozen=True)
+class TelegramCallbackPayload:
+    data: str
+    callback_query_id: str
+    update_id: int
+    chat_id: str
+    received_at: datetime
+    service_generation: int
+
+
+@dataclass(frozen=True)
+class QuestTarget:
+    code: str
+    category: str
+    display_name: str
+
+
+@dataclass(frozen=True)
+class EmulatorRebootResult:
+    update_id: int
+    chat_id: str
+    service_generation: int
+    succeeded: bool
+
+
+@dataclass(frozen=True)
 class RemoteProgressPayload:
     run_id: str
     state: ControlState
@@ -123,6 +150,7 @@ class OutboundMessage:
     chat_id: str
     text: str
     priority: NotificationPriority
+    reply_markup: dict | None = None
 
 
 @dataclass(frozen=True)

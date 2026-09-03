@@ -2675,3 +2675,39 @@ msgstr "Integrated upstream 2.6.2's narrower random single-target fallback area.
 
 msgid "Use per-combat strategy reset only after understanding the in-game \"Repeat Previous Action\" behavior."
 msgstr "Use per-combat strategy reset only after understanding the in-game \"Repeat Previous Action\" behavior."
+
+msgid "选择可执行文件"
+msgstr "Select executable"
+
+msgid ""
+"警告: 设置的模拟器路径可能不正确.\n"
+"如果你遇到无法启动模拟器, 请尝试重新设置路径."
+msgstr ""
+"Warning: The selected emulator path may be incorrect.\n"
+"If the emulator does not start, select its executable again."
+
+msgid "由于触发了特殊对话, 使用了回调函数."
+msgstr "A special dialogue option was selected; running its callback."
+
+msgid "楼层错误."
+msgstr "Wrong dungeon floor detected."
+
+#, python-brace-format
+msgid ""
+"已完成{a}次沙人缘.\n"
+"用时{b:.2f}秒."
+msgstr ""
+"Completed Sandman bondmate {a} time(s).\n"
+"Elapsed: {b:.2f}s."
+
+msgid "Integrated upstream 2.7.1's Sandman bondmate quest and dungeon-floor validation."
+msgstr "Integrated upstream 2.7.1's Sandman bondmate quest and dungeon-floor validation."
+
+msgid "Sandman now performs its time leap only after all three bondmate encounters are complete."
+msgstr "Sandman now performs its time leap only after all three bondmate encounters are complete."
+
+msgid "Warns when an unsupported emulator executable is selected without blocking the saved setting."
+msgstr "Warns when an unsupported emulator executable is selected without blocking the saved setting."
+
+msgid "Removed the unused SciPy dependency while preserving the local smart-chest implementation and standard logging pipeline."
+msgstr "Removed the unused SciPy dependency while preserving the local smart-chest implementation and standard logging pipeline."

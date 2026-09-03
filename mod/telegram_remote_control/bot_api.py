@@ -104,7 +104,7 @@ class TelegramBotClient:
     def get_updates(self, offset: int | None, timeout: int = 25) -> list[dict]:
         payload: dict[str, Any] = {
             "timeout": int(timeout),
-            "allowed_updates": ["message"],
+            "allowed_updates": ["message", "callback_query"],
         }
         if offset is not None:
             payload["offset"] = int(offset)
@@ -119,15 +119,28 @@ class TelegramBotClient:
             raise TelegramProtocolError("Telegram getUpdates 응답 형식이 올바르지 않습니다.")
         return result
 
-    def send_message(self, chat_id: str, text: str) -> dict:
+    def send_message(self, chat_id: str, text: str, reply_markup: dict | None = None) -> dict:
+        payload: dict[str, Any] = {"chat_id": str(chat_id), "text": str(text)}
+        if reply_markup is not None:
+            payload["reply_markup"] = reply_markup
         result = self._call(
             "sendMessage",
-            {"chat_id": str(chat_id), "text": str(text)},
+            payload,
             timeout=SHORT_HTTP_TIMEOUT_SECONDS,
         )
         if not isinstance(result, dict):
             raise TelegramProtocolError("Telegram sendMessage 응답 형식이 올바르지 않습니다.")
         return result
+
+    def answer_callback_query(self, callback_query_id: str) -> bool:
+        result = self._call(
+            "answerCallbackQuery",
+            {"callback_query_id": str(callback_query_id)},
+            timeout=SHORT_HTTP_TIMEOUT_SECONDS,
+        )
+        if result is not True:
+            raise TelegramProtocolError("Telegram callback 응답 형식이 올바르지 않습니다.")
+        return True
 
     def _call(self, method: str, payload: dict[str, Any], *, timeout: int) -> Any:
         url = f"{BOT_API_ORIGIN}/bot{self._token}/{method}"
