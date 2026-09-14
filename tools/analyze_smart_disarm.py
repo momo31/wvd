@@ -9,19 +9,17 @@
 집계 항목:
   1. 호출 결과 분포(종료/중단 사유), 스턱 가드 발동, 무막대 즉시 반환 빈도
   2. 탭 적중률 - 신형식(정지 위치 기준)과 구형식(개선 전 기준) 분리, 이미지 라벨 대조,
-     게임 판정(ChallengeCheck) 성공률 + 차감 인식 내역 + 구식 환산(차감 인식 제외)
-  2b. 폭별 성적 - 목표구간 폭(pw*속도) 대역별 게임 판정 성공률, 협소 우회 폭 분포
-  3. 보정 궤적 - press EMA, 정지 리드 adj, 정지위치 오프셋 분포와 stop_time 조정 제안,
+     게임 기회 차감 확정 / 픽셀 차분 추정 / 무차감(판정 미확정) 분리
+  2b. 폭별 관측 - 구조화 로그의 실제 안전구간 폭별 차감/미확정 내역, 협소 우회 폭 분포
+  3. 보정 궤적 - press EMA, 정지 리드 adj, 정지위치 오프셋 분포,
      측정 커버리지(보정이 실제 작동한 탭 비율)와 생략 사유
   4. 캡처 성능 - 샘플 간격 dt, [cap] 소켓/서브프로세스 캡처 시간 (개선 전 기준선 0.806s)
-  5. 종료 프레임(_end.png) 인벤토리 - 실제 함정 발동 여부의 수동 라벨링 대상
+  5. 종료 프레임(_end.png) - 기존 템플릿으로 보상 문구 후보와 미확정 화면 분리
 
 개선 전 기준선(2026-07-01~02 실측): 탭 적중 27%(구 기준), 샘플 dt median 0.806s.
 
-게임 판정(ChallengeCheck) 정직 기준선: 07-19 58% → 07-28 41%.
-07-18 새벽의 '81%'는 smallgame_3 미스매치로 차감(4→3, 3→2) 실패를 세지 못하던
-시기의 과대 측정이다(26.07-28 로그를 같은 척도로 재환산하면 83%). 과거 세션과의
-비교는 반드시 '구식 환산(차감 인식 제외)' 지표끼리 한다.
+무차감은 성공 증거가 아니다. 2026-09-05 19:32:52의 마지막 기회 1→1 뒤
+독침 함정이 확인됐다. 과거 무차감 기반 성공률도 실제 성공률로 비교하지 않는다.
 """
 import os
 import re
@@ -45,7 +43,13 @@ RE_TAP_NEW = re.compile(r"\[audit\] 탭 #(\d+): 목표x=([\d.]+) 정지추정x=(
 RE_TAP_OLD = re.compile(r"\[audit\] 탭 #(\d+): 목표x=([\d.]+) 실제커서x=(\S+) 적중=(\S)")
 RE_TAPLOG  = re.compile(r"개봉 탭: 목표구간중심x=([\d.]+) margin=([\d.]+) pw=([\d.]+)s 속도=([\d.]+)px/s"
                         r"(?: press=([\d.]+)s)?(?: 리드=([\d.]+)s)?")
-RE_NARROW  = re.compile(r"안전구간 협소\((\d+(?:\.\d+)?)px <= (\d+(?:\.\d+)?)px\)")
+RE_METRIC  = re.compile(
+    r"\[smart_disarm_metrics\] tap=(\d+) center=([\d.]+) margin=([\d.]+) "
+    r"safe_width=([\d.]+) half_period=([\d.]+) sample_dt=([\d.]+) "
+    r"lag_comp=([\d.]+) speed=([\d.]+) press_wait=([\d.]+) "
+    r"press_rtt=([\d.]+) lead=([\d.]+)"
+)
+RE_NARROW  = re.compile(r"안전구간 협소\((\d+(?:\.\d+)?)px <=? (\d+(?:\.\d+)?)px\)")
 RE_OFFSET  = re.compile(r"정지위치 오프셋 ([+-]?\d+)px.*리드 보정 ([+-][\d.]+)s \(누적 ([+-][\d.]+)s\)")
 RE_SNAP    = re.compile(r"보정 상태: press EMA=(.+?), 정지리드=([\d.]+)s\(adj ([+-][\d.]+)\), "
                         r"grab_frac=([\d.]+), stop_time=([\d.]+)s")
@@ -54,9 +58,7 @@ RE_CAP_S   = re.compile(r"\[cap\] socket ([\d.]+)s")
 RE_CAP_P   = re.compile(r"\[cap\] subprocess ([\d.]+)s")
 RE_SKIP    = re.compile(r"\[측정\] (.+?)(?:→| -) 보정 생략")
 RE_CHANCE  = re.compile(r"기회 매칭 점수: (.+?) → 판독")
-# 게임 판정(ChallengeCheck) 기준 성공/실패 — audit 라벨(추정 기반)과 달리 실제 게임 결과.
-# 무차감 = 기회 N->N 인식 또는 sim 필터. 차감 인식(N->N-1)은 동반되는 '탭 실패' 로그로
-# 집계되므로 여기서 세지 않는다(이중 계상 방지).
+# 기회 차감만 실패를 확정한다. 무차감/유사도는 성공을 확정하지 못한다.
 RE_CC_NC   = re.compile(r"기회 인식 결과: 탭 전 (\d)회 -> 탭 후 (\d)회")
 RE_CC_SIM  = re.compile(r"자가 학습 필터링")
 RE_CC_FAIL = re.compile(r"\[ChallengeCheck\] 탭 실패")
@@ -66,7 +68,7 @@ COUNT_KEYS = [
     ("스마트 개봉 연속",                "연속 실패 가드 재시작"),
     ("구식 연타 방식으로 전환",          "구식 연타 강등 발동"),
     ("개봉 가능한 캐릭터가 없습니다",     "전원 공포로 상자 포기"),
-    ("막대 미검출(비게임 화면 추정)",     "무막대 즉시 반환"),
+    ("스마트 개봉 중단: 막대 미검출(비게임 화면 추정)", "무막대 즉시 반환"),
     ("추정 검증 실패(4점 fold",         "4점 검증으로 추정 폐기"),
     # 무측정 실패 보정 (26.07-16 개선: 고정 +0.05 → 조건·부호·크기 3중 제한)
     ("리드 보정치를 강제 상향",          "무측정 실패 보정 +0.05 (구형식)"),
@@ -99,16 +101,19 @@ def q(vals, p):
 def parse_logs(log_dir):
     data = dict(results=[], taps_new=[], taps_old=[], taplogs=[], offsets=[],
                 snaps=[], press=[], cap_s=[], cap_p=[], dts=[], skips={},
-                chance_scores={}, cc=dict(ok=0, fail=0, ded={}, hours={}),
+                chance_scores={}, cc=dict(unchanged=0, fail=0, ded={}),
                 counts={label: 0 for _, label in COUNT_KEYS},
                 narrow=[], tap_widths=[])
     files = sorted(glob.glob(os.path.join(log_dir, "log_*.txt")))
     cur_tag, prev_t, last_speed = None, None, None
-    # pending: 직전 '개봉 탭'의 목표구간 폭(pw*속도, px). 다음 게임 판정(무차감/sim/탭 실패)
-    # 이 나오면 그 폭에 성적을 귀속시킨다. 차감 인식 라인(N->N-1)은 판정 확정이 아니라
-    # 뒤따르는 '탭 실패' 라인이 확정이므로(이중 계상 방지와 동일 규약) pending 을 유지한다.
+    # pending: 직전 구조화 로그의 실제 안전구간 폭. 다음 게임 판정(무차감/sim/탭 실패)이
+    # 나오면 그 폭에 성적을 귀속시킨다. 구형 로그의 pw*속도는 목표까지 이동거리이므로
+    # 안전폭으로 간주하지 않는다.
     pending = None
+    legacy_tap_pending = False
     for lf in files:
+        cur_tag, prev_t, last_speed = None, None, None
+        legacy_tap_pending = False
         try:
             fh = open(lf, encoding="utf-8", errors="replace")
         except OSError:
@@ -122,7 +127,11 @@ def parse_logs(log_dir):
                         data["counts"][label] += 1
                 m = RE_START.search(line)
                 if m:
-                    cur_tag, prev_t = m.group(1), None
+                    if pending is not None:
+                        data["tap_widths"].append(dict(w=pending, outcome=None))
+                    pending = None
+                    cur_tag, prev_t, last_speed = m.group(1), None, None
+                    legacy_tap_pending = False
                     continue
                 m = RE_SAMPLE.search(line)
                 if m:
@@ -136,12 +145,34 @@ def parse_logs(log_dir):
                     rec = dict(center=float(m.group(1)), pw=float(m.group(3)),
                                speed=float(m.group(4)),
                                press=(float(m.group(5)) if m.group(5) else None),
-                               lead=(float(m.group(6)) if m.group(6) else None))
+                               lead=(float(m.group(6)) if m.group(6) else None),
+                               safe_width=None, half_period=None, sample_dt=None,
+                               lag_comp=None)
                     data["taplogs"].append(rec)
                     last_speed = rec["speed"]
                     if pending is not None:
                         data["tap_widths"].append(dict(w=pending, outcome=None))
-                    pending = rec["pw"] * rec["speed"]
+                    pending = None
+                    legacy_tap_pending = True
+                    continue
+                m = RE_METRIC.search(line)
+                if m:
+                    rec = dict(
+                        center=float(m.group(2)), margin=float(m.group(3)),
+                        safe_width=float(m.group(4)), half_period=float(m.group(5)),
+                        sample_dt=float(m.group(6)), lag_comp=float(m.group(7)),
+                        speed=float(m.group(8)), pw=float(m.group(9)),
+                        press=float(m.group(10)), lead=float(m.group(11)),
+                    )
+                    if legacy_tap_pending and data["taplogs"]:
+                        data["taplogs"][-1].update(rec)
+                    else:
+                        if pending is not None:
+                            data["tap_widths"].append(dict(w=pending, outcome=None))
+                        data["taplogs"].append(rec)
+                    last_speed = rec["speed"]
+                    pending = rec["safe_width"]
+                    legacy_tap_pending = False
                     continue
                 m = RE_NARROW.search(line)
                 if m:
@@ -196,19 +227,17 @@ def parse_logs(log_dir):
                     continue
                 m = RE_CC_NC.search(line)
                 if m or RE_CC_SIM.search(line) or RE_CC_FAIL.search(line):
-                    hr = data["cc"]["hours"].setdefault(line[11:13], [0, 0])
                     outcome = None
                     if RE_CC_FAIL.search(line):
                         data["cc"]["fail"] += 1
-                        hr[1] += 1
-                        outcome = "fail"
+                        outcome = "inferred_fail"
                     elif m is None or m.group(1) == m.group(2):
-                        data["cc"]["ok"] += 1
-                        hr[0] += 1
-                        outcome = "ok"
-                    else:
+                        data["cc"]["unchanged"] += 1
+                        outcome = "unchanged"
+                    elif int(m.group(2)) < int(m.group(1)):
                         k = "{}->{}".format(m.group(1), m.group(2))
                         data["cc"]["ded"][k] = data["cc"]["ded"].get(k, 0) + 1
+                        outcome = "fail"
                     if outcome and pending is not None:
                         data["tap_widths"].append(dict(w=pending, outcome=outcome))
                         pending = None
@@ -221,27 +250,108 @@ def parse_logs(log_dir):
                         data["tap_widths"].append(dict(w=pending, outcome=None))
                         pending = None
                     cur_tag, prev_t = None, None
+                    legacy_tap_pending = False
+        if pending is not None:
+            data["tap_widths"].append(dict(w=pending, outcome=None))
+            pending = None
     return data
 
 
+def _gray(cv2, image):
+    if image is None or len(image.shape) == 2:
+        return image
+    code = cv2.COLOR_BGRA2GRAY if image.shape[2] == 4 else cv2.COLOR_BGR2GRAY
+    return cv2.cvtColor(image, code)
+
+
+def _match_score(cv2, image, template):
+    if image is None or template is None:
+        return -1.0
+    ih, iw = image.shape[:2]
+    th, tw = template.shape[:2]
+    if not ih or not iw or th > ih or tw > iw:
+        return -1.0
+    return float(cv2.minMaxLoc(cv2.matchTemplate(
+        image, template, cv2.TM_CCOEFF_NORMED
+    ))[1])
+
+
+def classify_end_frame(img, receive_template, dialogue_template, cv2, chest_templates):
+    """Return a reward candidate; absence of reward text never proves a trap."""
+    gray = _gray(cv2, img)
+    receive = _gray(cv2, receive_template)
+    dialogue = _gray(cv2, dialogue_template)
+    if gray is None or gray.shape[0] < 1500 or gray.shape[1] < 850:
+        return "unknown"
+    if len(chest_templates) != 3 or any(template is None for template in chest_templates):
+        return "unknown"
+    if any(_match_score(cv2, gray, _gray(cv2, template)) >= 0.8
+           for template in chest_templates):
+        return "unknown"
+    if _match_score(cv2, gray[1400:1600, 750:900], dialogue) < 0.95:
+        return "unknown"
+
+    reward_roi = gray[1180:1340, 40:400]
+    reward_score = max(
+        _match_score(
+            cv2,
+            reward_roi,
+            cv2.resize(receive, None, fx=scale, fy=scale,
+                       interpolation=cv2.INTER_CUBIC),
+        )
+        for scale in (1.15, 1.20)
+    ) if receive is not None else -1.0
+    if reward_score >= 0.60:
+        return "reward_candidate"
+    return "unknown"
+
+
 def analyze_images(img_dir):
-    labels = {"hit": 0, "miss": 0, "unk": 0}
+    labels = {
+        "game_hit": 0, "game_miss": 0,
+        "model_hit": 0, "model_miss": 0,
+        "legacy_hit": 0, "legacy_miss": 0,
+        "unk": 0,
+    }
     errs = []
     end_frames = []
+    end_outcomes = {}
     try:
         import cv2
         import numpy as np
     except ImportError:
         cv2 = None
+    receive_template = dialogue_template = None
+    chest_templates = []
+    if cv2 is not None:
+        receive_template = cv2.imread(os.path.join(
+            REPO_ROOT, "resources", "images", "FFXI", "receive.png"
+        ), cv2.IMREAD_UNCHANGED)
+        dialogue_template = cv2.imread(os.path.join(
+            REPO_ROOT, "resources", "images", "dialogueNext.png"
+        ), cv2.IMREAD_UNCHANGED)
+        chest_templates = [cv2.imread(os.path.join(
+            REPO_ROOT, "resources", "images", name + ".png"
+        )) for name in ("chestFlag", "whowillopenit", "chestOpening")]
     for f in sorted(glob.glob(os.path.join(img_dir, "disarm_*.png"))):
         base = os.path.basename(f)
         if base.endswith("_end.png"):
             end_frames.append(base)
+            m = re.match(r"disarm_(\d+_\d+)_end\.png", base)
+            if m and cv2 is not None:
+                end_outcomes[m.group(1)] = classify_end_frame(
+                    cv2.imread(f), receive_template, dialogue_template, cv2, chest_templates
+                )
             continue
-        m = re.match(r"disarm_\d+_\d+_(\d+)_(hit|miss|unk)\.png", base)
+        m = re.match(
+            r"disarm_\d+_\d+_(\d+)_"
+            r"(game_hit|game_miss|model_hit|model_miss|hit|miss|unk)\.png",
+            base,
+        )
         if not m:
             continue
-        labels[m.group(2)] += 1
+        label = m.group(2)
+        labels[{"hit": "legacy_hit", "miss": "legacy_miss"}.get(label, label)] += 1
         if cv2 is None:
             continue
         img = cv2.imread(f)
@@ -264,7 +374,7 @@ def analyze_images(img_dir):
             judged = full_cols((b < 60) & (g > 200) & (r < 60))         # 초록: 적중 판정선
         if center is not None and judged is not None:
             errs.append(abs(judged - center))
-    return labels, errs, end_frames
+    return labels, errs, end_frames, end_outcomes
 
 
 def main():
@@ -274,12 +384,11 @@ def main():
     args = ap.parse_args()
 
     d = parse_logs(args.logs)
-    labels, errs, ends = analyze_images(args.img)
+    labels, errs, ends, end_outcomes = analyze_images(args.img)
 
     print("=" * 62)
     print("스마트 개봉 audit 평가  (기준선: 적중 27%, dt 0.806s)")
-    print("게임 판정 정직 기준선: 07-19 58% / 07-28 41%")
-    print("('81%'는 차감 인식 불능기의 과대 측정 - 과거 비교는 구식 환산 지표로만)")
+    print("무차감/추정 라벨은 실제 성공률이 아님. 최종 결과 확인이 필요합니다.")
     print("=" * 62)
 
     print("\n[1] 호출 결과")
@@ -297,7 +406,7 @@ def main():
             print(f"  {label}: {v}회")
 
     print("\n[2] 탭 적중률")
-    for name, taps in (("신형식(정지 위치 기준)", d["taps_new"]),
+    for name, taps in (("정지 모델 추정(실제 성공 아님)", d["taps_new"]),
                        ("구형식(개선 전 기록)", d["taps_old"])):
         if taps:
             o = sum(1 for t in taps if t["hit"] == "O")
@@ -310,10 +419,17 @@ def main():
             print(f"  {name}: 데이터 없음")
     total_img = sum(labels.values())
     if total_img:
-        judged = labels["hit"] + labels["miss"]
-        rate = (100.0 * labels["hit"] / judged) if judged else float("nan")
-        print(f"  이미지 라벨: hit {labels['hit']} / miss {labels['miss']} / unk {labels['unk']}"
-              f"  적중 {rate:.0f}%")
+        for name, hit_key, miss_key in (
+            ("게임 확정 이미지", "game_hit", "game_miss"),
+            ("모델 추정 이미지", "model_hit", "model_miss"),
+            ("구형 혼합 이미지", "legacy_hit", "legacy_miss"),
+        ):
+            judged = labels[hit_key] + labels[miss_key]
+            if judged:
+                print(f"  {name}: hit {labels[hit_key]} / miss {labels[miss_key]}"
+                      f"  적중 {100.0 * labels[hit_key] / judged:.0f}%")
+        if labels["unk"]:
+            print(f"  판정 근거 없는 이미지: {labels['unk']}장")
     if errs:
         print(f"  이미지 |판정선-목표| 오차: median {q(errs,0.5):.0f}px"
               f" (p25 {q(errs,0.25):.0f} / p75 {q(errs,0.75):.0f}, n={len(errs)})")
@@ -325,42 +441,36 @@ def main():
                 parts.append(f"{k}: med {q(vs,0.5):.2f} max {max(vs):.2f} (n={len(vs)})")
         print("  기회 템플릿 매칭 최고점(문턱 0.85): " + " | ".join(parts))
     cc = d["cc"]
-    cc_total = cc["ok"] + cc["fail"]
+    cc_total = cc["unchanged"] + cc["fail"] + sum(cc["ded"].values())
     if cc_total:
-        print(f"  게임 판정(ChallengeCheck) 기준: 성공 {cc['ok']} / 실패 {cc['fail']}"
-              f"  성공률 {100.0 * cc['ok'] / cc_total:.0f}%")
-        parts = [f"{hh}시 {100 * o // (o + x)}%({o}/{x})"
-                 for hh, (o, x) in sorted(cc["hours"].items()) if o + x]
-        print("  시간대별: " + " ".join(parts))
         ded_n = sum(cc["ded"].values())
+        print(f"  기회 차감 확정 {ded_n} / 픽셀 차분 추정 실패 {max(0, cc['fail'] - ded_n)}"
+              f" / 무차감(미확정) {cc['unchanged']}")
         if ded_n:
             parts = " ".join(f"{k} {v}건" for k, v in sorted(cc["ded"].items(), reverse=True))
             print(f"  차감 인식: {ded_n}건 ({parts})")
-        # 구식 환산: smallgame_3 미스매치로 차감을 못 세던 시절(<= 07-18 새벽 '81%')과
-        # 같은 척도. 실패에서 차감 인식분을 제외해 당시 계측을 재현한다.
-        legacy_fail = max(0, cc["fail"] - ded_n)
-        legacy_total = cc["ok"] + legacy_fail
-        if legacy_total:
-            print(f"  구식 환산(차감 인식 제외): 성공 {cc['ok']} / 실패 {legacy_fail}"
-                  f"  성공률 {100.0 * cc['ok'] / legacy_total:.0f}%"
-                  f"  <- 07-18 이전 세션('81%')과 비교는 이 값으로")
 
     tw = [t for t in d["tap_widths"] if t["outcome"]]
     if tw or d["narrow"]:
-        print("\n[2b] 폭별 성적(게임 판정, 목표구간 폭=pw*속도)")
+        print("\n[2b] 실제 안전구간 폭별 성적(게임 판정)")
     if tw:
-        bands = [(0, 134), (134, 160), (160, 220), (220, 400), (400, float("inf"))]
+        bands = [
+            (0, 50), (50, 75), (75, 100), (100, 134),
+            (134, 160), (160, 220), (220, float("inf")),
+        ]
         for lo, hi in bands:
             grp = [t for t in tw if lo <= t["w"] < hi]
             if not grp:
                 continue
-            okn = sum(1 for t in grp if t["outcome"] == "ok")
+            failed = sum(1 for t in grp if t["outcome"] == "fail")
             label = f"{lo:.0f}~{hi:.0f}px" if hi != float("inf") else f"{lo:.0f}px+"
-            print(f"  {label}: 판정 {len(grp)}건  성공률 {100.0 * okn / len(grp):.0f}%"
-                  f" (성공 {okn} / 실패 {len(grp) - okn})")
+            print(f"  {label}: 관측 {len(grp)}건 / 차감 확정 {failed} / "
+                  f"그 외 미확정 {len(grp) - failed}")
         unj = len(d["tap_widths"]) - len(tw)
         if unj:
             print(f"  판정 미연결 탭: {unj}건 (탭 후 판정 라인 없이 종료)")
+    elif d["narrow"]:
+        print("  스마트 조준 표본: 구조화 로그 없음(다음 실행부터 수집)")
     if d["narrow"]:
         nv = d["narrow"]
         print(f"  협소 우회(폴백행, 판정 표본 제외): {len(nv)}건"
@@ -372,10 +482,8 @@ def main():
         s0, s1 = d["snaps"][0], d["snaps"][-1]
         print(f"  보정 스냅숏 {len(d['snaps'])}건: press EMA {s0['ema']} -> {s1['ema']},"
               f" 리드 {s0['lead']:.3f}s(adj {s0['adj']:+.3f}) -> {s1['lead']:.3f}s(adj {s1['adj']:+.3f})")
-        stop_time = s1["stop_time"]
     else:
         print("  보정 스냅숏: 데이터 없음(다음 세션에서 수집)")
-        stop_time = None
     if d["press"]:
         print(f"  press EMA 최종 {d['press'][-1]:.3f}s (표본 {len(d['press'])}건)")
     if d["offsets"]:
@@ -386,9 +494,6 @@ def main():
         if lag:
             ml = q(lag, 0.5)
             print(f"  시간 환산 지연: median {ml:+.3f}s")
-            if stop_time is not None and abs(ml) > 0.05 and len(lag) >= 5:
-                print(f"  제안: stop_time {stop_time:.2f} -> {stop_time + 2*ml:.2f}s"
-                      f" (오프셋 중앙값이 0.05s 초과)")
         adj_last = d["offsets"][-1]["adj"]
         if abs(adj_last) >= 0.30:
             print(f"  주의: 리드 누적 보정 {adj_last:+.3f}s가 상한(0.35s) 부근. stop_time 재설정 필요.")
@@ -414,11 +519,30 @@ def main():
     if d["cap_p"]:
         print(f"  서브프로세스 폴백: median {q(d['cap_p'],0.5):.3f}s (n={len(d['cap_p'])})")
 
-    print("\n[5] 종료 프레임(실제 함정 발동 여부 수동 라벨링 대상)")
+    print("\n[5] 종료 프레임 최종 결과")
     if ends:
-        print(f"  {len(ends)}장 저장됨. 최근 5장:")
-        for f in ends[-5:]:
-            print(f"    {f}")
+        outcome_counts = {name: 0 for name in ("reward_candidate", "unknown")}
+        for outcome in end_outcomes.values():
+            outcome_counts[outcome] += 1
+        print(f"  보상 문구 후보 {outcome_counts['reward_candidate']} / "
+              f"미확정 {len(ends) - outcome_counts['reward_candidate']}")
+
+        result_by_tag = {r["tag"]: r["result"] for r in d["results"]}
+        by_reason = {}
+        for tag, outcome in end_outcomes.items():
+            reason = result_by_tag.get(tag, "연결 로그 없음")
+            counts = by_reason.setdefault(reason, {name: 0 for name in outcome_counts})
+            counts[outcome] += 1
+        for reason, counts in sorted(
+                by_reason.items(), key=lambda item: -sum(item[1].values())):
+            print(f"  {reason}: 보상 문구 후보 {counts['reward_candidate']} / "
+                  f"미확정 {counts['unknown']}")
+
+        unknown = [f for f in ends if end_outcomes.get(f[7:-8], "unknown") == "unknown"]
+        if unknown:
+            print("  최근 미확정 프레임:")
+            for f in unknown[-5:]:
+                print(f"    {f}")
     else:
         print("  없음(다음 세션에서 수집)")
     print()

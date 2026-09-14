@@ -1,4 +1,16 @@
 **新版本!**
+==Unreleased==
+Routine guild requests now dismiss Arna's blocking invitation, while quest-specific choices stay intact; an unresponsive choice stops after three attempts.
+Recovery now waits for startup/loading screens to clear before retrying the interrupted operation, and stops after five minutes instead of repeatedly restarting during loading.
+Server maintenance notices in Korean now stop automation with a clear reason before any fallback taps or recovery retries, preventing repeated game and emulator restarts during maintenance.
+Party reassembly now dismisses Arna's blocking "I can't." guild choice, preventing the repeated PartyManagementTitle recovery loop during pickaxe refill.
+Smart chest retries reuse the latest completion-check frame with its original capture time, avoiding one redundant screenshot without relaxing aiming checks.
+Smart chest aiming now reads the fixed gauge interior, preventing bright chest scenery from becoming a target or changing cursor reflection bounds.
+Reflection estimates must fit all four sampled positions before aiming.
+Smart chest timing includes the return pass through a safe zone after reflection, avoiding unnecessary waits for a later crossing.
+The chest-aware completion check takes precedence on entry, even when reward scenery resembles the timing gauge.
+Unchanged remaining chances no longer confirm success; audit output separates model estimates, chance deductions, and unconfirmed results.
+
 ==v2.7.1-momo.1==
 Integrated upstream 2.7.1's Sandman bondmate quest and dungeon-floor validation.
 Sandman now performs its time leap only after all three bondmate encounters are complete.

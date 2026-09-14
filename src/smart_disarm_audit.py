@@ -10,7 +10,8 @@ smart_disarm.py 는 이 모듈을 선택적으로 import 하므로, 파일이 �
 - C. 샘플별 debug 로그: 매 측정 t/x/속도/방향, 추정값 (logger, debug)
 
 [저장 위치]
-- 오버레이 이미지(B): audit/smart_disarm/disarm_<tag>_<tap>_<hit|miss>.png  (프로젝트 루트 기준)
+- 오버레이 이미지(B): audit/smart_disarm/disarm_<tag>_<tap>_<source>_<hit|miss>.png
+  source=model은 정지위치 추정, source=game은 기회 차감으로 확인한 판정이다.
 - 요약/샘플 로그(A,C): 기존 logger 경유 -> logs/log_*.txt + GUI 로그창
 """
 import os
@@ -108,7 +109,7 @@ class SmartDisarmAuditor:
             return
         hit = bool(hit)
         self._game_outcomes[self.tap_count] = hit
-        label = "hit" if hit else "miss"
+        label = "game_hit" if hit else "game_miss"
         self.log.info(
             self._t("[audit] 탭 #{a}: 게임 판정={b}, 감사 라벨={c} 확정")
             .format(a=self.tap_count, b=("성공" if hit else "실패"), c=label)
@@ -163,7 +164,7 @@ class SmartDisarmAuditor:
             if backcast_x is not None:                              # 정지위치 추정(적중 초록/빗나감 빨강)
                 cv2.line(vis, (int(backcast_x), 0), (int(backcast_x), 179),
                          (0, 255, 0) if hit else (0, 0, 255), 2)
-            lab = "unk" if hit is None else ("hit" if hit else "miss")
+            lab = "unk" if hit is None else ("model_hit" if hit else "model_miss")
             name = f"disarm_{self.tag}_{self.tap_count}_{lab}.png"
             path = os.path.join(self.out_dir, name)
             if cv2.imwrite(path, vis):

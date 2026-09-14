@@ -112,6 +112,7 @@ class DisarmConfig:
     margin_speed_k = 0.0       # 속도 의존 가산: margin += k*v*Δt (빠른게임 여유). 0=비활성
     margin_min = 4.0           # 최소 margin(px)
     # --- 커서 검출 필터 (거짓양성 방어) ---
+    bar_roi = (16, 60, 881, 56)  # 900x1600 고정 UI: 게이지 안쪽만 읽고 반사 경계는 유지한다.
     cursor_w_min = 6
     cursor_w_max = 22
     white_thr = 165            # 흰 커서 min(R,G,B) 임계 (실측: 150~215에서 둔감)
@@ -128,11 +129,8 @@ class DisarmConfig:
     nobar_max_miss = 2         # 막대를 한 번도 못 본 상태의 미검출 허용. 초과 시 비게임 화면으로 보고 즉시 반환.
     bypass_fast_game = False   # [옵션] 빠른(어려운) 게임은 폴백으로 우회 (사용자 선택)
     fast_game_k = 2.5          # 반주기 < fast_game_k*Δt 이면 '빠른 게임'으로 판정
-    fast_game_min_half = 0.8   # 빠른 게임 판정 절대값 하한(s). 반주기가 이 값 이상이면 빠른 게임 아님.
-    fast_game_min_safe_width = 100  # 안전구간 크기 하한(px). 이 값 이하이면 빠른게임(고난도) 판정.
-                                    # 26.07-18 실측(상자 178개): 폭 134~160 구간도 재조준 포함
-                                    # 상자 성공률 83%(연타 폴백 기대치 ~50%)라 134→100 하향.
-                                    # 100 미만은 표본 미확보 — 실측 쌓이면 추가 하향 재평가.
+    fast_game_min_half = 0.8   # 검출/판정 수정 후 실측으로 재평가할 기존 우회 기준.
+    fast_game_min_safe_width = 100
     fast_game_fail_limit = 3   # 빠른게임 판정/실패가 이만큼 누적되면 폴백 트리거
     settle_after_tap = 0.5     # 탭 후 결과 안정 대기(s)
     settle_extra_checks = 2    # settle_after_tap 후 종료 미감지 시 추가 종료 체크 횟수
@@ -201,38 +199,34 @@ class SmartDisarm:
     def detect(self, img):
         """막대 영역/커서 후보/안전구간 검출. 실패 시 None.
         반환: dict(bar=(x0,x1), y=(y0,y1), cursors=[(x,w)], safes=[(a,b)])"""
-        if img is None:
+        x0, y0, width, height = self.cfg.bar_roi
+        if (img is None or img.ndim != 3 or img.shape[2] != 3
+                or img.shape[0] < y0 + height or img.shape[1] < x0 + width):
             return None
-        region = img[0:180]
+        # 상자 배경/불꽃도 빨강·노랑이다. 전체 상단에서 색 띠를 찾으면 배경이
+        # 안전구간으로 섞이고, 어두운 막대 양끝이 잘려 반사 속도까지 틀어진다.
+        region = img[y0:y0 + height, x0:x0 + width]
         b = region[:, :, 0].astype(np.int16)
         g = region[:, :, 1].astype(np.int16)
         r = region[:, :, 2].astype(np.int16)
         # 막대(빨강/노랑 계열) 픽셀: R 우세
         barmask = (r > 100) & (r > b + 30)
-        rows = barmask.sum(axis=1)
-        if rows.max() == 0:
-            return None
-        ys = np.where(rows > rows.max() * 0.35)[0]
-        # 막대 본체 = 가장 두꺼운 연속 띠. (아래쪽 빨강 체력바/하단 UI 를 분리)
-        bands = self._clusters(ys, gap=4, as_center=False)
-        y0, y1 = max(bands, key=lambda ab: ab[1] - ab[0])
-        y0, y1 = int(y0), int(y1)
-        cols_bar = np.where(barmask[y0:y1 + 1].sum(axis=0) > (y1 - y0 + 1) * 0.3)[0]
+        cols_bar = np.where(barmask.sum(axis=0) > height * 0.3)[0]
         if len(cols_bar) < 10:
             return None
-        bar_x0, bar_x1 = int(cols_bar.min()), int(cols_bar.max())
-        barh = y1 - y0 + 1
 
         mn = np.minimum(np.minimum(b, g), r)
-        white = (mn > self.cfg.white_thr)[y0:y1 + 1]
-        yellow = ((r > 150) & (g > 110) & (b < 130))[y0:y1 + 1]
+        white = mn > self.cfg.white_thr
+        yellow = (r > 150) & (g > 110) & (b < 130)
         wc = white.sum(axis=0)
         yc = yellow.sum(axis=0)
 
-        cursors = self._clusters(np.where(wc > barh * 0.30)[0], gap=12, as_center=True)
-        safes_raw = self._clusters(np.where(yc > barh * 0.40)[0], gap=20, as_center=False)
-        safes = [(a, b2) for (a, b2) in safes_raw if (b2 - a) >= 25]  # 너무 좁은 노이즈 제외
-        return {"bar": (bar_x0, bar_x1), "y": (y0, y1), "cursors": cursors, "safes": safes}
+        cursors = [(x + x0, w) for x, w in self._clusters(
+            np.where(wc > height * 0.30)[0], gap=12, as_center=True)]
+        safes_raw = self._clusters(np.where(yc > height * 0.40)[0], gap=20, as_center=False)
+        safes = [(a + x0, b2 + x0) for (a, b2) in safes_raw if (b2 - a) >= 25]
+        return {"bar": (x0, x0 + width - 1), "y": (y0, y0 + height - 1),
+                "cursors": cursors, "safes": safes}
 
     @staticmethod
     def _clusters(idx, gap, as_center):
@@ -350,11 +344,15 @@ class SmartDisarm:
 
     def _est_consistent(self, est, samples, xmin, xmax):
         """dt가 반주기에 근접하면 3점 외삽이 앨리어싱으로 오염될 수 있다.
-        직전(4번째) 샘플을 fold 역예측해 잔차가 크면 추정을 폐기한다."""
-        t_prev, x_prev = samples[-4]
-        dt_back = t_prev - samples[-1][0]
-        pred, _d = self._propagate(est["x"], est["speed"], est["dir"], dt_back, xmin, xmax)
-        return abs(pred - x_prev) <= self.cfg.est_verify_tol
+        최근 4점 전체를 fold 역예측해 잔차가 크면 추정을 폐기한다."""
+        # 반전 공식은 양끝 두 표본만 맞출 수 있다. 가장 오래된 점뿐 아니라
+        # 중간점도 확인해야 잘못된 반전 속도가 우연히 검증을 통과하지 않는다.
+        return all(
+            abs(self._propagate(est["x"], est["speed"], est["dir"],
+                                t - samples[-1][0], xmin, xmax)[0] - x)
+            <= self.cfg.est_verify_tol
+            for t, x in samples[-4:-1]
+        )
 
     def reach_time(self, x, v, d, c, xmin, xmax):
         """현재(x,방향d,속도v)에서 목표 c 도달까지 시간. 끝점 반전 고려(전역 예측)."""
@@ -365,30 +363,28 @@ class SmartDisarm:
 
     def plan_tap(self, est, safes, xmin, xmax, dt, min_reach=0.0):
         """실행 가능한(reach >= min_reach) 후보 중 가장 이른 도달을 선택.
-        정지 리드 때문에 가까운 교차가 실행 불가면 다음 주기 후보까지 본다.
+        실행 가능 시점으로 먼저 이동해 반사 뒤 돌아오는 교차도 놓치지 않는다.
         반환: 목표·margin·reach 또는 None."""
         x, v, d = est["x"], est["speed"], est["dir"]
-        period = 2.0 * (xmax - xmin) / v
+        x, d = self._propagate(x, v, d, min_reach, xmin, xmax)
         best = None
-        for k in (0, 1):
-            for (a, b) in safes:
-                c = (a + b) / 2
-                half = (b - a) / 2
-                margin = max(self.cfg.margin_min, half * self.cfg.margin_ratio
-                             + self.cfg.margin_speed_k * v * dt)
-                tt = self.reach_time(x, v, d, c, xmin, xmax) + k * period
-                if tt < min_reach or tt > min_reach + self.cfg.pw_thresh:
-                    continue
-                if best is None or tt < best["reach"]:
-                    best = {"reach": tt, "center": c, "half": half, "margin": margin}
-            if best is not None:
-                break
+        for (a, b) in safes:
+            c = (a + b) / 2
+            half = (b - a) / 2
+            margin = max(self.cfg.margin_min, half * self.cfg.margin_ratio
+                         + self.cfg.margin_speed_k * v * dt)
+            tt = min_reach + self.reach_time(x, v, d, c, xmin, xmax)
+            if tt > min_reach + self.cfg.pw_thresh:
+                continue
+            if best is None or tt < best["reach"]:
+                best = {"reach": tt, "center": c, "half": half, "margin": margin}
         return best
 
     # ===================== 메인 루프 =====================
     def run(self):
         cfg = self.cfg
         samples = []          # [(t, x)] 검출 성공만
+        pending_capture = None  # 추가 종료 확인의 마지막 프레임을 다음 표본으로 한 번만 사용
         prev_x = None
         img_before = None     # 탭 전 도전 횟수 영역 캡처 본 보관용
         v_est = 0.0
@@ -417,9 +413,14 @@ class SmartDisarm:
 
         sample_limit = cfg.max_total_samples
         while shots < sample_limit:
-            t0 = self.now()
-            img = self.cap()
-            t1 = self.now()
+            if pending_capture is None:
+                t0 = self.now()
+                img = self.cap()
+                t1 = self.now()
+            else:
+                t0, img, t1 = pending_capture
+                pending_capture = None
+                self.log.debug("[smart_disarm_capture] reuse=settle capture_dt=%.3f", t1 - t0)
             # 프레임 취득은 캡처 시간창의 중후반(프로세스 기동 후, 전송 전)에 일어난다.
             # 종료 시각을 그대로 쓰면 측정 시각이 계통적으로 늦어져 탭이 통째로 늦는다.
             t = t0 + cfg.capture_grab_frac * (t1 - t0)
@@ -433,8 +434,9 @@ class SmartDisarm:
                 continue
 
             d = self.detect(img)
-            # 게임 종료 판정: 첫 캡처(오호출 즉시 반환) 시점에 막대가 보이지 않으면서(비게임 화면) is_done인 경우에만 즉시 종료
-            if shots == 1 and (not d or len(d["safes"]) == 0) and self.is_done and self.is_done(img):
+            # 첫 프레임은 상자 표식을 우선하는 종료 판정을 신뢰한다. 보상 화면의
+            # 노란 배경도 안전구간처럼 보일 수 있어 색 검출로 이 판정을 막으면 안 된다.
+            if shots == 1 and self.is_done and self.is_done(img):
                 self.log.info(self._t("개봉 완료/화면 전환 감지. 종료."))
                 if self.audit:
                     self.audit.on_result(self._t("종료(즉시)"))
@@ -559,7 +561,7 @@ class SmartDisarm:
 
             # 판정은 '정지 위치' 기준: 주입 후에도 커서가 v*stop_time/2 만큼 미끄러지므로
             # 그만큼(정지 리드) 이르게 탭해야 한다. 리드 때문에 실행 불가해진 가까운 후보는
-            # plan_tap 이 걸러내고 다음 주기 후보로 대체한다.
+            # plan_tap 이 건너뛰고 반사까지 고려한 다음 교차로 대체한다.
             elapsed_now = self.now() - t
             # 캡처 주기 지터 연동 동적 렉 보상 (Lag Compensation)
             # 캡처 간격(last_dt)이 느려진 만큼 탭 주입 지연도 늘어난다고 판단하여 리드를 선제적으로 당김
@@ -595,6 +597,23 @@ class SmartDisarm:
             self.log.info(self._t("개봉 탭: 목표구간중심x={a:.0f} margin={b:.0f} pw={c:.3f}s 속도={d:.0f}px/s press={e:.3f}s 리드={f:.3f}s")
                           .format(a=plan["center"], b=plan["margin"], c=press_wait, d=est["speed"],
                                   e=p1 - p0, f=self._stop_lead()))
+            # 로케일과 무관한 audit 입력. 사람이 읽는 위 로그는 유지하고 분석기는 이 줄을 우선한다.
+            self.log.debug(
+                "[smart_disarm_metrics] tap=%d center=%.0f margin=%.0f safe_width=%.0f "
+                "half_period=%.3f sample_dt=%.3f lag_comp=%.3f speed=%.0f "
+                "press_wait=%.3f press_rtt=%.3f lead=%.3f",
+                tap_count,
+                plan["center"],
+                plan["margin"],
+                plan["half"] * 2.0,
+                half_period,
+                last_dt,
+                lag_comp,
+                est["speed"],
+                press_wait,
+                p1 - p0,
+                self._stop_lead(),
+            )
 
             # 탭 직후 전프레임: 정지위치 실측/역산 + audit + 조기 종료판정 겸용
             aimg = None
@@ -688,8 +707,9 @@ class SmartDisarm:
                         if after_chance < before_chance:
                             is_failed = True
                             game_outcome = False
-                        elif after_chance == before_chance:
-                            game_outcome = True
+                        # 무차감은 아직 판정 전이거나 마지막 기회 소진 중일 수 있다.
+                        # 2026-09-05 19:32:52의 1→1 뒤 독침 함정이 확인됐다.
+                        # 차감이 없는 프레임만으로 성공 라벨을 확정하지 않는다.
                     # 2) 템플릿이 미구비되어 식별 불가한 경우: 기존 픽셀 차분 편차 방식(Fallback) + 자가 학습(Auto-capture)
                     else:
                         if diff_val >= 3.0:
@@ -800,12 +820,17 @@ class SmartDisarm:
             # 추가 종료 재시도: 전환 애니메이션이 settle_after_tap을 초과하는 경우 대비
             for _retry in range(cfg.settle_extra_checks):
                 time.sleep(cfg.settle_extra_interval)
+                extra_start = self.now()
                 extra = self.cap()
+                extra_end = self.now()
                 if self.is_done and extra is not None and self.is_done(extra):
                     self.log.info(self._t("개봉 종료 감지(추가 체크 {a}회차).").format(a=_retry + 1))
                     if self.audit: self.audit.on_result(self._t("종료(추가체크)"))
                     self._audit_end_frame(extra)
                     return True
+                # 최신 화면만 재사용한다. 취득 시각을 새로 붙이거나 실패한 캡처 대신
+                # 이전 화면을 쓰면 속도/방향 추정이 틀어지므로 원래 시간창도 보존한다.
+                pending_capture = (extra_start, extra, extra_end) if extra is not None else None
             # 아직 진행 중이면 상태 리셋하고 계속 (함정이 여러 단계일 수 있음)
             samples.clear(); prev_x = None; v_est = 0.0
 

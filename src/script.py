@@ -1029,6 +1029,7 @@ def Factory():
                 orientation_failures = 0
 
                 consecutive_failures = 0
+                StopIfServerMaintenance(image)
                 return image
 
             except subprocess.TimeoutExpired:
@@ -1153,6 +1154,33 @@ def Factory():
             pos,
         )
         return pos
+
+    def StopIfServerMaintenance(screen):
+        # ponytail: verified Korean notice only; add templates for other game
+        # languages when real captures are available. Exclude the changing date.
+        if not CheckIfAtThreshold(
+            screen, "serverMaintenance_ko", threshold=0.95,
+            roi=[[200, 580, 500, 140]],
+        ):
+            return
+        StopTaskWithError(
+            "서버 점검 안내를 감지해 작업을 중단했습니다. 점검 종료 후 다시 시작해 주세요.",
+            "server_maintenance", screen,
+        )
+
+    def StopTaskWithError(detail, phase, screen):
+        runtime = getattr(setting, "_REMOTE_RUNTIME", None)
+        if runtime is not None:
+            runtime.mark_exit(TaskExitReason.ERROR, detail, phase)
+        # Keep later input blocked even if a caller catches the stop exception.
+        setting._FORCESTOPING.set()
+        logger.warning(detail, extra={"summary": True})
+        AddImportantInfo(detail)
+        try:
+            SaveImage(screen)
+        except Exception:
+            logger.warning("진단 화면 저장에 실패했습니다. 작업 중단은 유지합니다.")
+        raise TaskStoppedException()
 
     def CheckIf(screenImage, shortPathOfTarget, roi = None, outputMatchResult = False):
         pos, max_val = _check(screenImage, LoadTemplateImage(shortPathOfTarget), roi, outputMatchResult)
@@ -1448,6 +1476,7 @@ def Factory():
         runtimeContext._IMPORTANTINFO = " {a} {b}\n{c}".format(a = time_str, b=str, c=runtimeContext._IMPORTANTINFO)
     ##################################################################
     def FindCoordsOrElseExecuteFallbackAndWait(targetPattern, fallback,waitTime):
+        guild_declines = 0
         # fallback可以是坐标[x,y]或者字符串. 当为字符串的时候, 视为图片地址
         def pressTarget(target):
             if target.lower() == "return":
@@ -1487,6 +1516,23 @@ def Factory():
                 else:
                     if p:=checkPattern(scn,targetPattern):
                         return p # FindCoords
+                # Only routine guild-menu entry may dismiss Arna's invitation.
+                # Mixed targets such as COS/Okay must keep their quest choice.
+                if targetPattern == "guildRequest" and isinstance(fallback, (list, tuple)) and "guild" in fallback:
+                    decline = CheckIfAtThreshold(
+                        scn, "guildDecline", threshold=0.95, roi=[[300, 900, 300, 150]],
+                    )
+                    if decline:
+                        if guild_declines >= 3:
+                            StopTaskWithError(
+                                "길드 대화 선택 후에도 화면이 바뀌지 않아 작업을 중단했습니다.",
+                                "guild_dialog_stuck", scn,
+                            )
+                        guild_declines += 1
+                        logger.info("길드 메뉴를 가리는 대화를 닫습니다.")
+                        Press(decline)
+                        Sleep(1)
+                        continue
                 # OrElse
                 if TryPressRetry(scn):
                     Sleep(1)
@@ -1644,7 +1690,62 @@ def Factory():
         if logs.strip():
             logger.error(_("检测到崩溃日志, 关闭模拟器重启.{a}").format(a=logs))
             restartGame(skip_screenshot = False, force_restart_EMU = True)
+        WaitForGameStartup()
         raise RestartSignal()
+
+    def WaitForGameStartup():
+        """Drain startup screens before any interrupted operation is retried."""
+        logger.info("재시작 후 로딩·타이틀 화면이 끝날 때까지 최대 300초 기다립니다.")
+        deadline = time.monotonic() + 300
+        clear_frames = 0
+        disclaimer_tapped = False
+        last_title_tap = -float("inf")
+        screen = None
+        while time.monotonic() < deadline:
+            if setting._FORCESTOPING.is_set():
+                raise TaskStoppedException()
+            runtime = getattr(setting, "_REMOTE_RUNTIME", None)
+            if runtime is not None and runtime.is_stop_requested():
+                raise RemoteStopSignal(CheckpointKind.BETWEEN_OPERATIONS)
+            screen = ScreenShot()
+            title = CheckIfAtThreshold(screen, "titlelogo", threshold=0.88, roi=[[0, 0, 900, 960]])
+            disclaimer = CheckIfAtThreshold(
+                screen, "startupDisclaimer", threshold=0.88, roi=[[150, 450, 600, 350]],
+            )
+            loading = classify_screen(screen) is ScreenHealth.BLACK or CheckIf(screen, "abyssReadying")
+            if not (title or disclaimer or loading):
+                clear_frames += 1
+                if clear_frames >= 2:
+                    logger.info("시작 화면 종료를 확인했습니다. 중단된 작업을 재개합니다.")
+                    return
+            else:
+                clear_frames = 0
+                if disclaimer and not disclaimer_tapped:
+                    Press(disclaimer)
+                    disclaimer_tapped = True
+                elif title:
+                    # The loading progress bar can resemble the generic Close
+                    # template; only dedicated startup controls are safe here.
+                    download = CheckIfAtThreshold(
+                        screen, "startdownload", threshold=0.90, roi=[[222, 901, 465, 84]],
+                    )
+                    if download:
+                        Press(download)
+                    elif not HandleSessionExpiry(screen):
+                        # The logo is also visible during master-data loading.
+                        # Tap only a visible start control, never the logo alone.
+                        start = CheckIfAtThreshold(
+                            screen, "tabtostart", threshold=0.88, roi=[[0, 800, 900, 800]],
+                        )
+                        if start and time.monotonic() - last_title_tap >= 2:
+                            Press(start)
+                            last_title_tap = time.monotonic()
+            Sleep(1)
+        StopTaskWithError(
+            "게임 시작 화면이 300초 동안 끝나지 않아 작업을 중단했습니다. 로딩 상태를 확인해 주세요.",
+            "game_startup_timeout", screen,
+        )
+
     class RestartSignal(Exception):
         pass
     def RestartableSequenceExecution(*operations):
@@ -1757,11 +1858,13 @@ def Factory():
     def reunionParty(partyName = None):
         logger.info(_("必须重新集结队伍..."))
 
+        # Arna's request can block the guild menu, including after a restart.
+        # Decline it only here so quest-specific dialogue choices stay intact.
         if not partyName:
             RestartableSequenceExecution(
                         lambda: FindCoordsOrElseExecuteFallbackAndWait(
                             "PartyManagementTitle",
-                            ["PartyManagement", "Edit", "guild", [1,1]],
+                            ["PartyManagement", "Edit", "guild", "guildDecline", [1,1]],
                             1,
                         ),
                         lambda: Press(FindCoordsOrElseExecuteFallbackAndWait("ok",[[137,290],"AssembleParty"],1)),
@@ -1771,7 +1874,7 @@ def Factory():
             RestartableSequenceExecution(
                                     lambda: FindCoordsOrElseExecuteFallbackAndWait(
                                         "PartyManagementTitle",
-                                        ["PartyManagement", "Edit", "guild", [1,1]],
+                                        ["PartyManagement", "Edit", "guild", "guildDecline", [1,1]],
                                         1,
                                     ),
                                     lambda: Press(FindCoordsOrElseExecuteFallbackAndWait("ok",[partyName,"AssembleParty"],1)),

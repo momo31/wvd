@@ -1,8 +1,11 @@
 import ast
 import gettext
 import sys
+import threading
+import time
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -284,6 +287,114 @@ class RecoveryScreenReturnTests(unittest.TestCase):
                 translations = gettext.GNUTranslations(stream)
             for message_id in message_ids:
                 self.assertNotEqual(translations.gettext(message_id), message_id)
+
+
+class PartyReunionTests(unittest.TestCase):
+    def build_reunion(self, party_name, *, dialogue=True, stuck=False):
+        source = (SRC / "script.py").read_text(encoding="utf-8")
+        names = {
+            "reunionParty", "FindCoordsOrElseExecuteFallbackAndWait",
+            "RestartableSequenceExecution", "RestartSignal",
+        }
+        nodes = [
+            node for node in ast.walk(ast.parse(source))
+            if isinstance(node, (ast.FunctionDef, ast.ClassDef))
+            and node.name in names
+        ]
+        selection = [137, 590] if party_name else [137, 290]
+        screens = {
+            "town": {"guild": [156, 844]},
+            "dialogue": {"guildDecline": [451, 991]},
+            "guild": {"Edit": [450, 610]},
+            "edit": {"PartyManagement": [450, 1100]},
+            "party": {
+                "PartyManagementTitle": [450, 110],
+                "FFXI/FFXIStone": selection,
+            },
+            "selected": {"AssembleParty": [650, 1500]},
+            "confirm": {"ok": [450, 900]},
+            "done": {},
+            "returned": {"Inn": [200, 700]},
+        }
+        transitions = {
+            ("town", (156, 844)): "dialogue" if dialogue else "guild",
+            ("dialogue", (451, 991)): "dialogue" if stuck else "guild",
+            ("guild", (450, 610)): "edit",
+            ("edit", (450, 1100)): "party",
+            ("party", tuple(selection)): "selected",
+            ("selected", (650, 1500)): "confirm",
+            ("confirm", (450, 900)): "done",
+            ("done", "back"): "returned",
+        }
+        state = {"screen": "town", "presses": [], "restarts": 0}
+
+        def press(position):
+            if position is None:
+                return False
+            key = position if position == "back" else tuple(position)
+            state["presses"].append((state["screen"], key))
+            state["screen"] = transitions.get(
+                (state["screen"], key), state["screen"]
+            )
+            return True
+
+        def restart():
+            state["restarts"] += 1
+            raise RuntimeError("recovery requested")
+
+        namespace = {
+            "setting": SimpleNamespace(
+                MAX_TRY_LIMIT=6, _FORCESTOPING=threading.Event(),
+            ),
+            "ScreenShot": lambda: state["screen"],
+            "CheckIf": lambda screen, pattern: screens[screen].get(pattern),
+            "Press": press,
+            "PressReturn": lambda: press("back"),
+            "Sleep": lambda *args: None,
+            "DismissSetTrapScreen": lambda screen: False,
+            "TryPressRetry": lambda screen: False,
+            "CheckIf_fastForwardOff": lambda screen: None,
+            "remote_stop_checkpoint": lambda *args: None,
+            "CheckpointKind": SimpleNamespace(BETWEEN_OPERATIONS="between"),
+            "TaskStoppedException": RuntimeError,
+            "restartGame": restart,
+            "logger": SimpleNamespace(info=lambda *args: None),
+            "time": time,
+            "_": lambda message: message,
+        }
+        module = ast.Module(body=nodes, type_ignores=[])
+        ast.fix_missing_locations(module)
+        exec(compile(module, "<party-reunion>", "exec"), namespace)
+        return namespace["reunionParty"], state
+
+    def test_named_and_default_parties_reassemble_through_guild_dialogue(self):
+        for party_name in (None, "FFXI/FFXIStone"):
+            for dialogue, start in (
+                (False, "town"), (True, "town"),
+                (True, "dialogue"), (False, "party"),
+            ):
+                with self.subTest(party_name=party_name, dialogue=dialogue, start=start):
+                    reunion, state = self.build_reunion(
+                        party_name, dialogue=dialogue,
+                    )
+                    state["screen"] = start
+                    reunion(party_name)
+                    self.assertEqual(state["screen"], "returned")
+                    self.assertEqual(state["restarts"], 0)
+                    self.assertEqual(
+                        state["presses"].count(("dialogue", (451, 991))),
+                        int(dialogue),
+                    )
+
+    def test_unresponsive_guild_choice_keeps_the_existing_retry_bound(self):
+        reunion, state = self.build_reunion("FFXI/FFXIStone", stuck=True)
+        state["screen"] = "dialogue"
+        with self.assertRaisesRegex(RuntimeError, "recovery requested"):
+            reunion("FFXI/FFXIStone")
+        self.assertEqual(state["restarts"], 1)
+        self.assertEqual(
+            state["presses"].count(("dialogue", (451, 991))), 6,
+        )
 
 
 if __name__ == "__main__":
