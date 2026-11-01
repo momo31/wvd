@@ -15,6 +15,9 @@ sys.path.insert(0, str(SRC))
 from recovery import RecoveryPlan, RecoveryReason, RecoverySupervisor
 
 
+from utils import ResolveTemplatePath
+
+
 class RecoveryPlanTests(unittest.TestCase):
     def test_combat_still_requests_recovery_when_chest_recovery_is_skipped(self):
         plan = RecoveryPlan()
@@ -226,7 +229,7 @@ class RecoveryScreenReturnTests(unittest.TestCase):
                     self.source[start:end],
                 )
 
-        self.assertTrue((ROOT / "resources" / "images" / "settrap.png").is_file())
+        self.assertTrue((Path(ResolveTemplatePath('settrap.png'))).is_file())
 
     def test_fallback_loop_checks_remote_stop_before_screenshot(self):
         calls = []

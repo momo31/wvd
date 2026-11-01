@@ -3,6 +3,9 @@ from __future__ import annotations
 import threading
 import time
 import unittest
+from unittest.mock import Mock, patch
+
+from chest_guard import MAX_DIALOGUE_SKIP_ATTEMPTS
 
 from mod.telegram_remote_control.constants import (
     DIALOGUE_NEXT_ROI,
@@ -94,6 +97,60 @@ class _Adapter:
 
 
 class ReturnToTownTests(unittest.TestCase):
+    def run_return(self, adapter):
+        return return_to_town(adapter, _Runtime(), RemoteStopSignal(CheckpointKind.BETWEEN_OPERATIONS))
+
+    def test_low_confidence_background_never_taps(self):
+        adapter = _Adapter(["loot"] * 6 + ["town", "town"])
+        match = adapter.match_base
+        adapter.match_base = lambda frame, name, roi, threshold: (
+            None if name == "dialogueNext" and threshold > 0.83
+            else match(frame, name, roi, threshold)
+        )
+        self.assertEqual(self.run_return(adapter).status, TransitionStatus.TOWN_READY)
+        self.assertEqual(adapter.presses, [])
+
+    def test_unchanged_dialogue_is_bounded_and_reclassified_after_every_tap(self):
+        adapter = _Adapter(["loot"] * 8 + ["town", "town"])
+        adapter.screenshot = Mock(wraps=adapter.screenshot)
+        self.assertEqual(self.run_return(adapter).status, TransitionStatus.TOWN_READY)
+        self.assertEqual(len(adapter.presses), MAX_DIALOGUE_SKIP_ATTEMPTS)
+        self.assertEqual(adapter.screenshot.call_count, 10)
+
+    def test_unknown_frame_does_not_reset_exhausted_dialogue_budget(self):
+        adapter = _Adapter(["loot"] * 3 + ["unknown", "loot", "town", "town"])
+        self.assertEqual(self.run_return(adapter).status, TransitionStatus.TOWN_READY)
+        self.assertEqual(len(adapter.presses), 3)
+
+    def test_normal_reward_pages_advance_and_reach_town(self):
+        pages = ["gold-page", "item-page", "experience-page"]
+        adapter = _Adapter(pages + ["town", "town"])
+        match = adapter.match_base
+        adapter.match_base = lambda frame, name, roi, threshold: match("loot" if frame in pages else frame, name, roi, threshold)
+        self.assertEqual(self.run_return(adapter).status, TransitionStatus.TOWN_READY)
+        self.assertEqual(adapter.presses, [[834, 1487]] * len(pages))
+
+    def test_exhausted_dialogue_budget_still_reaches_total_deadline_fallback(self):
+        adapter = _Adapter(["loot"] * 20)
+        runtime = _Runtime()
+        runtime.stop_deadline_monotonic = 10
+        fallback_result = object()
+        with patch("mod.telegram_remote_control.return_to_town.time.monotonic", side_effect=range(20)), patch(
+            "mod.telegram_remote_control.return_to_town.force_stop_game_once", return_value=fallback_result,
+        ) as fallback:
+            result = return_to_town(adapter, runtime, RemoteStopSignal(CheckpointKind.BETWEEN_OPERATIONS))
+        self.assertIs(result, fallback_result)
+        self.assertEqual(len(adapter.presses), MAX_DIALOGUE_SKIP_ATTEMPTS)
+        fallback.assert_called_once_with(adapter, runtime, failure_phase="return_to_town_deadline")
+
+    def test_chest_transition_resets_dialogue_budget_without_skipping_chest(self):
+        adapter = _Adapter(["loot"] * 3 + ["chest-and-dialogue", "loot", "town", "town"])
+        adapter.finish_combat_or_chest = Mock(return_value=True)
+        with patch("mod.telegram_remote_control.return_to_town.run_bounded_operation", side_effect=lambda operation, **_: operation()):
+            self.assertEqual(self.run_return(adapter).status, TransitionStatus.TOWN_READY)
+        adapter.finish_combat_or_chest.assert_called_once_with("chest")
+        self.assertEqual(len(adapter.presses), 4)
+
     def test_loot_dialogue_is_advanced_before_town_and_map_probes(self):
         adapter = _Adapter(["loot", "town", "town"])
         runtime = _Runtime()

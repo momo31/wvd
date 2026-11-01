@@ -104,6 +104,8 @@ def RegisterQueueHandler():
     # 保持原有的stdout/stderr重定向
     sys.stdout = LoggerStream(logger, logging.DEBUG)
     sys.stderr = LoggerStream(logger, logging.ERROR)
+    logger.setLevel(logging.DEBUG)
+    logger.propagate = False
     
     for handler in logger.handlers:
         if isinstance(handler, logging.handlers.QueueHandler) and handler.queue is log_queue:
@@ -113,9 +115,7 @@ def RegisterQueueHandler():
     queue_handler = logging.handlers.QueueHandler(log_queue)
     queue_handler.setLevel(logging.DEBUG)
     
-    logger.setLevel(logging.DEBUG)
     logger.addHandler(queue_handler)
-    logger.propagate = False
 
 def RegisterConsoleHandler():
     sys.stdout = sys.__stdout__
@@ -470,8 +470,20 @@ def _write_config_file(config_path, config_data):
                 pass
 
 
+def _migrate_language_settings(config_data: dict) -> tuple[dict, bool]:
+    """Separate display and image languages without overwriting explicit choices."""
+    if not isinstance(config_data, dict) or not isinstance(config_data.get('GENERAL'), dict):
+        return config_data, False
+    migrated = copy.deepcopy(config_data)
+    general = migrated['GENERAL']
+    before = dict(general)
+    general.setdefault('LANGUAGE_SCRIPT', general.get('LANGUAGE', 'ko_KR'))
+    general.setdefault('LANGUAGE_GAME', 'en_US')
+    return migrated, general != before
+
+
 CONFIG_FILE = _config_file_path()
-def SaveConfigToFile(config_data, config_file_path=CONFIG_FILE):
+def SaveConfigToFile(config_data, config_file_path=None):
     try:
         _write_config_file(config_file_path or CONFIG_FILE, config_data)
         logger.info(_("配置已保存。"))
@@ -479,17 +491,26 @@ def SaveConfigToFile(config_data, config_file_path=CONFIG_FILE):
     except Exception as e:
         logger.error(f"保存配置时发生错误: {e}")
         return False
-def LoadRawConfigFromFile(config_file_path = CONFIG_FILE, migrate_recovery = True):
-    if config_file_path == None:
+def LoadRawConfigFromFile(config_file_path=None, migrate_recovery=True):
+    use_default_config = config_file_path is None
+    if use_default_config:
         config_file_path = CONFIG_FILE
-    config_data = LoadJson(config_file_path)
+        config_data = LoadJson(config_file_path)
+    else:
+        # An explicit file must never silently turn into defaults on read failure.
+        with open(config_file_path, "r", encoding="utf-8") as handle:
+            config_data = json.load(handle)
+        if not isinstance(config_data, dict):
+            raise ValueError("Invalid configuration object")
     should_persist = False
 
     # A clean build can leave either a first-run config or an older config that
     # predates the Telegram fields beside the executable. Recover and migrate
     # the best legacy file into the stable per-user location in both cases.
     if (
-        getattr(sys, "frozen", False)
+        migrate_recovery
+        and use_default_config
+        and getattr(sys, "frozen", False)
         and os.path.abspath(config_file_path) == os.path.abspath(CONFIG_FILE)
         and (
             not _config_has_runtime_settings(config_data)
@@ -510,7 +531,8 @@ def LoadRawConfigFromFile(config_file_path = CONFIG_FILE, migrate_recovery = Tru
 
     if migrate_recovery:
         config_data, recovery_settings_changed = _migrate_recovery_settings(config_data)
-        should_persist = should_persist or recovery_settings_changed
+        config_data, language_settings_changed = _migrate_language_settings(config_data)
+        should_persist = should_persist or recovery_settings_changed or language_settings_changed
     if should_persist:
         try:
             _write_config_file(config_file_path, config_data)
@@ -518,15 +540,15 @@ def LoadRawConfigFromFile(config_file_path = CONFIG_FILE, migrate_recovery = Tru
             logger.warning("Config migration failed: %s", exc)
 
     return config_data
-def SetOneVarInGeneralConfig(var, value):
-    data = LoadRawConfigFromFile()
-    data['GENERAL'][var] = value
-    SaveConfigToFile(data)
-def GetOneVarInGeneralConfig(var, default_value):
+def SetOneVarInGeneralConfig(var, value, config_file_path=None):
+    data = LoadRawConfigFromFile(config_file_path)
+    data.setdefault('GENERAL', {})[var] = value
+    return SaveConfigToFile(data, config_file_path)
+def GetOneVarInGeneralConfig(var, default_value, config_file_path=None):
     # Locale setup runs while this module is imported. Defer recovery-key
     # persistence until the application explicitly loads its farm settings so
     # imports and test discovery never rewrite the user's config by themselves.
-    data = LoadRawConfigFromFile(migrate_recovery=False)
+    data = LoadRawConfigFromFile(config_file_path=config_file_path, migrate_recovery=False)
     if 'GENERAL' in data:
         if var in data['GENERAL']:
             return data['GENERAL'][var]
@@ -534,7 +556,9 @@ def GetOneVarInGeneralConfig(var, default_value):
     return default_value
 ############################################
 localedir = ResourcePath("locale")
-LANGUAGE = GetOneVarInGeneralConfig('LANGUAGE', "ko_KR")
+LANGUAGE_SCRIPT = GetOneVarInGeneralConfig('LANGUAGE_SCRIPT', GetOneVarInGeneralConfig('LANGUAGE', 'ko_KR'))
+LANGUAGE_GAME = GetOneVarInGeneralConfig('LANGUAGE_GAME', 'en_US')
+LANGUAGE = LANGUAGE_SCRIPT
 trans = gettext.translation('messages', localedir, languages=[LANGUAGE], fallback=True)
 trans.install()
 ###########################################
@@ -656,6 +680,7 @@ def _build_quest_data():
 
     return merged
 QUEST_DATA = _build_quest_data()
+QUEST_CODE_ALIASES = {'FFXI-5F-2Elite': 'FFXI-5F-2Elite-bottom'}
 
 def BuildQuestReflection():
     try:
@@ -709,34 +734,39 @@ def BuildQuestReflection():
 ###########################################
 IMAGE_FOLDER = fr'resources/images/'
 _TEMPLATE_CACHE = {}
-def LoadTemplateImage(shortPathOfTarget):
-    # 매 호출마다 디스크에서 PNG 를 다시 읽던 것을 캐싱. 호출부는 모두 matchTemplate
-    # 입력(읽기 전용)으로만 사용하므로 안전하며, CheckIf 가 도는 모든 루프가 빨라진다.
-    # (v2.4.0 병합: 캐시 미스 경로에 업스트림의 mod 디렉터리 폴백을 유지한다.
-    #  단 LoadImage 는 예외를 던지지 않고 None 을 반환하므로 — 업스트림의 try/except
-    #  폴백은 도달 불가한 죽은 코드였다 — None 판정으로 폴백을 실제 동작하게 한다.)
-    img = _TEMPLATE_CACHE.get(shortPathOfTarget)
+def GetModPath(relative_path):
+    base = os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else os.path.dirname(os.path.dirname(__file__))
+    return os.path.join(base, 'mod', relative_path)
+
+
+def ResolveTemplatePath(shortPathOfTarget, language=None):
+    language = language or LANGUAGE_GAME
+    filename = str(shortPathOfTarget).replace('\\', '/')
+    if not filename.endswith('.png'):
+        filename += '.png'
+    candidates = [ResourcePath(os.path.join(IMAGE_FOLDER, lang, filename)) for lang in (language, 'common')]
+    candidates += [GetModPath(os.path.join('images', filename)), GetModPath(filename)]
+    for path in candidates:
+        if os.path.isfile(path):
+            return path
+    raise FileNotFoundError(f'Image unavailable ({language}): {shortPathOfTarget}')
+
+
+def LoadTemplateImage(shortPathOfTarget, language=None):
+    language = language or LANGUAGE_GAME
+    key = (language, shortPathOfTarget)
+    img = _TEMPLATE_CACHE.get(key)
     if img is not None:
         return img
-    logger.debug(f"加载图片: {shortPathOfTarget}")
-    image_filename = f"{shortPathOfTarget}.png"
-
-    # 1. 优先从 ResourcePath 加载
-    img = LoadImage(ResourcePath(os.path.join(IMAGE_FOLDER, image_filename)))
-    # 2. 资源路径失败，尝试 mod 目录
-    if img is None:
-        logger.debug(f"资源路径未找到 {image_filename}，尝试 mod 目录")
-        mod_path = os.path.join('mod', image_filename)
-        if os.path.isfile(mod_path):
-            img = LoadImage(mod_path)
-    # 3. 两处都未找到
+    img = LoadImage(ResolveTemplatePath(shortPathOfTarget, language))
     if img is None:
         raise FileNotFoundError(f"图片 {shortPathOfTarget} 不可用")
-    _TEMPLATE_CACHE[shortPathOfTarget] = img
+    _TEMPLATE_CACHE[key] = img
     return img
-def reflectImage(folder):
+def reflectImage(folder, lang=None):
     # 构建dialogueChoices文件夹的模式匹配路径
-    pattern = os.path.join(IMAGE_FOLDER, folder, '*.png')
+    lang = lang or ('common' if str(folder).replace('\\', '/').startswith('spellskill/char') else LANGUAGE_GAME)
+    pattern = os.path.join(IMAGE_FOLDER, lang, folder, '*.png')
     full_pattern = ResourcePath(pattern)
     
     # 使用glob获取所有匹配的文件
@@ -746,6 +776,61 @@ def reflectImage(folder):
     img = sorted([os.path.splitext(os.path.basename(f))[0] for f in png_files])
     
     return img
+
+
+QUEST_RESOURCE_REQUIREMENTS = LoadJson(ResourcePath('resources/quest/required-images.json')) or {}
+
+
+def _missing_templates(names, language):
+    missing = []
+    for name in sorted(set(names)):
+        try:
+            ResolveTemplatePath(name, language)
+        except FileNotFoundError:
+            missing.append(name)
+    return missing
+
+
+def ValidateRemoteResources(language: str) -> list[str]:
+    return _missing_templates(('closeAppPrompt', 'startupDisclaimer', 'titlelogo', 'tabtostart'), language)
+
+
+def ValidateQuestResources(target: str, language: str, resolved=None) -> list[str]:
+    target = QUEST_CODE_ALIASES.get(target, target)
+    if target not in QUEST_DATA:
+        return ['quest:' + str(target)]
+    if language not in ('en_US', 'zh_CN'):
+        return ['language:' + str(language)]
+    quest = QUEST_DATA[target]
+    names = {'Inn', 'dungFlag', 'combatActive', 'chestFlag', 'whowillopenit', 'chestOpening', 'dialogueNext'}
+    names.update(QUEST_RESOURCE_REQUIREMENTS.get('__runtime__', ()))
+    names.update(QUEST_RESOURCE_REQUIREMENTS.get(target, ()))
+    for key in ('_FloorCheck', '_SPECIALJUNK'):
+        value = quest.get(key)
+        if value:
+            names.update([value] if isinstance(value, str) else value)
+    for action in quest.get('_EOT') or ():
+        if action[0] in ('L1', 'L2', 'worldmap'):
+            names.add(action[1])
+    for action in quest.get('_TARGETINFOLIST') or ():
+        if action[0] not in ('position', 'chest', 'chest_auto'):
+            names.add(action[0])
+        if len(action) > 2 and isinstance(action[2], str) and action[2] != 'default':
+            names.add(action[2])
+    if quest.get('_RTT'):
+        names.add(quest['_RTT'][0])
+    if resolved is None:
+        missing = _missing_templates(names, language)
+    else:
+        # Share checks only within one UI snapshot; a later launch checks the filesystem again.
+        unchecked = names - resolved.keys()
+        unavailable = set(_missing_templates(unchecked, language))
+        resolved.update((name, name not in unavailable) for name in unchecked)
+        missing = sorted(name for name in names if not resolved[name])
+    callback = quest.get('_SPECIALJUNK_CALLBACK')
+    if callback and callback not in QUEST_DATA:
+        missing.append('quest:' + callback)
+    return missing
 
 DIALOG_OPTION_IMAGE_LIST = reflectImage('dialogueChoices')
 
@@ -877,3 +962,163 @@ def _dummy_strategy_option_names_for_translation():
     _("全自动战斗")
     _("柚子")
     _("自定义任务点策略")
+
+
+SHAPE_TEMPLATE = {}
+
+def registerTemplate(path, to_gray=True):
+    img = LoadTemplateImage(path)
+
+    if to_gray and img.ndim == 3:
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+    if img.dtype == np.uint8:
+        gray = img
+    else:
+        img = img.astype(np.float32)
+        if img.max() <= 1.0:
+            img = img * 255.0
+        gray = np.clip(img, 0, 255).astype(np.uint8)
+    tmpl_f = gray.astype(np.float32) / 255.0
+
+    gx_t = cv2.Sobel(tmpl_f, cv2.CV_32F, 1, 0, ksize=3)
+    gy_t = cv2.Sobel(tmpl_f, cv2.CV_32F, 0, 1, ksize=3)
+    mag = np.sqrt(gx_t ** 2 + gy_t ** 2) + 1e-6
+
+    SHAPE_TEMPLATE[(LANGUAGE_GAME, path)] = {
+        'gray':  gray,
+        'gx_t':  gx_t / mag,
+        'gy_t':  gy_t / mag,
+        'side':  min(gray.shape[:2]),
+        'shape': gray.shape[:2],
+        'src':   img,
+    }
+    return SHAPE_TEMPLATE[(LANGUAGE_GAME, path)]
+
+def loadShapeTemplate(name):
+    if (LANGUAGE_GAME, name) in SHAPE_TEMPLATE:
+        return SHAPE_TEMPLATE[(LANGUAGE_GAME, name)]
+    else:
+        return registerTemplate(name)
+
+def checkShape(channel, tmpl_name,
+               threshold=0.5, min_area=10.0, dedup_dist=None):
+    t = loadShapeTemplate(tmpl_name)
+    gx_t, gy_t = t['gx_t'], t['gy_t']
+
+    if dedup_dist is None:
+        dedup_dist = 0.5 * t['side']
+
+    blurred = cv2.GaussianBlur(channel, (5, 5), 0)
+    gx = cv2.Sobel(blurred, cv2.CV_32F, 1, 0, ksize=3)
+    gy = cv2.Sobel(blurred, cv2.CV_32F, 0, 1, ksize=3)
+
+    resp = (cv2.filter2D(gx, -1, gx_t, borderType=cv2.BORDER_CONSTANT) +
+            cv2.filter2D(gy, -1, gy_t, borderType=cv2.BORDER_CONSTANT))
+
+    max_val = resp.max()
+    if max_val <= 0:
+        return [], None
+
+    norm_resp = resp / max_val
+    binary = (norm_resp >= threshold).astype(np.uint8) * 255
+    contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    detections = []
+    for cnt in contours:
+        if cv2.contourArea(cnt) < min_area:
+            continue
+        x, y, w, h = cv2.boundingRect(cnt)
+        cx, cy = x + w // 2, y + h // 2
+        score = float(norm_resp[y:y + h, x:x + w].max())
+        detections.append({'center': (cx, cy), 'score': score, 'bbox': (x, y, w, h)})
+
+    detections.sort(key=lambda d: d['score'], reverse=True)
+    kept = []
+    for det in detections:
+        cx, cy = det['center']
+        if not any((cx - k['center'][0]) ** 2 + (cy - k['center'][1]) ** 2 < dedup_dist ** 2
+                   for k in kept):
+            kept.append(det)
+
+    return kept, norm_resp
+
+def StateCombat_DetectArrow(screenshot):
+    t = loadShapeTemplate("spellskill/arrow/mask3")
+    dedup_dist = 0.5 * t['side']
+
+    gray = cv2.cvtColor(screenshot, cv2.COLOR_BGR2GRAY)
+    r_channel = screenshot[:, :, 2]
+    channel_data = [('Grey', gray), ('R', r_channel)]
+
+    all_detections = []
+    for label, ch in channel_data:
+        dets, _ = checkShape(ch, "spellskill/arrow/mask3",
+                             threshold=0.5, min_area=10,
+                             dedup_dist=dedup_dist)
+        for d in dets:
+            d['label'] = label
+            all_detections.append(d)
+
+    all_detections.sort(key=lambda d: d['score'], reverse=True)
+    kept = []
+    for det in all_detections:
+        cx, cy = det['center']
+        if not any((cx - k['center'][0]) ** 2 + (cy - k['center'][1]) ** 2 < dedup_dist ** 2
+                   for k in kept):
+            kept.append(det)
+
+    marked_img = screenshot.copy()
+    for det in kept:
+        x, y, w, h = det['bbox']
+        cv2.rectangle(marked_img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        cv2.putText(marked_img, f'{det["label"]}:{det["score"]:.2f}', (x, y - 5),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+
+    results = [(d['center'][0], d['center'][1], d['score'], d['label']) for d in kept]
+    return results, marked_img
+
+def Fishing_DetectBobber(screenshot):
+    t = loadShapeTemplate("fishing/bobber")
+    bobber = t['gray']
+    side = t['side']
+
+    r_channel = screenshot[:, :, 2].astype(np.float32)
+    r_scaled = np.clip((r_channel - 14.0) * (255.0 / 86.0), 0, 255).astype(np.uint8)
+
+    kept, _ = checkShape(r_scaled, "fishing/bobber",
+                         threshold=0.5, min_area=10,
+                         dedup_dist=0.5 * side)
+
+    H, W = screenshot.shape[:2]
+    final = []
+    for det in kept:
+        cx, cy = det['center']
+        x1, y1 = max(cx - side // 2, 0), max(cy - side // 2, 0)
+        x2 = min(cx + side // 2, W - 1)
+        y2 = min(cy + side // 2, H - 1)
+        roi = r_scaled[y1:y2, x1:x2]
+        if roi.size == 0:
+            continue
+        tmpl = cv2.resize(bobber, (roi.shape[1], roi.shape[0]))
+        match_score = float(
+            (cv2.matchTemplate(roi, tmpl, cv2.TM_CCOEFF_NORMED)[0][0] + 1.0) / 2.0
+        )
+        det['match_score'] = match_score
+        if det['score'] >= 0.9 and match_score >= 0.8:
+            final.append(det)
+
+    marked = r_scaled.copy()
+    for det in final:
+        cx, cy = det['center']
+        x1, y1 = max(cx - side // 2, 0), max(cy - side // 2, 0)
+        x2 = min(cx + side // 2, marked.shape[1] - 1)
+        y2 = min(cy + side // 2, marked.shape[0] - 1)
+        cv2.rectangle(marked, (x1, y1), (x2, y2), 255, 2)
+        cv2.putText(marked, f'DF:{det["score"]:.2f}', (x1, y1 - 5),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, 255, 1)
+        cv2.putText(marked, f'MA:{det["match_score"]:.2f}', (x1, y1 - 20),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, 255, 1)
+
+    return [(d['center'][0], d['center'][1], d['score'], d['match_score'])
+            for d in final], marked

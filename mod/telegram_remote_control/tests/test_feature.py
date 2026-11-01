@@ -85,6 +85,19 @@ class _RecordingService:
 
 
 class FeatureTests(unittest.TestCase):
+    def test_device_failure_queues_error_notification_and_releases_running_state(self):
+        feature, _ = self.make_feature()
+        runtime = RemoteRuntime("adb-failure", StartReason.LOCAL, "task", queue.Queue(), threading.Event(), None, "test",
+                                notification_chat_id=feature.current_settings.allowed_chat_id)
+        feature.current_runtime = runtime
+        feature.state = ControlState.RUNNING
+        runtime.mark_exit(TaskExitReason.ERROR, "ADB connection failed", "reset_device")
+        feature._finalize_payload(runtime.build_finished_payload(), None)
+        self.assertEqual(feature.state, ControlState.ERROR)
+        self.assertIsNone(feature.current_runtime)
+        self.assertEqual(len(feature.service.messages), 1)
+        self.assertIn("ADB connection failed", feature.service.messages[0].text)
+
     def make_feature(self, events=None):
         events = [] if events is None else events
         ports = _Ports(events)

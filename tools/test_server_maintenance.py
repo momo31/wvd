@@ -31,6 +31,9 @@ from mod.telegram_remote_control.runtime_bridge import RemoteRuntime, remote_sto
 from mod.telegram_remote_control.worker import TaskCompletionLatch, run_farm_worker
 
 
+from utils import ResolveTemplatePath
+
+
 class _ExtractFunctions(ast.NodeTransformer):
     def visit_Nonlocal(self, node):
         # Execute the real nested functions against one controlled namespace.
@@ -88,7 +91,7 @@ class ServerMaintenanceTests(unittest.TestCase):
             "CheckpointKind": CheckpointKind, "remote_stop_checkpoint": remote_stop_checkpoint,
             "prepare_telegram_run": prepare_telegram_run, "_": lambda value: value,
             "consecutive_failures": 0, "orientation_failures": 0, "MAX_SCREENSHOT_RETRIES": 5,
-            "LoadTemplateImage": lambda name: cv2.imread(str(ROOT / "resources" / "images" / f"{name}.png")),
+            "LoadTemplateImage": lambda name: cv2.imread(str(Path(ResolveTemplatePath(f'{name}.png')))),
             "SaveImage": Mock(side_effect=OSError("disk full") if save_fails else None),
             "AddImportantInfo": Mock(), "logger": Mock(), "Sleep": Mock(), "ReloadStrategy": Mock(),
             "ResetDevice": Mock(return_value=True), "restartGame": Mock(side_effect=AssertionError("unexpected restart")),

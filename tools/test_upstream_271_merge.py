@@ -29,14 +29,14 @@ class Upstream271MergeTests(unittest.TestCase):
         requirements = set(
             (ROOT / "requirements.txt").read_text(encoding="utf-8").splitlines()
         )
-        self.assertIn("__version__ = '2.7.1-momo.1'", self.main)
+        self.assertIn("__version__ = '3.2.1-momo.1'", self.main)
         self.assertIn("==v2.7.1-momo.1==", self.changelog)
         self.assertNotIn("scipy", requirements)
         self.assertNotIn("loguru", requirements)
         self.assertNotIn("from scipy", self.script)
         self.assertNotIn("from loguru", self.utils)
         self.assertIn("logging.handlers.QueueListener", self.utils)
-        self.assertIn("SummaryLogFilter", self.gui)
+        self.assertIn("class WebLogHandler(logging.Handler)", self.gui)
         self.assertIn('extra={"summary": True}', self.script)
         self.assertTrue((SRC / "smart_disarm.py").is_file())
 
@@ -52,7 +52,7 @@ class Upstream271MergeTests(unittest.TestCase):
         self.assertEqual(sandman["questName_ko_KR"], "[인연] 샌드맨")
         self.assertEqual(sandman["questCategory_ko_KR"], "메인 시나리오 1~3장")
         self.assertIsNone(HAN_PATTERN.search(sandman["questName_ko_KR"]))
-        self.assertIn('"[缘]沙人": "[인연] 샌드맨"', self.gui)
+        self.assertIn('"[缘]沙人": "[인연] 샌드맨"', (SRC / 'config_model.py').read_text(encoding='utf-8'))
 
         sys.path.insert(0, str(SRC))
         try:
@@ -76,19 +76,10 @@ class Upstream271MergeTests(unittest.TestCase):
         )
 
     def test_upstream_assets_are_present(self):
-        expected_sizes = {
-            "Triumph.png": 42394,
-            "bondmate_close.png": 17280,
-            "sandman/sandman_1.png": 19633,
-            "sandman/sandman_2.png": 9560,
-            "sandman/sandman_bondmate.png": 763525,
-            "stair_fortress3f.png": 45434,
-        }
-        image_root = ROOT / "resources" / "images"
-        for relative_path, size in expected_sizes.items():
-            with self.subTest(relative_path=relative_path):
-                self.assertEqual((image_root / relative_path).stat().st_size, size)
-        self.assertFalse((image_root / "Economy_替换.png").exists())
+        import utils
+        for name in ('Triumph', 'bondmate_close', 'sandman/sandman_1', 'sandman/sandman_2', 'sandman/sandman_3', 'sandman/sandman_bondmate', 'stair_fortress3f'):
+            with self.subTest(template=name):
+                self.assertGreater(utils.LoadTemplateImage(name, 'en_US').size, 0)
 
     def test_wrong_floor_queues_one_actionable_exit(self):
         search_start = self.script.index("def StateMapSearch(")
@@ -128,21 +119,11 @@ class Upstream271MergeTests(unittest.TestCase):
         self.assertLess(request_leap, triumph_leap)
 
     def test_emulator_path_check_accepts_supported_executables(self):
-        tree = ast.parse(self.gui)
-        function = next(
-            node
-            for node in tree.body
-            if isinstance(node, ast.FunctionDef)
-            and node.name == "_is_known_emulator_executable"
-        )
-        namespace = {"os": os}
-        exec(compile(ast.Module(body=[function], type_ignores=[]), "gui.py", "exec"), namespace)
-        is_known = namespace["_is_known_emulator_executable"]
-
-        self.assertTrue(is_known(r"C:\Program Files\BlueStacks\HD-Player.exe"))
-        self.assertTrue(is_known("C:/MuMu Player 12/shell/MuMuPlayer.exe"))
-        self.assertTrue(is_known(r"C:\MuMu\shell\MuMuNxDevice.exe"))
-        self.assertFalse(is_known(r"C:\Unknown\emulator.exe"))
+        from config_model import _is_known_emulator_executable as is_known
+        self.assertTrue(is_known('C:/Program Files/BlueStacks/HD-Player.exe'))
+        self.assertTrue(is_known('C:/MuMu Player 12/shell/MuMuPlayer.exe'))
+        self.assertTrue(is_known('C:/MuMu/shell/MuMuNxDevice.exe'))
+        self.assertFalse(is_known('C:/Unknown/emulator.exe'))
 
     def test_new_messages_are_compiled_for_every_locale(self):
         messages = {

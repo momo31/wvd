@@ -27,7 +27,7 @@ class Upstream261MergeTests(unittest.TestCase):
 
     def test_version_and_changelog_identify_the_fork_release(self):
         main = (SRC / "main.py").read_text(encoding="utf-8")
-        self.assertIn("__version__ = '2.7.1-momo.1'", main)
+        self.assertIn("__version__ = '3.2.1-momo.1'", main)
         self.assertIn("==v2.6.1-momo.1==", self.changelog)
         self.assertIn(
             "Integrated upstream 2.6.1 checkbox styling and positive recovery controls.",
@@ -39,20 +39,17 @@ class Upstream261MergeTests(unittest.TestCase):
         )
 
     def test_checkbox_styles_are_split_by_context(self):
-        self.assertNotIn("Custom.TCheckbutton", self.gui)
-        self.assertEqual(
-            self.gui.count('style="CombatStrategy.TCheckbutton"'),
-            3,
-        )
-        self.assertGreaterEqual(
-            self.gui.count('style="Default.TCheckbutton"'),
-            10,
-        )
-        self.assertIn('configure("Default.TCheckbutton")', self.gui)
-        self.assertIn(
-            'configure("CombatStrategy.TCheckbutton", background="#FFFFFF")',
-            self.gui,
-        )
+        from html.parser import HTMLParser
+        class Controls(HTMLParser):
+            def __init__(self): super().__init__(); self.checkboxes = set()
+            def handle_starttag(self, tag, attrs):
+                attrs = dict(attrs)
+                if tag == 'input' and attrs.get('type') == 'checkbox':
+                    self.checkboxes.add(attrs.get('data-config') or attrs.get('id'))
+        parser = Controls(); parser.feed((SRC / 'ui.html').read_text(encoding='utf-8'))
+        self.assertIn('telegramEnabled', parser.checkboxes)
+        self.assertGreater(len(parser.checkboxes), 10)
+        self.assertNotIn('tk.Tk', self.gui)
 
     def test_positive_recovery_flags_keep_local_recovery_orchestration(self):
         self.assertIn(

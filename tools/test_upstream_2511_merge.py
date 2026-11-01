@@ -16,6 +16,9 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 
+from utils import ResolveTemplatePath
+
+
 def png_dimensions(path):
     data = path.read_bytes()[:24]
     if data[:8] != b"\x89PNG\r\n\x1a\n":
@@ -39,11 +42,11 @@ class Upstream2511MergeTests(unittest.TestCase):
         cls.mining_block = cls.script_source[mining_start:mining_end]
 
     def test_version_and_upstream_images_are_integrated(self):
-        self.assertIn("__version__ = '2.7.1-momo.1'", self.main_source)
+        self.assertIn("__version__ = '3.2.1-momo.1'", self.main_source)
 
-        next_image = ROOT / "resources" / "images" / "next.png"
+        next_image = Path(ResolveTemplatePath('next.png'))
         position_image = (
-            ROOT / "resources" / "images" / "FFXI" / "org_position.png"
+            Path(ResolveTemplatePath('FFXI/org_position.png'))
         )
         self.assertEqual(png_dimensions(next_image), (34, 24))
         self.assertEqual(

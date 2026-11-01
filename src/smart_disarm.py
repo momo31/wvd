@@ -55,9 +55,9 @@ import cv2
 # 번들 템플릿을 못 찾아 "미구비"로 판정하고 자가 학습을 처음부터 재시작하는 문제가 있었다.
 # (utils.ResourcePath 와 동일 규약. 이 모듈은 무의존 원칙을 지키기 위해 자체 해석한다.)
 try:
-    _SMALLGAME_DIR = os.path.join(sys._MEIPASS, "resources", "images")
+    _SMALLGAME_DIR = os.path.join(sys._MEIPASS, "resources", "images", "common")
 except Exception:
-    _SMALLGAME_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "resources", "images"))
+    _SMALLGAME_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "resources", "images", "common"))
 
 
 class DisarmConfig:

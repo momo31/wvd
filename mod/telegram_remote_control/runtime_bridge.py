@@ -68,6 +68,22 @@ class RemoteRuntime:
         self.fallback_done = threading.Event()
         self.fallback_succeeded: bool | None = None
         self.handoff_target: str | None = None
+        self.worker_generation = 0
+        self.stop_after_run_event = threading.Event()
+
+    def begin_worker(self) -> int:
+        with self._lock:
+            self.worker_generation += 1
+            return self.worker_generation
+
+    def finish_round(self) -> bool:
+        """Apply the run's reservation only at a round or handoff boundary."""
+        with self._lock:
+            if not self.stop_after_run_event.is_set():
+                return False
+            self.worker_force_stop_event.set()
+            self.mark_exit(TaskExitReason.LOCAL_STOP, "이번 회차가 끝나 작업을 중지했습니다.")
+            return True
 
     def request_stop(self, now: datetime | None, monotonic_now: float, chat_id: str | None) -> bool:
         with self._lock:
@@ -122,7 +138,9 @@ class RemoteRuntime:
 
     def request_handoff(self, target: str) -> bool:
         with self._lock:
-            if self.exit_reason is not None or self.stop_event.is_set() or self.handoff_target is not None:
+            if (self.exit_reason is not None or self.stop_event.is_set()
+                    or self.worker_force_stop_event.is_set() or self.finish_round()
+                    or self.handoff_target is not None):
                 return False
             self.handoff_target = str(target)
             return True
@@ -131,9 +149,9 @@ class RemoteRuntime:
         with self._lock:
             return self.handoff_target is not None and (target is None or self.handoff_target == target)
 
-    def clear_handoff(self, target: str) -> bool:
+    def clear_handoff(self, target: str | None = None) -> bool:
         with self._lock:
-            if self.handoff_target != target:
+            if self.handoff_target is None or (target is not None and self.handoff_target != target):
                 return False
             self.handoff_target = None
             return True
@@ -233,12 +251,15 @@ def request_task_handoff(
 ) -> bool:
     remote_stop_checkpoint(runtime, CheckpointKind.BETWEEN_OPERATIONS)
     if runtime is None:
-        event_queue.put((event_name, ""))
-        return True
+        return False
     if not runtime.request_handoff(target):
         return False
     try:
-        event_queue.put((event_name, runtime.run_id))
+        event_queue.put(("switch_quest", {
+            "run_id": runtime.run_id,
+            "worker_generation": runtime.worker_generation,
+            "target": str(target),
+        }))
     except Exception:
         runtime.clear_handoff(target)
         raise

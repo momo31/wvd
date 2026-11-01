@@ -98,14 +98,26 @@ def load_latest_farm_setting(
 ) -> Any:
     path = str(Path(config_path).resolve(strict=False)) if config_path else None
     raw = _load_raw(path, load_raw)
+    return _build_farm_setting(raw, path, (raw.get('GENERAL') or {}).get('FARM_TARGET'), build_setting)
+
+
+def load_farm_setting_for_target(config_path, target: str, load_raw, build_setting) -> Any:
+    """Build a handoff's settings without saving its transient selection."""
+    path = str(Path(config_path).resolve(strict=False)) if config_path else None
+    return _build_farm_setting(_load_raw(path, load_raw), path, target, build_setting)
+
+
+def _build_farm_setting(raw, path, target, build_setting):
     general = dict(raw.get("GENERAL") or {})
-    target = general.get("FARM_TARGET")
-    if general.get("TASK_SPECIFIC_CONFIG") and target:
-        task = dict(raw.get(str(target)) or {})
-    else:
-        task = dict(raw.get("DEFAULT") or {})
-    merged = {**general, **task}
+    if not isinstance(target, str) or not target.strip():
+        raise TelegramConfigError("실행할 매크로가 설정되지 않았습니다.")
+    section = str(target) if general.get('TASK_SPECIFIC_CONFIG') and target in raw else 'DEFAULT'
+    task = dict(raw.get(section) or {})
+    merged = {**task, **general, 'FARM_TARGET': target}
+    if target != general.get('FARM_TARGET'):
+        merged['FARM_TARGET_TEXT'] = ''
     setting = build_setting(merged)
+    setting._CONFIG_PATH = path
     if not getattr(setting, "FARM_TARGET", None):
         raise TelegramConfigError("실행할 매크로가 설정되지 않았습니다.")
     return setting

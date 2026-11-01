@@ -61,31 +61,12 @@ class Upstream2410MergeTests(unittest.TestCase):
         self.assertEqual(block.count('LeaveMiningDungeon(result, _("'), 2)
 
     def test_ffxi_mining_tip_is_localized(self):
-        tip = self.quests["FFXI-Org"]["_TIPS"]
-        expected_leads = {
-            "en_US": "Follow these setup steps:",
-            "ko_KR": "다음 순서로 설정하세요:",
-            "zh_CN": "请按照如下步骤设置:",
-        }
-
-        for language, expected_lead in expected_leads.items():
-            catalog_path = (
-                ROOT / "locale" / language / "LC_MESSAGES" / "messages.mo"
-            )
-            with catalog_path.open("rb") as stream:
-                translations = gettext.GNUTranslations(stream)
-            translated = translations.gettext(tip)
-            self.assertTrue(translated.startswith(expected_lead))
-            self.assertIn("9999", translated.replace(",", ""))
-            changelog_line = translations.gettext(
-                "修复了挖矿任务会卡死的问题."
-            )
-            if language != "zh_CN":
-                self.assertNotIn("请按照", translated)
-                self.assertNotEqual(
-                    changelog_line,
-                    "修复了挖矿任务会卡死的问题.",
-                )
+        quests = json.loads((ROOT / 'resources/quest/quest.json').read_text(encoding='utf-8'))
+        for language in ('en_US', 'ko_KR', 'zh_CN'):
+            tip = quests['FFXI-Org']['_TIPS_' + language]
+            self.assertIn('9999', tip.replace(',', ''))
+            self.assertIn('FFXIStone', tip)
+            if language != 'zh_CN': self.assertNotIn('请按照', tip)
 
     def test_new_changelog_section_is_localizable_and_consistent(self):
         from utils import LocalizeChangesLog

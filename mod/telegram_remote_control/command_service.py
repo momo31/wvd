@@ -25,7 +25,6 @@ from .constants import (
     POLL_TIMEOUT_SECONDS,
     SEND_BACKOFF_SECONDS,
     SENT_KEY_CACHE_SIZE,
-    SERVICE_THREAD_JOIN_TIMEOUT_SECONDS,
     GUI_CONNECTION_TEST_TIMEOUT_SECONDS,
 )
 from .models import (
@@ -195,6 +194,8 @@ class TelegramCommandService:
         self._final_stop = False
         self._poll_thread: threading.Thread | None = None
         self._send_thread: threading.Thread | None = None
+        self._test_threads: list[threading.Thread] = []
+        self._test_timers: list[threading.Timer] = []
         self._pending: dict[str, OutboundMessage] = {}
         self._retry_counts: dict[str, int] = {}
         self._outbound: queue.PriorityQueue[tuple[int, int, str]] = queue.PriorityQueue()
@@ -224,17 +225,28 @@ class TelegramCommandService:
             if self._final_stop:
                 return
             self._final_stop = True
+            for timer in self._test_timers:
+                timer.cancel()
             self._condition.notify_all()
-        def cleanup() -> None:
-            for thread in (self._poll_thread, self._send_thread):
-                if thread and thread.is_alive():
-                    thread.join(SERVICE_THREAD_JOIN_TIMEOUT_SECONDS)
-        threading.Thread(target=cleanup, name="telegram-service-cleanup", daemon=True).start()
+
+    def wait_stopped(self) -> None:
+        """Join actual I/O workers on the controller's watched cleanup thread.
+
+        The owner enforces the shared 36-second service deadline. Do not return
+        just because an inner timeout elapsed while a worker is still alive.
+        """
+        with self._condition:
+            threads = [self._poll_thread, self._send_thread, *self._test_threads, *self._test_timers]
+        for thread in threads:
+            if thread is not None and thread is not threading.current_thread():
+                thread.join()
 
     def enqueue(self, message: OutboundMessage) -> bool:
         if not isinstance(message, OutboundMessage):
             raise TypeError("message must be OutboundMessage")
         with self._condition:
+            if self._final_stop:
+                return False
             if message.key in self._sent_set or message.key in self._pending:
                 return False
             if len(self._pending) >= MAX_PENDING_MESSAGES:
@@ -252,23 +264,31 @@ class TelegramCommandService:
         result_sent = threading.Event()
 
         def emit(result: ConnectionTestResult) -> None:
-            if result_sent.is_set():
-                return
-            result_sent.set()
-            self._events.put(("telegram_test_result", result))
+            with self._condition:
+                if self._final_stop or result_sent.is_set():
+                    return
+                result_sent.set()
+                self._events.put(("telegram_test_result", result))
+
+        def cancelled() -> bool:
+            with self._condition:
+                return self._final_stop or result_sent.is_set()
 
         timeout_timer = threading.Timer(
             GUI_CONNECTION_TEST_TIMEOUT_SECONDS,
             lambda: emit(ConnectionTestResult(request.request_id, False, "Telegram 연결 테스트 시간이 초과되었습니다.")),
         )
         timeout_timer.daemon = True
-        timeout_timer.start()
 
         def run() -> None:
             try:
+                if cancelled():
+                    return
                 settings = validate_telegram_settings(request.settings)
                 client = self._client_factory(settings.bot_token, self._logger)
                 client.get_me()
+                if cancelled():
+                    return
                 client.send_message(settings.allowed_chat_id, "WvDAS 연결 테스트가 완료되었습니다.")
                 result = ConnectionTestResult(request.request_id, True, "연결됨")
             except TelegramApiError as exc:
@@ -277,9 +297,19 @@ class TelegramCommandService:
                 result = ConnectionTestResult(request.request_id, False, str(exc))
             except Exception:
                 result = ConnectionTestResult(request.request_id, False, "Telegram 연결 테스트에 실패했습니다.")
-            timeout_timer.cancel()
+            finally:
+                timeout_timer.cancel()
             emit(result)
-        threading.Thread(target=run, name="telegram-connection-test", daemon=True).start()
+        with self._condition:
+            if self._final_stop:
+                return
+            self._test_threads = [thread for thread in self._test_threads if thread.is_alive()]
+            self._test_timers = [timer for timer in self._test_timers if timer.is_alive()]
+            thread = threading.Thread(target=run, name="telegram-connection-test", daemon=True)
+            self._test_threads.append(thread)
+            self._test_timers.append(timeout_timer)
+            timeout_timer.start()
+            thread.start()
 
     def _apply_settings(self, settings: TelegramSettings, *, initial: bool) -> None:
         settings = validate_telegram_settings(settings)
@@ -311,6 +341,7 @@ class TelegramCommandService:
 
     def _poll_loop(self) -> None:
         offset: int | None = None
+        initialized_generation: int | None = None
         while True:
             snapshot = self._wait_for_enabled()
             if snapshot is None:
@@ -319,29 +350,58 @@ class TelegramCommandService:
             try:
                 client = self._client_factory(settings.bot_token, self._logger)
                 client.get_me()
-                discarded = client.get_updates(-1, timeout=0)
-                offset = None
-                if discarded:
-                    offset = max(int(item["update_id"]) for item in discarded if "update_id" in item) + 1
+                if not self._is_generation_active(generation, settings):
+                    continue
+                if initialized_generation != generation:
+                    discarded = client.get_updates(-1, timeout=0)
+                    with self._condition:
+                        if not self._is_generation_active(generation, settings):
+                            continue
+                        ids = []
+                        for item in discarded:
+                            try:
+                                ids.append(int(item["update_id"]))
+                            except (KeyError, TypeError, ValueError):
+                                continue
+                        self._last_update_id = max(ids) if ids else None
+                        offset = self._last_update_id + 1 if ids else None
+                        initialized_generation = generation
                 self._put_status(ServiceStatus.CONNECTED, "", generation)
                 while self._is_generation_active(generation, settings):
                     updates = client.get_updates(offset, timeout=POLL_TIMEOUT_SECONDS)
                     if not updates:
                         continue
-                    max_id = None
-                    for update in sorted(updates, key=lambda item: int(item.get("update_id", -1))):
+                    ordered = []
+                    for update in updates:
                         try:
                             update_id = int(update["update_id"])
                         except (KeyError, TypeError, ValueError):
                             continue
-                        if self._last_update_id is not None and update_id <= self._last_update_id:
-                            continue
-                        max_id = update_id if max_id is None else max(max_id, update_id)
-                        payload, unknown = parse_update_command(update, settings, generation)
-                        callback = parse_update_callback(update, settings, generation)
-                        if payload is not None:
-                            self._events.put(("telegram_command", payload))
-                        elif callback is not None:
+                        ordered.append((update_id, update))
+                    for update_id, update in sorted(ordered, key=lambda item: item[0]):
+                        with self._condition:
+                            if not self._is_generation_active(generation, settings):
+                                break
+                            if self._last_update_id is not None and update_id <= self._last_update_id:
+                                continue
+                            payload, unknown = parse_update_command(update, settings, generation)
+                            callback = parse_update_callback(update, settings, generation)
+                            if payload is not None:
+                                self._events.put(("telegram_command", payload))
+                            elif callback is not None:
+                                self._events.put(("telegram_callback", callback))
+                            elif unknown:
+                                self.enqueue(
+                                    OutboundMessage(
+                                        key=f"unknown:{update_id}",
+                                        chat_id=settings.allowed_chat_id,
+                                        text=UNKNOWN_COMMAND_TEXT,
+                                        priority=NotificationPriority.ACKNOWLEDGEMENT,
+                                    )
+                                )
+                            self._last_update_id = update_id
+                            offset = update_id + 1
+                        if callback is not None:
                             try:
                                 client.answer_callback_query(callback.callback_query_id)
                             except Exception as exc:
@@ -352,19 +412,6 @@ class TelegramCommandService:
                                     )
                                 except Exception:
                                     pass
-                            self._events.put(("telegram_callback", callback))
-                        elif unknown:
-                            self.enqueue(
-                                OutboundMessage(
-                                    key=f"unknown:{update_id}",
-                                    chat_id=settings.allowed_chat_id,
-                                    text=UNKNOWN_COMMAND_TEXT,
-                                    priority=NotificationPriority.ACKNOWLEDGEMENT,
-                                )
-                            )
-                    if max_id is not None:
-                        self._last_update_id = max_id
-                        offset = max_id + 1
             except (TelegramAuthError, TelegramWebhookConflictError) as exc:
                 self._put_status(ServiceStatus.ERROR, exc.public_message, generation)
                 self._wait_for_change(generation, 5.0)

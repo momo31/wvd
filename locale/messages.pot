@@ -45,8 +45,7 @@ msgstr ""
 msgid "技能配置组"
 msgstr ""
 
-#: src/gui.py:338 src/gui.py:403 src/script.py:45 src/script.py:1767
-#: src/utils.py:528
+#: src/gui.py:338 src/gui.py:403 src/script.py:45 src/script.py:1767 src/utils.py:528
 msgid "左上技能"
 msgstr ""
 
@@ -90,14 +89,12 @@ msgstr ""
 msgid "中下角色"
 msgstr ""
 
-#: src/gui.py:339 src/gui.py:496 src/gui.py:536 src/gui.py:541 src/script.py:46
-#: src/utils.py:540
+#: src/gui.py:339 src/gui.py:496 src/gui.py:536 src/gui.py:541 src/script.py:46 src/utils.py:540
 msgid "不可用"
 msgstr ""
 
-#: src/gui.py:347 src/gui.py:954 src/gui.py:1283 src/gui.py:1287
-#: src/gui.py:1302 src/gui.py:1340 src/script.py:52 src/script.py:55
-#: src/script.py:1914 src/utils.py:546
+#: src/gui.py:347 src/gui.py:954 src/gui.py:1283 src/gui.py:1287 src/gui.py:1302 src/gui.py:1340
+#: src/script.py:52 src/script.py:55 src/script.py:1914 src/utils.py:546
 msgid "全自动战斗"
 msgstr ""
 
@@ -224,8 +221,7 @@ msgstr ""
 msgid "ADB地址:"
 msgstr ""
 
-#: src/gui.py:872 src/gui.py:882 src/gui.py:1121 src/gui.py:1781
-#: src/gui.py:1796
+#: src/gui.py:872 src/gui.py:882 src/gui.py:1121 src/gui.py:1781 src/gui.py:1796
 msgid "保存"
 msgstr ""
 
@@ -368,14 +364,13 @@ msgstr ""
 msgid "请先选择任务目标"
 msgstr ""
 
-#: src/gui.py:1188 src/gui.py:1189 src/gui.py:1193 src/gui.py:1279
-#: src/gui.py:1310 src/gui.py:1311 src/gui.py:1375 src/gui.py:1442
-#: src/gui.py:1443 src/gui.py:1450 src/gui.py:1451
+#: src/gui.py:1188 src/gui.py:1189 src/gui.py:1193 src/gui.py:1279 src/gui.py:1310 src/gui.py:1311
+#: src/gui.py:1375 src/gui.py:1442 src/gui.py:1443 src/gui.py:1450 src/gui.py:1451
 msgid "全程"
 msgstr ""
 
-#: src/gui.py:1220 src/gui.py:1285 src/gui.py:1356 src/gui.py:1376
-#: src/gui.py:1391 src/script.py:1155 src/utils.py:548
+#: src/gui.py:1220 src/gui.py:1285 src/gui.py:1356 src/gui.py:1376 src/gui.py:1391 src/script.py:1155
+#: src/utils.py:548
 msgid "自定义任务点策略"
 msgstr ""
 
@@ -1561,8 +1556,8 @@ msgstr ""
 msgid "第二步: 返回要塞..."
 msgstr ""
 
-#: src/script.py:2676 src/script.py:3271 src/script.py:3282 src/script.py:3352
-#: src/script.py:3363 src/script.py:3487
+#: src/script.py:2676 src/script.py:3271 src/script.py:3282 src/script.py:3352 src/script.py:3363
+#: src/script.py:3487
 msgid "第三步: 前往王城..."
 msgstr ""
 
@@ -1755,8 +1750,8 @@ msgstr ""
 msgid "跳过了巨人检测环节. 现在默认总是击杀灯怪."
 msgstr ""
 
-#: src/script.py:3261 src/script.py:3276 src/script.py:3288 src/script.py:3342
-#: src/script.py:3357 src/script.py:3369
+#: src/script.py:3261 src/script.py:3276 src/script.py:3288 src/script.py:3342 src/script.py:3357
+#: src/script.py:3369
 msgid "第一步: 时空跳跃..."
 msgstr ""
 
@@ -2050,8 +2045,7 @@ msgid "每次启动仅一次"
 msgstr ""
 
 #: src/gui.py:1374
-msgid ""
-"该任务在小村子住宿. 主要不要开\"住豪华房\"和\"6小时重置队伍\"."
+msgid "该任务在小村子住宿. 主要不要开\"住豪华房\"和\"6小时重置队伍\"."
 msgstr ""
 
 #: src/script.py
@@ -2378,7 +2372,9 @@ msgstr ""
 msgid "Preserved Telegram control, persistent settings, and network recovery."
 msgstr ""
 
-msgid "Simplified route-readiness detection so slow screenshots do not misclassify transient route errors."
+msgid ""
+"Simplified route-readiness detection so slow screenshots do not misclassify transient route "
+"errors."
 msgstr ""
 
 msgid "Added a recovery boundary so mining can continue after a game restart during dungeon entry."
@@ -2397,6 +2393,7 @@ msgid "Combat now uses bounded fallback targeting when the Next marker remains v
 msgstr ""
 
 #: src/script.py
+#, python-brace-format
 msgid "Obtained {a}."
 msgstr ""
 
@@ -2405,14 +2402,17 @@ msgid "Detected an all-refined ore reward."
 msgstr ""
 
 #: src/script.py
+#, python-brace-format
 msgid "Unrecognized ore reward; screenshot saved to {a}."
 msgstr ""
 
 #: src/script.py
+#, python-brace-format
 msgid "No usable pickaxe was detected in the {a} frame; leaving the dungeon."
 msgstr ""
 
 #: src/script.py
+#, python-brace-format
 msgid "No ore to mine was detected in the {a} frame; leaving the dungeon."
 msgstr ""
 
@@ -2432,6 +2432,7 @@ msgid "Kept chest interaction markers ahead of bounded result-dialogue skips."
 msgstr ""
 
 #: src/script.py
+#, python-brace-format
 msgid "The result dialogue did not change after {a} skip attempts; re-identifying the screen."
 msgstr ""
 
@@ -2482,10 +2483,13 @@ msgid "One configured action completed, so the remaining strategy queue was clea
 msgstr ""
 
 #: src/script.py
+#, python-brace-format
 msgid "All-refined ore detected; screenshot saved to {a}."
 msgstr ""
 
-msgid "Integrated upstream 2.5.12 through 2.6.0 while preserving local recovery, Telegram control, and chest guards."
+msgid ""
+"Integrated upstream 2.5.12 through 2.6.0 while preserving local recovery, Telegram control, and "
+"chest guards."
 msgstr ""
 
 msgid "Combat reset and completion behavior can now be configured per strategy."
@@ -2500,7 +2504,9 @@ msgstr ""
 msgid "All-refined mining rewards now save a diagnostic screenshot."
 msgstr ""
 
-msgid "Temporarily disabled the legacy per-combat reset and saved screenshots for all-refined mining rewards."
+msgid ""
+"Temporarily disabled the legacy per-combat reset and saved screenshots for all-refined mining "
+"rewards."
 msgstr ""
 
 msgid "Recovered cleanly when a game restart is triggered during screenshot capture."
@@ -2518,13 +2524,17 @@ msgstr ""
 msgid "Existing skip-recovery settings are migrated automatically without changing behavior."
 msgstr ""
 
-msgid "Preserved local recovery orchestration, Telegram control, chest guards, and localized quest categories."
+msgid ""
+"Preserved local recovery orchestration, Telegram control, chest guards, and localized quest "
+"categories."
 msgstr ""
 
 msgid "Integrated upstream 2.6.2's narrower random single-target fallback area."
 msgstr ""
 
-msgid "Use per-combat strategy reset only after understanding the in-game \"Repeat Previous Action\" behavior."
+msgid ""
+"Use per-combat strategy reset only after understanding the in-game \"Repeat Previous Action\" "
+"behavior."
 msgstr ""
 
 msgid "选择可执行文件"
@@ -2556,5 +2566,1308 @@ msgstr ""
 msgid "Warns when an unsupported emulator executable is selected without blocking the saved setting."
 msgstr ""
 
-msgid "Removed the unused SciPy dependency while preserving the local smart-chest implementation and standard logging pipeline."
+msgid ""
+"Removed the unused SciPy dependency while preserving the local smart-chest implementation and "
+"standard logging pipeline."
+msgstr ""
+
+#: src/ui.html:1
+msgid " · 炉壶灵庙"
+msgstr ""
+
+#: src/ui.html:1
+msgid " 个任务点"
+msgstr ""
+
+#: src/ui.html:1
+msgid " 个角色"
+msgstr ""
+
+#: src/ui.html:1
+msgid " 点"
+msgstr ""
+
+#: src/ui.html:1
+msgid " 组方案"
+msgstr ""
+
+#: src/ui.html:1
+msgid " 链接待补充"
+msgstr ""
+
+#: src/ui.html:1
+msgid "' 已存在，请使用其他名称"
+msgstr ""
+
+#: src/ui.html:1
+msgid "0 火策略"
+msgstr ""
+
+#: src/ui.html:1
+msgid "0 火策略、剧情跳跃、住宿偏好与容错阈值。"
+msgstr ""
+
+#: src/ui.html:1
+msgid "127.0.0.1:端口"
+msgstr ""
+
+#: src/ui.html:1
+msgid "ADB 地址"
+msgstr ""
+
+#: src/ui.html:1
+msgid "API 不存在: "
+msgstr ""
+
+#: src/ui.html:1
+msgid "FFXI 联动"
+msgstr ""
+
+#: src/ui.html:1
+msgid "Web Store（新）"
+msgstr ""
+
+#: src/ui.html:1
+msgid "Wizardry Variants Daphne · 自动挂机"
+msgstr ""
+
+#: src/ui.html:1
+msgid "[高级] 该策略释放任一技能即视为完成。"
+msgstr ""
+
+#: src/ui.html:1
+msgid "[高级] 该策略需要在战斗开始前进行重置。确保你了解「重复上一次」功能，否则请勿开启。"
+msgstr ""
+
+#: src/ui.html:1
+msgid "]吗？"
+msgstr ""
+
+#: src/ui.html:1
+msgid "上次切换灵庙"
+msgstr ""
+
+#: src/ui.html:1
+msgid "上次领取宝石（新）"
+msgstr ""
+
+#: src/ui.html:1
+msgid "上次领取宝石（旧）"
+msgstr ""
+
+#: src/ui.html:1
+msgid "下载更新"
+msgstr ""
+
+#: src/ui.html:1
+msgid "下载更新 · v"
+msgstr ""
+
+#: src/ui.html:1
+msgid "为当前任务指定全程与任务点使用的战斗策略。"
+msgstr ""
+
+#: src/ui.html:1
+msgid "主线前三章"
+msgstr ""
+
+#: src/ui.html:1
+msgid "主线第四章"
+msgstr ""
+
+#: src/ui.html:1
+msgid "仅对当前选择的任务生效"
+msgstr ""
+
+#: src/ui.html:1
+msgid "任务定制配置"
+msgstr ""
+
+#: src/ui.html:1
+msgid "任务定制配置 · 已启用"
+msgstr ""
+
+#: src/ui.html:1
+msgid "任务定制配置 · 未启用"
+msgstr ""
+
+#: src/ui.html:1
+msgid "任务已切换"
+msgstr ""
+
+#: src/ui.html:1
+msgid "任务提示"
+msgstr ""
+
+#: src/ui.html:1
+msgid "任务提示："
+msgstr ""
+
+#: src/ui.html:1
+msgid "任务洞窟"
+msgstr ""
+
+#: src/ui.html:1
+msgid "任务点策略"
+msgstr ""
+
+#: src/ui.html:1
+msgid "任务目标"
+msgstr ""
+
+#: src/ui.html:1
+msgid "任务类别"
+msgstr ""
+
+#: src/ui.html:1
+msgid "任务选择"
+msgstr ""
+
+#: src/ui.html:1
+msgid "优先级：挖矿 → 刷钱 → 钓鱼。三项均未启用时，脚本会等待约 2 小时后重启游戏以重新点火。"
+msgstr ""
+
+#: src/ui.html:1
+msgid "住宿后首次进入地下城时进行恢复"
+msgstr ""
+
+#: src/ui.html:1
+msgid "保存失败"
+msgstr ""
+
+#: src/ui.html:1
+msgid "保存战斗方案失败"
+msgstr ""
+
+#: src/ui.html:1
+msgid "修改界面语言后需要重启脚本才能生效。游戏语言不一致会导致 OCR 与图片识别失败。"
+msgstr ""
+
+#: src/ui.html:1
+msgid "停止脚本"
+msgstr ""
+
+#: src/ui.html:1
+msgid "全程策略"
+msgstr ""
+
+#: src/ui.html:1
+msgid "全自动战斗无需配置角色技能。"
+msgstr ""
+
+#: src/ui.html:1
+msgid "共 "
+msgstr ""
+
+#: src/ui.html:1
+msgid "共 0 组方案"
+msgstr ""
+
+#: src/ui.html:1
+msgid "关闭"
+msgstr ""
+
+#: src/ui.html:1
+msgid "关闭日志"
+msgstr ""
+
+#: src/ui.html:1
+msgid "其他"
+msgstr ""
+
+#: src/ui.html:1
+msgid "再起之火耗尽时自动切换"
+msgstr ""
+
+#: src/ui.html:1
+msgid "删除"
+msgstr ""
+
+#: src/ui.html:1
+msgid "删除角色"
+msgstr ""
+
+#: src/ui.html:1
+msgid "剧情与跳跃"
+msgstr ""
+
+#: src/ui.html:1
+msgid "双周刷新，可一键切换到月常任务「炉壶灵庙」。"
+msgstr ""
+
+#: src/ui.html:1
+msgid "发现新版本 v"
+msgstr ""
+
+#: src/ui.html:1
+msgid "发生错误"
+msgstr ""
+
+#: src/ui.html:1
+msgid "变"
+msgstr ""
+
+#: src/ui.html:1
+msgid "可单独设置该任务每个任务点的战斗策略，不影响全局默认值。"
+msgstr ""
+
+#: src/ui.html:1
+msgid "合计"
+msgstr ""
+
+#: src/ui.html:1
+msgid "名称 '"
+msgstr ""
+
+#: src/ui.html:1
+msgid "启动脚本前需要先连接模拟器"
+msgstr ""
+
+#: src/ui.html:1
+msgid "启用定时重置队伍"
+msgstr ""
+
+#: src/ui.html:1
+msgid "善 → 中立，中立 → 恶"
+msgstr ""
+
+#: src/ui.html:1
+msgid "善恶调整"
+msgstr ""
+
+#: src/ui.html:1
+msgid "地址可以只填端口，失焦后会自动补全为"
+msgstr ""
+
+#: src/ui.html:1
+msgid "完成"
+msgstr ""
+
+#: src/ui.html:1
+msgid "官"
+msgstr ""
+
+#: src/ui.html:1
+msgid "官方 X / 动态"
+msgstr ""
+
+#: src/ui.html:1
+msgid "官方、商店、攻略与社区入口。"
+msgstr ""
+
+#: src/ui.html:1
+msgid "官方商店（旧）"
+msgstr ""
+
+#: src/ui.html:1
+msgid "官方网站"
+msgstr ""
+
+#: src/ui.html:1
+msgid "官方账号、维护与最新动态"
+msgstr ""
+
+#: src/ui.html:1
+msgid "官网宝石每周可领取一次；灵庙任务每两周刷新一次。"
+msgstr ""
+
+#: src/ui.html:1
+msgid "官网每周宝石"
+msgstr ""
+
+#: src/ui.html:1
+msgid "官网每周宝石 · 新网站"
+msgstr ""
+
+#: src/ui.html:1
+msgid "官网每周宝石 · 旧网站"
+msgstr ""
+
+#: src/ui.html:1
+msgid "定位失败后重启游戏"
+msgstr ""
+
+#: src/ui.html:1
+msgid "容错阈值"
+msgstr ""
+
+#: src/ui.html:1
+msgid "小时"
+msgstr ""
+
+#: src/ui.html:1
+msgid "尚未选择模拟器可执行文件"
+msgstr ""
+
+#: src/ui.html:1
+msgid "尝试刷钱"
+msgstr ""
+
+#: src/ui.html:1
+msgid "尝试挖矿"
+msgstr ""
+
+#: src/ui.html:1
+msgid "尝试钓鱼"
+msgstr ""
+
+#: src/ui.html:1
+msgid "就绪"
+msgstr ""
+
+#: src/ui.html:1
+msgid "展开 / 收起"
+msgstr ""
+
+#: src/ui.html:1
+msgid "已切换灵庙任务"
+msgstr ""
+
+#: src/ui.html:1
+msgid "已取消：本次执行完毕后停止"
+msgstr ""
+
+#: src/ui.html:1
+msgid "已标记本周宝石为已领取"
+msgstr ""
+
+#: src/ui.html:1
+msgid "已设置"
+msgstr ""
+
+#: src/ui.html:1
+msgid "已设置：本次执行完毕后停止"
+msgstr ""
+
+#: src/ui.html:1
+msgid "常用网站"
+msgstr ""
+
+#: src/ui.html:1
+msgid "平均用时"
+msgstr ""
+
+#: src/ui.html:1
+msgid "店"
+msgstr ""
+
+#: src/ui.html:1
+msgid "开始下载更新"
+msgstr ""
+
+#: src/ui.html:1
+msgid "开箱"
+msgstr ""
+
+#: src/ui.html:1
+msgid "开箱、恢复、旅店休息与队伍重置等探索相关设置。"
+msgstr ""
+
+#: src/ui.html:1
+msgid "开箱人选"
+msgstr ""
+
+#: src/ui.html:1
+msgid "开箱后进行恢复"
+msgstr ""
+
+#: src/ui.html:1
+msgid "当前任务"
+msgstr ""
+
+#: src/ui.html:1
+msgid "当前未启用任务点策略。选择上方的「自定义任务点策略」后，本模块才会生效。"
+msgstr ""
+
+#: src/ui.html:1
+msgid "当前版本"
+msgstr ""
+
+#: src/ui.html:1
+msgid "当前版本 v"
+msgstr ""
+
+#: src/ui.html:1
+msgid "恶 → 中立，中立 → 善"
+msgstr ""
+
+#: src/ui.html:1
+msgid "悬停详情"
+msgstr ""
+
+#: src/ui.html:1
+msgid "战斗方案会在每次重启游戏以及任意角色死亡后重置；任务点完成后会自动切换到下一点配置。"
+msgstr ""
+
+#: src/ui.html:1
+msgid "战斗方案会在每次重启游戏，以及任意角色死亡后重置。每个角色可以配置技能槽位、技能等级和执行顺序。"
+msgstr ""
+
+#: src/ui.html:1
+msgid "战斗策略"
+msgstr ""
+
+#: src/ui.html:1
+msgid "战斗结束后进行恢复"
+msgstr ""
+
+#: src/ui.html:1
+msgid "手动下载"
+msgstr ""
+
+#: src/ui.html:1
+msgid "技能"
+msgstr ""
+
+#: src/ui.html:1
+msgid "提交 Bug 与功能建议"
+msgstr ""
+
+#: src/ui.html:1
+msgid "提示"
+msgstr ""
+
+#: src/ui.html:1
+msgid "摘要"
+msgstr ""
+
+#: src/ui.html:1
+msgid "操作失败："
+msgstr ""
+
+#: src/ui.html:1
+msgid "支持项目开发"
+msgstr ""
+
+#: src/ui.html:1
+msgid "攻略 Wiki"
+msgstr ""
+
+#: src/ui.html:1
+msgid "新"
+msgstr ""
+
+#: src/ui.html:1
+msgid "新摘要"
+msgstr ""
+
+#: src/ui.html:1
+msgid "新版网页商店与领取入口"
+msgstr ""
+
+#: src/ui.html:1
+msgid "方案"
+msgstr ""
+
+#: src/ui.html:1
+msgid "旅店与队伍"
+msgstr ""
+
+#: src/ui.html:1
+msgid "无法读取配置。"
+msgstr ""
+
+#: src/ui.html:1
+msgid "日常"
+msgstr ""
+
+#: src/ui.html:1
+msgid "日常 / 周常"
+msgstr ""
+
+#: src/ui.html:1
+msgid "日志已清空。"
+msgstr ""
+
+#: src/ui.html:1
+msgid "日志自动滚动已恢复"
+msgstr ""
+
+#: src/ui.html:1
+msgid "日志自动滚动已暂停"
+msgstr ""
+
+#: src/ui.html:1
+msgid "暂停滚动"
+msgstr ""
+
+#: src/ui.html:1
+msgid "暂无角色配置"
+msgstr ""
+
+#: src/ui.html:1
+msgid "更新下载完成"
+msgstr ""
+
+#: src/ui.html:1
+msgid "更新完成，应用即将重启"
+msgstr ""
+
+#: src/ui.html:1
+msgid "最大化"
+msgstr ""
+
+#: src/ui.html:1
+msgid "最小化"
+msgstr ""
+
+#: src/ui.html:1
+msgid "最新任务"
+msgstr ""
+
+#: src/ui.html:1
+msgid "月常"
+msgstr ""
+
+#: src/ui.html:1
+msgid "未单独指定的任务点都会使用该策略"
+msgstr ""
+
+#: src/ui.html:1
+msgid "未设置"
+msgstr ""
+
+#: src/ui.html:1
+msgid "未选择"
+msgstr ""
+
+#: src/ui.html:1
+msgid "未选择任务"
+msgstr ""
+
+#: src/ui.html:1
+msgid "本周 50 钻待领取 · store.wizardry.info"
+msgstr ""
+
+#: src/ui.html:1
+msgid "本周 50 钻待领取 · webstore.wizardry.info"
+msgstr ""
+
+#: src/ui.html:1
+msgid "本期待切换 · 炉壶灵庙"
+msgstr ""
+
+#: src/ui.html:1
+msgid "本次执行完毕后停止"
+msgstr ""
+
+#: src/ui.html:1
+msgid "模拟器编号"
+msgstr ""
+
+#: src/ui.html:1
+msgid "模拟器路径"
+msgstr ""
+
+#: src/ui.html:1
+msgid "次"
+msgstr ""
+
+#: src/ui.html:1
+msgid "次后休息"
+msgstr ""
+
+#: src/ui.html:1
+msgid "正在停止…"
+msgstr ""
+
+#: src/ui.html:1
+msgid "每"
+msgstr ""
+
+#: src/ui.html:1
+msgid "每周 / 每两周重置"
+msgstr ""
+
+#: src/ui.html:1
+msgid "每周例行"
+msgstr ""
+
+#: src/ui.html:1
+msgid "每周可领取 50 钻"
+msgstr ""
+
+#: src/ui.html:1
+msgid "每周领取 50 钻的旧版入口"
+msgstr ""
+
+#: src/ui.html:1
+msgid "深色模式"
+msgstr ""
+
+#: src/ui.html:1
+msgid "清空日志"
+msgstr ""
+
+#: src/ui.html:1
+msgid "游戏公告、活动与更新情报"
+msgstr ""
+
+#: src/ui.html:1
+msgid "游戏内每日与每周例行事项的自动化设置。"
+msgstr ""
+
+#: src/ui.html:1
+msgid "游戏内语言"
+msgstr ""
+
+#: src/ui.html:1
+msgid "源码、Issue 与 Releases"
+msgstr ""
+
+#: src/ui.html:1
+msgid "灵庙刷新"
+msgstr ""
+
+#: src/ui.html:1
+msgid "灵庙刷新 · 双周"
+msgstr ""
+
+#: src/ui.html:1
+msgid "点击卡片会在系统默认浏览器中打开对应网站。"
+msgstr ""
+
+#: src/ui.html:1
+msgid "爱"
+msgstr ""
+
+#: src/ui.html:1
+msgid "版本变更与已知问题"
+msgstr ""
+
+#: src/ui.html:1
+msgid "特 殊 事 件 明 细"
+msgstr ""
+
+#: src/ui.html:1
+msgid "特殊事件"
+msgstr ""
+
+#: src/ui.html:1
+msgid "用任务定制的配置文件覆盖默认配置"
+msgstr ""
+
+#: src/ui.html:1
+msgid "界面已就绪。"
+msgstr ""
+
+#: src/ui.html:1
+msgid "知道了"
+msgstr ""
+
+#: src/ui.html:1
+msgid "矿石"
+msgstr ""
+
+#: src/ui.html:1
+msgid "确定"
+msgstr ""
+
+#: src/ui.html:1
+msgid "确定要删除["
+msgstr ""
+
+#: src/ui.html:1
+msgid "确定要清除当前任务的定制配置吗？"
+msgstr ""
+
+#: src/ui.html:1
+msgid "确认"
+msgstr ""
+
+#: src/ui.html:1
+msgid "确认清除"
+msgstr ""
+
+#: src/ui.html:1
+msgid "策略配置 "
+msgstr ""
+
+#: src/ui.html:1
+msgid "简体中文"
+msgstr ""
+
+#: src/ui.html:1
+msgid "缩略模式"
+msgstr ""
+
+#: src/ui.html:1
+msgid "网站"
+msgstr ""
+
+#: src/ui.html:1
+msgid "脚本界面语言"
+msgstr ""
+
+#: src/ui.html:1
+msgid "脚本，启动！"
+msgstr ""
+
+#: src/ui.html:1
+msgid "自动"
+msgstr ""
+
+#: src/ui.html:1
+msgid "自动切换"
+msgstr ""
+
+#: src/ui.html:1
+msgid "自动恢复"
+msgstr ""
+
+#: src/ui.html:1
+msgid "自定义"
+msgstr ""
+
+#: src/ui.html:1
+msgid "角色"
+msgstr ""
+
+#: src/ui.html:1
+msgid "角色、装备与任务资料"
+msgstr ""
+
+#: src/ui.html:1
+msgid "记录"
+msgstr ""
+
+#: src/ui.html:1
+msgid "设备"
+msgstr ""
+
+#: src/ui.html:1
+msgid "该"
+msgstr ""
+
+#: src/ui.html:1
+msgid "该策略需要在进入地下城时进行重置。"
+msgstr ""
+
+#: src/ui.html:1
+msgid "语言"
+msgstr ""
+
+#: src/ui.html:1
+msgid "赞助作者"
+msgstr ""
+
+#: src/ui.html:1
+msgid "跳跃到第三章结局「凯旋」"
+msgstr ""
+
+#: src/ui.html:1
+msgid "跳跃到第四章结局「美丽矿石的真相」"
+msgstr ""
+
+#: src/ui.html:1
+msgid "跳过额外检测，连续点击开锁。"
+msgstr ""
+
+#: src/ui.html:1
+msgid "输入"
+msgstr ""
+
+#: src/ui.html:1
+msgid "运行中"
+msgstr ""
+
+#: src/ui.html:1
+msgid "运行日志"
+msgstr ""
+
+#: src/ui.html:1
+msgid "还需 "
+msgstr ""
+
+#: src/ui.html:1
+msgid "还需 +0 点"
+msgstr ""
+
+#: src/ui.html:1
+msgid "进入地下城时进行恢复"
+msgstr ""
+
+#: src/ui.html:1
+msgid "连接设备与 ADB，设置脚本与游戏使用的语言。"
+msgstr ""
+
+#: src/ui.html:1
+msgid "连接设置"
+msgstr ""
+
+#: src/ui.html:1
+msgid "选择本次要执行的任务类别与具体任务目标。"
+msgstr ""
+
+#: src/ui.html:1
+msgid "选择类别后会自动筛选任务目标"
+msgstr ""
+
+#: src/ui.html:1
+msgid "遇到善恶事件时"
+msgstr ""
+
+#: src/ui.html:1
+msgid "配置每个角色的技能槽位、等级与执行顺序。"
+msgstr ""
+
+#: src/ui.html:1
+msgid "重启游戏后重启模拟器"
+msgstr ""
+
+#: src/ui.html:1
+msgid "重新召集酒馆第一个队伍，以便清理背包和调整站位。"
+msgstr ""
+
+#: src/ui.html:1
+msgid "问题反馈"
+msgstr ""
+
+#: src/ui.html:1
+msgid "需与模拟器内游戏语言保持一致"
+msgstr ""
+
+#: src/ui.html:1
+msgid "项目 GitHub"
+msgstr ""
+
+#: src/ui.html:1
+msgid "领取（新）"
+msgstr ""
+
+#: src/ui.html:1
+msgid "领取（旧）"
+msgstr ""
+
+#: src/ui.html:1
+msgid "＋ 新增角色"
+msgstr ""
+
+#: src/ui.html:1
+msgid "＋ 添加新技能配置"
+msgstr ""
+
+#: src/ui.html:1
+msgid "；输入多个端口时会自动选用最大值。"
+msgstr ""
+
+msgid "Enable remote control"
+msgstr ""
+
+msgid "Bot token"
+msgstr ""
+
+msgid "Leave blank to keep the saved token"
+msgstr ""
+
+msgid "Allowed chat ID"
+msgstr ""
+
+msgid "Clear saved token"
+msgstr ""
+
+msgid "Save and apply"
+msgstr ""
+
+msgid "Test connection"
+msgstr ""
+
+msgid "Smart chest opening"
+msgstr ""
+
+msgid "Bypass fast chest minigame"
+msgstr ""
+
+msgid "Cancel download"
+msgstr ""
+
+msgid "Unavailable for this game language."
+msgstr ""
+
+msgid "The task could not start. Check the selected task and game language."
+msgstr ""
+
+msgid "Stopping locally..."
+msgstr ""
+
+msgid "Closing..."
+msgstr ""
+
+msgid "Token saved"
+msgstr ""
+
+msgid "No token saved"
+msgstr ""
+
+msgid "Idle"
+msgstr ""
+
+msgid "Starting"
+msgstr ""
+
+msgid "Running"
+msgstr ""
+
+msgid "Returning remotely..."
+msgstr ""
+
+msgid "At title screen"
+msgstr ""
+
+msgid "Error"
+msgstr ""
+
+msgid "Completed"
+msgstr ""
+
+msgid "Stopped"
+msgstr ""
+
+msgid "Stop the task before changing these settings."
+msgstr ""
+
+msgid "Checking connection..."
+msgstr ""
+
+msgid "Connection test timed out."
+msgstr ""
+
+msgid "The request could not be completed."
+msgstr ""
+
+#, python-brace-format
+msgid "Preparing to switch to task \"{a}\"."
+msgstr ""
+
+msgid "No zero-resource fallback is enabled. Waiting two hours."
+msgstr ""
+
+msgid "No bait supply was found. Fishing has stopped."
+msgstr ""
+
+msgid "After resting"
+msgstr ""
+
+msgid "界面语言立即生效。游戏语言必须与模拟器内的设置一致。"
+msgstr ""
+
+msgid "执行频率"
+msgstr ""
+
+msgid "5分钟了还没钓到, 重来吧."
+msgstr ""
+
+#, python-brace-format
+msgid "ADB命令线程未能退出: {a}"
+msgstr ""
+
+msgid "ADB设备未连接"
+msgstr ""
+
+msgid ""
+"adb服务未启动!\n"
+"启动adb服务..."
+msgstr ""
+
+#, python-brace-format
+msgid "{size} {fish}"
+msgstr ""
+
+#, python-brace-format
+msgid "{size} {fish}: {count}"
+msgstr ""
+
+msgid "下杆!"
+msgstr ""
+
+#, python-format
+msgid "任务内部代号 '%s' 已迁移到 '%s'."
+msgstr ""
+
+#, python-brace-format
+msgid "任务点完成: {v0} {v1}"
+msgstr ""
+
+#, python-brace-format
+msgid "匹配时间 {v0}"
+msgstr ""
+
+#, python-brace-format
+msgid "因果: 滑动后的截图误差={v0:.6f}"
+msgstr ""
+
+msgid "宝箱"
+msgstr ""
+
+msgid "宝箱按钮不可用."
+msgstr ""
+
+#, python-format
+msgid "已切换到月常任务：%s"
+msgstr ""
+
+msgid "已完成第一个陷阱."
+msgstr ""
+
+#, python-brace-format
+msgid ""
+"已完成近端钓鱼{v0}次, 失败{v1}次.\n"
+"累计用时{v2:.2f}秒, 平均每条鱼用时{v3:.2f}秒.\n"
+"{v4}"
+msgstr ""
+
+msgid "开箱子然后遇到怪物还是善恶, 你这什么运气啊."
+msgstr ""
+
+#, python-brace-format
+msgid "当前层级: {a}"
+msgstr ""
+
+msgid "截图数据无效, 跳过楼层检测."
+msgstr ""
+
+msgid "拉杆!"
+msgstr ""
+
+#, python-brace-format
+msgid "拖动地图:{v0} {v1} {v2} {v3}"
+msgstr ""
+
+msgid "换鱼饵结束."
+msgstr ""
+
+msgid "本周 50 钻待领取 · 点击直接打开官网"
+msgstr ""
+
+msgid "本周宝石已领取 · 点击可再次打开官网"
+msgstr ""
+
+msgid "本周已领取"
+msgstr ""
+
+msgid "本周待领取"
+msgstr ""
+
+msgid "本期已切换"
+msgstr ""
+
+msgid "本期待切换"
+msgstr ""
+
+msgid "某些无法判断的东西..."
+msgstr ""
+
+msgid "楼层名匹配失败: 所有模板均因尺寸不一致被跳过."
+msgstr ""
+
+#, python-brace-format
+msgid "楼层名匹配失败: 最佳模板[{n}], 阶段[{s}], 错误率{r:.2f}%, 超过阈值{c:.0f}%."
+msgstr ""
+
+#, python-brace-format
+msgid "楼层名匹配成功: 模板[{n}], 阶段[{s}], 错误率{r:.2f}%."
+msgstr ""
+
+#, python-brace-format
+msgid "模板[{n}]尺寸与RoI不一致: RoI={a}, template={b}, 跳过该模板"
+msgstr ""
+
+msgid "模板名列表为空, 跳过楼层检测."
+msgstr ""
+
+msgid "没有鱼饵了..."
+msgstr ""
+
+msgid "真的没有了."
+msgstr ""
+
+#, python-brace-format
+msgid "移动停止检查:{v0:.2f}"
+msgstr ""
+
+#, python-brace-format
+msgid ""
+"第{a}次\"华蜜\"完成. \n"
+"该次花费时间{b:.2f}s.\n"
+"总计用时{c:.2f}s.\n"
+"平均用时{d:.2f}"
+msgstr ""
+
+msgid "第三步: 接取悬赏..."
+msgstr ""
+
+msgid "第二步: 前往第四章主城..."
+msgstr ""
+
+msgid "第五步: 退出副本..."
+msgstr ""
+
+msgid "第四步: 前往第四章7F, 9F, 并抵达9F目标位置..."
+msgstr ""
+
+msgid "等待着猎物..."
+msgstr ""
+
+msgid "网络故障, 重试中......"
+msgstr ""
+
+#, python-brace-format
+msgid "获得了{v0}{v1}!"
+msgstr ""
+
+msgid ""
+"设置的模拟器路径可能不正确。\n"
+"如果你遇到无法启动模拟器，请尝试重新设置路径。"
+msgstr ""
+
+#, python-brace-format
+msgid "读取任务{v0}"
+msgstr ""
+
+msgid "跳过回城休息."
+msgstr ""
+
+msgid "错误:roi1范围无效."
+msgstr ""
+
+msgid "防止卡空气墙, 右转后左右走."
+msgstr ""
+
+msgid "鱼饵还有, 不需要更换."
+msgstr ""
+
+msgid "小"
+msgstr ""
+
+msgid "普通"
+msgstr ""
+
+msgid "大"
+msgstr ""
+
+msgid "鲈鱼"
+msgstr ""
+
+msgid "雅罗"
+msgstr ""
+
+msgid "鲶鱼"
+msgstr ""
+
+msgid "鳟鱼"
+msgstr ""
+
+msgid "鳗鱼"
+msgstr ""
+
+msgid "三文鱼"
+msgstr ""
+
+msgid "杂鱼"
+msgstr ""
+
+msgid "未收录"
+msgstr ""
+
+msgid "Check momo31 releases for a manual update."
+msgstr ""
+
+msgid "Update failed. Please download the fork release manually."
+msgstr ""
+
+msgid "文件校验失败，请手动更新"
+msgstr ""
+
+msgid "网络波动"
+msgstr ""
+
+msgid "重启游戏"
+msgstr ""
+
+msgid "面具死亡"
+msgstr ""
+
+msgid "Resume did not advance after 20 attempts. Restarting the game."
+msgstr ""
+
+msgid "可执行文件 (*.exe)"
+msgstr ""
+
+msgid "所有文件 (*.*)"
+msgstr ""
+
+msgid "F 五郎八"
+msgstr ""
+
+msgid "F 宵藏"
+msgstr ""
+
+msgid "F 拉斐洛"
+msgstr ""
+
+msgid "F 爱莉安诺特"
+msgstr ""
+
+msgid "G 丹尼尔"
+msgstr ""
+
+msgid "G 卡米尔"
+msgstr ""
+
+msgid "G 薇薇安娜"
+msgstr ""
+
+msgid "N 人类僧侣"
+msgstr ""
+
+msgid "N 人类忍者"
+msgstr ""
+
+msgid "N 人类武士"
+msgstr ""
+
+msgid "N 兽人盗贼"
+msgstr ""
+
+msgid "N 精灵法师"
+msgstr ""
+
+msgid "金币"
+msgstr ""
+
+msgid "善恶变化"
+msgstr ""
+
+msgid "复活队友"
+msgstr ""
+
+msgid "购买了骨头"
+msgstr ""
+
+msgid "购买了尸油"
+msgstr ""
+
+msgid ""
+"Integrated upstream 3.2.1 with a localized WebView interface, structured summaries and separate "
+"interface/game languages."
+msgstr ""
+
+msgid ""
+"Added fishing, fairy transitions, new bounty routes and run-scoped stop-after-round controls "
+"while preserving Telegram and smart chest safeguards."
+msgstr ""
+
+msgid ""
+"Preserved custom configuration paths, target-specific strategies and saved selections across "
+"automatic quest handoffs."
+msgstr ""
+
+msgid ""
+"Updates now accept only momo31 fork releases; cancellation and window closing finish cleanup "
+"before any restart."
+msgstr ""
+
+msgid ""
+"Missing recognition images block affected tasks before launch; English FloralHoney and Chinese "
+"game safety templates remain unavailable."
 msgstr ""

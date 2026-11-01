@@ -6,6 +6,11 @@ import time
 from enum import Enum
 from typing import Any
 
+from chest_guard import (
+    MAX_DIALOGUE_SKIP_ATTEMPTS,
+    ChestGuardAction,
+    decide_chest_guard_action,
+)
 from .adapters import ModResourceError
 from .constants import (
     DIALOGUE_ADVANCE_INTERVAL_SECONDS,
@@ -53,6 +58,7 @@ def return_to_town(adapter: Any, runtime: Any, signal: RemoteStopSignal) -> Tran
     deadline = runtime.stop_deadline_monotonic
     last_screen = None
     town_frames = 0
+    dialogue_attempts = 0
     edge_deadline: float | None = None
     rtt_deadline: float | None = None
     last_edge_input = -float("inf")
@@ -65,6 +71,8 @@ def return_to_town(adapter: Any, runtime: Any, signal: RemoteStopSignal) -> Tran
             screen = adapter.screenshot()
             last_screen = screen
             state = _classify(adapter, screen)
+            if state not in (ReturnScreen.DIALOGUE, ReturnScreen.UNKNOWN, ReturnScreen.LOADING):
+                dialogue_attempts = 0
             if state is ReturnScreen.TITLE:
                 return TransitionOutcome(TransitionStatus.AT_TITLE, "이미 타이틀 화면입니다.")
             if state is ReturnScreen.TOWN:
@@ -98,6 +106,11 @@ def return_to_town(adapter: Any, runtime: Any, signal: RemoteStopSignal) -> Tran
                 adapter.sleep(DIALOGUE_ADVANCE_INTERVAL_SECONDS)
                 continue
             if state is ReturnScreen.DIALOGUE:
+                # shortcut: cap consecutive dialogue pages at three until a reward-page transition marker is verified.
+                if dialogue_attempts >= MAX_DIALOGUE_SKIP_ATTEMPTS:
+                    adapter.sleep(DIALOGUE_ADVANCE_INTERVAL_SECONDS)
+                    continue
+                dialogue_attempts += 1
                 _press_if_allowed(
                     adapter,
                     runtime,
@@ -189,23 +202,28 @@ def _classify(adapter, screen) -> ReturnScreen:
         return ReturnScreen.TITLE
     if _has(adapter, screen, "combatActive") or _has(adapter, screen, "someonedead"):
         return ReturnScreen.COMBAT
-    if any(_has(adapter, screen, name) for name in ("chestFlag", "whowillopenit", "chestOpening")):
-        return ReturnScreen.CHEST
-    # The first return after the daily reset can show Harken's blessing
-    # choices. It must win over dialogueNext and blind recovery taps.
-    if _has(adapter, screen, "blessing"):
-        return ReturnScreen.BLESSING
+    blessing = False
+
+    def match_dialogue(frame, name, **kwargs):
+        nonlocal blessing
+        # The shared guard checks chests first; blessing also outranks dialogue.
+        blessing = _has(adapter, frame, "blessing")
+        return None if blessing else _match(adapter, frame, name, **kwargs)
+
     # Loot/result pages can appear after the chest handler has returned and a
     # remote stop has already transferred ownership to this state machine.
     # Handle them before the expensive town/map probes so each result page is
     # advanced promptly. Active chest UI keeps priority above this branch.
-    if _has(
-        adapter,
+    decision = decide_chest_guard_action(
         screen,
-        "dialogueNext",
-        DIALOGUE_NEXT_ROI,
-        DIALOGUE_NEXT_THRESHOLD,
-    ):
+        lambda frame, name: _match(adapter, frame, name),
+        match_dialogue,
+    )
+    if decision.action in (ChestGuardAction.OPEN_CHEST, ChestGuardAction.KEEP_CHEST_STATE):
+        return ReturnScreen.CHEST
+    if blessing:
+        return ReturnScreen.BLESSING
+    if decision.action is ChestGuardAction.SKIP_DIALOGUE:
         return ReturnScreen.DIALOGUE
     if _has(adapter, screen, "ReturnText"):
         return ReturnScreen.RETURN_TEXT

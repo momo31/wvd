@@ -5,7 +5,39 @@ on:
     branches: [ master ]
 
 jobs:
+  validate:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.14'
+    - name: Install development dependencies
+      run: python -m pip install -r requirements.txt
+    - name: Compile development catalogs
+      shell: pwsh
+      run: |
+        python -m babel.messages.frontend compile -d locale -D messages
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        python -m babel.messages.frontend compile -d mod/telegram_remote_control/locale -D telegram_remote_control
+    - name: Run tools unit tests
+      shell: pwsh
+      run: |
+        $env:PYTHONPATH = "$PWD;$PWD/src"
+        python -B -X utf8 -m unittest discover -s tools -p "test_*.py"
+    - name: Run remote-control unit tests
+      shell: pwsh
+      run: |
+        $env:PYTHONPATH = "$PWD;$PWD/src"
+        python -B -X utf8 -m unittest discover -s mod/telegram_remote_control/tests -p "test_*.py"
+    - name: Run smart-disarm scenarios
+      shell: pwsh
+      run: |
+        $env:PYTHONPATH = "$PWD;$PWD/src"
+        python -B -X utf8 tools/test_smart_disarm_fixes.py
+
   build:
+    needs: validate
     runs-on: windows-latest
 
     steps:
@@ -54,15 +86,13 @@ jobs:
     - name: Compile translation catalogs
       run: |
         python -m babel.messages.frontend compile -d locale -D messages
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         python -m babel.messages.frontend compile -d mod/telegram_remote_control/locale -D telegram_remote_control
-
-    - name: Run remote-control unit tests
-      run: |
-        python -m unittest discover -s mod/telegram_remote_control/tests -p "test_*.py"
 
     - name: Build with PyInstaller
       run: |
-        pyinstaller --onedir --paths "." --add-data "resources;resources/" --add-data "locale;locale/" --add-data "mod/telegram_remote_control/locale;mod/telegram_remote_control/locale/" src/main.py -n wvd
+        pyinstaller --onedir --paths "." --collect-all webview --add-data "src/ui.html;." --add-data "resources;resources/" --add-data "locale;locale/" --add-data "mod/telegram_remote_control/locale;mod/telegram_remote_control/locale/" src/main.py -n wvd
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         Write-Host "Build completed successfully."
 
     - name: Compress build artifact to ZIP

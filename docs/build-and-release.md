@@ -11,6 +11,16 @@
 
 Windows 실행 파일은 저장소의 Python 3.14 빌드 환경과 `wvd.spec`을 사용한다. 사용자 데이터가 있는 `dist\wvd`를 PyInstaller의 `--clean` 대상으로 사용하지 않는다.
 
+3.2.1-momo.1부터 UI는 pywebview 6.2.1과 Windows WebView2를 사용한다. `src/ui.html`은 번들 루트의 `ui.html`로, `resources`, 기본 `locale`, Telegram 로케일은 기존 상대 경로로 포함한다. CI의 `--collect-all webview`와 로컬 spec의 `collect_all('webview')`는 동일한 수집 계약이다.
+
+`wvd.spec`은 Git ignore 대상이다. 이번 통합 작업본의 로컬 spec도 수정했으며, 새 체크아웃에서는 버전 관리되는 템플릿으로 재현한다.
+
+```powershell
+Copy-Item -LiteralPath 'tools/wvd.spec.template' -Destination 'wvd.spec'
+```
+
+개발 단계의 `tools/test_packaging_contract.py`는 소스·모의 frozen HTML 바이트, 로케일, CI/spec 설정을 검사한다. 실제 exe·원격 CI 검증을 대신하지 않는다. GitHub Actions의 `validate` 작업은 기본·Telegram 카탈로그를 컴파일한 뒤 핵심·원격·스마트 개봉 테스트를 실행하며, `build`는 그 성공에 의존한다. 기존 `-` 포함 버전의 사전 출시 분류를 유지하므로 `N.N.N-momo.N`은 Pages 업데이트 메타데이터를 게시하지 않는다. 포크 정식 배포 분류와 Pages 게시 정책 변경은 병합 계획에 따라 보류한다.
+
 ```powershell
 $repoRoot = [IO.Path]::GetFullPath((Get-Location).Path)
 $stageName = "release-stage-{0}" -f (Get-Date -Format 'yyyyMMdd-HHmmss')

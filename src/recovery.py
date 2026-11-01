@@ -9,6 +9,7 @@ class RecoveryReason(Enum):
     COMBAT = "combat"
     DUNGEON_START = "dungeon_start"
     REVIVE = "revive"
+    REST = "rest"
 
 
 class RecoveryPlan:

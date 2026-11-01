@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import queue
 import sys
+import threading
+import time
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
@@ -116,20 +118,17 @@ class MainControllerTests(unittest.TestCase):
             )
 
     def test_task_button_uses_one_localized_label_source(self):
-        gui_source = (SRC / "gui.py").read_text(encoding="utf-8")
-
-        self.assertIn(
-            'return _("停止") if busy else _("脚本, 启动!")',
-            gui_source,
-        )
-        self.assertNotIn('_("중지") if busy else _("시작")', gui_source)
-        self.assertIn("text=task_button_text(False)", gui_source)
-        self.assertIn("text=task_button_text(busy)", gui_source)
+        with mock.patch('builtins._', side_effect=lambda text: {'停止': 'STOP', '脚本, 启动!': 'START'}[text]):
+            self.assertEqual(gui.task_button_text(False), 'START')
+            self.assertEqual(gui.task_button_text(True), 'STOP')
 
     def test_local_start_creates_runtime_before_handoff_check(self):
-        runtime = _Runtime()
-        controller = _Controller(runtime)
-        setting = _Setting()
+        from tools.test_quest_handoff import make_controller, make_runtime
+        runtime = make_runtime()
+        runtime.is_handoff_requested = mock.Mock(wraps=runtime.is_handoff_requested)
+        controller = make_controller()
+        controller._new_local_runtime = mock.Mock(return_value=runtime)
+        setting = SimpleNamespace(FARM_TARGET='7000G', FARM_TARGET_TEXT='test target')
 
         with mock.patch.object(main, "Factory", return_value=object()), mock.patch.object(
             main.threading,
@@ -149,8 +148,8 @@ class MainControllerTests(unittest.TestCase):
         self.assertIs(setting._REMOTE_RUNTIME, runtime)
         self.assertIs(setting._FORCESTOPING, runtime.worker_force_stop_event)
         self.assertIsNone(setting._REMOTE_HANDOFF_TARGET)
-        self.assertEqual(runtime.handoff_checks, 0)
-        self.assertEqual(controller.remote_feature.started, [runtime])
+        runtime.is_handoff_requested.assert_not_called()
+        controller.remote_feature.on_task_started.assert_called_once_with(runtime)
         self.assertTrue(controller.quest_threading.started)
 
     def test_remote_target_selection_preserves_config_and_disables_task_specific(self):
@@ -182,31 +181,15 @@ class MainControllerTests(unittest.TestCase):
         self.assertEqual(raw["new"], {"MAX_TRY_LIMIT": 9})
         save.assert_called_once_with(raw, "custom.json")
 
-    def test_remote_target_updates_gui_through_existing_selection_event(self):
-        window = SimpleNamespace(
-            farm_target_category_combo=_Combo(),
-            farm_target_combo=_Combo(),
-            FARM_TARGET_TEXT=_Variable(),
-            FARM_TARGET=_Variable(),
-            TASK_SPECIFIC_CONFIG=_Variable(),
-        )
-        with mock.patch.object(gui, "_targets_for_category_display", return_value=["raw target"]), mock.patch.object(
-            gui,
-            "trans_tgt",
-            return_value="표시 목표",
-        ), mock.patch.object(gui, "_quest_code_for_target_display", return_value="quest-code"):
-            selected = gui.ConfigPanelApp.select_farm_target_from_remote(
-                window,
-                "표시 분류",
-                "표시 목표",
-            )
-
+    def test_remote_target_updates_web_selection_without_starting(self):
+        from tools import test_web_ui as fixture
+        fixture.WebUiTests.setUp(self)
+        self.controller._start_task = mock.Mock()
+        selected = self.app.select_farm_target_from_remote('category', 'fishing')
         self.assertTrue(selected)
-        self.assertEqual(window.farm_target_category_combo.value, "표시 분류")
-        self.assertEqual(window.farm_target_combo["values"], ["표시 목표"])
-        self.assertEqual(window.FARM_TARGET.value, "quest-code")
-        self.assertFalse(window.TASK_SPECIFIC_CONFIG.value)
-        self.assertEqual(window.farm_target_combo.events, ["<<ComboboxSelected>>"])
+        self.assertEqual(self.bridge.bootstrap()['targetId'], 'fishing')
+        self.assertFalse(self.bridge.bootstrap()['taskSpecific'])
+        self.controller._start_task.assert_not_called()
 
     def test_remote_target_does_not_replace_an_invalid_config(self):
         controller = SimpleNamespace(config_path="broken.json", main_window=None)
@@ -219,6 +202,109 @@ class MainControllerTests(unittest.TestCase):
 
         self.assertFalse(selected)
         save.assert_not_called()
+
+
+class ControllerLifecycleTests(unittest.TestCase):
+    def make_controller(self):
+        with mock.patch.object(main, 'TelegramRemoteFeature') as feature, mock.patch.object(main, 'AutoUpdater') as updater:
+            feature.return_value.handle_event.return_value = False
+            feature.return_value.emulator_reboot_in_progress = False
+            updater.return_value.cancel_event = threading.Event()
+            c = main.AppController(True, 'fixture.json')
+        c._force_exit = mock.Mock()
+        return c
+
+    def test_controller_serializes_start_stop_and_stale_completion(self):
+        c = self.make_controller()
+        reached, release = threading.Event(), threading.Event()
+        def farm(setting):
+            reached.set()
+            release.wait(2)
+        with mock.patch.object(main, 'Factory', return_value=farm), mock.patch.object(main, 'ValidateQuestResources', return_value=[]):
+            setting = SimpleNamespace(FARM_TARGET='7000G', LANGUAGE_GAME='en_US')
+            c.msg_queue.put(('start_quest', setting))
+            c.msg_queue.put(('start_quest', setting))
+            c.process_once()
+            self.assertTrue(reached.wait(1))
+            runtime = c._active_runtime
+            self.assertEqual(runtime.worker_generation, 1)
+            c.msg_queue.put(('task_completion_requested', 'previous-run'))
+            c.msg_queue.put(('stop_quest', None))
+            c.process_once()
+            self.assertIs(c._active_runtime, runtime)
+            self.assertTrue(runtime.worker_force_stop_event.is_set())
+            self.assertFalse(c._active_latch.called)
+            release.set()
+            c.quest_threading.join(2)
+
+    def test_close_cancels_workers_before_destroy(self):
+        c = self.make_controller()
+        c.main_window = mock.Mock()
+        stopped = threading.Event()
+        c._active_runtime = main.RemoteRuntime('run', main.StartReason.LOCAL, '', c.msg_queue, stopped, None, '')
+        c.quest_threading = mock.Mock(is_alive=mock.Mock(return_value=True))
+        c.schedule_after(0, lambda: self.fail('callback ran after shutdown began'))
+        c.request_shutdown()
+        c.process_once()
+        self.assertTrue(stopped.is_set())
+        self.assertTrue(c.updater.cancel_event.is_set())
+        c.main_window.destroy.assert_not_called()
+        with mock.patch.object(c, '_start_task') as start:
+            for name in ('start_quest', 'switch_quest', 'restart_ready'):
+                c.msg_queue.put((name, None))
+            c.process_once()
+            start.assert_not_called()
+        c.quest_threading.is_alive.return_value = False
+        c._service_stop_thread.join(1)
+        c.process_once()
+        c.main_window.destroy.assert_called_once()
+        c._force_exit.assert_not_called()
+
+    def test_shutdown_deadlines_are_bounded(self):
+        self.assertEqual(main.CONTROLLER_TICK_MILLISECONDS, 100)
+        for kind, limit in [('worker', 15), ('service', 36), ('download', 45)]:
+            with self.subTest(kind=kind):
+                c = self.make_controller()
+                now = [0.0]
+                c._clock = lambda: now[0]
+                c.request_shutdown()
+                c.process_once()
+                # Keep the shutdown pending with exactly one synthetic worker.
+                c._shutdown_done.clear()
+                hung = mock.Mock(is_alive=mock.Mock(return_value=True))
+                c._shutdown_started = 0.0
+                if kind == 'worker': c.quest_threading = hung
+                elif kind == 'service': c._service_stop_thread = hung
+                else: c._download_thread = hung
+                now[0] = limit - .01
+                c._poll_shutdown()
+                c._force_exit.assert_not_called()
+                now[0] = limit
+                c._poll_shutdown()
+                c._force_exit.assert_called_once_with(1)
+
+    def test_scheduled_callbacks_run_on_the_owner_thread(self):
+        c = self.make_controller()
+        seen = []
+        now = [0.0]
+        c._clock = lambda: now[0]
+        thread = threading.Thread(target=lambda: c.schedule_after(100, lambda: seen.append(threading.get_ident())))
+        thread.start()
+        thread.join(1)
+        c.process_once()
+        self.assertEqual(seen, [])
+        now[0] = .1
+        c.process_once()
+        self.assertEqual(seen, [threading.get_ident()])
+
+    def test_import_does_not_load_gui_or_start_external_services(self):
+        import os
+        import subprocess
+        env = dict(os.environ, PYTHONPATH=str(SRC) + os.pathsep + str(ROOT))
+        result = subprocess.run([sys.executable, '-B', '-X', 'utf8', '-c',
+            "import sys, threading; import main; assert 'gui' not in sys.modules; assert 'webview' not in sys.modules; assert not any(t.name.startswith(('farm-', 'remote-')) for t in threading.enumerate())"],
+            cwd=ROOT, env=env, capture_output=True, text=True, timeout=15)
+        self.assertEqual(result.returncode, 0, result.stderr)
 
 
 if __name__ == "__main__":

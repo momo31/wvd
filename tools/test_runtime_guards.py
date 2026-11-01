@@ -1,7 +1,14 @@
 import ast
+import copy
 import sys
+import time
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import Mock
+
+import cv2
+import numpy as np
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -18,7 +25,12 @@ from chest_guard import (  # noqa: E402
 from network_guard import (  # noqa: E402
     NETWORK_PROBE_COOLDOWN_SECONDS,
     NETWORK_STALL_SECONDS,
+    NetworkStallTracker,
 )
+from screen_health import ScreenHealth, classify_screen
+
+
+from utils import ResolveTemplatePath
 
 
 class ChestGuardDecisionTests(unittest.TestCase):
@@ -98,6 +110,52 @@ class RuntimeGuardSourceTests(unittest.TestCase):
             if isinstance(node, ast.FunctionDef)
             and node.name == "HandleBlockingOverlay"
         )
+
+    def test_synthetic_chest_selection_fixture_opens_without_dialogue_tap(self):
+        names = {"CutRoI", "_check", "CheckIf", "CheckIfAtThreshold", "StateChest"}
+        nodes = [copy.deepcopy(node) for node in ast.walk(self.tree)
+                 if isinstance(node, ast.FunctionDef) and node.name in names]
+        for node in nodes:
+            node.body = [statement for statement in node.body if not isinstance(statement, ast.Nonlocal)]
+        templates = {}
+
+        def load(name):
+            if name not in templates:
+                templates[name] = cv2.imread(str(Path(ResolveTemplatePath(name + '.png'))))
+                self.assertIsNotNone(templates[name], name)
+            return templates[name]
+
+        # Synthetic fixture: real templates on a neutral background, not a game capture.
+        selection = np.full((1600, 900, 3), 60, dtype=np.uint8)
+        for name, x, y in (("chestFlag", 300, 1200), ("dialogueNext", 800, 1450)):
+            template = load(name)
+            h, w = template.shape[:2]
+            selection[y:y + h, x:x + w] = template
+        namespace = dict(
+            cv2=cv2, np=np, time=time, logger=Mock(), _=lambda text: text,
+            LoadTemplateImage=load, runtimeContext=SimpleNamespace(_TIME_CHEST=0),
+            setting=SimpleNamespace(QUICK_DISARM_CHEST=False),
+            quest=SimpleNamespace(_SPECIALJUNK='special-item', _SPECIALJUNK_CALLBACK='shiphold-fairy'),
+            NetworkStallTracker=NetworkStallTracker, NETWORK_STALL_SECONDS=NETWORK_STALL_SECONDS,
+            NETWORK_PROBE_COOLDOWN_SECONDS=NETWORK_PROBE_COOLDOWN_SECONDS,
+            ScreenHealth=ScreenHealth, classify_screen=classify_screen,
+            decide_chest_guard_action=decide_chest_guard_action, ChestGuardAction=ChestGuardAction,
+            ScreenShot=Mock(side_effect=[selection, np.zeros_like(selection)]),
+            TryPressNetworkRetry=Mock(return_value=False), Press=Mock(), Sleep=Mock(),
+        )
+        exec(compile(ast.fix_missing_locations(ast.Module(nodes, type_ignores=[])), "<chest-fixture>", "exec"), namespace)
+        expected_open = namespace["CheckIf"](selection, "chestFlag")
+        self.assertTrue(expected_open)
+        self.assertTrue(namespace["CheckIfAtThreshold"](selection, "dialogueNext", threshold=0.95, roi=DIALOGUE_NEXT_ROI))
+        namespace["StateChest"]()
+        namespace["Press"].assert_called_once_with(expected_open)
+
+        from mod.telegram_remote_control.return_to_town import ReturnScreen, _classify
+        adapter = SimpleNamespace(
+            match_mod=lambda *_: None,
+            match_base=lambda frame, name, roi, threshold: namespace["CheckIfAtThreshold"](frame, name, threshold, roi),
+        )
+        self.assertEqual(_classify(adapter, selection), ReturnScreen.CHEST)
 
     def build_overlay_handler(self, active_patterns=(), close_position=None):
         calls = {"press": [], "sleep": [], "threshold": [], "debug": []}
@@ -263,7 +321,7 @@ class RuntimeGuardSourceTests(unittest.TestCase):
             calls["threshold"],
             [("startdownload", 0.90, [[222, 901, 465, 84]])],
         )
-        self.assertTrue((ROOT / "resources" / "images" / "startdownload.png").is_file())
+        self.assertTrue((Path(ResolveTemplatePath('startdownload.png'))).is_file())
 
     def test_harken_blessing_choice_precedes_dialogue_and_blind_taps(self):
         identify_start = self.source.index("def IdentifyState():")

@@ -1,0 +1,744 @@
+status,upstream_old,upstream_new,action,destination,reason
+A,.github/scripts/notify_qq_group.py,.github/scripts/notify_qq_group.py,excluded,,Plan explicitly excludes QQ notifications and its credentials/network side effects
+M,.github/workflows/build-executable.yml,.github/workflows/build-executable.yml,integrated,.github/workflows/build-executable.yml,Python 3.14; validation before build; locale compilation; HTML/webview bundle; momo release metadata; QQ notification omitted
+M,.gitignore,.gitignore,integrated,.gitignore,Keep local ignores and add upstream .venv/Chinese captures plus fork restart helper
+M,CHANGES_LOG.md,CHANGES_LOG.md,integrated,CHANGES_LOG.md,Fork 3.2.1 notes with compiled ko/en/zh translations; preserve local history
+M,README.md,README.md,integrated,README.md,"Document fork web UI, settings migration, language limits and preserved Telegram/smart chest"
+M,locale/en_US/LC_MESSAGES/messages.po,locale/en_US/LC_MESSAGES/messages.po,integrated,locale/en_US/LC_MESSAGES/messages.po,Merged upstream catalog keys into local catalogs; Korean and HTML/runtime/data coverage compiled
+M,locale/zh_CN/LC_MESSAGES/messages.po,locale/zh_CN/LC_MESSAGES/messages.po,integrated,locale/zh_CN/LC_MESSAGES/messages.po,Merged upstream catalog keys into local catalogs; Korean and HTML/runtime/data coverage compiled
+M,requirements.txt,requirements.txt,integrated,requirements.txt,Add pywebview 6.2.1; preserve certifi and standard logging; omit loguru
+R100,resources/images/Bharken.png,resources/images/common/Bharken.png,integrated,resources/images/common/Bharken.png,Upstream language/common image layout
+R100,resources/images/Bharken2.png,resources/images/common/Bharken2.png,integrated,resources/images/common/Bharken2.png,Upstream language/common image layout
+R100,resources/images/DOE_quit.png,resources/images/common/DOE_quit.png,integrated,resources/images/common/DOE_quit.png,Upstream language/common image layout
+R100,resources/images/DOF_quit.png,resources/images/common/DOF_quit.png,integrated,resources/images/common/DOF_quit.png,Upstream language/common image layout
+R100,resources/images/DOL_quit.png,resources/images/common/DOL_quit.png,integrated,resources/images/common/DOL_quit.png,Upstream language/common image layout
+R100,resources/images/DOLtarget1.png,resources/images/common/DOLtarget1.png,integrated,resources/images/common/DOLtarget1.png,Upstream language/common image layout
+R100,resources/images/DOLtarget2.png,resources/images/common/DOLtarget2.png,integrated,resources/images/common/DOLtarget2.png,Upstream language/common image layout
+R100,resources/images/DOS_quit.png,resources/images/common/DOS_quit.png,integrated,resources/images/common/DOS_quit.png,Upstream language/common image layout
+R100,resources/images/DOW_quit.png,resources/images/common/DOW_quit.png,integrated,resources/images/common/DOW_quit.png,Upstream language/common image layout
+R100,resources/images/FFXI/GCN.png,resources/images/common/FFXI/GCN.png,integrated,resources/images/common/FFXI/GCN.png,Upstream language/common image layout
+R100,resources/images/FFXI/diggable.png,resources/images/common/FFXI/diggable.png,integrated,resources/images/common/FFXI/diggable.png,Upstream language/common image layout
+R100,resources/images/FFXI/nothingToDig.png,resources/images/common/FFXI/nothingToDig.png,integrated,resources/images/common/FFXI/nothingToDig.png,Upstream language/common image layout
+R100,resources/images/FFXI/nothingToDig2.png,resources/images/common/FFXI/nothingToDig2.png,integrated,resources/images/common/FFXI/nothingToDig2.png,Upstream language/common image layout
+R100,resources/images/FFXI/nothingToDig3.png,resources/images/common/FFXI/nothingToDig3.png,integrated,resources/images/common/FFXI/nothingToDig3.png,Upstream language/common image layout
+R100,resources/images/FFXI/org_position.png,resources/images/common/FFXI/org_position.png,integrated,resources/images/common/FFXI/org_position.png,Upstream language/common image layout
+R100,resources/images/LBC/LBC_quit.png,resources/images/common/LBC_quit.png,integrated,resources/images/common/LBC_quit.png,Upstream language/common image layout
+R100,resources/images/SSC/SSC1F_left_1_once.png,resources/images/common/SSC/SSC1F_left_1_once.png,integrated,resources/images/common/SSC/SSC1F_left_1_once.png,Upstream language/common image layout
+R100,resources/images/SSC/SSC1F_left_2_once.png,resources/images/common/SSC/SSC1F_left_2_once.png,integrated,resources/images/common/SSC/SSC1F_left_2_once.png,Upstream language/common image layout
+R100,resources/images/SSC/SSC1F_left_3_once.png,resources/images/common/SSC/SSC1F_left_3_once.png,integrated,resources/images/common/SSC/SSC1F_left_3_once.png,Upstream language/common image layout
+R100,resources/images/SSC/SSC1F_left_once.png,resources/images/common/SSC/SSC1F_left_once.png,integrated,resources/images/common/SSC/SSC1F_left_once.png,Upstream language/common image layout
+R100,resources/images/SSC/SSC1F_right_once.png,resources/images/common/SSC/SSC1F_right_once.png,integrated,resources/images/common/SSC/SSC1F_right_once.png,Upstream language/common image layout
+R100,resources/images/SSC/SSC_quit.png,resources/images/common/SSC/SSC_quit.png,integrated,resources/images/common/SSC/SSC_quit.png,Upstream language/common image layout
+R100,resources/images/SSC/goldenchest_1.png,resources/images/common/SSC/goldenchest_1.png,integrated,resources/images/common/SSC/goldenchest_1.png,Upstream language/common image layout
+R100,resources/images/blackScreen.png,resources/images/common/blackScreen.png,integrated,resources/images/common/blackScreen.png,Upstream language/common image layout
+R100,resources/images/chest.png,resources/images/common/chest.png,integrated,resources/images/common/chest.png,Upstream language/common image layout
+R100,resources/images/chestOpening.png,resources/images/common/chestOpening.png,integrated,resources/images/common/chestOpening.png,Upstream language/common image layout
+R100,resources/images/chestStone.png,resources/images/common/chestStone.png,integrated,resources/images/common/chestStone.png,Upstream language/common image layout
+R100,resources/images/chest_auto.png,resources/images/common/chest_auto.png,integrated,resources/images/common/chest_auto.png,Upstream language/common image layout
+R100,resources/images/chest_auto_minus.png,resources/images/common/chest_auto_minus.png,integrated,resources/images/common/chest_auto_minus.png,Upstream language/common image layout
+R100,resources/images/chestfear.png,resources/images/common/chestfear.png,integrated,resources/images/common/chestfear.png,Upstream language/common image layout
+R100,resources/images/closePartyInfo.png,resources/images/common/closePartyInfo.png,integrated,resources/images/common/closePartyInfo.png,Upstream language/common image layout
+R100,resources/images/closePartyInfo_fortress.png,resources/images/common/closePartyInfo_fortress.png,integrated,resources/images/common/closePartyInfo_fortress.png,Upstream language/common image layout
+R100,resources/images/closePartyInfo_waterway.png,resources/images/common/closePartyInfo_waterway.png,integrated,resources/images/common/closePartyInfo_waterway.png,Upstream language/common image layout
+R100,resources/images/cursedWheelTapLeft.png,resources/images/common/cursedWheelTapLeft.png,integrated,resources/images/common/cursedWheelTapLeft.png,Upstream language/common image layout
+R100,resources/images/cursedWheelTapRight.png,resources/images/common/cursedWheelTapRight.png,integrated,resources/images/common/cursedWheelTapRight.png,Upstream language/common image layout
+R100,resources/images/cursor.png,resources/images/common/cursor.png,integrated,resources/images/common/cursor.png,Upstream language/common image layout
+R100,resources/images/cursor_0.png,resources/images/common/cursor_0.png,integrated,resources/images/common/cursor_0.png,Upstream language/common image layout
+R100,resources/images/cursor_1.png,resources/images/common/cursor_1.png,integrated,resources/images/common/cursor_1.png,Upstream language/common image layout
+R100,resources/images/cursor_2.png,resources/images/common/cursor_2.png,integrated,resources/images/common/cursor_2.png,Upstream language/common image layout
+R100,resources/images/cursor_3.png,resources/images/common/cursor_3.png,integrated,resources/images/common/cursor_3.png,Upstream language/common image layout
+R100,resources/images/darklight.png,resources/images/common/darklight.png,integrated,resources/images/common/darklight.png,Upstream language/common image layout
+R100,resources/images/dungFlag.png,resources/images/common/dungFlag.png,integrated,resources/images/common/dungFlag.png,Upstream language/common image layout
+R100,resources/images/fastforward.png,resources/images/common/fastforward.png,integrated,resources/images/common/fastforward.png,Upstream language/common image layout
+R100,resources/images/fastforward_off.png,resources/images/common/fastforward_off.png,integrated,resources/images/common/fastforward_off.png,Upstream language/common image layout
+A,resources/images/common/fishing/bobber.png,resources/images/common/fishing/bobber.png,integrated,resources/images/common/fishing/bobber.png,Upstream language/common image layout
+A,resources/images/common/fishing/cast.png,resources/images/common/fishing/cast.png,integrated,resources/images/common/fishing/cast.png,Upstream language/common image layout
+A,resources/images/common/fishing/iconbait.png,resources/images/common/fishing/iconbait.png,integrated,resources/images/common/fishing/iconbait.png,Upstream language/common image layout
+A,resources/images/common/fishing/nobaitinbag.png,resources/images/common/fishing/nobaitinbag.png,integrated,resources/images/common/fishing/nobaitinbag.png,Upstream language/common image layout
+A,resources/images/common/fishing/quit.png,resources/images/common/fishing/quit.png,integrated,resources/images/common/fishing/quit.png,Upstream language/common image layout
+A,resources/images/common/fishing/striking.png,resources/images/common/fishing/striking.png,integrated,resources/images/common/fishing/striking.png,Upstream language/common image layout
+R100,resources/images/gaint_candelabra_1.png,resources/images/common/gaint_candelabra_1.png,integrated,resources/images/common/gaint_candelabra_1.png,Upstream language/common image layout
+R100,resources/images/gaint_candelabra_2.png,resources/images/common/gaint_candelabra_2.png,integrated,resources/images/common/gaint_candelabra_2.png,Upstream language/common image layout
+R100,resources/images/harken.png,resources/images/common/harken.png,integrated,resources/images/common/harken.png,Upstream language/common image layout
+R100,resources/images/harken2.png,resources/images/common/harken2.png,integrated,resources/images/common/harken2.png,Upstream language/common image layout
+R100,resources/images/intoWorldMap.png,resources/images/common/intoWorldMap.png,integrated,resources/images/common/intoWorldMap.png,Upstream language/common image layout
+R100,resources/images/itemIcon.png,resources/images/common/itemIcon.png,integrated,resources/images/common/itemIcon.png,Upstream language/common image layout
+R100,resources/images/leaveDung.png,resources/images/common/leaveDung.png,integrated,resources/images/common/leaveDung.png,Upstream language/common image layout
+R100,resources/images/mark_auto.png,resources/images/common/mark_auto.png,integrated,resources/images/common/mark_auto.png,Upstream language/common image layout
+R100,resources/images/marker.png,resources/images/common/marker.png,integrated,resources/images/common/marker.png,Upstream language/common image layout
+R100,resources/images/resume.png,resources/images/common/resume.png,integrated,resources/images/common/resume.png,Upstream language/common image layout
+R100,resources/images/retry_blank.png,resources/images/common/retry_blank.png,integrated,resources/images/common/retry_blank.png,Upstream language/common image layout
+R100,resources/images/skull.png,resources/images/common/skull.png,integrated,resources/images/common/skull.png,Upstream language/common image layout
+R100,resources/images/someonedead.png,resources/images/common/someonedead.png,integrated,resources/images/common/someonedead.png,Upstream language/common image layout
+A,resources/images/common/spellskill/arrow/mask1.png,resources/images/common/spellskill/arrow/mask1.png,integrated,resources/images/common/spellskill/arrow/mask1.png,Upstream language/common image layout
+A,resources/images/common/spellskill/arrow/mask2.png,resources/images/common/spellskill/arrow/mask2.png,integrated,resources/images/common/spellskill/arrow/mask2.png,Upstream language/common image layout
+A,resources/images/common/spellskill/arrow/mask3.png,resources/images/common/spellskill/arrow/mask3.png,integrated,resources/images/common/spellskill/arrow/mask3.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/0 面具.png,resources/images/common/spellskill/char/0 面具.png,integrated,resources/images/common/spellskill/char/0 面具.png,Upstream language/common image layout
+A,resources/images/common/spellskill/char/F 五郎八.png,resources/images/common/spellskill/char/F 五郎八.png,integrated,resources/images/common/spellskill/char/F 五郎八.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/F 伊亚玛斯.png,resources/images/common/spellskill/char/F 伊亚玛斯.png,integrated,resources/images/common/spellskill/char/F 伊亚玛斯.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/F 凛音.png,resources/images/common/spellskill/char/F 凛音.png,integrated,resources/images/common/spellskill/char/F 凛音.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/F 凛音_sp.png,resources/images/common/spellskill/char/F 凛音_sp.png,integrated,resources/images/common/spellskill/char/F 凛音_sp.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/F 吉拉德.png,resources/images/common/spellskill/char/F 吉拉德.png,integrated,resources/images/common/spellskill/char/F 吉拉德.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/F 吉拉德_sp.png,resources/images/common/spellskill/char/F 吉拉德_sp.png,integrated,resources/images/common/spellskill/char/F 吉拉德_sp.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/F 基利昂.png,resources/images/common/spellskill/char/F 基利昂.png,integrated,resources/images/common/spellskill/char/F 基利昂.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/F 夏莉莉妮雅.png,resources/images/common/spellskill/char/F 夏莉莉妮雅.png,integrated,resources/images/common/spellskill/char/F 夏莉莉妮雅.png,Upstream language/common image layout
+A,resources/images/common/spellskill/char/F 夏莉莉妮雅_sp.png,resources/images/common/spellskill/char/F 夏莉莉妮雅_sp.png,integrated,resources/images/common/spellskill/char/F 夏莉莉妮雅_sp.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/F 奥尔德里科.png,resources/images/common/spellskill/char/F 奥尔德里科.png,integrated,resources/images/common/spellskill/char/F 奥尔德里科.png,Upstream language/common image layout
+A,resources/images/common/spellskill/char/F 宵藏.png,resources/images/common/spellskill/char/F 宵藏.png,integrated,resources/images/common/spellskill/char/F 宵藏.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/F 尤尔萨.png,resources/images/common/spellskill/char/F 尤尔萨.png,integrated,resources/images/common/spellskill/char/F 尤尔萨.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/F 影狼.png,resources/images/common/spellskill/char/F 影狼.png,integrated,resources/images/common/spellskill/char/F 影狼.png,Upstream language/common image layout
+A,resources/images/common/spellskill/char/F 拉斐洛.png,resources/images/common/spellskill/char/F 拉斐洛.png,integrated,resources/images/common/spellskill/char/F 拉斐洛.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/F 普修利.png,resources/images/common/spellskill/char/F 普修利.png,integrated,resources/images/common/spellskill/char/F 普修利.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/F 柚奈壬姬.png,resources/images/common/spellskill/char/F 柚奈壬姬.png,integrated,resources/images/common/spellskill/char/F 柚奈壬姬.png,Upstream language/common image layout
+A,resources/images/common/spellskill/char/F 爱莉安诺特.png,resources/images/common/spellskill/char/F 爱莉安诺特.png,integrated,resources/images/common/spellskill/char/F 爱莉安诺特.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/F 狮樱.png,resources/images/common/spellskill/char/F 狮樱.png,integrated,resources/images/common/spellskill/char/F 狮樱.png,Upstream language/common image layout
+A,resources/images/common/spellskill/char/F 狮樱_sp.png,resources/images/common/spellskill/char/F 狮樱_sp.png,integrated,resources/images/common/spellskill/char/F 狮樱_sp.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/F 艾妮琪.png,resources/images/common/spellskill/char/F 艾妮琪.png,integrated,resources/images/common/spellskill/char/F 艾妮琪.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/F 艾尔文.png,resources/images/common/spellskill/char/F 艾尔文.png,integrated,resources/images/common/spellskill/char/F 艾尔文.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/F 莉娜莉亚.png,resources/images/common/spellskill/char/F 莉娜莉亚.png,integrated,resources/images/common/spellskill/char/F 莉娜莉亚.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/F 莉瓦娜.png,resources/images/common/spellskill/char/F 莉瓦娜.png,integrated,resources/images/common/spellskill/char/F 莉瓦娜.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/F 莉瓦娜_sp.png,resources/images/common/spellskill/char/F 莉瓦娜_sp.png,integrated,resources/images/common/spellskill/char/F 莉瓦娜_sp.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/F 萨维亚.png,resources/images/common/spellskill/char/F 萨维亚.png,integrated,resources/images/common/spellskill/char/F 萨维亚.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/F 萨维亚_sp.png,resources/images/common/spellskill/char/F 萨维亚_sp.png,integrated,resources/images/common/spellskill/char/F 萨维亚_sp.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/F 贝卡南.png,resources/images/common/spellskill/char/F 贝卡南.png,integrated,resources/images/common/spellskill/char/F 贝卡南.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/F 贝卡南_sp.png,resources/images/common/spellskill/char/F 贝卡南_sp.png,integrated,resources/images/common/spellskill/char/F 贝卡南_sp.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/F 赛德.png,resources/images/common/spellskill/char/F 赛德.png,integrated,resources/images/common/spellskill/char/F 赛德.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/F 迦鲁巴多斯.png,resources/images/common/spellskill/char/F 迦鲁巴多斯.png,integrated,resources/images/common/spellskill/char/F 迦鲁巴多斯.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/F 银莲.png,resources/images/common/spellskill/char/F 银莲.png,integrated,resources/images/common/spellskill/char/F 银莲.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/F 阿尔博里斯.png,resources/images/common/spellskill/char/F 阿尔博里斯.png,integrated,resources/images/common/spellskill/char/F 阿尔博里斯.png,Upstream language/common image layout
+A,resources/images/common/spellskill/char/F 阿尔博里斯_sp.png,resources/images/common/spellskill/char/F 阿尔博里斯_sp.png,integrated,resources/images/common/spellskill/char/F 阿尔博里斯_sp.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/F 雅蓓妮斯.png,resources/images/common/spellskill/char/F 雅蓓妮斯.png,integrated,resources/images/common/spellskill/char/F 雅蓓妮斯.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/F 雅蓓妮斯_alt.png,resources/images/common/spellskill/char/F 雅蓓妮斯_alt.png,integrated,resources/images/common/spellskill/char/F 雅蓓妮斯_alt.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/F 雅蓓妮斯_sp.png,resources/images/common/spellskill/char/F 雅蓓妮斯_sp.png,integrated,resources/images/common/spellskill/char/F 雅蓓妮斯_sp.png,Upstream language/common image layout
+A,resources/images/common/spellskill/char/G 丹尼尔.png,resources/images/common/spellskill/char/G 丹尼尔.png,integrated,resources/images/common/spellskill/char/G 丹尼尔.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/G 亚沙.png,resources/images/common/spellskill/char/G 亚沙.png,integrated,resources/images/common/spellskill/char/G 亚沙.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/G 亚沙_sp.png,resources/images/common/spellskill/char/G 亚沙_sp.png,integrated,resources/images/common/spellskill/char/G 亚沙_sp.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/G 克拉丽莎.png,resources/images/common/spellskill/char/G 克拉丽莎.png,integrated,resources/images/common/spellskill/char/G 克拉丽莎.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/G 克洛艾.png,resources/images/common/spellskill/char/G 克洛艾.png,integrated,resources/images/common/spellskill/char/G 克洛艾.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/G 克洛艾_sp.png,resources/images/common/spellskill/char/G 克洛艾_sp.png,integrated,resources/images/common/spellskill/char/G 克洛艾_sp.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/G 切羽.png,resources/images/common/spellskill/char/G 切羽.png,integrated,resources/images/common/spellskill/char/G 切羽.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/G 加斯顿.png,resources/images/common/spellskill/char/G 加斯顿.png,integrated,resources/images/common/spellskill/char/G 加斯顿.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/G 卡米尔.png,resources/images/common/spellskill/char/G 卡米尔.png,integrated,resources/images/common/spellskill/char/G 卡米尔.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/G 奥利芙.png,resources/images/common/spellskill/char/G 奥利芙.png,integrated,resources/images/common/spellskill/char/G 奥利芙.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/G 奥菲莉亚.png,resources/images/common/spellskill/char/G 奥菲莉亚.png,integrated,resources/images/common/spellskill/char/G 奥菲莉亚.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/G 巴克什.png,resources/images/common/spellskill/char/G 巴克什.png,integrated,resources/images/common/spellskill/char/G 巴克什.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/G 本杰明.png,resources/images/common/spellskill/char/G 本杰明.png,integrated,resources/images/common/spellskill/char/G 本杰明.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/G 海因里科.png,resources/images/common/spellskill/char/G 海因里科.png,integrated,resources/images/common/spellskill/char/G 海因里科.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/G 玛丽安娜.png,resources/images/common/spellskill/char/G 玛丽安娜.png,integrated,resources/images/common/spellskill/char/G 玛丽安娜.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/G 甘道夫.png,resources/images/common/spellskill/char/G 甘道夫.png,integrated,resources/images/common/spellskill/char/G 甘道夫.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/G 米拉娜.png,resources/images/common/spellskill/char/G 米拉娜.png,integrated,resources/images/common/spellskill/char/G 米拉娜.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/G 米拉娜_sp.png,resources/images/common/spellskill/char/G 米拉娜_sp.png,integrated,resources/images/common/spellskill/char/G 米拉娜_sp.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/G 艾莉赛.png,resources/images/common/spellskill/char/G 艾莉赛.png,integrated,resources/images/common/spellskill/char/G 艾莉赛.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/G 芙尔特.png,resources/images/common/spellskill/char/G 芙尔特.png,integrated,resources/images/common/spellskill/char/G 芙尔特.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/G 芙尔特_sp.png,resources/images/common/spellskill/char/G 芙尔特_sp.png,integrated,resources/images/common/spellskill/char/G 芙尔特_sp.png,Upstream language/common image layout
+A,resources/images/common/spellskill/char/G 薇薇安娜.png,resources/images/common/spellskill/char/G 薇薇安娜.png,integrated,resources/images/common/spellskill/char/G 薇薇安娜.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/G 阿米莉娅.png,resources/images/common/spellskill/char/G 阿米莉娅.png,integrated,resources/images/common/spellskill/char/G 阿米莉娅.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/N 无名人类女僧侣.png,resources/images/common/spellskill/char/N 人类僧侣.png,integrated,resources/images/common/spellskill/char/N 人类僧侣.png,Upstream language/common image layout
+A,resources/images/common/spellskill/char/N 人类忍者.png,resources/images/common/spellskill/char/N 人类忍者.png,integrated,resources/images/common/spellskill/char/N 人类忍者.png,Upstream language/common image layout
+A,resources/images/common/spellskill/char/N 人类武士.png,resources/images/common/spellskill/char/N 人类武士.png,integrated,resources/images/common/spellskill/char/N 人类武士.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/N 无名兽人女盗贼.png,resources/images/common/spellskill/char/N 兽人盗贼.png,integrated,resources/images/common/spellskill/char/N 兽人盗贼.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/N 无名妖精女法师.png,resources/images/common/spellskill/char/N 精灵法师.png,integrated,resources/images/common/spellskill/char/N 精灵法师.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/P 亚当.png,resources/images/common/spellskill/char/P 亚当.png,integrated,resources/images/common/spellskill/char/P 亚当.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/P 亚当_sp.png,resources/images/common/spellskill/char/P 亚当_sp.png,integrated,resources/images/common/spellskill/char/P 亚当_sp.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/P 叶卡捷琳娜.png,resources/images/common/spellskill/char/P 叶卡捷琳娜.png,integrated,resources/images/common/spellskill/char/P 叶卡捷琳娜.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/P 叶卡捷琳娜_alt.png,resources/images/common/spellskill/char/P 叶卡捷琳娜_alt.png,integrated,resources/images/common/spellskill/char/P 叶卡捷琳娜_alt.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/P 叶卡捷琳娜_sp.png,resources/images/common/spellskill/char/P 叶卡捷琳娜_sp.png,integrated,resources/images/common/spellskill/char/P 叶卡捷琳娜_sp.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/P 哲鲁夫_alt.png,resources/images/common/spellskill/char/P 哲鲁夫_alt.png,integrated,resources/images/common/spellskill/char/P 哲鲁夫_alt.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/P 拉纳维尔.png,resources/images/common/spellskill/char/P 拉纳维尔.png,integrated,resources/images/common/spellskill/char/P 拉纳维尔.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/P 拉纳维尔_alt.png,resources/images/common/spellskill/char/P 拉纳维尔_alt.png,integrated,resources/images/common/spellskill/char/P 拉纳维尔_alt.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/P 拉纳维尔_sp.png,resources/images/common/spellskill/char/P 拉纳维尔_sp.png,integrated,resources/images/common/spellskill/char/P 拉纳维尔_sp.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/P 爱丽丝.png,resources/images/common/spellskill/char/P 爱丽丝.png,integrated,resources/images/common/spellskill/char/P 爱丽丝.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/P 爱丽丝_alt.png,resources/images/common/spellskill/char/P 爱丽丝_alt.png,integrated,resources/images/common/spellskill/char/P 爱丽丝_alt.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/P 爱丽丝_sp.png,resources/images/common/spellskill/char/P 爱丽丝_sp.png,integrated,resources/images/common/spellskill/char/P 爱丽丝_sp.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/P 黛波拉.png,resources/images/common/spellskill/char/P 黛波拉.png,integrated,resources/images/common/spellskill/char/P 黛波拉.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/P 黛波拉_alt.png,resources/images/common/spellskill/char/P 黛波拉_alt.png,integrated,resources/images/common/spellskill/char/P 黛波拉_alt.png,Upstream language/common image layout
+R100,resources/images/spellskill/char/P 黛波拉_sp.png,resources/images/common/spellskill/char/P 黛波拉_sp.png,integrated,resources/images/common/spellskill/char/P 黛波拉_sp.png,Upstream language/common image layout
+R100,resources/images/stair_1.png,resources/images/common/stair_1.png,integrated,resources/images/common/stair_1.png,Upstream language/common image layout
+R100,resources/images/stair_2.png,resources/images/common/stair_2.png,integrated,resources/images/common/stair_2.png,Upstream language/common image layout
+R100,resources/images/stair_3.png,resources/images/common/stair_3.png,integrated,resources/images/common/stair_3.png,Upstream language/common image layout
+R100,resources/images/stair_down.png,resources/images/common/stair_down.png,integrated,resources/images/common/stair_down.png,Upstream language/common image layout
+R100,resources/images/stair_teleport.png,resources/images/common/stair_teleport.png,integrated,resources/images/common/stair_teleport.png,Upstream language/common image layout
+R100,resources/images/stair_up.png,resources/images/common/stair_up.png,integrated,resources/images/common/stair_up.png,Upstream language/common image layout
+R100,resources/images/story.png,resources/images/common/story.png,integrated,resources/images/common/story.png,Upstream language/common image layout
+R100,resources/images/supportSkillCheck.png,resources/images/common/supportSkillCheck.png,integrated,resources/images/common/supportSkillCheck.png,Upstream language/common image layout
+D,resources/images/cursedWheel_timeLeap.png,resources/images/cursedWheel_timeLeap.png,local retained,resources/images/en_US/cursedWheel_timeLeap.png,Legacy/local template preserved in language layout; removed quest IDs stay disabled
+D,resources/images/dialogueChoices/DontBuyIt.png,resources/images/dialogueChoices/DontBuyIt.png,local retained,resources/images/en_US/dialogueChoices/DontBuyIt.png,Legacy/local template preserved in language layout; removed quest IDs stay disabled
+R100,resources/images/7000G/icantagreewithU.png,resources/images/en_US/7000G/icantagreewithU.png,integrated,resources/images/en_US/7000G/icantagreewithU.png,Upstream language/common image layout
+R100,resources/images/7000G/illgo.png,resources/images/en_US/7000G/illgo.png,integrated,resources/images/en_US/7000G/illgo.png,Upstream language/common image layout
+R100,resources/images/7000G/illgonow.png,resources/images/en_US/7000G/illgonow.png,integrated,resources/images/en_US/7000G/illgonow.png,Upstream language/common image layout
+R100,resources/images/7000G/iminhungry.png,resources/images/en_US/7000G/iminhungry.png,integrated,resources/images/en_US/7000G/iminhungry.png,Upstream language/common image layout
+R100,resources/images/7000G/leavethechild.png,resources/images/en_US/7000G/leavethechild.png,integrated,resources/images/en_US/7000G/leavethechild.png,Upstream language/common image layout
+R100,resources/images/7000G/noeasytask.png,resources/images/en_US/7000G/noeasytask.png,integrated,resources/images/en_US/7000G/noeasytask.png,Upstream language/common image layout
+R100,resources/images/7000G/olddist.png,resources/images/en_US/7000G/olddist.png,integrated,resources/images/en_US/7000G/olddist.png,Upstream language/common image layout
+R100,resources/images/7000G/royalcapital.png,resources/images/en_US/7000G/royalcapital.png,integrated,resources/images/en_US/7000G/royalcapital.png,Upstream language/common image layout
+R100,resources/images/7000G/why.png,resources/images/en_US/7000G/why.png,integrated,resources/images/en_US/7000G/why.png,Upstream language/common image layout
+R100,resources/images/7thDist.png,resources/images/en_US/7thDist.png,integrated,resources/images/en_US/7thDist.png,Upstream language/common image layout
+R100,resources/images/AWD/AWD.png,resources/images/en_US/AWD/AWD.png,integrated,resources/images/en_US/AWD/AWD.png,Upstream language/common image layout
+R100,resources/images/AWD/AWD1F.png,resources/images/en_US/AWD/AWD1F.png,integrated,resources/images/en_US/AWD/AWD1F.png,Upstream language/common image layout
+R100,resources/images/AWD/AWD2F.png,resources/images/en_US/AWD/AWD2F.png,integrated,resources/images/en_US/AWD/AWD2F.png,Upstream language/common image layout
+R100,resources/images/AssembleParty.png,resources/images/en_US/AssembleParty.png,integrated,resources/images/en_US/AssembleParty.png,Upstream language/common image layout
+R100,resources/images/AutoMove.png,resources/images/en_US/AutoMove.png,integrated,resources/images/en_US/AutoMove.png,Upstream language/common image layout
+R100,resources/images/B2FTemple.png,resources/images/en_US/B2FTemple.png,integrated,resources/images/en_US/B2FTemple.png,Upstream language/common image layout
+R100,resources/images/B4FLabyrinth.png,resources/images/en_US/B4FLabyrinth.png,integrated,resources/images/en_US/B4FLabyrinth.png,Upstream language/common image layout
+R100,resources/images/B5FWarpedOnesNest.png,resources/images/en_US/B5FWarpedOnesNest.png,integrated,resources/images/en_US/B5FWarpedOnesNest.png,Upstream language/common image layout
+R100,resources/images/BeautifulOre.png,resources/images/en_US/BeautifulOre.png,integrated,resources/images/en_US/BeautifulOre.png,Upstream language/common image layout
+R100,resources/images/COS/ArnasPast.png,resources/images/en_US/COS/ArnasPast.png,integrated,resources/images/en_US/COS/ArnasPast.png,Upstream language/common image layout
+R100,resources/images/COS/COS.png,resources/images/en_US/COS/COS.png,integrated,resources/images/en_US/COS/COS.png,Upstream language/common image layout
+R100,resources/images/COS/COSB2F.png,resources/images/en_US/COS/COSB2F.png,integrated,resources/images/en_US/COS/COSB2F.png,Upstream language/common image layout
+R100,resources/images/COS/COSENT.png,resources/images/en_US/COS/COSENT.png,integrated,resources/images/en_US/COS/COSENT.png,Upstream language/common image layout
+R100,resources/images/COS/EnaTheAdventurer.png,resources/images/en_US/COS/EnaTheAdventurer.png,integrated,resources/images/en_US/COS/EnaTheAdventurer.png,Upstream language/common image layout
+R100,resources/images/COS/Okay.png,resources/images/en_US/COS/Okay.png,integrated,resources/images/en_US/COS/Okay.png,Upstream language/common image layout
+R100,resources/images/COS/b2fentrance.png,resources/images/en_US/COS/b2fentrance.png,integrated,resources/images/en_US/COS/b2fentrance.png,Upstream language/common image layout
+R100,resources/images/COS/requestwasfor.png,resources/images/en_US/COS/requestwasfor.png,integrated,resources/images/en_US/COS/requestwasfor.png,Upstream language/common image layout
+R100,resources/images/COS/takehimwithyou.png,resources/images/en_US/COS/takehimwithyou.png,integrated,resources/images/en_US/COS/takehimwithyou.png,Upstream language/common image layout
+R100,resources/images/COS/替换-凯旋.png,resources/images/en_US/COS/替换-凯旋.png,integrated,resources/images/en_US/COS/替换-凯旋.png,Upstream language/common image layout
+R100,resources/images/CSC.png,resources/images/en_US/CSC.png,integrated,resources/images/en_US/CSC.png,Upstream language/common image layout
+R100,resources/images/City_DHI.png,resources/images/en_US/City_DHI.png,integrated,resources/images/en_US/City_DHI.png,Upstream language/common image layout
+R100,resources/images/City_RoyalCityLuknalia.png,resources/images/en_US/City_RoyalCityLuknalia.png,integrated,resources/images/en_US/City_RoyalCityLuknalia.png,Upstream language/common image layout
+R100,resources/images/City_fortress.png,resources/images/en_US/City_fortress.png,integrated,resources/images/en_US/City_fortress.png,Upstream language/common image layout
+R100,resources/images/City_portTownGrandLegion.png,resources/images/en_US/City_portTownGrandLegion.png,integrated,resources/images/en_US/City_portTownGrandLegion.png,Upstream language/common image layout
+R100,resources/images/DH-Church.png,resources/images/en_US/DH-Church.png,integrated,resources/images/en_US/DH-Church.png,Upstream language/common image layout
+R100,resources/images/DH-R4.png,resources/images/en_US/DH-R4.png,integrated,resources/images/en_US/DH-R4.png,Upstream language/common image layout
+R100,resources/images/DH-R5.png,resources/images/en_US/DH-R5.png,integrated,resources/images/en_US/DH-R5.png,Upstream language/common image layout
+R100,resources/images/DH-R6.png,resources/images/en_US/DH-R6.png,integrated,resources/images/en_US/DH-R6.png,Upstream language/common image layout
+R100,resources/images/DH-R7.png,resources/images/en_US/DH-R7.png,integrated,resources/images/en_US/DH-R7.png,Upstream language/common image layout
+R100,resources/images/DH-R9.png,resources/images/en_US/DH-R9.png,integrated,resources/images/en_US/DH-R9.png,Upstream language/common image layout
+R100,resources/images/DH-entrance.png,resources/images/en_US/DH-entrance.png,integrated,resources/images/en_US/DH-entrance.png,Upstream language/common image layout
+R100,resources/images/DH.png,resources/images/en_US/DH.png,integrated,resources/images/en_US/DH.png,Upstream language/common image layout
+R100,resources/images/DOE.png,resources/images/en_US/DOE.png,integrated,resources/images/en_US/DOE.png,Upstream language/common image layout
+R100,resources/images/DOEB1F.png,resources/images/en_US/DOEB1F.png,integrated,resources/images/en_US/DOEB1F.png,Upstream language/common image layout
+R100,resources/images/DOF.png,resources/images/en_US/DOF.png,integrated,resources/images/en_US/DOF.png,Upstream language/common image layout
+R100,resources/images/DOFB1F.png,resources/images/en_US/DOFB1F.png,integrated,resources/images/en_US/DOFB1F.png,Upstream language/common image layout
+R100,resources/images/DOL.png,resources/images/en_US/DOL.png,integrated,resources/images/en_US/DOL.png,Upstream language/common image layout
+R100,resources/images/DOLB1F.png,resources/images/en_US/DOLB1F.png,integrated,resources/images/en_US/DOLB1F.png,Upstream language/common image layout
+R100,resources/images/DOS.png,resources/images/en_US/DOS.png,integrated,resources/images/en_US/DOS.png,Upstream language/common image layout
+R100,resources/images/DOSB1F.png,resources/images/en_US/DOSB1F.png,integrated,resources/images/en_US/DOSB1F.png,Upstream language/common image layout
+R100,resources/images/DOW.png,resources/images/en_US/DOW.png,integrated,resources/images/en_US/DOW.png,Upstream language/common image layout
+R100,resources/images/DOWB1F.png,resources/images/en_US/DOWB1F.png,integrated,resources/images/en_US/DOWB1F.png,Upstream language/common image layout
+R100,resources/images/Dist.png,resources/images/en_US/Dist.png,integrated,resources/images/en_US/Dist.png,Upstream language/common image layout
+R100,resources/images/EVENT.png,resources/images/en_US/EVENT.png,integrated,resources/images/en_US/EVENT.png,Upstream language/common image layout
+R100,resources/images/Economy.png,resources/images/en_US/Economy.png,integrated,resources/images/en_US/Economy.png,Upstream language/common image layout
+R100,resources/images/EdgeOfTown.png,resources/images/en_US/EdgeOfTown.png,integrated,resources/images/en_US/EdgeOfTown.png,Upstream language/common image layout
+R100,resources/images/Edit.png,resources/images/en_US/Edit.png,integrated,resources/images/en_US/Edit.png,Upstream language/common image layout
+A,resources/images/en_US/EoTreturn.png,resources/images/en_US/EoTreturn.png,integrated,resources/images/en_US/EoTreturn.png,Upstream language/common image layout
+R100,resources/images/FFXI/City_VNH.png,resources/images/en_US/FFXI/City_VNH.png,integrated,resources/images/en_US/FFXI/City_VNH.png,Upstream language/common image layout
+R100,resources/images/FFXI/EVENT_GCN.png,resources/images/en_US/FFXI/EVENT_GCN.png,integrated,resources/images/en_US/FFXI/EVENT_GCN.png,Upstream language/common image layout
+R100,resources/images/FFXI/EVENT_VNH.png,resources/images/en_US/FFXI/EVENT_VNH.png,integrated,resources/images/en_US/FFXI/EVENT_VNH.png,Upstream language/common image layout
+R100,resources/images/FFXI/FFXIStone.png,resources/images/en_US/FFXI/FFXIStone.png,integrated,resources/images/en_US/FFXI/FFXIStone.png,Upstream language/common image layout
+A,resources/images/en_US/FFXI/ZONE1.png,resources/images/en_US/FFXI/ZONE1.png,integrated,resources/images/en_US/FFXI/ZONE1.png,Upstream language/common image layout
+R100,resources/images/FFXI/ZONE2.png,resources/images/en_US/FFXI/ZONE2.png,integrated,resources/images/en_US/FFXI/ZONE2.png,Upstream language/common image layout
+A,resources/images/en_US/FFXI/ZONE3.png,resources/images/en_US/FFXI/ZONE3.png,integrated,resources/images/en_US/FFXI/ZONE3.png,Upstream language/common image layout
+R100,resources/images/FFXI/entrance.png,resources/images/en_US/FFXI/entrance.png,integrated,resources/images/en_US/FFXI/entrance.png,Upstream language/common image layout
+R100,resources/images/FFXI/needpickaxe.png,resources/images/en_US/FFXI/needpickaxe.png,integrated,resources/images/en_US/FFXI/needpickaxe.png,Upstream language/common image layout
+R100,resources/images/FFXI/org_alter.png,resources/images/en_US/FFXI/org_alter.png,integrated,resources/images/en_US/FFXI/org_alter.png,Upstream language/common image layout
+R100,resources/images/FFXI/org_fine.png,resources/images/en_US/FFXI/org_fine.png,integrated,resources/images/en_US/FFXI/org_fine.png,Upstream language/common image layout
+R100,resources/images/FFXI/org_full.png,resources/images/en_US/FFXI/org_full.png,integrated,resources/images/en_US/FFXI/org_full.png,Upstream language/common image layout
+R100,resources/images/FFXI/org_high.png,resources/images/en_US/FFXI/org_high.png,integrated,resources/images/en_US/FFXI/org_high.png,Upstream language/common image layout
+R100,resources/images/FFXI/org_lesser_full.png,resources/images/en_US/FFXI/org_lesser_full.png,integrated,resources/images/en_US/FFXI/org_lesser_full.png,Upstream language/common image layout
+R100,resources/images/FFXI/org_low.png,resources/images/en_US/FFXI/org_low.png,integrated,resources/images/en_US/FFXI/org_low.png,Upstream language/common image layout
+R100,resources/images/FFXI/org_mid.png,resources/images/en_US/FFXI/org_mid.png,integrated,resources/images/en_US/FFXI/org_mid.png,Upstream language/common image layout
+R100,resources/images/FFXI/org_ouro.png,resources/images/en_US/FFXI/org_ouro.png,integrated,resources/images/en_US/FFXI/org_ouro.png,Upstream language/common image layout
+R100,resources/images/FFXI/org_refine.png,resources/images/en_US/FFXI/org_refine.png,integrated,resources/images/en_US/FFXI/org_refine.png,Upstream language/common image layout
+R100,resources/images/FFXI/org_sliver.png,resources/images/en_US/FFXI/org_sliver.png,integrated,resources/images/en_US/FFXI/org_sliver.png,Upstream language/common image layout
+R100,resources/images/FFXI/receive.png,resources/images/en_US/FFXI/receive.png,integrated,resources/images/en_US/FFXI/receive.png,Upstream language/common image layout
+A,resources/images/en_US/FFXI/stair_zone3.png,resources/images/en_US/FFXI/stair_zone3.png,integrated,resources/images/en_US/FFXI/stair_zone3.png,Upstream language/common image layout
+A,resources/images/en_US/FFXI/stair_zone4.png,resources/images/en_US/FFXI/stair_zone4.png,integrated,resources/images/en_US/FFXI/stair_zone4.png,Upstream language/common image layout
+R100,resources/images/FFXI/zone5.png,resources/images/en_US/FFXI/zone5.png,integrated,resources/images/en_US/FFXI/zone5.png,Upstream language/common image layout
+R100,resources/images/FortressArrival.png,resources/images/en_US/FortressArrival.png,integrated,resources/images/en_US/FortressArrival.png,Upstream language/common image layout
+R100,resources/images/GHB/GHB.png,resources/images/en_US/GHB/GHB.png,integrated,resources/images/en_US/GHB/GHB.png,Upstream language/common image layout
+R100,resources/images/GHB/GHB_quit.png,resources/images/en_US/GHB/GHB_quit.png,integrated,resources/images/en_US/GHB/GHB_quit.png,Upstream language/common image layout
+R100,resources/images/GhostsOfYore.png,resources/images/en_US/GhostsOfYore.png,integrated,resources/images/en_US/GhostsOfYore.png,Upstream language/common image layout
+R100,resources/images/GotoDung.png,resources/images/en_US/GotoDung.png,integrated,resources/images/en_US/GotoDung.png,Upstream language/common image layout
+R100,resources/images/HSR/AGMM1F.png,resources/images/en_US/HSR/AGMM1F.png,integrated,resources/images/en_US/HSR/AGMM1F.png,Upstream language/common image layout
+R100,resources/images/HSR/HSR.png,resources/images/en_US/HSR/HSR.png,integrated,resources/images/en_US/HSR/HSR.png,Upstream language/common image layout
+R100,resources/images/IWO/IWO.png,resources/images/en_US/IWO/IWO.png,integrated,resources/images/en_US/IWO/IWO.png,Upstream language/common image layout
+R100,resources/images/IWO/IWOB1F.png,resources/images/en_US/IWO/IWOB1F.png,integrated,resources/images/en_US/IWO/IWOB1F.png,Upstream language/common image layout
+R100,resources/images/IWO/IWOB2F.png,resources/images/en_US/IWO/IWOB2F.png,integrated,resources/images/en_US/IWO/IWOB2F.png,Upstream language/common image layout
+R100,resources/images/Inn.png,resources/images/en_US/Inn.png,integrated,resources/images/en_US/Inn.png,Upstream language/common image layout
+R100,resources/images/LBC.png,resources/images/en_US/LBC.png,integrated,resources/images/en_US/LBC.png,Upstream language/common image layout
+R100,resources/images/LBC/EnaWasSaved.png,resources/images/en_US/LBC/EnaWasSaved.png,integrated,resources/images/en_US/LBC/EnaWasSaved.png,Upstream language/common image layout
+R100,resources/images/LBC/LBC.png,resources/images/en_US/LBC/LBC.png,integrated,resources/images/en_US/LBC/LBC.png,Upstream language/common image layout
+R100,resources/images/LBC_quit.png,resources/images/en_US/LBC/LBC_quit.png,integrated,resources/images/en_US/LBC/LBC_quit.png,Upstream language/common image layout
+R100,resources/images/LBC/request.png,resources/images/en_US/LBC/request.png,integrated,resources/images/en_US/LBC/request.png,Upstream language/common image layout
+R100,resources/images/LBC/symbolofalliance.png,resources/images/en_US/LBC/symbolofalliance.png,integrated,resources/images/en_US/LBC/symbolofalliance.png,Upstream language/common image layout
+R100,resources/images/LMG/FTB1F.png,resources/images/en_US/LMG/FTB1F.png,integrated,resources/images/en_US/LMG/FTB1F.png,Upstream language/common image layout
+R100,resources/images/LMG/LMG.png,resources/images/en_US/LMG/LMG.png,integrated,resources/images/en_US/LMG/LMG.png,Upstream language/common image layout
+R100,resources/images/LMG/LMG1F.png,resources/images/en_US/LMG/LMG1F.png,integrated,resources/images/en_US/LMG/LMG1F.png,Upstream language/common image layout
+R100,resources/images/NoChestCanBeFound.png,resources/images/en_US/NoChestCanBeFound.png,integrated,resources/images/en_US/NoChestCanBeFound.png,Upstream language/common image layout
+R100,resources/images/OK.png,resources/images/en_US/OK.png,integrated,resources/images/en_US/OK.png,Upstream language/common image layout
+R100,resources/images/PartyManagement.png,resources/images/en_US/PartyManagement.png,integrated,resources/images/en_US/PartyManagement.png,Upstream language/common image layout
+R100,resources/images/PartyManagementTitle.png,resources/images/en_US/PartyManagementTitle.png,integrated,resources/images/en_US/PartyManagementTitle.png,Upstream language/common image layout
+R100,resources/images/ReturnText.png,resources/images/en_US/ReturnText.png,integrated,resources/images/en_US/ReturnText.png,Upstream language/common image layout
+R100,resources/images/RiseAgain.png,resources/images/en_US/RiseAgain.png,integrated,resources/images/en_US/RiseAgain.png,Upstream language/common image layout
+R100,resources/images/SC/SC.png,resources/images/en_US/SC/SC.png,integrated,resources/images/en_US/SC/SC.png,Upstream language/common image layout
+R100,resources/images/SC/SCB1F.png,resources/images/en_US/SC/SCB1F.png,integrated,resources/images/en_US/SC/SCB1F.png,Upstream language/common image layout
+R100,resources/images/SC/SCB2F.png,resources/images/en_US/SC/SCB2F.png,integrated,resources/images/en_US/SC/SCB2F.png,Upstream language/common image layout
+R100,resources/images/SH_B2F.png,resources/images/en_US/SH_B2F.png,integrated,resources/images/en_US/SH_B2F.png,Upstream language/common image layout
+R100,resources/images/SH_cave.png,resources/images/en_US/SH_cave.png,integrated,resources/images/en_US/SH_cave.png,Upstream language/common image layout
+R100,resources/images/SSC/Leap.png,resources/images/en_US/SSC/Leap.png,integrated,resources/images/en_US/SSC/Leap.png,Upstream language/common image layout
+R100,resources/images/SSC/Request.png,resources/images/en_US/SSC/Request.png,integrated,resources/images/en_US/SSC/Request.png,Upstream language/common image layout
+R100,resources/images/SSC/SSC.png,resources/images/en_US/SSC/SSC.png,integrated,resources/images/en_US/SSC/SSC.png,Upstream language/common image layout
+A,resources/images/en_US/SSC/SSC1F_left_1_once.png,resources/images/en_US/SSC/SSC1F_left_1_once.png,integrated,resources/images/en_US/SSC/SSC1F_left_1_once.png,Upstream language/common image layout
+A,resources/images/en_US/SSC/SSC1F_left_2_once.png,resources/images/en_US/SSC/SSC1F_left_2_once.png,integrated,resources/images/en_US/SSC/SSC1F_left_2_once.png,Upstream language/common image layout
+A,resources/images/en_US/SSC/SSC1F_left_3_once.png,resources/images/en_US/SSC/SSC1F_left_3_once.png,integrated,resources/images/en_US/SSC/SSC1F_left_3_once.png,Upstream language/common image layout
+A,resources/images/en_US/SSC/SSC1F_left_once.png,resources/images/en_US/SSC/SSC1F_left_once.png,integrated,resources/images/en_US/SSC/SSC1F_left_once.png,Upstream language/common image layout
+A,resources/images/en_US/SSC/SSC1F_right_once.png,resources/images/en_US/SSC/SSC1F_right_once.png,integrated,resources/images/en_US/SSC/SSC1F_right_once.png,Upstream language/common image layout
+A,resources/images/en_US/SSC/SSC_quit.png,resources/images/en_US/SSC/SSC_quit.png,integrated,resources/images/en_US/SSC/SSC_quit.png,Upstream language/common image layout
+R100,resources/images/SSC/dotdotdot.png,resources/images/en_US/SSC/dotdotdot.png,integrated,resources/images/en_US/SSC/dotdotdot.png,Upstream language/common image layout
+A,resources/images/en_US/SSC/goldenchest_1.png,resources/images/en_US/SSC/goldenchest_1.png,integrated,resources/images/en_US/SSC/goldenchest_1.png,Upstream language/common image layout
+R100,resources/images/SSC/shadow.png,resources/images/en_US/SSC/shadow.png,integrated,resources/images/en_US/SSC/shadow.png,Upstream language/common image layout
+R100,resources/images/SSC/trapdeactived.png,resources/images/en_US/SSC/trapdeactived.png,integrated,resources/images/en_US/SSC/trapdeactived.png,Upstream language/common image layout
+R100,resources/images/Stay.png,resources/images/en_US/Stay.png,integrated,resources/images/en_US/Stay.png,Upstream language/common image layout
+R100,resources/images/TWC/TWC.png,resources/images/en_US/TWC/TWC.png,integrated,resources/images/en_US/TWC/TWC.png,Upstream language/common image layout
+R100,resources/images/TWC/TWCB1F.png,resources/images/en_US/TWC/TWCB1F.png,integrated,resources/images/en_US/TWC/TWCB1F.png,Upstream language/common image layout
+R100,resources/images/TradeWaterway.png,resources/images/en_US/TradeWaterway.png,integrated,resources/images/en_US/TradeWaterway.png,Upstream language/common image layout
+R100,resources/images/Triumph.png,resources/images/en_US/Triumph.png,integrated,resources/images/en_US/Triumph.png,Upstream language/common image layout
+A,resources/images/en_US/accept_death_cursedWheel_timeLeap.png,resources/images/en_US/accept_death_cursedWheel_timeLeap.png,integrated,resources/images/en_US/accept_death_cursedWheel_timeLeap.png,Upstream language/common image layout
+R100,resources/images/ambush.png,resources/images/en_US/ambush.png,integrated,resources/images/en_US/ambush.png,Upstream language/common image layout
+R100,resources/images/autoBattleEnable.png,resources/images/en_US/autoBattleEnable.png,integrated,resources/images/en_US/autoBattleEnable.png,Upstream language/common image layout
+R100,resources/images/bag.png,resources/images/en_US/bag.png,integrated,resources/images/en_US/bag.png,Upstream language/common image layout
+R100,resources/images/beginningAbyss.png,resources/images/en_US/beginningAbyss.png,integrated,resources/images/en_US/beginningAbyss.png,Upstream language/common image layout
+R100,resources/images/blessing.png,resources/images/en_US/blessing.png,integrated,resources/images/en_US/blessing.png,Upstream language/common image layout
+R100,resources/images/bondmate_close.png,resources/images/en_US/bondmate_close.png,integrated,resources/images/en_US/bondmate_close.png,Upstream language/common image layout
+R100,resources/images/Bounties.png,resources/images/en_US/bounty/Bounties.png,integrated,resources/images/en_US/bounty/Bounties.png,Upstream language/common image layout
+R100,resources/images/CompletionReported.png,resources/images/en_US/bounty/CompletionReported.png,integrated,resources/images/en_US/bounty/CompletionReported.png,Upstream language/common image layout
+R100,resources/images/bounty/Slayhim.png,resources/images/en_US/bounty/Slayhim.png,integrated,resources/images/en_US/bounty/Slayhim.png,Upstream language/common image layout
+R100,resources/images/bounty/cuthimdown.png,resources/images/en_US/bounty/cuthimdown.png,integrated,resources/images/en_US/bounty/cuthimdown.png,Upstream language/common image layout
+R100,resources/images/bounty/lethimgo.png,resources/images/en_US/bounty/lethimgo.png,integrated,resources/images/en_US/bounty/lethimgo.png,Upstream language/common image layout
+R100,resources/images/caveinZone.png,resources/images/en_US/caveinZone.png,integrated,resources/images/en_US/caveinZone.png,Upstream language/common image layout
+R100,resources/images/chestFlag.png,resources/images/en_US/chestFlag.png,integrated,resources/images/en_US/chestFlag.png,Upstream language/common image layout
+R100,resources/images/close.png,resources/images/en_US/close.png,integrated,resources/images/en_US/close.png,Upstream language/common image layout
+R100,resources/images/combatActive.png,resources/images/en_US/combatActive.png,integrated,resources/images/en_US/combatActive.png,Upstream language/common image layout
+R100,resources/images/combatActive_2.png,resources/images/en_US/combatActive_2.png,integrated,resources/images/en_US/combatActive_2.png,Upstream language/common image layout
+R100,resources/images/combatActive_3.png,resources/images/en_US/combatActive_3.png,integrated,resources/images/en_US/combatActive_3.png,Upstream language/common image layout
+R100,resources/images/combatActive_4.png,resources/images/en_US/combatActive_4.png,integrated,resources/images/en_US/combatActive_4.png,Upstream language/common image layout
+R100,resources/images/combatAuto.png,resources/images/en_US/combatAuto.png,integrated,resources/images/en_US/combatAuto.png,Upstream language/common image layout
+R100,resources/images/combatAuto_2.png,resources/images/en_US/combatAuto_2.png,integrated,resources/images/en_US/combatAuto_2.png,Upstream language/common image layout
+R100,resources/images/combatClose.png,resources/images/en_US/combatClose.png,integrated,resources/images/en_US/combatClose.png,Upstream language/common image layout
+R100,resources/images/combatSpd.png,resources/images/en_US/combatSpd.png,integrated,resources/images/en_US/combatSpd.png,Upstream language/common image layout
+R100,resources/images/combatSpd_DHI.png,resources/images/en_US/combatSpd_DHI.png,integrated,resources/images/en_US/combatSpd_DHI.png,Upstream language/common image layout
+R100,resources/images/cropped.png,resources/images/en_US/cropped.png,integrated,resources/images/en_US/cropped.png,Upstream language/common image layout
+R100,resources/images/cursedWheel.png,resources/images/en_US/cursedWheel.png,integrated,resources/images/en_US/cursedWheel.png,Upstream language/common image layout
+R100,resources/images/cursedWheelTitle.png,resources/images/en_US/cursedWheelTitle.png,integrated,resources/images/en_US/cursedWheelTitle.png,Upstream language/common image layout
+R100,resources/images/cursedwheel_dhi.png,resources/images/en_US/cursedwheel_dhi.png,integrated,resources/images/en_US/cursedwheel_dhi.png,Upstream language/common image layout
+R100,resources/images/cursedwheel_impregnableFortress.png,resources/images/en_US/cursedwheel_impregnableFortress.png,integrated,resources/images/en_US/cursedwheel_impregnableFortress.png,Upstream language/common image layout
+R100,resources/images/cursewheel.png,resources/images/en_US/cursewheel.png,integrated,resources/images/en_US/cursewheel.png,Upstream language/common image layout
+R100,resources/images/darklight_lightIt.png,resources/images/en_US/darklight_lightIt.png,integrated,resources/images/en_US/darklight_lightIt.png,Upstream language/common image layout
+R100,resources/images/dialogueChoices/!adventurersbones.png,resources/images/en_US/dialogueChoices/!adventurersbones.png,integrated,resources/images/en_US/dialogueChoices/!adventurersbones.png,Upstream language/common image layout
+R100,resources/images/dialogueChoices/!halfBone.png,resources/images/en_US/dialogueChoices/!halfBone.png,integrated,resources/images/en_US/dialogueChoices/!halfBone.png,Upstream language/common image layout
+R100,resources/images/dialogueChoices/#hammer.png,resources/images/en_US/dialogueChoices/#hammer.png,integrated,resources/images/en_US/dialogueChoices/#hammer.png,Upstream language/common image layout
+A,resources/images/en_US/dialogueChoices/DontBuyIt.png,resources/images/en_US/dialogueChoices/DontBuyIt.png,integrated,resources/images/en_US/dialogueChoices/DontBuyIt.png,Upstream language/common image layout
+R100,resources/images/dialogueChoices/buyNothing.png,resources/images/en_US/dialogueChoices/buyNothing.png,integrated,resources/images/en_US/dialogueChoices/buyNothing.png,Upstream language/common image layout
+R100,resources/images/dialogueChoices/dontGiveAntitoxin.png,resources/images/en_US/dialogueChoices/dontGiveAntitoxin.png,integrated,resources/images/en_US/dialogueChoices/dontGiveAntitoxin.png,Upstream language/common image layout
+R100,resources/images/dialogueChoices/donthelp.png,resources/images/en_US/dialogueChoices/donthelp.png,integrated,resources/images/en_US/dialogueChoices/donthelp.png,Upstream language/common image layout
+R100,resources/images/dialogueChoices/givehimnothing.png,resources/images/en_US/dialogueChoices/givehimnothing.png,integrated,resources/images/en_US/dialogueChoices/givehimnothing.png,Upstream language/common image layout
+R100,resources/images/dialogueChoices/idonthaveany.png,resources/images/en_US/dialogueChoices/idonthaveany.png,integrated,resources/images/en_US/dialogueChoices/idonthaveany.png,Upstream language/common image layout
+R100,resources/images/dialogueChoices/ignorethequest.png,resources/images/en_US/dialogueChoices/ignorethequest.png,integrated,resources/images/en_US/dialogueChoices/ignorethequest.png,Upstream language/common image layout
+R100,resources/images/dialogueChoices/nope.png,resources/images/en_US/dialogueChoices/nope.png,integrated,resources/images/en_US/dialogueChoices/nope.png,Upstream language/common image layout
+R100,resources/images/dialogueChoices/nothanks.png,resources/images/en_US/dialogueChoices/nothanks.png,integrated,resources/images/en_US/dialogueChoices/nothanks.png,Upstream language/common image layout
+R100,resources/images/dialogueChoices/spareit.png,resources/images/en_US/dialogueChoices/spareit.png,integrated,resources/images/en_US/dialogueChoices/spareit.png,Upstream language/common image layout
+R100,resources/images/dialogueChoices/strange_things.png,resources/images/en_US/dialogueChoices/strange_things.png,integrated,resources/images/en_US/dialogueChoices/strange_things.png,Upstream language/common image layout
+R100,resources/images/didnottakethequest.png,resources/images/en_US/didnottakethequest.png,integrated,resources/images/en_US/didnottakethequest.png,Upstream language/common image layout
+R100,resources/images/donothing.png,resources/images/en_US/donothing.png,integrated,resources/images/en_US/donothing.png,Upstream language/common image layout
+A,resources/images/en_US/fairy.png,resources/images/en_US/fairy.png,integrated,resources/images/en_US/fairy.png,Upstream language/common image layout
+A,resources/images/en_US/fishing/6bait.png,resources/images/en_US/fishing/6bait.png,integrated,resources/images/en_US/fishing/6bait.png,Upstream language/common image layout
+A,resources/images/en_US/fishing/8bait.png,resources/images/en_US/fishing/8bait.png,integrated,resources/images/en_US/fishing/8bait.png,Upstream language/common image layout
+A,resources/images/en_US/fishing/9bait.png,resources/images/en_US/fishing/9bait.png,integrated,resources/images/en_US/fishing/9bait.png,Upstream language/common image layout
+A,resources/images/en_US/fishing/CloseFishInfo.png,resources/images/en_US/fishing/CloseFishInfo.png,integrated,resources/images/en_US/fishing/CloseFishInfo.png,Upstream language/common image layout
+A,resources/images/en_US/fishing/FISHBait.png,resources/images/en_US/fishing/FISHBait.png,integrated,resources/images/en_US/fishing/FISHBait.png,Upstream language/common image layout
+A,resources/images/en_US/fishing/nobait.png,resources/images/en_US/fishing/nobait.png,integrated,resources/images/en_US/fishing/nobait.png,Upstream language/common image layout
+A,resources/images/en_US/fishing/size_average.png,resources/images/en_US/fishing/size_average.png,integrated,resources/images/en_US/fishing/size_average.png,Upstream language/common image layout
+A,resources/images/en_US/fishing/size_large.png,resources/images/en_US/fishing/size_large.png,integrated,resources/images/en_US/fishing/size_large.png,Upstream language/common image layout
+A,resources/images/en_US/fishing/size_small.png,resources/images/en_US/fishing/size_small.png,integrated,resources/images/en_US/fishing/size_small.png,Upstream language/common image layout
+A,resources/images/en_US/fishing/startfishing.png,resources/images/en_US/fishing/startfishing.png,integrated,resources/images/en_US/fishing/startfishing.png,Upstream language/common image layout
+A,resources/images/en_US/fishing/三文鱼.png,resources/images/en_US/fishing/三文鱼.png,integrated,resources/images/en_US/fishing/三文鱼.png,Upstream language/common image layout
+A,resources/images/en_US/fishing/杂鱼.png,resources/images/en_US/fishing/杂鱼.png,integrated,resources/images/en_US/fishing/杂鱼.png,Upstream language/common image layout
+A,resources/images/en_US/fishing/雅罗.png,resources/images/en_US/fishing/雅罗.png,integrated,resources/images/en_US/fishing/雅罗.png,Upstream language/common image layout
+A,resources/images/en_US/fishing/鲈鱼.png,resources/images/en_US/fishing/鲈鱼.png,integrated,resources/images/en_US/fishing/鲈鱼.png,Upstream language/common image layout
+A,resources/images/en_US/fishing/鲶鱼.png,resources/images/en_US/fishing/鲶鱼.png,integrated,resources/images/en_US/fishing/鲶鱼.png,Upstream language/common image layout
+A,resources/images/en_US/fishing/鳗鱼.png,resources/images/en_US/fishing/鳗鱼.png,integrated,resources/images/en_US/fishing/鳗鱼.png,Upstream language/common image layout
+A,resources/images/en_US/fishing/鳟鱼.png,resources/images/en_US/fishing/鳟鱼.png,integrated,resources/images/en_US/fishing/鳟鱼.png,Upstream language/common image layout
+R100,resources/images/flee.png,resources/images/en_US/flee.png,integrated,resources/images/en_US/flee.png,Upstream language/common image layout
+R100,resources/images/fordraig/AskDagger.png,resources/images/en_US/fordraig/AskDagger.png,integrated,resources/images/en_US/fordraig/AskDagger.png,Upstream language/common image layout
+R100,resources/images/fordraig/B2Fentrance.png,resources/images/en_US/fordraig/B2Fentrance.png,integrated,resources/images/en_US/fordraig/B2Fentrance.png,Upstream language/common image layout
+R100,resources/images/fordraig/B2Fquit.png,resources/images/en_US/fordraig/B2Fquit.png,integrated,resources/images/en_US/fordraig/B2Fquit.png,Upstream language/common image layout
+R100,resources/images/fordraig/B3F.png,resources/images/en_US/fordraig/B3F.png,integrated,resources/images/en_US/fordraig/B3F.png,Upstream language/common image layout
+R100,resources/images/fordraig/B3F_teleport.png,resources/images/en_US/fordraig/B3F_teleport.png,integrated,resources/images/en_US/fordraig/B3F_teleport.png,Upstream language/common image layout
+R100,resources/images/fordraig/B3fentrance.png,resources/images/en_US/fordraig/B3fentrance.png,integrated,resources/images/en_US/fordraig/B3fentrance.png,Upstream language/common image layout
+R100,resources/images/fordraig/B4F.png,resources/images/en_US/fordraig/B4F.png,integrated,resources/images/en_US/fordraig/B4F.png,Upstream language/common image layout
+R100,resources/images/fordraig/B4Fquit.png,resources/images/en_US/fordraig/B4Fquit.png,integrated,resources/images/en_US/fordraig/B4Fquit.png,Upstream language/common image layout
+R100,resources/images/fordraig/Entrance.png,resources/images/en_US/fordraig/Entrance.png,integrated,resources/images/en_US/fordraig/Entrance.png,Upstream language/common image layout
+R100,resources/images/fordraig/FirstBoss.png,resources/images/en_US/fordraig/FirstBoss.png,integrated,resources/images/en_US/fordraig/FirstBoss.png,Upstream language/common image layout
+R100,resources/images/fordraig/FirstTrap.png,resources/images/en_US/fordraig/FirstTrap.png,integrated,resources/images/en_US/fordraig/FirstTrap.png,Upstream language/common image layout
+R100,resources/images/fordraig/InsertTheDagger.png,resources/images/en_US/fordraig/InsertTheDagger.png,integrated,resources/images/en_US/fordraig/InsertTheDagger.png,Upstream language/common image layout
+R100,resources/images/fordraig/Leap.png,resources/images/en_US/fordraig/Leap.png,integrated,resources/images/en_US/fordraig/Leap.png,Upstream language/common image layout
+R100,resources/images/fordraig/RequestAccept.png,resources/images/en_US/fordraig/RequestAccept.png,integrated,resources/images/en_US/fordraig/RequestAccept.png,Upstream language/common image layout
+R100,resources/images/fordraig/SecondBoss.png,resources/images/en_US/fordraig/SecondBoss.png,integrated,resources/images/en_US/fordraig/SecondBoss.png,Upstream language/common image layout
+R100,resources/images/fordraig/SecondTrap.png,resources/images/en_US/fordraig/SecondTrap.png,integrated,resources/images/en_US/fordraig/SecondTrap.png,Upstream language/common image layout
+R100,resources/images/fordraig/TryPushingIt.png,resources/images/en_US/fordraig/TryPushingIt.png,integrated,resources/images/en_US/fordraig/TryPushingIt.png,Upstream language/common image layout
+R100,resources/images/fordraig/b1fquit.png,resources/images/en_US/fordraig/b1fquit.png,integrated,resources/images/en_US/fordraig/b1fquit.png,Upstream language/common image layout
+R100,resources/images/fordraig/labyrinthOfFordraig.png,resources/images/en_US/fordraig/labyrinthOfFordraig.png,integrated,resources/images/en_US/fordraig/labyrinthOfFordraig.png,Upstream language/common image layout
+R100,resources/images/fordraig/readytoBoss.png,resources/images/en_US/fordraig/readytoBoss.png,integrated,resources/images/en_US/fordraig/readytoBoss.png,Upstream language/common image layout
+R100,resources/images/fordraig/thedagger.png,resources/images/en_US/fordraig/thedagger.png,integrated,resources/images/en_US/fordraig/thedagger.png,Upstream language/common image layout
+R100,resources/images/fordraig/thirdMach.png,resources/images/en_US/fordraig/thirdMach.png,integrated,resources/images/en_US/fordraig/thirdMach.png,Upstream language/common image layout
+R100,resources/images/fortressEntrance.png,resources/images/en_US/fortressEntrance.png,integrated,resources/images/en_US/fortressEntrance.png,Upstream language/common image layout
+R100,resources/images/fortressb10f.png,resources/images/en_US/fortressb10f.png,integrated,resources/images/en_US/fortressb10f.png,Upstream language/common image layout
+A,resources/images/en_US/fortressb1f.png,resources/images/en_US/fortressb1f.png,integrated,resources/images/en_US/fortressb1f.png,Upstream language/common image layout
+A,resources/images/en_US/fortressb3f.png,resources/images/en_US/fortressb3f.png,integrated,resources/images/en_US/fortressb3f.png,Upstream language/common image layout
+R100,resources/images/fortressb7f.png,resources/images/en_US/fortressb7f.png,integrated,resources/images/en_US/fortressb7f.png,Upstream language/common image layout
+R100,resources/images/give.png,resources/images/en_US/give.png,integrated,resources/images/en_US/give.png,Upstream language/common image layout
+R100,resources/images/gradeexam.png,resources/images/en_US/gradeexam.png,integrated,resources/images/en_US/gradeexam.png,Upstream language/common image layout
+R100,resources/images/gradeup.png,resources/images/en_US/gradeup.png,integrated,resources/images/en_US/gradeup.png,Upstream language/common image layout
+R100,resources/images/guild.png,resources/images/en_US/guild.png,integrated,resources/images/en_US/guild.png,Upstream language/common image layout
+R100,resources/images/guildFeatured.png,resources/images/en_US/guildFeatured.png,integrated,resources/images/en_US/guildFeatured.png,Upstream language/common image layout
+R100,resources/images/guildRequest.png,resources/images/en_US/guildRequest.png,integrated,resources/images/en_US/guildRequest.png,Upstream language/common image layout
+R100,resources/images/icanstillgo.png,resources/images/en_US/icanstillgo.png,integrated,resources/images/en_US/icanstillgo.png,Upstream language/common image layout
+R100,resources/images/ignore.png,resources/images/en_US/ignore.png,integrated,resources/images/en_US/ignore.png,Upstream language/common image layout
+R100,resources/images/impregnableFortress.png,resources/images/en_US/impregnableFortress.png,integrated,resources/images/en_US/impregnableFortress.png,Upstream language/common image layout
+R100,resources/images/itemList.png,resources/images/en_US/itemList.png,integrated,resources/images/en_US/itemList.png,Upstream language/common image layout
+R100,resources/images/leap.png,resources/images/en_US/leap.png,integrated,resources/images/en_US/leap.png,Upstream language/common image layout
+A,resources/images/en_US/leave.png,resources/images/en_US/leave.png,integrated,resources/images/en_US/leave.png,Upstream language/common image layout
+R100,resources/images/letswithdraw.png,resources/images/en_US/letswithdraw.png,integrated,resources/images/en_US/letswithdraw.png,Upstream language/common image layout
+R100,resources/images/lounge.png,resources/images/en_US/lounge.png,integrated,resources/images/en_US/lounge.png,Upstream language/common image layout
+R100,resources/images/malice_b3f.png,resources/images/en_US/malice_b3f.png,integrated,resources/images/en_US/malice_b3f.png,Upstream language/common image layout
+R100,resources/images/malice_malice.png,resources/images/en_US/malice_malice.png,integrated,resources/images/en_US/malice_malice.png,Upstream language/common image layout
+R100,resources/images/mapFlag.png,resources/images/en_US/mapFlag.png,integrated,resources/images/en_US/mapFlag.png,Upstream language/common image layout
+R100,resources/images/markspot.png,resources/images/en_US/markspot.png,integrated,resources/images/en_US/markspot.png,Upstream language/common image layout
+R100,resources/images/multipeopledead.png,resources/images/en_US/multipeopledead.png,integrated,resources/images/en_US/multipeopledead.png,Upstream language/common image layout
+R100,resources/images/next.png,resources/images/en_US/next.png,integrated,resources/images/en_US/next.png,Upstream language/common image layout
+R100,resources/images/noneed.png,resources/images/en_US/noneed.png,integrated,resources/images/en_US/noneed.png,Upstream language/common image layout
+R100,resources/images/notenough_close.png,resources/images/en_US/notenough_close.png,integrated,resources/images/en_US/notenough_close.png,Upstream language/common image layout
+R100,resources/images/notenoughmp.png,resources/images/en_US/notenoughmp.png,integrated,resources/images/en_US/notenoughmp.png,Upstream language/common image layout
+R100,resources/images/notenoughsp.png,resources/images/en_US/notenoughsp.png,integrated,resources/images/en_US/notenoughsp.png,Upstream language/common image layout
+R100,resources/images/openworldmap.png,resources/images/en_US/openworldmap.png,integrated,resources/images/en_US/openworldmap.png,Upstream language/common image layout
+R100,resources/images/output.png,resources/images/en_US/output.png,integrated,resources/images/en_US/output.png,Upstream language/common image layout
+R100,resources/images/press!!!.png,resources/images/en_US/press!!!.png,integrated,resources/images/en_US/press!!!.png,Upstream language/common image layout
+R100,resources/images/putinstorage.png,resources/images/en_US/putinstorage.png,integrated,resources/images/en_US/putinstorage.png,Upstream language/common image layout
+R100,resources/images/quit.png,resources/images/en_US/quit.png,integrated,resources/images/en_US/quit.png,Upstream language/common image layout
+R100,resources/images/ready.png,resources/images/en_US/ready.png,integrated,resources/images/en_US/ready.png,Upstream language/common image layout
+R100,resources/images/recover.png,resources/images/en_US/recover.png,integrated,resources/images/en_US/recover.png,Upstream language/common image layout
+R100,resources/images/requestToRescueTheDuke.png,resources/images/en_US/requestToRescueTheDuke.png,integrated,resources/images/en_US/requestToRescueTheDuke.png,Upstream language/common image layout
+R100,resources/images/request_accepted.png,resources/images/en_US/request_accepted.png,integrated,resources/images/en_US/request_accepted.png,Upstream language/common image layout
+R100,resources/images/retry.png,resources/images/en_US/retry.png,integrated,resources/images/en_US/retry.png,Upstream language/common image layout
+R100,resources/images/returntotown.png,resources/images/en_US/returntotown.png,integrated,resources/images/en_US/returntotown.png,Upstream language/common image layout
+A,resources/images/en_US/returntotown_DH.png,resources/images/en_US/returntotown_DH.png,integrated,resources/images/en_US/returntotown_DH.png,Upstream language/common image layout
+R100,resources/images/rowFlag.png,resources/images/en_US/rowFlag.png,integrated,resources/images/en_US/rowFlag.png,Upstream language/common image layout
+R100,resources/images/royalsuite.png,resources/images/en_US/royalsuite.png,integrated,resources/images/en_US/royalsuite.png,Upstream language/common image layout
+R100,resources/images/ruins.png,resources/images/en_US/ruins.png,integrated,resources/images/en_US/ruins.png,Upstream language/common image layout
+R100,resources/images/sandman/sandman_1.png,resources/images/en_US/sandman/sandman_1.png,integrated,resources/images/en_US/sandman/sandman_1.png,Upstream language/common image layout
+R100,resources/images/sandman/sandman_2.png,resources/images/en_US/sandman/sandman_2.png,integrated,resources/images/en_US/sandman/sandman_2.png,Upstream language/common image layout
+A,resources/images/en_US/sandman/sandman_3.png,resources/images/en_US/sandman/sandman_3.png,integrated,resources/images/en_US/sandman/sandman_3.png,Upstream language/common image layout
+R100,resources/images/sandman/sandman_bondmate.png,resources/images/en_US/sandman/sandman_bondmate.png,integrated,resources/images/en_US/sandman/sandman_bondmate.png,Upstream language/common image layout
+R100,resources/images/sandman_recover.png,resources/images/en_US/sandman_recover.png,integrated,resources/images/en_US/sandman_recover.png,Upstream language/common image layout
+R100,resources/images/shiphold.png,resources/images/en_US/shiphold.png,integrated,resources/images/en_US/shiphold.png,Upstream language/common image layout
+R100,resources/images/specialRequest.png,resources/images/en_US/specialRequest.png,integrated,resources/images/en_US/specialRequest.png,Upstream language/common image layout
+R100,resources/images/spellskill/CombatAutoDisable.png,resources/images/en_US/spellskill/CombatAutoDisable.png,integrated,resources/images/en_US/spellskill/CombatAutoDisable.png,Upstream language/common image layout
+R100,resources/images/spellskill/CombatAutoEnable.png,resources/images/en_US/spellskill/CombatAutoEnable.png,integrated,resources/images/en_US/spellskill/CombatAutoEnable.png,Upstream language/common image layout
+R100,resources/images/spellskill/skillDetail.png,resources/images/en_US/spellskill/skillDetail.png,integrated,resources/images/en_US/spellskill/skillDetail.png,Upstream language/common image layout
+R100,resources/images/spellskill/skillLvl/lv1.png,resources/images/en_US/spellskill/skillLvl/lv1.png,integrated,resources/images/en_US/spellskill/skillLvl/lv1.png,Upstream language/common image layout
+R100,resources/images/spellskill/skillLvl/lv2.png,resources/images/en_US/spellskill/skillLvl/lv2.png,integrated,resources/images/en_US/spellskill/skillLvl/lv2.png,Upstream language/common image layout
+R100,resources/images/spellskill/skillLvl/lv3.png,resources/images/en_US/spellskill/skillLvl/lv3.png,integrated,resources/images/en_US/spellskill/skillLvl/lv3.png,Upstream language/common image layout
+R100,resources/images/spellskill/skillLvl/lv4.png,resources/images/en_US/spellskill/skillLvl/lv4.png,integrated,resources/images/en_US/spellskill/skillLvl/lv4.png,Upstream language/common image layout
+R100,resources/images/spellskill/skillLvl/lv5.png,resources/images/en_US/spellskill/skillLvl/lv5.png,integrated,resources/images/en_US/spellskill/skillLvl/lv5.png,Upstream language/common image layout
+R100,resources/images/spellskill/skillLvl/lv6.png,resources/images/en_US/spellskill/skillLvl/lv6.png,integrated,resources/images/en_US/spellskill/skillLvl/lv6.png,Upstream language/common image layout
+R100,resources/images/spellskill/skillLvl/lv7.png,resources/images/en_US/spellskill/skillLvl/lv7.png,integrated,resources/images/en_US/spellskill/skillLvl/lv7.png,Upstream language/common image layout
+R100,resources/images/spellskill/skillLvl/s_lv1.png,resources/images/en_US/spellskill/skillLvl/s_lv1.png,integrated,resources/images/en_US/spellskill/skillLvl/s_lv1.png,Upstream language/common image layout
+R100,resources/images/spellskill/skillLvl/s_lv2.png,resources/images/en_US/spellskill/skillLvl/s_lv2.png,integrated,resources/images/en_US/spellskill/skillLvl/s_lv2.png,Upstream language/common image layout
+R100,resources/images/spellskill/skillLvl/s_lv3.png,resources/images/en_US/spellskill/skillLvl/s_lv3.png,integrated,resources/images/en_US/spellskill/skillLvl/s_lv3.png,Upstream language/common image layout
+R100,resources/images/spellskill/skillLvl/s_lv4.png,resources/images/en_US/spellskill/skillLvl/s_lv4.png,integrated,resources/images/en_US/spellskill/skillLvl/s_lv4.png,Upstream language/common image layout
+R100,resources/images/spellskill/skillLvl/s_lv5.png,resources/images/en_US/spellskill/skillLvl/s_lv5.png,integrated,resources/images/en_US/spellskill/skillLvl/s_lv5.png,Upstream language/common image layout
+R100,resources/images/spellskill/skillLvl/s_lv6.png,resources/images/en_US/spellskill/skillLvl/s_lv6.png,integrated,resources/images/en_US/spellskill/skillLvl/s_lv6.png,Upstream language/common image layout
+R100,resources/images/spellskill/skillLvl/s_lv7.png,resources/images/en_US/spellskill/skillLvl/s_lv7.png,integrated,resources/images/en_US/spellskill/skillLvl/s_lv7.png,Upstream language/common image layout
+A,resources/images/en_US/stair_DH_CG.png,resources/images/en_US/stair_DH_CG.png,integrated,resources/images/en_US/stair_DH_CG.png,Upstream language/common image layout
+A,resources/images/en_US/stair_DH_R10.png,resources/images/en_US/stair_DH_R10.png,integrated,resources/images/en_US/stair_DH_R10.png,Upstream language/common image layout
+A,resources/images/en_US/stair_DH_R4.png,resources/images/en_US/stair_DH_R4.png,integrated,resources/images/en_US/stair_DH_R4.png,Upstream language/common image layout
+A,resources/images/en_US/stair_DH_R5.png,resources/images/en_US/stair_DH_R5.png,integrated,resources/images/en_US/stair_DH_R5.png,Upstream language/common image layout
+A,resources/images/en_US/stair_DH_R6.png,resources/images/en_US/stair_DH_R6.png,integrated,resources/images/en_US/stair_DH_R6.png,Upstream language/common image layout
+A,resources/images/en_US/stair_DH_R7.png,resources/images/en_US/stair_DH_R7.png,integrated,resources/images/en_US/stair_DH_R7.png,Upstream language/common image layout
+A,resources/images/en_US/stair_DH_R9.png,resources/images/en_US/stair_DH_R9.png,integrated,resources/images/en_US/stair_DH_R9.png,Upstream language/common image layout
+A,resources/images/en_US/stair_fortress10f.png,resources/images/en_US/stair_fortress10f.png,integrated,resources/images/en_US/stair_fortress10f.png,Upstream language/common image layout
+A,resources/images/en_US/stair_fortress1f.png,resources/images/en_US/stair_fortress1f.png,integrated,resources/images/en_US/stair_fortress1f.png,Upstream language/common image layout
+A,resources/images/en_US/stair_fortress3f.png,resources/images/en_US/stair_fortress3f.png,integrated,resources/images/en_US/stair_fortress3f.png,Upstream language/common image layout
+A,resources/images/en_US/stair_fortressGate.png,resources/images/en_US/stair_fortressGate.png,integrated,resources/images/en_US/stair_fortressGate.png,Upstream language/common image layout
+A,resources/images/en_US/stair_goblinsNest.png,resources/images/en_US/stair_goblinsNest.png,integrated,resources/images/en_US/stair_goblinsNest.png,Upstream language/common image layout
+A,resources/images/en_US/stair_lounge.png,resources/images/en_US/stair_lounge.png,integrated,resources/images/en_US/stair_lounge.png,Upstream language/common image layout
+A,resources/images/en_US/stair_shiphold.png,resources/images/en_US/stair_shiphold.png,integrated,resources/images/en_US/stair_shiphold.png,Upstream language/common image layout
+R100,resources/images/startdownload.png,resources/images/en_US/startdownload.png,integrated,resources/images/en_US/startdownload.png,Upstream language/common image layout
+R100,resources/images/steel.png,resources/images/en_US/steel.png,integrated,resources/images/en_US/steel.png,Upstream language/common image layout
+R100,resources/images/theRouteToTheDestinationCannotBeFound.png,resources/images/en_US/theRouteToTheDestinationCannotBeFound.png,integrated,resources/images/en_US/theRouteToTheDestinationCannotBeFound.png,Upstream language/common image layout
+R100,resources/images/tooPoorToReadTheMap.png,resources/images/en_US/tooPoorToReadTheMap.png,integrated,resources/images/en_US/tooPoorToReadTheMap.png,Upstream language/common image layout
+R100,resources/images/totitle.png,resources/images/en_US/totitle.png,integrated,resources/images/en_US/totitle.png,Upstream language/common image layout
+R100,resources/images/trait.png,resources/images/en_US/trait.png,integrated,resources/images/en_US/trait.png,Upstream language/common image layout
+A,resources/images/en_US/transfer.png,resources/images/en_US/transfer.png,integrated,resources/images/en_US/transfer.png,Upstream language/common image layout
+R100,resources/images/whowillopenit.png,resources/images/en_US/whowillopenit.png,integrated,resources/images/en_US/whowillopenit.png,Upstream language/common image layout
+A,resources/images/en_US/whowillyougiveitto.png,resources/images/en_US/whowillyougiveitto.png,integrated,resources/images/en_US/whowillyougiveitto.png,Upstream language/common image layout
+R100,resources/images/worldmapflag.png,resources/images/en_US/worldmapflag.png,integrated,resources/images/en_US/worldmapflag.png,Upstream language/common image layout
+R100,resources/images/wraped.png,resources/images/en_US/wraped.png,integrated,resources/images/en_US/wraped.png,Upstream language/common image layout
+D,resources/images/fortressb1f.png,resources/images/fortressb1f.png,local retained,resources/images/en_US/fortressb1f.png,Legacy/local template preserved in language layout; removed quest IDs stay disabled
+D,resources/images/fortressb3f.png,resources/images/fortressb3f.png,local retained,resources/images/en_US/fortressb3f.png,Legacy/local template preserved in language layout; removed quest IDs stay disabled
+D,resources/images/stair_DH_Church.png,resources/images/stair_DH_Church.png,local retained,resources/images/en_US/stair_DH_Church.png,Legacy/local template preserved in language layout; removed quest IDs stay disabled
+D,resources/images/stair_DH_R10.png,resources/images/stair_DH_R10.png,local retained,resources/images/en_US/stair_DH_R10.png,Legacy/local template preserved in language layout; removed quest IDs stay disabled
+D,resources/images/stair_DH_R4.png,resources/images/stair_DH_R4.png,local retained,resources/images/en_US/stair_DH_R4.png,Legacy/local template preserved in language layout; removed quest IDs stay disabled
+D,resources/images/stair_DH_R5.png,resources/images/stair_DH_R5.png,local retained,resources/images/en_US/stair_DH_R5.png,Legacy/local template preserved in language layout; removed quest IDs stay disabled
+D,resources/images/stair_DH_R6.png,resources/images/stair_DH_R6.png,local retained,resources/images/en_US/stair_DH_R6.png,Legacy/local template preserved in language layout; removed quest IDs stay disabled
+D,resources/images/stair_DH_R7.png,resources/images/stair_DH_R7.png,local retained,resources/images/en_US/stair_DH_R7.png,Legacy/local template preserved in language layout; removed quest IDs stay disabled
+D,resources/images/stair_DH_R9.png,resources/images/stair_DH_R9.png,local retained,resources/images/en_US/stair_DH_R9.png,Legacy/local template preserved in language layout; removed quest IDs stay disabled
+D,resources/images/stair_fortress1f.png,resources/images/stair_fortress1f.png,local retained,resources/images/en_US/stair_fortress1f.png,Legacy/local template preserved in language layout; removed quest IDs stay disabled
+D,resources/images/stair_fortress3f.png,resources/images/stair_fortress3f.png,local retained,resources/images/en_US/stair_fortress3f.png,Legacy/local template preserved in language layout; removed quest IDs stay disabled
+D,resources/images/stair_fortressGate.png,resources/images/stair_fortressGate.png,local retained,resources/images/en_US/stair_fortressGate.png,Legacy/local template preserved in language layout; removed quest IDs stay disabled
+D,resources/images/stair_goblinsNest.png,resources/images/stair_goblinsNest.png,local retained,resources/images/en_US/stair_goblinsNest.png,Legacy/local template preserved in language layout; removed quest IDs stay disabled
+D,resources/images/stair_lounge.png,resources/images/stair_lounge.png,local retained,resources/images/en_US/stair_lounge.png,Legacy/local template preserved in language layout; removed quest IDs stay disabled
+D,resources/images/stair_shiphold.png,resources/images/stair_shiphold.png,local retained,resources/images/en_US/stair_shiphold.png,Legacy/local template preserved in language layout; removed quest IDs stay disabled
+A,resources/images/zh_CN/7thDist.png,resources/images/zh_CN/7thDist.png,integrated,resources/images/zh_CN/7thDist.png,Upstream language/common image layout
+A,resources/images/zh_CN/AWD/AWD.png,resources/images/zh_CN/AWD/AWD.png,integrated,resources/images/zh_CN/AWD/AWD.png,Upstream language/common image layout
+A,resources/images/zh_CN/AWD/AWD1F.png,resources/images/zh_CN/AWD/AWD1F.png,integrated,resources/images/zh_CN/AWD/AWD1F.png,Upstream language/common image layout
+A,resources/images/zh_CN/AWD/AWD2F.png,resources/images/zh_CN/AWD/AWD2F.png,integrated,resources/images/zh_CN/AWD/AWD2F.png,Upstream language/common image layout
+A,resources/images/zh_CN/AssembleParty.png,resources/images/zh_CN/AssembleParty.png,integrated,resources/images/zh_CN/AssembleParty.png,Upstream language/common image layout
+A,resources/images/zh_CN/AutoMove.png,resources/images/zh_CN/AutoMove.png,integrated,resources/images/zh_CN/AutoMove.png,Upstream language/common image layout
+A,resources/images/zh_CN/B2FTemple.png,resources/images/zh_CN/B2FTemple.png,integrated,resources/images/zh_CN/B2FTemple.png,Upstream language/common image layout
+A,resources/images/zh_CN/B4FLabyrinth.png,resources/images/zh_CN/B4FLabyrinth.png,integrated,resources/images/zh_CN/B4FLabyrinth.png,Upstream language/common image layout
+A,resources/images/zh_CN/B5FWarpedOnesNest.png,resources/images/zh_CN/B5FWarpedOnesNest.png,integrated,resources/images/zh_CN/B5FWarpedOnesNest.png,Upstream language/common image layout
+A,resources/images/zh_CN/BeautifulOre.png,resources/images/zh_CN/BeautifulOre.png,integrated,resources/images/zh_CN/BeautifulOre.png,Upstream language/common image layout
+A,resources/images/zh_CN/COS/ArnasPast.png,resources/images/zh_CN/COS/ArnasPast.png,integrated,resources/images/zh_CN/COS/ArnasPast.png,Upstream language/common image layout
+A,resources/images/zh_CN/COS/COS.png,resources/images/zh_CN/COS/COS.png,integrated,resources/images/zh_CN/COS/COS.png,Upstream language/common image layout
+A,resources/images/zh_CN/COS/COSB2F.png,resources/images/zh_CN/COS/COSB2F.png,integrated,resources/images/zh_CN/COS/COSB2F.png,Upstream language/common image layout
+A,resources/images/zh_CN/COS/COSENT.png,resources/images/zh_CN/COS/COSENT.png,integrated,resources/images/zh_CN/COS/COSENT.png,Upstream language/common image layout
+A,resources/images/zh_CN/COS/替换-凯旋.png,resources/images/zh_CN/COS/替换-凯旋.png,integrated,resources/images/zh_CN/COS/替换-凯旋.png,Upstream language/common image layout
+A,resources/images/zh_CN/CSC.png,resources/images/zh_CN/CSC.png,integrated,resources/images/zh_CN/CSC.png,Upstream language/common image layout
+A,resources/images/zh_CN/City_DHI.png,resources/images/zh_CN/City_DHI.png,integrated,resources/images/zh_CN/City_DHI.png,Upstream language/common image layout
+A,resources/images/zh_CN/City_RoyalCityLuknalia.png,resources/images/zh_CN/City_RoyalCityLuknalia.png,integrated,resources/images/zh_CN/City_RoyalCityLuknalia.png,Upstream language/common image layout
+A,resources/images/zh_CN/City_fortress.png,resources/images/zh_CN/City_fortress.png,integrated,resources/images/zh_CN/City_fortress.png,Upstream language/common image layout
+A,resources/images/zh_CN/City_portTownGrandLegion.png,resources/images/zh_CN/City_portTownGrandLegion.png,integrated,resources/images/zh_CN/City_portTownGrandLegion.png,Upstream language/common image layout
+A,resources/images/zh_CN/DH-Church.png,resources/images/zh_CN/DH-Church.png,integrated,resources/images/zh_CN/DH-Church.png,Upstream language/common image layout
+A,resources/images/zh_CN/DH-R4.png,resources/images/zh_CN/DH-R4.png,integrated,resources/images/zh_CN/DH-R4.png,Upstream language/common image layout
+A,resources/images/zh_CN/DH-R5.png,resources/images/zh_CN/DH-R5.png,integrated,resources/images/zh_CN/DH-R5.png,Upstream language/common image layout
+A,resources/images/zh_CN/DH-R6.png,resources/images/zh_CN/DH-R6.png,integrated,resources/images/zh_CN/DH-R6.png,Upstream language/common image layout
+A,resources/images/zh_CN/DH-R7.png,resources/images/zh_CN/DH-R7.png,integrated,resources/images/zh_CN/DH-R7.png,Upstream language/common image layout
+A,resources/images/zh_CN/DH-R9.png,resources/images/zh_CN/DH-R9.png,integrated,resources/images/zh_CN/DH-R9.png,Upstream language/common image layout
+A,resources/images/zh_CN/DH-entrance.png,resources/images/zh_CN/DH-entrance.png,integrated,resources/images/zh_CN/DH-entrance.png,Upstream language/common image layout
+A,resources/images/zh_CN/DH.png,resources/images/zh_CN/DH.png,integrated,resources/images/zh_CN/DH.png,Upstream language/common image layout
+A,resources/images/zh_CN/DOE.png,resources/images/zh_CN/DOE.png,integrated,resources/images/zh_CN/DOE.png,Upstream language/common image layout
+A,resources/images/zh_CN/DOEB1F.png,resources/images/zh_CN/DOEB1F.png,integrated,resources/images/zh_CN/DOEB1F.png,Upstream language/common image layout
+A,resources/images/zh_CN/DOF.png,resources/images/zh_CN/DOF.png,integrated,resources/images/zh_CN/DOF.png,Upstream language/common image layout
+A,resources/images/zh_CN/DOFB1F.png,resources/images/zh_CN/DOFB1F.png,integrated,resources/images/zh_CN/DOFB1F.png,Upstream language/common image layout
+A,resources/images/zh_CN/DOL.png,resources/images/zh_CN/DOL.png,integrated,resources/images/zh_CN/DOL.png,Upstream language/common image layout
+A,resources/images/zh_CN/DOLB1F.png,resources/images/zh_CN/DOLB1F.png,integrated,resources/images/zh_CN/DOLB1F.png,Upstream language/common image layout
+A,resources/images/zh_CN/DOS.png,resources/images/zh_CN/DOS.png,integrated,resources/images/zh_CN/DOS.png,Upstream language/common image layout
+A,resources/images/zh_CN/DOSB1F.png,resources/images/zh_CN/DOSB1F.png,integrated,resources/images/zh_CN/DOSB1F.png,Upstream language/common image layout
+A,resources/images/zh_CN/DOW.png,resources/images/zh_CN/DOW.png,integrated,resources/images/zh_CN/DOW.png,Upstream language/common image layout
+A,resources/images/zh_CN/DOWB1F.png,resources/images/zh_CN/DOWB1F.png,integrated,resources/images/zh_CN/DOWB1F.png,Upstream language/common image layout
+A,resources/images/zh_CN/Dist.png,resources/images/zh_CN/Dist.png,integrated,resources/images/zh_CN/Dist.png,Upstream language/common image layout
+A,resources/images/zh_CN/Economy.png,resources/images/zh_CN/Economy.png,integrated,resources/images/zh_CN/Economy.png,Upstream language/common image layout
+A,resources/images/zh_CN/EdgeOfTown.png,resources/images/zh_CN/EdgeOfTown.png,integrated,resources/images/zh_CN/EdgeOfTown.png,Upstream language/common image layout
+A,resources/images/zh_CN/Edit.png,resources/images/zh_CN/Edit.png,integrated,resources/images/zh_CN/Edit.png,Upstream language/common image layout
+A,resources/images/zh_CN/EoTreturn.png,resources/images/zh_CN/EoTreturn.png,integrated,resources/images/zh_CN/EoTreturn.png,Upstream language/common image layout
+A,resources/images/zh_CN/FFXI/City_VNH.png,resources/images/zh_CN/FFXI/City_VNH.png,integrated,resources/images/zh_CN/FFXI/City_VNH.png,Upstream language/common image layout
+A,resources/images/zh_CN/FFXI/FFXIStone.png,resources/images/zh_CN/FFXI/FFXIStone.png,integrated,resources/images/zh_CN/FFXI/FFXIStone.png,Upstream language/common image layout
+A,resources/images/zh_CN/FFXI/GCN.png,resources/images/zh_CN/FFXI/GCN.png,integrated,resources/images/zh_CN/FFXI/GCN.png,Upstream language/common image layout
+A,resources/images/zh_CN/FFXI/ZONE1.png,resources/images/zh_CN/FFXI/ZONE1.png,integrated,resources/images/zh_CN/FFXI/ZONE1.png,Upstream language/common image layout
+A,resources/images/zh_CN/FFXI/ZONE2.png,resources/images/zh_CN/FFXI/ZONE2.png,integrated,resources/images/zh_CN/FFXI/ZONE2.png,Upstream language/common image layout
+A,resources/images/zh_CN/FFXI/ZONE3.png,resources/images/zh_CN/FFXI/ZONE3.png,integrated,resources/images/zh_CN/FFXI/ZONE3.png,Upstream language/common image layout
+A,resources/images/zh_CN/FFXI/entrance.png,resources/images/zh_CN/FFXI/entrance.png,integrated,resources/images/zh_CN/FFXI/entrance.png,Upstream language/common image layout
+A,resources/images/zh_CN/FFXI/needpickaxe.png,resources/images/zh_CN/FFXI/needpickaxe.png,integrated,resources/images/zh_CN/FFXI/needpickaxe.png,Upstream language/common image layout
+A,resources/images/zh_CN/FFXI/org_alter.png,resources/images/zh_CN/FFXI/org_alter.png,integrated,resources/images/zh_CN/FFXI/org_alter.png,Upstream language/common image layout
+A,resources/images/zh_CN/FFXI/org_fine.png,resources/images/zh_CN/FFXI/org_fine.png,integrated,resources/images/zh_CN/FFXI/org_fine.png,Upstream language/common image layout
+A,resources/images/zh_CN/FFXI/org_full.png,resources/images/zh_CN/FFXI/org_full.png,integrated,resources/images/zh_CN/FFXI/org_full.png,Upstream language/common image layout
+A,resources/images/zh_CN/FFXI/org_high.png,resources/images/zh_CN/FFXI/org_high.png,integrated,resources/images/zh_CN/FFXI/org_high.png,Upstream language/common image layout
+A,resources/images/zh_CN/FFXI/org_lesser_full.png,resources/images/zh_CN/FFXI/org_lesser_full.png,integrated,resources/images/zh_CN/FFXI/org_lesser_full.png,Upstream language/common image layout
+A,resources/images/zh_CN/FFXI/org_low.png,resources/images/zh_CN/FFXI/org_low.png,integrated,resources/images/zh_CN/FFXI/org_low.png,Upstream language/common image layout
+A,resources/images/zh_CN/FFXI/org_mid.png,resources/images/zh_CN/FFXI/org_mid.png,integrated,resources/images/zh_CN/FFXI/org_mid.png,Upstream language/common image layout
+A,resources/images/zh_CN/FFXI/org_ouro.png,resources/images/zh_CN/FFXI/org_ouro.png,integrated,resources/images/zh_CN/FFXI/org_ouro.png,Upstream language/common image layout
+A,resources/images/zh_CN/FFXI/org_position.png,resources/images/zh_CN/FFXI/org_position.png,integrated,resources/images/zh_CN/FFXI/org_position.png,Upstream language/common image layout
+A,resources/images/zh_CN/FFXI/org_refine.png,resources/images/zh_CN/FFXI/org_refine.png,integrated,resources/images/zh_CN/FFXI/org_refine.png,Upstream language/common image layout
+A,resources/images/zh_CN/FFXI/org_sliver.png,resources/images/zh_CN/FFXI/org_sliver.png,integrated,resources/images/zh_CN/FFXI/org_sliver.png,Upstream language/common image layout
+A,resources/images/zh_CN/FFXI/receive.png,resources/images/zh_CN/FFXI/receive.png,integrated,resources/images/zh_CN/FFXI/receive.png,Upstream language/common image layout
+A,resources/images/zh_CN/FFXI/stair_zone3.png,resources/images/zh_CN/FFXI/stair_zone3.png,integrated,resources/images/zh_CN/FFXI/stair_zone3.png,Upstream language/common image layout
+A,resources/images/zh_CN/FFXI/stair_zone4.png,resources/images/zh_CN/FFXI/stair_zone4.png,integrated,resources/images/zh_CN/FFXI/stair_zone4.png,Upstream language/common image layout
+A,resources/images/zh_CN/FFXI/zone5.png,resources/images/zh_CN/FFXI/zone5.png,integrated,resources/images/zh_CN/FFXI/zone5.png,Upstream language/common image layout
+A,resources/images/zh_CN/FloralHoney/floral.png,resources/images/zh_CN/FloralHoney/floral.png,integrated,resources/images/zh_CN/FloralHoney/floral.png,Upstream language/common image layout
+A,resources/images/zh_CN/FloralHoney/pay.png,resources/images/zh_CN/FloralHoney/pay.png,integrated,resources/images/zh_CN/FloralHoney/pay.png,Upstream language/common image layout
+A,resources/images/zh_CN/FortressArrival.png,resources/images/zh_CN/FortressArrival.png,integrated,resources/images/zh_CN/FortressArrival.png,Upstream language/common image layout
+A,resources/images/zh_CN/GHB/GHB.png,resources/images/zh_CN/GHB/GHB.png,integrated,resources/images/zh_CN/GHB/GHB.png,Upstream language/common image layout
+A,resources/images/zh_CN/GhostsOfYore.png,resources/images/zh_CN/GhostsOfYore.png,integrated,resources/images/zh_CN/GhostsOfYore.png,Upstream language/common image layout
+A,resources/images/zh_CN/GotoDung.png,resources/images/zh_CN/GotoDung.png,integrated,resources/images/zh_CN/GotoDung.png,Upstream language/common image layout
+A,resources/images/zh_CN/HSR/AGMM1F.png,resources/images/zh_CN/HSR/AGMM1F.png,integrated,resources/images/zh_CN/HSR/AGMM1F.png,Upstream language/common image layout
+A,resources/images/zh_CN/HSR/HSR.png,resources/images/zh_CN/HSR/HSR.png,integrated,resources/images/zh_CN/HSR/HSR.png,Upstream language/common image layout
+A,resources/images/zh_CN/IWO/IWO.png,resources/images/zh_CN/IWO/IWO.png,integrated,resources/images/zh_CN/IWO/IWO.png,Upstream language/common image layout
+A,resources/images/zh_CN/IWO/IWOB1F.png,resources/images/zh_CN/IWO/IWOB1F.png,integrated,resources/images/zh_CN/IWO/IWOB1F.png,Upstream language/common image layout
+A,resources/images/zh_CN/IWO/IWOB2F.png,resources/images/zh_CN/IWO/IWOB2F.png,integrated,resources/images/zh_CN/IWO/IWOB2F.png,Upstream language/common image layout
+A,resources/images/zh_CN/Inn.png,resources/images/zh_CN/Inn.png,integrated,resources/images/zh_CN/Inn.png,Upstream language/common image layout
+A,resources/images/zh_CN/LBC.png,resources/images/zh_CN/LBC.png,integrated,resources/images/zh_CN/LBC.png,Upstream language/common image layout
+A,resources/images/zh_CN/LBC/LBC.png,resources/images/zh_CN/LBC/LBC.png,integrated,resources/images/zh_CN/LBC/LBC.png,Upstream language/common image layout
+A,resources/images/zh_CN/LBC/symbolofalliance.png,resources/images/zh_CN/LBC/symbolofalliance.png,integrated,resources/images/zh_CN/LBC/symbolofalliance.png,Upstream language/common image layout
+A,resources/images/zh_CN/LMG/FTB1F.png,resources/images/zh_CN/LMG/FTB1F.png,integrated,resources/images/zh_CN/LMG/FTB1F.png,Upstream language/common image layout
+A,resources/images/zh_CN/LMG/LMG.png,resources/images/zh_CN/LMG/LMG.png,integrated,resources/images/zh_CN/LMG/LMG.png,Upstream language/common image layout
+A,resources/images/zh_CN/LMG/LMG1F.png,resources/images/zh_CN/LMG/LMG1F.png,integrated,resources/images/zh_CN/LMG/LMG1F.png,Upstream language/common image layout
+A,resources/images/zh_CN/LMG/beginningAbyss.png,resources/images/zh_CN/LMG/beginningAbyss.png,integrated,resources/images/zh_CN/LMG/beginningAbyss.png,Upstream language/common image layout
+A,resources/images/zh_CN/LMG/cursedWheel.png,resources/images/zh_CN/LMG/cursedWheel.png,integrated,resources/images/zh_CN/LMG/cursedWheel.png,Upstream language/common image layout
+A,resources/images/zh_CN/NoChestCanBeFound.png,resources/images/zh_CN/NoChestCanBeFound.png,integrated,resources/images/zh_CN/NoChestCanBeFound.png,Upstream language/common image layout
+A,resources/images/zh_CN/OK.png,resources/images/zh_CN/OK.png,integrated,resources/images/zh_CN/OK.png,Upstream language/common image layout
+A,resources/images/zh_CN/PartyManagement.png,resources/images/zh_CN/PartyManagement.png,integrated,resources/images/zh_CN/PartyManagement.png,Upstream language/common image layout
+A,resources/images/zh_CN/PartyManagementTitle.png,resources/images/zh_CN/PartyManagementTitle.png,integrated,resources/images/zh_CN/PartyManagementTitle.png,Upstream language/common image layout
+A,resources/images/zh_CN/ReturnText.png,resources/images/zh_CN/ReturnText.png,integrated,resources/images/zh_CN/ReturnText.png,Upstream language/common image layout
+A,resources/images/zh_CN/RiseAgain.png,resources/images/zh_CN/RiseAgain.png,integrated,resources/images/zh_CN/RiseAgain.png,Upstream language/common image layout
+A,resources/images/zh_CN/SSC/Leap.png,resources/images/zh_CN/SSC/Leap.png,integrated,resources/images/zh_CN/SSC/Leap.png,Upstream language/common image layout
+A,resources/images/zh_CN/SSC/SSC.png,resources/images/zh_CN/SSC/SSC.png,integrated,resources/images/zh_CN/SSC/SSC.png,Upstream language/common image layout
+A,resources/images/zh_CN/SSC/trapdeactived.png,resources/images/zh_CN/SSC/trapdeactived.png,integrated,resources/images/zh_CN/SSC/trapdeactived.png,Upstream language/common image layout
+A,resources/images/zh_CN/Stay.png,resources/images/zh_CN/Stay.png,integrated,resources/images/zh_CN/Stay.png,Upstream language/common image layout
+A,resources/images/zh_CN/Steel.png,resources/images/zh_CN/Steel.png,integrated,resources/images/zh_CN/Steel.png,Upstream language/common image layout
+A,resources/images/zh_CN/TradeWaterway.png,resources/images/zh_CN/TradeWaterway.png,integrated,resources/images/zh_CN/TradeWaterway.png,Upstream language/common image layout
+A,resources/images/zh_CN/Triumph.png,resources/images/zh_CN/Triumph.png,integrated,resources/images/zh_CN/Triumph.png,Upstream language/common image layout
+A,resources/images/zh_CN/accept_death_cursedWheel_timeLeap.png,resources/images/zh_CN/accept_death_cursedWheel_timeLeap.png,integrated,resources/images/zh_CN/accept_death_cursedWheel_timeLeap.png,Upstream language/common image layout
+A,resources/images/zh_CN/ambush.png,resources/images/zh_CN/ambush.png,integrated,resources/images/zh_CN/ambush.png,Upstream language/common image layout
+A,resources/images/zh_CN/bag.png,resources/images/zh_CN/bag.png,integrated,resources/images/zh_CN/bag.png,Upstream language/common image layout
+A,resources/images/zh_CN/beginningAbyss.png,resources/images/zh_CN/beginningAbyss.png,integrated,resources/images/zh_CN/beginningAbyss.png,Upstream language/common image layout
+A,resources/images/zh_CN/blessing.png,resources/images/zh_CN/blessing.png,integrated,resources/images/zh_CN/blessing.png,Upstream language/common image layout
+A,resources/images/zh_CN/bondmate_close.png,resources/images/zh_CN/bondmate_close.png,integrated,resources/images/zh_CN/bondmate_close.png,Upstream language/common image layout
+A,resources/images/zh_CN/bounty/Bounties.png,resources/images/zh_CN/bounty/Bounties.png,integrated,resources/images/zh_CN/bounty/Bounties.png,Upstream language/common image layout
+A,resources/images/zh_CN/bounty/CompletionReported.png,resources/images/zh_CN/bounty/CompletionReported.png,integrated,resources/images/zh_CN/bounty/CompletionReported.png,Upstream language/common image layout
+A,resources/images/zh_CN/bounty/cuthimdown.png,resources/images/zh_CN/bounty/cuthimdown.png,integrated,resources/images/zh_CN/bounty/cuthimdown.png,Upstream language/common image layout
+A,resources/images/zh_CN/bounty/lethimgo.png,resources/images/zh_CN/bounty/lethimgo.png,integrated,resources/images/zh_CN/bounty/lethimgo.png,Upstream language/common image layout
+A,resources/images/zh_CN/caveinZone.png,resources/images/zh_CN/caveinZone.png,integrated,resources/images/zh_CN/caveinZone.png,Upstream language/common image layout
+A,resources/images/zh_CN/chestFlag.png,resources/images/zh_CN/chestFlag.png,integrated,resources/images/zh_CN/chestFlag.png,Upstream language/common image layout
+A,resources/images/zh_CN/close.png,resources/images/zh_CN/close.png,integrated,resources/images/zh_CN/close.png,Upstream language/common image layout
+A,resources/images/zh_CN/combatActive.png,resources/images/zh_CN/combatActive.png,integrated,resources/images/zh_CN/combatActive.png,Upstream language/common image layout
+A,resources/images/zh_CN/combatActive_2.png,resources/images/zh_CN/combatActive_2.png,integrated,resources/images/zh_CN/combatActive_2.png,Upstream language/common image layout
+A,resources/images/zh_CN/combatActive_3.png,resources/images/zh_CN/combatActive_3.png,integrated,resources/images/zh_CN/combatActive_3.png,Upstream language/common image layout
+A,resources/images/zh_CN/combatActive_4.png,resources/images/zh_CN/combatActive_4.png,integrated,resources/images/zh_CN/combatActive_4.png,Upstream language/common image layout
+A,resources/images/zh_CN/combatAuto.png,resources/images/zh_CN/combatAuto.png,integrated,resources/images/zh_CN/combatAuto.png,Upstream language/common image layout
+A,resources/images/zh_CN/combatAuto_2.png,resources/images/zh_CN/combatAuto_2.png,integrated,resources/images/zh_CN/combatAuto_2.png,Upstream language/common image layout
+A,resources/images/zh_CN/combatClose.png,resources/images/zh_CN/combatClose.png,integrated,resources/images/zh_CN/combatClose.png,Upstream language/common image layout
+A,resources/images/zh_CN/combatSpd.png,resources/images/zh_CN/combatSpd.png,integrated,resources/images/zh_CN/combatSpd.png,Upstream language/common image layout
+A,resources/images/zh_CN/combatSpd_DHI.png,resources/images/zh_CN/combatSpd_DHI.png,integrated,resources/images/zh_CN/combatSpd_DHI.png,Upstream language/common image layout
+A,resources/images/zh_CN/cursedWheel.png,resources/images/zh_CN/cursedWheel.png,integrated,resources/images/zh_CN/cursedWheel.png,Upstream language/common image layout
+A,resources/images/zh_CN/cursedWheelTitle.png,resources/images/zh_CN/cursedWheelTitle.png,integrated,resources/images/zh_CN/cursedWheelTitle.png,Upstream language/common image layout
+A,resources/images/zh_CN/cursedwheel_dhi.png,resources/images/zh_CN/cursedwheel_dhi.png,integrated,resources/images/zh_CN/cursedwheel_dhi.png,Upstream language/common image layout
+A,resources/images/zh_CN/cursedwheel_impregnableFortress.png,resources/images/zh_CN/cursedwheel_impregnableFortress.png,integrated,resources/images/zh_CN/cursedwheel_impregnableFortress.png,Upstream language/common image layout
+A,resources/images/zh_CN/cursewheel.png,resources/images/zh_CN/cursewheel.png,integrated,resources/images/zh_CN/cursewheel.png,Upstream language/common image layout
+A,resources/images/zh_CN/dialogueChoices/!halfBone.png,resources/images/zh_CN/dialogueChoices/!halfBone.png,integrated,resources/images/zh_CN/dialogueChoices/!halfBone.png,Upstream language/common image layout
+A,resources/images/zh_CN/dialogueChoices/#hammer.png,resources/images/zh_CN/dialogueChoices/#hammer.png,integrated,resources/images/zh_CN/dialogueChoices/#hammer.png,Upstream language/common image layout
+A,resources/images/zh_CN/dialogueChoices/DontBuyIt.png,resources/images/zh_CN/dialogueChoices/DontBuyIt.png,integrated,resources/images/zh_CN/dialogueChoices/DontBuyIt.png,Upstream language/common image layout
+A,resources/images/zh_CN/dialogueChoices/buyNothing.png,resources/images/zh_CN/dialogueChoices/buyNothing.png,integrated,resources/images/zh_CN/dialogueChoices/buyNothing.png,Upstream language/common image layout
+A,resources/images/zh_CN/dialogueChoices/no_plan.png,resources/images/zh_CN/dialogueChoices/no_plan.png,integrated,resources/images/zh_CN/dialogueChoices/no_plan.png,Upstream language/common image layout
+A,resources/images/zh_CN/dialogueChoices/nointerest.png,resources/images/zh_CN/dialogueChoices/nointerest.png,integrated,resources/images/zh_CN/dialogueChoices/nointerest.png,Upstream language/common image layout
+A,resources/images/zh_CN/dialogueChoices/nope.png,resources/images/zh_CN/dialogueChoices/nope.png,integrated,resources/images/zh_CN/dialogueChoices/nope.png,Upstream language/common image layout
+A,resources/images/zh_CN/donothing.png,resources/images/zh_CN/donothing.png,integrated,resources/images/zh_CN/donothing.png,Upstream language/common image layout
+A,resources/images/zh_CN/fairy.png,resources/images/zh_CN/fairy.png,integrated,resources/images/zh_CN/fairy.png,Upstream language/common image layout
+A,resources/images/zh_CN/fishing/6bait.png,resources/images/zh_CN/fishing/6bait.png,integrated,resources/images/zh_CN/fishing/6bait.png,Upstream language/common image layout
+A,resources/images/zh_CN/fishing/8bait.png,resources/images/zh_CN/fishing/8bait.png,integrated,resources/images/zh_CN/fishing/8bait.png,Upstream language/common image layout
+A,resources/images/zh_CN/fishing/9bait.png,resources/images/zh_CN/fishing/9bait.png,integrated,resources/images/zh_CN/fishing/9bait.png,Upstream language/common image layout
+A,resources/images/zh_CN/fishing/CloseFishInfo.png,resources/images/zh_CN/fishing/CloseFishInfo.png,integrated,resources/images/zh_CN/fishing/CloseFishInfo.png,Upstream language/common image layout
+A,resources/images/zh_CN/fishing/FISHBait.png,resources/images/zh_CN/fishing/FISHBait.png,integrated,resources/images/zh_CN/fishing/FISHBait.png,Upstream language/common image layout
+A,resources/images/zh_CN/fishing/baitbox.png,resources/images/zh_CN/fishing/baitbox.png,integrated,resources/images/common/fishing/baitbox.png,Visually confirmed textless bait-box icon; shared by both game languages
+A,resources/images/zh_CN/fishing/nobait.png,resources/images/zh_CN/fishing/nobait.png,integrated,resources/images/zh_CN/fishing/nobait.png,Upstream language/common image layout
+A,resources/images/zh_CN/fishing/size_average.png,resources/images/zh_CN/fishing/size_average.png,integrated,resources/images/zh_CN/fishing/size_average.png,Upstream language/common image layout
+A,resources/images/zh_CN/fishing/size_large.png,resources/images/zh_CN/fishing/size_large.png,integrated,resources/images/zh_CN/fishing/size_large.png,Upstream language/common image layout
+A,resources/images/zh_CN/fishing/size_small.png,resources/images/zh_CN/fishing/size_small.png,integrated,resources/images/zh_CN/fishing/size_small.png,Upstream language/common image layout
+A,resources/images/zh_CN/fishing/startfishing.png,resources/images/zh_CN/fishing/startfishing.png,integrated,resources/images/zh_CN/fishing/startfishing.png,Upstream language/common image layout
+A,resources/images/zh_CN/fishing/三文鱼.png,resources/images/zh_CN/fishing/三文鱼.png,integrated,resources/images/zh_CN/fishing/三文鱼.png,Upstream language/common image layout
+A,resources/images/zh_CN/fishing/杂鱼.png,resources/images/zh_CN/fishing/杂鱼.png,integrated,resources/images/zh_CN/fishing/杂鱼.png,Upstream language/common image layout
+A,resources/images/zh_CN/fishing/雅罗.png,resources/images/zh_CN/fishing/雅罗.png,integrated,resources/images/zh_CN/fishing/雅罗.png,Upstream language/common image layout
+A,resources/images/zh_CN/fishing/鲈鱼.png,resources/images/zh_CN/fishing/鲈鱼.png,integrated,resources/images/zh_CN/fishing/鲈鱼.png,Upstream language/common image layout
+A,resources/images/zh_CN/fishing/鲶鱼.png,resources/images/zh_CN/fishing/鲶鱼.png,integrated,resources/images/zh_CN/fishing/鲶鱼.png,Upstream language/common image layout
+A,resources/images/zh_CN/fishing/鳗鱼.png,resources/images/zh_CN/fishing/鳗鱼.png,integrated,resources/images/zh_CN/fishing/鳗鱼.png,Upstream language/common image layout
+A,resources/images/zh_CN/fishing/鳟鱼.png,resources/images/zh_CN/fishing/鳟鱼.png,integrated,resources/images/zh_CN/fishing/鳟鱼.png,Upstream language/common image layout
+A,resources/images/zh_CN/flee.png,resources/images/zh_CN/flee.png,integrated,resources/images/zh_CN/flee.png,Upstream language/common image layout
+A,resources/images/zh_CN/fordraig/B3F.png,resources/images/zh_CN/fordraig/B3F.png,integrated,resources/images/zh_CN/fordraig/B3F.png,Upstream language/common image layout
+A,resources/images/zh_CN/fordraig/Entrance.png,resources/images/zh_CN/fordraig/Entrance.png,integrated,resources/images/zh_CN/fordraig/Entrance.png,Upstream language/common image layout
+A,resources/images/zh_CN/fordraig/Leap.png,resources/images/zh_CN/fordraig/Leap.png,integrated,resources/images/zh_CN/fordraig/Leap.png,Upstream language/common image layout
+A,resources/images/zh_CN/fordraig/labyrinthOfFordraig.png,resources/images/zh_CN/fordraig/labyrinthOfFordraig.png,integrated,resources/images/zh_CN/fordraig/labyrinthOfFordraig.png,Upstream language/common image layout
+A,resources/images/zh_CN/fortressEntrance.png,resources/images/zh_CN/fortressEntrance.png,integrated,resources/images/zh_CN/fortressEntrance.png,Upstream language/common image layout
+A,resources/images/zh_CN/fortressb10f.png,resources/images/zh_CN/fortressb10f.png,integrated,resources/images/zh_CN/fortressb10f.png,Upstream language/common image layout
+A,resources/images/zh_CN/fortressb1f.png,resources/images/zh_CN/fortressb1f.png,integrated,resources/images/zh_CN/fortressb1f.png,Upstream language/common image layout
+A,resources/images/zh_CN/fortressb3f.png,resources/images/zh_CN/fortressb3f.png,integrated,resources/images/zh_CN/fortressb3f.png,Upstream language/common image layout
+A,resources/images/zh_CN/fortressb7f.png,resources/images/zh_CN/fortressb7f.png,integrated,resources/images/zh_CN/fortressb7f.png,Upstream language/common image layout
+A,resources/images/zh_CN/gradeexam.png,resources/images/zh_CN/gradeexam.png,integrated,resources/images/zh_CN/gradeexam.png,Upstream language/common image layout
+A,resources/images/zh_CN/gradeup.png,resources/images/zh_CN/gradeup.png,integrated,resources/images/zh_CN/gradeup.png,Upstream language/common image layout
+A,resources/images/zh_CN/guild.png,resources/images/zh_CN/guild.png,integrated,resources/images/zh_CN/guild.png,Upstream language/common image layout
+A,resources/images/zh_CN/guildFeatured.png,resources/images/zh_CN/guildFeatured.png,integrated,resources/images/zh_CN/guildFeatured.png,Upstream language/common image layout
+A,resources/images/zh_CN/guildRequest.png,resources/images/zh_CN/guildRequest.png,integrated,resources/images/zh_CN/guildRequest.png,Upstream language/common image layout
+A,resources/images/zh_CN/ignore.png,resources/images/zh_CN/ignore.png,integrated,resources/images/zh_CN/ignore.png,Upstream language/common image layout
+A,resources/images/zh_CN/impregnableFortress.png,resources/images/zh_CN/impregnableFortress.png,integrated,resources/images/zh_CN/impregnableFortress.png,Upstream language/common image layout
+A,resources/images/zh_CN/itemList.png,resources/images/zh_CN/itemList.png,integrated,resources/images/zh_CN/itemList.png,Upstream language/common image layout
+A,resources/images/zh_CN/leap.png,resources/images/zh_CN/leap.png,integrated,resources/images/zh_CN/leap.png,Upstream language/common image layout
+A,resources/images/zh_CN/leave.png,resources/images/zh_CN/leave.png,integrated,resources/images/zh_CN/leave.png,Upstream language/common image layout
+A,resources/images/zh_CN/malice_b3f.png,resources/images/zh_CN/malice_b3f.png,integrated,resources/images/zh_CN/malice_b3f.png,Upstream language/common image layout
+A,resources/images/zh_CN/malice_malice.png,resources/images/zh_CN/malice_malice.png,integrated,resources/images/zh_CN/malice_malice.png,Upstream language/common image layout
+A,resources/images/zh_CN/mapFlag.png,resources/images/zh_CN/mapFlag.png,integrated,resources/images/zh_CN/mapFlag.png,Upstream language/common image layout
+A,resources/images/zh_CN/markspot.png,resources/images/zh_CN/markspot.png,integrated,resources/images/zh_CN/markspot.png,Upstream language/common image layout
+A,resources/images/zh_CN/multipeopledead.png,resources/images/zh_CN/multipeopledead.png,integrated,resources/images/zh_CN/multipeopledead.png,Upstream language/common image layout
+A,resources/images/zh_CN/next.png,resources/images/zh_CN/next.png,integrated,resources/images/zh_CN/next.png,Upstream language/common image layout
+A,resources/images/zh_CN/noneed.png,resources/images/zh_CN/noneed.png,integrated,resources/images/zh_CN/noneed.png,Upstream language/common image layout
+A,resources/images/zh_CN/notenough_close.png,resources/images/zh_CN/notenough_close.png,integrated,resources/images/zh_CN/notenough_close.png,Upstream language/common image layout
+A,resources/images/zh_CN/notenoughmp.png,resources/images/zh_CN/notenoughmp.png,integrated,resources/images/zh_CN/notenoughmp.png,Upstream language/common image layout
+A,resources/images/zh_CN/notenoughsp.png,resources/images/zh_CN/notenoughsp.png,integrated,resources/images/zh_CN/notenoughsp.png,Upstream language/common image layout
+A,resources/images/zh_CN/openworldmap.png,resources/images/zh_CN/openworldmap.png,integrated,resources/images/zh_CN/openworldmap.png,Upstream language/common image layout
+A,resources/images/zh_CN/putinstorage.png,resources/images/zh_CN/putinstorage.png,integrated,resources/images/zh_CN/putinstorage.png,Upstream language/common image layout
+A,resources/images/zh_CN/ready.png,resources/images/zh_CN/ready.png,integrated,resources/images/zh_CN/ready.png,Upstream language/common image layout
+A,resources/images/zh_CN/recover.png,resources/images/zh_CN/recover.png,integrated,resources/images/zh_CN/recover.png,Upstream language/common image layout
+A,resources/images/zh_CN/requestToRescueTheDuke.png,resources/images/zh_CN/requestToRescueTheDuke.png,integrated,resources/images/zh_CN/requestToRescueTheDuke.png,Upstream language/common image layout
+A,resources/images/zh_CN/request_accepted.png,resources/images/zh_CN/request_accepted.png,integrated,resources/images/zh_CN/request_accepted.png,Upstream language/common image layout
+A,resources/images/zh_CN/retry.png,resources/images/zh_CN/retry.png,integrated,resources/images/zh_CN/retry.png,Upstream language/common image layout
+A,resources/images/zh_CN/returntotown.png,resources/images/zh_CN/returntotown.png,integrated,resources/images/zh_CN/returntotown.png,Upstream language/common image layout
+A,resources/images/zh_CN/returntotown_DH.png,resources/images/zh_CN/returntotown_DH.png,integrated,resources/images/zh_CN/returntotown_DH.png,Upstream language/common image layout
+A,resources/images/zh_CN/rowFlag.png,resources/images/zh_CN/rowFlag.png,integrated,resources/images/zh_CN/rowFlag.png,Upstream language/common image layout
+A,resources/images/zh_CN/royalsuite.png,resources/images/zh_CN/royalsuite.png,integrated,resources/images/zh_CN/royalsuite.png,Upstream language/common image layout
+A,resources/images/zh_CN/ruins.png,resources/images/zh_CN/ruins.png,integrated,resources/images/zh_CN/ruins.png,Upstream language/common image layout
+A,resources/images/zh_CN/sandman/sandman_1.png,resources/images/zh_CN/sandman/sandman_1.png,integrated,resources/images/zh_CN/sandman/sandman_1.png,Upstream language/common image layout
+A,resources/images/zh_CN/sandman/sandman_2.png,resources/images/zh_CN/sandman/sandman_2.png,integrated,resources/images/zh_CN/sandman/sandman_2.png,Upstream language/common image layout
+A,resources/images/zh_CN/sandman/sandman_3.png,resources/images/zh_CN/sandman/sandman_3.png,integrated,resources/images/zh_CN/sandman/sandman_3.png,Upstream language/common image layout
+A,resources/images/zh_CN/sandman/sandman_bondmate.png,resources/images/zh_CN/sandman/sandman_bondmate.png,integrated,resources/images/zh_CN/sandman/sandman_bondmate.png,Upstream language/common image layout
+A,resources/images/zh_CN/sandman_recover.png,resources/images/zh_CN/sandman_recover.png,integrated,resources/images/zh_CN/sandman_recover.png,Upstream language/common image layout
+A,resources/images/zh_CN/shiphold.png,resources/images/zh_CN/shiphold.png,integrated,resources/images/zh_CN/shiphold.png,Upstream language/common image layout
+A,resources/images/zh_CN/specialRequest.png,resources/images/zh_CN/specialRequest.png,integrated,resources/images/zh_CN/specialRequest.png,Upstream language/common image layout
+A,resources/images/zh_CN/spellskill/BeautifulOre.png,resources/images/zh_CN/spellskill/BeautifulOre.png,integrated,resources/images/zh_CN/spellskill/BeautifulOre.png,Upstream language/common image layout
+A,resources/images/zh_CN/spellskill/CombatAutoDisable.png,resources/images/zh_CN/spellskill/CombatAutoDisable.png,integrated,resources/images/zh_CN/spellskill/CombatAutoDisable.png,Upstream language/common image layout
+A,resources/images/zh_CN/spellskill/CombatAutoEnable.png,resources/images/zh_CN/spellskill/CombatAutoEnable.png,integrated,resources/images/zh_CN/spellskill/CombatAutoEnable.png,Upstream language/common image layout
+A,resources/images/zh_CN/spellskill/skillDetail.png,resources/images/zh_CN/spellskill/skillDetail.png,integrated,resources/images/zh_CN/spellskill/skillDetail.png,Upstream language/common image layout
+A,resources/images/zh_CN/spellskill/skillLvl/lv1.png,resources/images/zh_CN/spellskill/skillLvl/lv1.png,integrated,resources/images/zh_CN/spellskill/skillLvl/lv1.png,Upstream language/common image layout
+A,resources/images/zh_CN/spellskill/skillLvl/lv2.png,resources/images/zh_CN/spellskill/skillLvl/lv2.png,integrated,resources/images/zh_CN/spellskill/skillLvl/lv2.png,Upstream language/common image layout
+A,resources/images/zh_CN/spellskill/skillLvl/lv3.png,resources/images/zh_CN/spellskill/skillLvl/lv3.png,integrated,resources/images/zh_CN/spellskill/skillLvl/lv3.png,Upstream language/common image layout
+A,resources/images/zh_CN/spellskill/skillLvl/lv4.png,resources/images/zh_CN/spellskill/skillLvl/lv4.png,integrated,resources/images/zh_CN/spellskill/skillLvl/lv4.png,Upstream language/common image layout
+A,resources/images/zh_CN/spellskill/skillLvl/lv5.png,resources/images/zh_CN/spellskill/skillLvl/lv5.png,integrated,resources/images/zh_CN/spellskill/skillLvl/lv5.png,Upstream language/common image layout
+A,resources/images/zh_CN/spellskill/skillLvl/lv6.png,resources/images/zh_CN/spellskill/skillLvl/lv6.png,integrated,resources/images/zh_CN/spellskill/skillLvl/lv6.png,Upstream language/common image layout
+A,resources/images/zh_CN/spellskill/skillLvl/lv7.png,resources/images/zh_CN/spellskill/skillLvl/lv7.png,integrated,resources/images/zh_CN/spellskill/skillLvl/lv7.png,Upstream language/common image layout
+A,resources/images/zh_CN/spellskill/skillLvl/s_lv1.png,resources/images/zh_CN/spellskill/skillLvl/s_lv1.png,integrated,resources/images/zh_CN/spellskill/skillLvl/s_lv1.png,Upstream language/common image layout
+A,resources/images/zh_CN/spellskill/skillLvl/s_lv2.png,resources/images/zh_CN/spellskill/skillLvl/s_lv2.png,integrated,resources/images/zh_CN/spellskill/skillLvl/s_lv2.png,Upstream language/common image layout
+A,resources/images/zh_CN/spellskill/skillLvl/s_lv3.png,resources/images/zh_CN/spellskill/skillLvl/s_lv3.png,integrated,resources/images/zh_CN/spellskill/skillLvl/s_lv3.png,Upstream language/common image layout
+A,resources/images/zh_CN/spellskill/skillLvl/s_lv4.png,resources/images/zh_CN/spellskill/skillLvl/s_lv4.png,integrated,resources/images/zh_CN/spellskill/skillLvl/s_lv4.png,Upstream language/common image layout
+A,resources/images/zh_CN/spellskill/skillLvl/s_lv5.png,resources/images/zh_CN/spellskill/skillLvl/s_lv5.png,integrated,resources/images/zh_CN/spellskill/skillLvl/s_lv5.png,Upstream language/common image layout
+A,resources/images/zh_CN/spellskill/skillLvl/s_lv6.png,resources/images/zh_CN/spellskill/skillLvl/s_lv6.png,integrated,resources/images/zh_CN/spellskill/skillLvl/s_lv6.png,Upstream language/common image layout
+A,resources/images/zh_CN/spellskill/skillLvl/s_lv7.png,resources/images/zh_CN/spellskill/skillLvl/s_lv7.png,integrated,resources/images/zh_CN/spellskill/skillLvl/s_lv7.png,Upstream language/common image layout
+A,resources/images/zh_CN/stair_DH_CG.png,resources/images/zh_CN/stair_DH_CG.png,integrated,resources/images/zh_CN/stair_DH_CG.png,Upstream language/common image layout
+A,resources/images/zh_CN/stair_DH_R10.png,resources/images/zh_CN/stair_DH_R10.png,integrated,resources/images/zh_CN/stair_DH_R10.png,Upstream language/common image layout
+A,resources/images/zh_CN/stair_DH_R4.png,resources/images/zh_CN/stair_DH_R4.png,integrated,resources/images/zh_CN/stair_DH_R4.png,Upstream language/common image layout
+A,resources/images/zh_CN/stair_DH_R5.png,resources/images/zh_CN/stair_DH_R5.png,integrated,resources/images/zh_CN/stair_DH_R5.png,Upstream language/common image layout
+A,resources/images/zh_CN/stair_DH_R6.png,resources/images/zh_CN/stair_DH_R6.png,integrated,resources/images/zh_CN/stair_DH_R6.png,Upstream language/common image layout
+A,resources/images/zh_CN/stair_DH_R7.png,resources/images/zh_CN/stair_DH_R7.png,integrated,resources/images/zh_CN/stair_DH_R7.png,Upstream language/common image layout
+A,resources/images/zh_CN/stair_DH_R9.png,resources/images/zh_CN/stair_DH_R9.png,integrated,resources/images/zh_CN/stair_DH_R9.png,Upstream language/common image layout
+A,resources/images/zh_CN/stair_fortress10f.png,resources/images/zh_CN/stair_fortress10f.png,integrated,resources/images/zh_CN/stair_fortress10f.png,Upstream language/common image layout
+A,resources/images/zh_CN/stair_fortress1f.png,resources/images/zh_CN/stair_fortress1f.png,integrated,resources/images/zh_CN/stair_fortress1f.png,Upstream language/common image layout
+A,resources/images/zh_CN/stair_fortress3f.png,resources/images/zh_CN/stair_fortress3f.png,integrated,resources/images/zh_CN/stair_fortress3f.png,Upstream language/common image layout
+A,resources/images/zh_CN/stair_fortressGate.png,resources/images/zh_CN/stair_fortressGate.png,integrated,resources/images/zh_CN/stair_fortressGate.png,Upstream language/common image layout
+A,resources/images/zh_CN/stair_goblinsNest.png,resources/images/zh_CN/stair_goblinsNest.png,integrated,resources/images/zh_CN/stair_goblinsNest.png,Upstream language/common image layout
+A,resources/images/zh_CN/stair_lounge.png,resources/images/zh_CN/stair_lounge.png,integrated,resources/images/zh_CN/stair_lounge.png,Upstream language/common image layout
+A,resources/images/zh_CN/stair_shiphold.png,resources/images/zh_CN/stair_shiphold.png,integrated,resources/images/zh_CN/stair_shiphold.png,Upstream language/common image layout
+A,resources/images/zh_CN/startdownload.png,resources/images/zh_CN/startdownload.png,integrated,resources/images/zh_CN/startdownload.png,Upstream language/common image layout
+A,resources/images/zh_CN/theRouteToTheDestinationCannotBeFound.png,resources/images/zh_CN/theRouteToTheDestinationCannotBeFound.png,integrated,resources/images/zh_CN/theRouteToTheDestinationCannotBeFound.png,Upstream language/common image layout
+A,resources/images/zh_CN/toTitle.png,resources/images/zh_CN/toTitle.png,integrated,resources/images/zh_CN/toTitle.png,Upstream language/common image layout
+A,resources/images/zh_CN/tooPoorToReadTheMap.png,resources/images/zh_CN/tooPoorToReadTheMap.png,integrated,resources/images/zh_CN/tooPoorToReadTheMap.png,Upstream language/common image layout
+A,resources/images/zh_CN/trait.png,resources/images/zh_CN/trait.png,integrated,resources/images/zh_CN/trait.png,Upstream language/common image layout
+A,resources/images/zh_CN/transfer.png,resources/images/zh_CN/transfer.png,integrated,resources/images/zh_CN/transfer.png,Upstream language/common image layout
+A,resources/images/zh_CN/whowillopenit.png,resources/images/zh_CN/whowillopenit.png,integrated,resources/images/zh_CN/whowillopenit.png,Upstream language/common image layout
+A,resources/images/zh_CN/whowillyougiveitto.png,resources/images/zh_CN/whowillyougiveitto.png,integrated,resources/images/zh_CN/whowillyougiveitto.png,Upstream language/common image layout
+A,resources/images/zh_CN/worldmapflag.png,resources/images/zh_CN/worldmapflag.png,integrated,resources/images/zh_CN/worldmapflag.png,Upstream language/common image layout
+M,resources/quest/quest.json,resources/quest/quest.json,integrated,resources/quest/quest.json,"62 upstream quests with Korean labels/tips, dynamic requirements and local compatibility aliases"
+M,src/auto_updater.py,src/auto_updater.py,integrated,src/auto_updater.py,"Fork-only source/version validation, cancellation, bounded shutdown and protected PowerShell replacement"
+M,src/gui.py,src/gui.py,integrated,src/gui.py,"Web model/bridge with local config, strategies, Telegram, localization and standard logging"
+M,src/main.py,src/main.py,integrated,src/main.py,Queue-owned controller and bounded lifecycle preserving run-scoped remote handoff
+M,src/script.py,src/script.py,integrated,src/script.py,Function-level runtime/quests integration; preserve local chest/recovery/stop guards; full notes in merge report
+A,src/ui.html,src/ui.html,integrated,src/ui.html,"Upstream layout plus three UI languages, Telegram, local strategy and smart chest controls"
+M,src/utils.py,src/utils.py,integrated,src/utils.py,"Image language resolution, shape/fishing helpers and validation; local config/logging/recovery preserved; no HardExit/global stop"
+A,截图工具/启动.py,截图工具/启动.py,excluded,,Optional screenshot/build helper; local approved staging/spec workflow retained
+A,清理本地打包结果.bat,清理本地打包结果.bat,excluded,,Optional screenshot/build helper; local approved staging/spec workflow retained
+M,用于本地测试的打包脚本.bat,用于本地测试的打包脚本.bat,excluded,,Optional screenshot/build helper; local approved staging/spec workflow retained

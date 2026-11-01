@@ -18,6 +18,9 @@ from chest_guard import ChestGuardAction, decide_chest_guard_action  # noqa: E40
 HAN_PATTERN = re.compile(r"[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]")
 
 
+from utils import ResolveTemplatePath
+
+
 def png_dimensions(path):
     data = path.read_bytes()[:24]
     if data[:8] != b"\x89PNG\r\n\x1a\n":
@@ -34,7 +37,7 @@ class Upstream260MergeTests(unittest.TestCase):
 
     def test_version_changelog_and_party_management_asset(self):
         main = (SRC / "main.py").read_text(encoding="utf-8")
-        self.assertIn("__version__ = '2.7.1-momo.1'", main)
+        self.assertIn("__version__ = '3.2.1-momo.1'", main)
         for version in (
             "2.6.2-momo.1",
             "2.6.1-momo.1",
@@ -44,7 +47,7 @@ class Upstream260MergeTests(unittest.TestCase):
         ):
             self.assertIn(f"==v{version}==", self.changelog)
 
-        new_asset = ROOT / "resources" / "images" / "PartyManagementTitle.png"
+        new_asset = Path(ResolveTemplatePath('PartyManagementTitle.png'))
         old_asset = ROOT / "resources" / "images" / "AdventurerGuild.png"
         self.assertTrue(new_asset.is_file())
         self.assertFalse(old_asset.exists())
@@ -70,12 +73,13 @@ class Upstream260MergeTests(unittest.TestCase):
         self.assertEqual(
             route["questName_ko_KR"], "[악명] FFXI 5F 좌측 엘리트 2마리"
         )
-        self.assertEqual(route["questCategory_ko_KR"], "최신 던전")
+        self.assertEqual(route["questCategory_ko_KR"], "FFXI 콜라보")
         self.assertIsNone(HAN_PATTERN.search(route["questName_ko_KR"]))
-        self.assertIn(
-            '"[恶名]FFXI 5F 左侧2精英": "[악명] FFXI 5F 좌측 엘리트 2마리"',
-            self.gui,
-        )
+        import utils
+        from unittest.mock import patch
+        with patch.object(utils, 'LANGUAGE', 'ko_KR'):
+            reflected = utils.BuildQuestReflection()
+        self.assertEqual(reflected['FFXI 콜라보'][route['questName_ko_KR']], 'FFXI-5F-2Elite-left')
 
     def test_korean_category_reflection_merges_localized_category_aliases(self):
         import utils
@@ -88,13 +92,13 @@ class Upstream260MergeTests(unittest.TestCase):
             utils.LANGUAGE = previous_language
 
         self.assertNotIn("最新洞窟", categories)
-        self.assertIn("최신 던전", categories)
-        self.assertIn("FFXI-5F-2Elite-left", categories["최신 던전"].values())
+        self.assertIn("FFXI 콜라보", categories)
+        self.assertIn("FFXI-5F-2Elite-left", categories["FFXI 콜라보"].values())
         self.assertEqual(
-            len([category for category in categories if category == "최신 던전"]),
+            len([category for category in categories if category == "FFXI 콜라보"]),
             1,
         )
-        self.assertIn("dict.fromkeys", self.gui)
+        self.assertEqual(len(categories), len(set(categories)))
         self.assertIn("_category_keys_for_display", self.gui)
         self.assertIn("_quest_code_for_target_display", self.gui)
 
@@ -104,7 +108,7 @@ class Upstream260MergeTests(unittest.TestCase):
             "need_reload_when_combat_begins",
             "complete_one_as_all",
         ):
-            self.assertIn(option, self.gui)
+            self.assertIn(option, (SRC / "ui.html").read_text(encoding="utf-8"))
             self.assertIn(option, self.script)
         self.assertNotIn("reload_strategy_combobox", self.gui)
         self.assertIn("_legacy_strategy_reload_defaults", self.gui)

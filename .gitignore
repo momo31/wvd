@@ -41,6 +41,9 @@ screenshotwhenrestart/
 # Auto-update and local temporary files
 __update_temp__/
 _update_restart.bat
+_update_restart.ps1
+.venv/
+/中文图片/
 python-3.11.9-amd64.exe
 scratch_chinese_lines.txt
 chinese_in_gui.txt

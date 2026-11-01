@@ -117,14 +117,15 @@ class _Adapter:
 
 class TitleAndLoginTransitionTests(unittest.TestCase):
     def test_required_templates_exist_with_exact_case(self):
-        root = image_root()
+        from pathlib import Path
+        from utils import ResolveTemplatePath
         for name in (
             CLOSE_APP_PROMPT_TEMPLATE,
             STARTUP_DISCLAIMER_TEMPLATE,
             TITLE_LOGO_TEMPLATE,
             TITLE_TAP_TEMPLATE,
         ):
-            self.assertTrue((root / f"{name}.png").is_file(), name)
+            self.assertTrue(Path(ResolveTemplatePath(name, 'en_US')).is_file(), name)
 
     def test_title_decision_uses_stable_logo_without_blinking_prompt(self):
         adapter = _Adapter(["title"])

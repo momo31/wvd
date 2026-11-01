@@ -1,5 +1,14 @@
 **新版本!**
+==v3.2.1-momo.1==
+Fighter, Thief, Priest, Mage, Knight and Rarities tombs now go directly to the third route point instead of immediately selecting the exit.
+Integrated upstream 3.2.1 with a localized WebView interface, structured summaries and separate interface/game languages.
+Added fishing, fairy transitions, new bounty routes and run-scoped stop-after-round controls while preserving Telegram and smart chest safeguards.
+Preserved custom configuration paths, target-specific strategies and saved selections across automatic quest handoffs.
+Updates now accept only momo31 fork releases; cancellation and window closing finish cleanup before any restart.
+Missing recognition images block affected tasks before launch; English FloralHoney and Chinese game safety templates remain unavailable.
+
 ==Unreleased==
+Fighter, Thief, Priest, Mage, Knight and Rarities tombs now visit the third-point chest, finish chest handling, then move to the fourth-point exit. The separate furnace tomb route is unchanged.
 Routine guild requests now dismiss Arna's blocking invitation, while quest-specific choices stay intact; an unresponsive choice stops after three attempts.
 Recovery now waits for startup/loading screens to clear before retrying the interrupted operation, and stops after five minutes instead of repeatedly restarting during loading.
 Server maintenance notices in Korean now stop automation with a clear reason before any fallback taps or recovery retries, preventing repeated game and emulator restarts during maintenance.

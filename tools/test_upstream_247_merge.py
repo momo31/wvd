@@ -12,6 +12,9 @@ SRC = ROOT / "src"
 sys.path.insert(0, str(SRC))
 
 
+from utils import ResolveTemplatePath
+
+
 def load_json_rejecting_duplicate_keys(path):
     def reject_duplicates(pairs):
         result = {}
@@ -42,51 +45,23 @@ def contains_han(text):
 
 class Upstream249MergeTests(unittest.TestCase):
     def test_quest_catalog_excludes_1f_and_preserves_upstream_entries(self):
-        quests = load_json_rejecting_duplicate_keys(
-            ROOT / "resources" / "quest" / "quest.json"
-        )
-
-        ffxi_quests = (
-            "FFXI-2F",
-            "FFXI-2F-elite",
-            "FFXI-5F-4Elite",
-            "FFXI-5F-2Elite-mid",
-            "FFXI-5F-2Elite-bottom",
-            "FFXI-5F-Elite",
-        )
-        self.assertNotIn("ff-collabo-dungeon1f", quests)
-        for quest_key in ffxi_quests:
-            self.assertIn(quest_key, quests)
-
-        self.assertEqual(quests["FFXI-5F-4Elite"]["_EOT"][1][1], "FFXI/zone5")
-        self.assertEqual(quests["FFXI-5F-2Elite-mid"]["_EOT"][1][1], "FFXI/zone5")
-        self.assertEqual(quests["FFXI-5F-2Elite-bottom"]["_EOT"][1][1], "FFXI/zone5")
-        self.assertEqual(quests["FFXI-5F-Elite"]["_EOT"][1][1], "FFXI/zone5")
-        for quest_key in ffxi_quests:
-            self.assertEqual(
-                quests[quest_key]["_EOT"][0],
-                ["press", "EVENT", "FFXI/EVENT_GCN", 1],
-            )
-            self.assertEqual(quests[quest_key]["_RTT"], ["FFXI/EVENT_VNH"])
-
-        self.assertEqual(
-            quests["FFXI-5F-2Elite-mid"]["questName"],
-            "[恶名]FFXI 5F 中部2精英",
-        )
-        self.assertEqual(
-            quests["FFXI-5F-2Elite-bottom"]["questName"],
-            "[恶名]FFXI 5F 底部2精英",
-        )
+        quests = load_json_rejecting_duplicate_keys(ROOT / 'resources/quest/quest.json')
+        self.assertNotIn('ff-collabo-dungeon1f', quests)
+        for name in ('FFXI-2F', 'FFXI-2F-elite', 'FFXI-5F-4Elite', 'FFXI-5F-2Elite-mid', 'FFXI-5F-2Elite-bottom', 'FFXI-5F-Elite'):
+            self.assertIn(name, quests)
+            self.assertEqual(quests[name]['_EOT'][0], ['town', 'world'])
+            self.assertEqual(quests[name]['_EOT'][1][1], 'FFXI/GCN')
+            self.assertEqual(quests[name]['_EOT'][-1][1], 'FFXI/zone5' if '5F' in name else 'FFXI/ZONE2')
 
     def test_korean_quest_list_does_not_expose_chinese_names(self):
         quests = load_json_rejecting_duplicate_keys(
             ROOT / "resources" / "quest" / "quest.json"
         )
         category_translations = assigned_string(
-            SRC / "gui.py", "KO_CATEGORY_TRANSLATIONS"
+            SRC / "config_model.py", "KO_CATEGORY_TRANSLATIONS"
         )
         target_translations = assigned_string(
-            SRC / "gui.py", "KO_TARGET_TRANSLATIONS"
+            SRC / "config_model.py", "KO_TARGET_TRANSLATIONS"
         )
 
         for quest_key, quest in quests.items():
@@ -121,7 +96,7 @@ class Upstream249MergeTests(unittest.TestCase):
             "FFXI/org_full",
         ):
             image_path = (
-                ROOT / "resources" / "images" / f"{template_name}.png"
+                Path(ResolveTemplatePath(f'{template_name}.png'))
             )
             self.assertTrue(image_path.is_file())
 
@@ -130,34 +105,15 @@ class Upstream249MergeTests(unittest.TestCase):
             self.assertGreater(image.size, 0)
 
     def test_ffxi_tip_is_localized_in_supported_catalogs(self):
-        quests = load_json_rejecting_duplicate_keys(
-            ROOT / "resources" / "quest" / "quest.json"
-        )
-        tip = quests["FFXI-5F-Elite"]["_TIPS"]
-
-        expected_translations = {
-            "en_US": (
-                'This quest rests in the small village. Disable "Stay in '
-                'Royal Suite" and "Reassemble the first party at the tavern '
-                'every 6 hours".'
-            ),
-            "ko_KR": (
-                '이 퀘스트는 작은 마을에서 숙박합니다. "로얄 스위트룸 투숙"과 '
-                '"6시간마다 주점의 첫 번째 파티 재소집"을 비활성화하세요.'
-            ),
-            "zh_CN": tip,
-        }
-
-        for language, expected in expected_translations.items():
-            catalog_path = (
-                ROOT / "locale" / language / "LC_MESSAGES" / "messages.mo"
-            )
-            with catalog_path.open("rb") as stream:
-                translations = gettext.GNUTranslations(stream)
-            self.assertEqual(translations.gettext(tip), expected)
-
-        gui_source = (SRC / "gui.py").read_text(encoding="utf-8")
-        self.assertIn("tip = _(tip)", gui_source)
+        from unittest.mock import patch
+        import script
+        quest = script.QUEST_DATA['FFXI-Org']
+        for language in ('en_US', 'ko_KR', 'zh_CN'):
+            with patch.object(script, 'LANGUAGE', language):
+                tip = script.LoadQuest('FFXI-Org')._TIPS
+            self.assertEqual(tip, quest['_TIPS_' + language])
+            self.assertIn('FFXIStone', tip)
+            if language != 'zh_CN': self.assertFalse(contains_han(tip))
 
     def test_missing_language_key_returns_default(self):
         utils_path = SRC / "utils.py"
@@ -182,45 +138,26 @@ class Upstream249MergeTests(unittest.TestCase):
         self.assertEqual(getter("LANGUAGE", "zh_CN"), "zh_CN")
 
     def test_packaged_config_path_and_korean_default_are_stable(self):
-        utils_source = (SRC / "utils.py").read_text(encoding="utf-8")
-        script_source = (SRC / "script.py").read_text(encoding="utf-8")
-        self.assertIn("os.path.abspath(sys.executable)", utils_source)
-        self.assertIn("def _config_has_runtime_settings(config_data):", utils_source)
-        self.assertIn("WVDAS_CONFIG_PATH", utils_source)
-        self.assertIn("LOCALAPPDATA", utils_source)
-        self.assertIn("def _find_config_fallback():", utils_source)
-        self.assertIn("def _merge_telegram_settings(config_data, fallback_data):", utils_source)
-        self.assertIn("GetOneVarInGeneralConfig('LANGUAGE', \"ko_KR\")", utils_source)
-        self.assertIn('["GENERAL",   "LANGUAGE",                 tk.StringVar, "ko_KR"]', script_source)
+        import utils
+        from unittest.mock import patch
+        from types import SimpleNamespace
+        from pathlib import Path
+        data, changed = utils._migrate_language_settings({'GENERAL': {}})
+        self.assertTrue(changed)
+        self.assertEqual(data['GENERAL']['LANGUAGE_SCRIPT'], 'ko_KR')
+        self.assertEqual(data['GENERAL']['LANGUAGE_GAME'], 'en_US')
+        self.assertEqual(Path(utils.CONFIG_FILE).name, 'config.json')
+        # File recovery and custom-path behavior are covered in test_config_persistence/test_custom_config.
+        self.assertTrue(callable(utils._find_config_fallback))
 
     def test_fork_version_keeps_upstream_update_comparison(self):
-        version = assigned_string(SRC / "main.py", "__version__")
-        self.assertEqual(version, "2.7.1-momo.1")
-
         from auto_updater import AutoUpdater
-
-        updater = AutoUpdater(queue.Queue(), "owner", "repo", version)
-        self.assertFalse(updater._is_newer_version("2.4.9"))
-        self.assertFalse(updater._is_newer_version("2.4.10"))
-        self.assertFalse(updater._is_newer_version("2.4.11"))
-        self.assertFalse(updater._is_newer_version("2.4.12"))
-        self.assertFalse(updater._is_newer_version("2.4.13"))
-        self.assertFalse(updater._is_newer_version("2.4.14"))
-        self.assertFalse(updater._is_newer_version("2.4.15"))
-        self.assertFalse(updater._is_newer_version("2.5.0"))
-        self.assertFalse(updater._is_newer_version("2.5.1"))
-        self.assertFalse(updater._is_newer_version("2.5.2"))
-        self.assertFalse(updater._is_newer_version("2.5.4"))
-        self.assertFalse(updater._is_newer_version("2.5.5"))
-        self.assertFalse(updater._is_newer_version("2.5.11"))
-        self.assertFalse(updater._is_newer_version("2.5.12"))
-        self.assertFalse(updater._is_newer_version("2.6.0"))
-        self.assertFalse(updater._is_newer_version("2.6.1"))
-        self.assertFalse(updater._is_newer_version("2.6.2"))
-        self.assertFalse(updater._is_newer_version("2.6.3"))
-        self.assertFalse(updater._is_newer_version("2.7.0"))
-        self.assertFalse(updater._is_newer_version("2.7.1"))
-        self.assertTrue(updater._is_newer_version("2.7.2"))
+        version = assigned_string(SRC / 'main.py', '__version__')
+        self.assertEqual(version, '3.2.1-momo.1')
+        updater = AutoUpdater(queue.Queue(), 'momo31', 'wvd', version)
+        for value in ('2.7.2', '3.2.2', '3.2.1-momo.0', '3.2.1-momo.1'):
+            self.assertFalse(updater._is_newer_version(value))
+        self.assertTrue(updater._is_newer_version('3.2.1-momo.2'))
 
     def test_per_combat_strategy_reload_happens_after_combat(self):
         source = (SRC / "script.py").read_text(encoding="utf-8")
@@ -265,7 +202,7 @@ class Upstream249MergeTests(unittest.TestCase):
     def test_compatible_upstream_runtime_guards_are_present(self):
         source = (SRC / "script.py").read_text(encoding="utf-8")
         self.assertIn(
-            'FindCoordsOrElseExecuteFallbackAndWait(["openworldmap","dungFlag"]',
+            'FindCoordsOrElseExecuteFallbackAndWait(["intoWorldMap","dungFlag","worldmapflag","openworldmap"]',
             source,
         )
         mining_start = source.index('case "FFXI-Org":')
@@ -279,7 +216,7 @@ class Upstream249MergeTests(unittest.TestCase):
         )
 
     def test_new_quest_names_have_korean_mappings(self):
-        translations = assigned_string(SRC / "gui.py", "KO_TARGET_TRANSLATIONS")
+        translations = assigned_string(SRC / "config_model.py", "KO_TARGET_TRANSLATIONS")
         self.assertIn("[恶名]FFXI 5F 中部2精英", translations)
         self.assertIn("[恶名]FFXI 5F 底部2精英", translations)
         self.assertEqual(translations["[骨头]战士灵庙"], "[뼈] 전사 영묘")
@@ -439,7 +376,7 @@ class Upstream249MergeTests(unittest.TestCase):
             ROOT / "resources" / "quest" / "quest.json"
         )
 
-        self.assertEqual(assigned_string(SRC / "main.py", "__version__"), "2.7.1-momo.1")
+        self.assertEqual(assigned_string(SRC / "main.py", "__version__"), "3.2.1-momo.1")
         self.assertIn('DeviceShell("dumpsys window | grep mCurrentFocus")', source)
         self.assertIn('else "screencap 2>/dev/null"', source)
         self.assertIn("Multiple displays were found", source)
@@ -456,7 +393,7 @@ class Upstream249MergeTests(unittest.TestCase):
             "yes.png",
         ):
             self.assertFalse(
-                (ROOT / "resources" / "images" / "smallgame" / image_name).exists()
+                (ROOT / 'resources' / 'images' / 'common' / 'smallgame' / image_name).exists()
             )
 
     def test_upstream_252_changelog_does_not_fall_back_to_chinese_in_korean(self):
@@ -502,7 +439,7 @@ class Upstream249MergeTests(unittest.TestCase):
         quest = LoadQuest("FFXI-5F-2Elite")
         self.assertEqual(
             QUEST_DATA["FFXI-5F-2Elite-bottom"]["questName"],
-            "[恶名]FFXI 5F 底部2精英",
+            "[恶名]FFXI 5F 中等难度 底部2精英",
         )
         self.assertEqual(quest._TARGETINFOLIST[0].roi, [80, 1130])
 

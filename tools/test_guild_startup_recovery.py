@@ -21,6 +21,9 @@ from mod.telegram_remote_control.runtime_bridge import RemoteRuntime, remote_sto
 ROOT = Path(__file__).resolve().parents[1]
 
 
+from utils import ResolveTemplatePath
+
+
 class GuildStartupRecoveryTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -44,7 +47,7 @@ class GuildStartupRecoveryTests(unittest.TestCase):
 
         def template(name):
             if name not in images:
-                images[name] = cv2.imread(str(ROOT / "resources" / "images" / f"{name}.png"))
+                images[name] = cv2.imread(str(Path(ResolveTemplatePath(f'{name}.png'))))
                 assert images[name] is not None, name
             return images[name]
 
@@ -61,7 +64,7 @@ class GuildStartupRecoveryTests(unittest.TestCase):
                 raise namespace["TaskStoppedException"]()
             clock.now += seconds
 
-        context = SimpleNamespace(_CRASHCOUNTER=0, _RECOVERY_SUPERVISOR=RecoverySupervisor())
+        context = SimpleNamespace(_CRASHCOUNTER=0, record_special_event=Mock(), _RECOVERY_SUPERVISOR=RecoverySupervisor())
         namespace = {
             "cv2": cv2, "np": np, "time": SimpleNamespace(monotonic=lambda: clock.now, time=lambda: clock.now),
             "classify_screen": classify_screen, "ScreenHealth": ScreenHealth,

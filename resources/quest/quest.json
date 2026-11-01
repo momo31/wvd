@@ -1,923 +1,3044 @@
 {
-
-    "Dist":{
-        "_TYPE":"dungeon",
-        "questName":"[宝箱]水路一号街",
+    "Dist": {
+        "_TYPE": "dungeon",
+        "questName": "[宝箱]水路一号街",
         "questName_en_US": "[Chest] Waterway 1st",
         "questCategory": "主线前三章",
         "questCategory_en_US": "Chapter 1,2 and 3",
-        "_TARGETINFOLIST":[
-            ["chest"],
-            ["harken"]
+        "_TARGETINFOLIST": [
+            [
+                "chest"
+            ],
+            [
+                "harken"
+            ]
         ],
-        "_EOT":[
-            ["press","TradeWaterway",["EdgeOfTown",[1,1]],1],
-            ["press","Dist","input swipe 650 250 650 900",1]
-        ]
+        "_EOT": [
+            [
+                "town",
+                "EOT"
+            ],
+            [
+                "L1",
+                "TradeWaterway"
+            ],
+            [
+                "L2",
+                "Dist",
+                "input swipe 650 250 650 900"
+            ]
+        ],
+        "questName_ko_KR": "[상자] 무역수로 1번가",
+        "questCategory_ko_KR": "메인 시나리오 1~3장"
     },
-
-    "lounge":{
-        "_TYPE":"dungeon",
-        "questName":"[宝箱]水路船二lounge",
+    "lounge": {
+        "_TYPE": "dungeon",
+        "questName": "[宝箱]水路船二lounge",
         "questName_en_US": "[Chest] Waterway Lounge",
         "questCategory": "主线前三章",
         "questCategory_en_US": "Chapter 1,2 and 3",
-        "_TARGETINFOLIST":[
-            ["stair_lounge","左上",[292,394]],
-            ["chest_auto"],
-            ["stair_shiphold","左上",[292,394]],
-            ["harken",null,null]
+        "_TARGETINFOLIST": [
+            [
+                "stair_lounge",
+                "左上",
+                [
+                    292,
+                    394
+                ]
+            ],
+            [
+                "chest_auto"
+            ],
+            [
+                "stair_shiphold",
+                "左上",
+                [
+                    292,
+                    394
+                ]
+            ],
+            [
+                "harken",
+                null,
+                null
+            ]
         ],
-        "_EOT":[
-            ["press","TradeWaterway",["EdgeOfTown",[1,1]],1],
-            ["press","shiphold",[1,1],1]
-        ]
+        "_EOT": [
+            [
+                "town",
+                "EOT"
+            ],
+            [
+                "L1",
+                "TradeWaterway"
+            ],
+            [
+                "L2",
+                "shiphold"
+            ]
+        ],
+        "questName_ko_KR": "[상자] 무역수로 선실 2층 (라운지)",
+        "questCategory_ko_KR": "메인 시나리오 1~3장"
     },
-
-    "fortress-B1F":{
-        "_TYPE":"dungeon",
-        "questName":"[宝箱]要塞一层",
+    "shiphold-find": {
+        "_TYPE": "dungeon",
+        "questName": "[妖精]水路船一(前导任务)",
+        "questName_en_US": "[Faerie] Waterway Ship 1 (Lead)",
+        "questCategory": "最新任务",
+        "questCategory_en_US": "WHATS NEW",
+        "_TARGETINFOLIST": [
+            [
+                "mark_auto"
+            ],
+            [
+                "leaveDung"
+            ]
+        ],
+        "_EOT": [
+            [
+                "town",
+                "EOT"
+            ],
+            [
+                "L1",
+                "TradeWaterway"
+            ],
+            [
+                "L2",
+                "shiphold"
+            ]
+        ],
+        "_SPECIALJUNK": "fairy",
+        "_SPECIALJUNK_CALLBACK": "shiphold-fairy",
+        "_TIPS": "注意: 请在 船一, x=4, y=25处打上标记, 并确保这是船一的唯一标记.\n\n本任务是前导任务: 重复进入水路船一并直到妖精出现.\n成功捕捉到获得了妖精杂物后, 脚本会自动切换到\"[妖精]水路船一(后续任务)\"并开始循环刷取, 之后不再回到本任务.\n请在启动前按后续任务的需求把面板配置调好, 包括但不限于\"禁止回城\", \"全自动战斗\", 或者对后续任务使用\"任务定制的配置文件\".\n\nPlease place a marker at x=4, y=25 in Ship 1, and make sure it is the only marker there.\nThis is the lead task: keep re-entering Waterway Ship 1 until the Faerie appears.\nOnce the Faerie item is obtained, the script automatically switches to \"[Faerie] Waterway Ship 1 (After)\" and starts the farming loop; it will not come back to this task.\nBefore starting, set up the panel for the follow-up task, including but not limited to \"no return to town\", \"Full Auto\", or a task-specific config file for the follow-up task.",
+        "questName_ko_KR": "[요정] 수로 선실 1층 (선행 작업)",
+        "questCategory_ko_KR": "새 작업",
+        "_TIPS_ko_KR": "수로 선실 1층의 X=4, Y=25에 유일한 지도 표식을 설정하세요.\n\n요정이 나타날 때까지 선실에 재진입하는 선행 작업입니다. 요정 아이템을 확인하면 수로 선실 1층 후속 작업으로 자동 전환하고, 선행 작업으로 돌아오지 않습니다.\n시작 전에 후속 작업의 귀환·회복·전투 전략을 설정하세요. 작업별 설정을 켜 두면 후속 작업에 저장된 설정을 불러옵니다. 없으면 기본 설정을 사용합니다.",
+        "_TIPS_en_US": "Please place a marker at x=4, y=25 in Ship 1, and make sure it is the only marker there.\nThis is the lead task: keep re-entering Waterway Ship 1 until the Faerie appears.\nOnce the Faerie item is obtained, the script automatically switches to \"[Faerie] Waterway Ship 1 (After)\" and starts the farming loop; it will not come back to this task.\nBefore starting, set up the panel for the follow-up task, including but not limited to \"no return to town\", \"Full Auto\", or a task-specific config file for the follow-up task.",
+        "_TIPS_zh_CN": "注意: 请在 船一, x=4, y=25处打上标记, 并确保这是船一的唯一标记.\n\n本任务是前导任务: 重复进入水路船一并直到妖精出现.\n成功捕捉到获得了妖精杂物后, 脚本会自动切换到\"[妖精]水路船一(后续任务)\"并开始循环刷取, 之后不再回到本任务.\n请在启动前按后续任务的需求把面板配置调好, 包括但不限于\"禁止回城\", \"全自动战斗\", 或者对后续任务使用\"任务定制的配置文件\"."
+    },
+    "shiphold-fairy": {
+        "_TYPE": "dungeon",
+        "questName": "[妖精]水路船一(后续任务)",
+        "questName_en_US": "[Faerie] Waterway Ship 1 (After)",
+        "questCategory": "最新任务",
+        "questCategory_en_US": "WHATS NEW",
+        "_TARGETINFOLIST": [
+            [
+                "stair_lounge",
+                "左上",
+                [
+                    292,
+                    394
+                ]
+            ],
+            [
+                "stair_shiphold",
+                "左上",
+                [
+                    292,
+                    394
+                ]
+            ],
+            [
+                "position",
+                "左上",
+                [
+                    82,
+                    556
+                ]
+            ],
+            [
+                "position",
+                "左下",
+                [
+                    236,
+                    1130
+                ]
+            ],
+            [
+                "position",
+                "左上",
+                [
+                    82,
+                    556
+                ]
+            ]
+        ],
+        "_EOT": [
+            [
+                "town",
+                "EOT"
+            ],
+            [
+                "L1",
+                "TradeWaterway"
+            ],
+            [
+                "L2",
+                "shiphold"
+            ]
+        ],
+        "_TIPS": "本任务是后续任务, 负责循环刷取.\n通常由\"[妖精]水路船一(前导任务)\"触发一次后自动切换过来, 也可以直接启动本任务.\n\nThis is the follow-up task and performs the farming loop.\nIt is normally entered automatically after the lead task triggers once, but can also be started directly.",
+        "questName_ko_KR": "[요정] 수로 선실 1층 (후속 작업)",
+        "questCategory_ko_KR": "새 작업",
+        "_TIPS_ko_KR": "반복 파밍을 수행하는 후속 작업입니다. 보통 선행 작업에서 요정 아이템을 확인한 뒤 자동으로 전환되지만 직접 시작할 수도 있습니다.",
+        "_TIPS_en_US": "This is the follow-up task and performs the farming loop.\nIt is normally entered automatically after the lead task triggers once, but can also be started directly.",
+        "_TIPS_zh_CN": "本任务是后续任务, 负责循环刷取.\n通常由\"[妖精]水路船一(前导任务)\"触发一次后自动切换过来, 也可以直接启动本任务."
+    },
+    "fortress-B1F": {
+        "_TYPE": "dungeon",
+        "questName": "[宝箱]要塞一层",
         "questName_en_US": "[Chest] Fortress Zone 1",
         "questCategory": "主线前三章",
         "questCategory_en_US": "Chapter 1,2 and 3",
-        "_TARGETINFOLIST":[
-            ["chest","左下",[[0,305,900,965]]],
-            ["harken","左下",null]
+        "_TARGETINFOLIST": [
+            [
+                "chest",
+                "左下",
+                [
+                    [
+                        0,
+                        305,
+                        900,
+                        965
+                    ]
+                ]
+            ],
+            [
+                "harken",
+                "左下",
+                null
+            ]
         ],
-        "_EOT":[
-            ["press","impregnableFortress",["EdgeOfTown",[1,1]],1],
-            ["press","fortressb1f","input swipe 650 250 650 900",1]
-        ]
+        "_EOT": [
+            [
+                "town",
+                "EOT"
+            ],
+            [
+                "L1",
+                "impregnableFortress"
+            ],
+            [
+                "L2",
+                "fortressb1f",
+                "input swipe 650 250 650 900"
+            ]
+        ],
+        "questName_ko_KR": "[상자] 요새 1층",
+        "questCategory_ko_KR": "메인 시나리오 1~3장"
     },
-
-    "fortress-B8F_entrance":{
-        "_TYPE":"dungeon",
-        "questName":"[妖精]要塞八层门口",
-        "questName_en_US": "[Faerie] Fortress Zone 8",
+    "fortress-B8F_entrance": {
+        "_TYPE": "dungeon",
+        "questName": "[妖精]要塞八层门口(前导任务)",
+        "questName_en_US": "[Faerie] Fortress Zone 8 (Lead)",
+        "questCategory": "最新任务",
+        "questCategory_en_US": "WHATS NEW",
+        "_TARGETINFOLIST": [
+            [
+                "mark_auto"
+            ],
+            [
+                "position",
+                "左下",
+                [
+                    453,
+                    865
+                ]
+            ],
+            [
+                "stair_fortressGate",
+                "左下",
+                [
+                    720,
+                    1027
+                ]
+            ],
+            [
+                "position",
+                "左下",
+                [
+                    720,
+                    1241
+                ]
+            ]
+        ],
+        "_EOT": [
+            [
+                "town",
+                "EOT"
+            ],
+            [
+                "L1",
+                "impregnableFortress"
+            ],
+            [
+                "L2",
+                "fortressEntrance",
+                "input swipe 650 250 650 900"
+            ]
+        ],
+        "_SPECIALJUNK": "fairy",
+        "_SPECIALJUNK_CALLBACK": "fortress-B8F_trap",
+        "_TIPS": "本任务是前导任务: 反复刷要塞八层门口的两个怪并开箱, 直到开箱检测到\"妖精\"杂物.\n一旦检测到, 脚本会自动切换到\"[妖精]要塞八层陷阱\"并开始循环刷取, 之后不再回到本任务.\n前置条件: 必须通关第三章; 要塞八层右下区块必须是陷阱房.\n标记要求: 在要塞入口地图的x=13, y=34处做标记; 在8F地图的x=16, y=7处做标记.\n\nThis is the lead task: keep farming the two enemies at the Fortress Zone 8 entrance and opening chests until a \"Faerie\" junk item is detected.\nOnce detected, the script automatically switches to \"[Faerie] Fortress Zone 8 Trap\" and starts the farming loop; it will not come back to this task.\nPrerequisites: Chapter 3 must be cleared, and the bottom-right block of Fortress Zone 8 must be a trap room.\nMarkers: place a marker at x=13, y=34 on the Fortress entrance map, and another at x=16, y=7 on the 8F map.",
+        "questName_ko_KR": "[요정] 요새 8층 입구 (선행 작업)",
+        "questCategory_ko_KR": "새 작업",
+        "_TIPS_ko_KR": "요새 8층 입구의 몬스터 두 마리를 반복해서 처치하고 상자를 열어 요정 아이템을 찾는 선행 작업입니다. 발견하면 요새 8층 함정 후속 작업으로 전환하고 선행 작업으로 돌아오지 않습니다.\n조건: 3장 완료, 요새 8층 오른쪽 아래 구역이 함정 방이어야 합니다.\n지도 표식: 요새 입구 X=13, Y=34 및 8층 X=16, Y=7.",
+        "_TIPS_en_US": "This is the lead task: keep farming the two enemies at the Fortress Zone 8 entrance and opening chests until a \"Faerie\" junk item is detected.\nOnce detected, the script automatically switches to \"[Faerie] Fortress Zone 8 Trap\" and starts the farming loop; it will not come back to this task.\nPrerequisites: Chapter 3 must be cleared, and the bottom-right block of Fortress Zone 8 must be a trap room.\nMarkers: place a marker at x=13, y=34 on the Fortress entrance map, and another at x=16, y=7 on the 8F map.",
+        "_TIPS_zh_CN": "本任务是前导任务: 反复刷要塞八层门口的两个怪并开箱, 直到开箱检测到\"妖精\"杂物.\n一旦检测到, 脚本会自动切换到\"[妖精]要塞八层陷阱\"并开始循环刷取, 之后不再回到本任务.\n前置条件: 必须通关第三章; 要塞八层右下区块必须是陷阱房.\n标记要求: 在要塞入口地图的x=13, y=34处做标记; 在8F地图的x=16, y=7处做标记."
+    },
+    "fortress-B8F_trap": {
+        "_TYPE": "dungeon",
+        "questName": "[妖精]要塞八层陷阱(后续任务)",
+        "questName_en_US": "[Faerie] Fortress Zone 8 Trap (After)",
+        "questCategory": "最新任务",
+        "questCategory_en_US": "WHATS NEW",
+        "_TARGETINFOLIST": [
+            [
+                "stair_fortress1f",
+                "左上",
+                [
+                    720,
+                    395
+                ]
+            ],
+            [
+                "position",
+                "左下",
+                [
+                    453,
+                    865
+                ]
+            ],
+            [
+                "position",
+                "右下",
+                [
+                    712,
+                    972
+                ]
+            ],
+            [
+                "position",
+                "右下",
+                [
+                    500,
+                    1080
+                ]
+            ],
+            [
+                "position",
+                "右下",
+                [
+                    765,
+                    918
+                ]
+            ],
+            [
+                "position",
+                "右下",
+                [
+                    606,
+                    1026
+                ]
+            ],
+            [
+                "stair_fortressGate",
+                "左下",
+                [
+                    720,
+                    1027
+                ]
+            ]
+        ],
+        "_EOT": [
+            [
+                "town",
+                "EOT"
+            ],
+            [
+                "L1",
+                "impregnableFortress"
+            ],
+            [
+                "L2",
+                "fortressEntrance",
+                "input swipe 650 250 650 900"
+            ]
+        ],
+        "_TIPS": "本任务是后续任务, 负责循环刷取: 反复刷门口的两只怪物和陷阱房的怪物.\n通常由\"[妖精]要塞八层门口\"检测到妖精杂物后自动切换过来, 也可以直接启动本任务.\n\n要塞8刷小精灵的准备流程:\n这是不回城的队伍, 因此推荐忍者盗贼面具+物理长矛/弓箭+王女或者夏莉莉奶.\n在\"设置setting\"\"自动移动auto-moving\"中关闭所有选项.\n\nThis is the follow-up task and performs the farming loop: repeatedly farm the two enemies at the entrance and the enemies in the trap room.\nIt is normally entered automatically after \"[Faerie] Fortress Zone 8\" detects the Faerie junk, but can also be started directly.\n\nPreparation for farming Faeries in Fortress Zone 8:\nSince this party does not return to town, Ninja, Rogue and Masked One, plus a physical spear/bow and Princess or Sheliri as healer, are recommended.\nIn \"Settings\" > \"Auto-Moving\", turn off all options.",
+        "questName_ko_KR": "[요정] 요새 8층 함정 (후속 작업)",
+        "questCategory_ko_KR": "새 작업",
+        "_TIPS_ko_KR": "입구의 몬스터 두 마리와 함정 방의 몬스터를 반복 파밍하는 후속 작업입니다. 선행 작업에서 요정 아이템을 확인하면 자동 전환되며 직접 시작할 수도 있습니다.\n\n마을로 돌아오지 않는 파티입니다. 닌자·도적·가면 캐릭터, 물리 창/활 사용자와 황녀 또는 셰리리 회복 담당을 권장합니다. 게임 설정의 자동 이동 항목은 모두 끄세요.",
+        "_TIPS_en_US": "This is the follow-up task and performs the farming loop: repeatedly farm the two enemies at the entrance and the enemies in the trap room.\nIt is normally entered automatically after \"[Faerie] Fortress Zone 8\" detects the Faerie junk, but can also be started directly.\n\nPreparation for farming Faeries in Fortress Zone 8:\nSince this party does not return to town, Ninja, Rogue and Masked One, plus a physical spear/bow and Princess or Sheliri as healer, are recommended.\nIn \"Settings\" > \"Auto-Moving\", turn off all options.",
+        "_TIPS_zh_CN": "本任务是后续任务, 负责循环刷取: 反复刷门口的两只怪物和陷阱房的怪物.\n通常由\"[妖精]要塞八层门口\"检测到妖精杂物后自动切换过来, 也可以直接启动本任务.\n\n要塞8刷小精灵的准备流程:\n这是不回城的队伍, 因此推荐忍者盗贼面具+物理长矛/弓箭+王女或者夏莉莉奶.\n在\"设置setting\"\"自动移动auto-moving\"中关闭所有选项."
+    },
+    "fortress-10F": {
+        "_TYPE": "dungeon",
+        "questName": "[刷怪]要塞10层刷巨人",
+        "questName_en_US": "[Farm] Fortress Zone 10",
         "questCategory": "主线前三章",
         "questCategory_en_US": "Chapter 1,2 and 3",
-        "_TARGETINFOLIST":[
-            ["stair_fortress1f","左上",[720,395]],
-            ["position","左下",[453,865]],
-            ["position","右下",[500,918]],
-            ["stair_fortressGate","左下", [720,1027]],
-            ["position","左下",[720,1241]]
+        "_FloorCheck": "stair_fortress10f",
+        "_TARGETINFOLIST": [
+            [
+                "position",
+                "左下",
+                [
+                    560,
+                    757
+                ]
+            ],
+            [
+                "Bharken2",
+                "左下",
+                null
+            ]
         ],
-        "_EOT":[
-            ["press","impregnableFortress",["EdgeOfTown",[1,1]],1],
-            ["press","fortressEntrance","input swipe 650 250 650 900",1]
-        ]
-    },
-
-    "fortress-B8F_trap":{
-        "_TYPE":"quest",
-        "questName":"[妖精]要塞八层陷阱",
-        "questName_en_US": "[Faerie] Fortress Zone 8 Trap",
-        "questCategory": "主线前三章",
-        "questCategory_en_US": "Chapter 1,2 and 3",
-        "_TIPS":"要塞8刷小精灵的准备流程:\n这是不回城的队伍, 因此推荐忍者盗贼面具+物理长矛/弓箭+王女或者夏莉莉奶.\n在\"设置setting\"\"自动移动auto-moving\"中关闭所有选项.\n然后不停刷新8f门口两个怪, 确保其中之一是3小恶魔+1小精灵.\n然后在该位置打上标记.\n然后开启脚本."
-    },
-    	
-    "fortress-10F":{
-        "_TYPE":"dungeon",
-        "questName":"[灯怪]要塞10层",
-        "questName_en_US": "[Lamp] Fortress Zone 10",
-        "questCategory": "主线前三章",
-        "questCategory_en_US": "Chapter 1,2 and 3",
-        "_TARGETINFOLIST":[
-            ["position","左下",[560,757]],
-            ["Bharken2","左下",null]
+        "_EOT": [
+            [
+                "town",
+                "EOT"
+            ],
+            [
+                "L1",
+                "impregnableFortress"
+            ],
+            [
+                "L2",
+                "fortressb10f",
+                "input swipe 650 900 650 250"
+            ]
         ],
-        "_EOT":[
-            ["press","impregnableFortress",["EdgeOfTown",[1,1]],1],
-            ["press","fortressb10f","input swipe 650 900 650 250",1]
-        ]
+        "questName_ko_KR": "[몬스터] 요새 10층 거인",
+        "questCategory_ko_KR": "메인 시나리오 1~3장"
     },
-
-
-    "DH-4f":{
-        "_TYPE":"dungeon",
-        "questName":"[刷怪]深雪R4",
+    "DH-4f": {
+        "_TYPE": "dungeon",
+        "questName": "[刷怪]深雪R4",
         "questName_en_US": "[Farm] Snow R4",
         "questCategory": "主线第四章",
         "questCategory_en_US": "Chapter 4",
-        "_TARGETINFOLIST":[
-            ["position","右上",[500,610]],
-            ["position","右上",[445,290]],
-            ["position","右上",[820,605]],
-            ["harken", "右上","stair_DH_R4"]
+        "_FloorCheck": "stair_DH_R4",
+        "_TARGETINFOLIST": [
+            [
+                "position",
+                "右上",
+                [
+                    820,
+                    605
+                ]
+            ],
+            [
+                "position",
+                "右上",
+                [
+                    500,
+                    610
+                ]
+            ],
+            [
+                "position",
+                "右上",
+                [
+                    445,
+                    290
+                ]
+            ],
+            [
+                "harken",
+                "右上",
+                "stair_DH_R4"
+            ]
         ],
-        "_EOT":[
-            ["press","DH",["EdgeOfTown",[1,1]],1],
-            ["press","DH-R4","input swipe 650 250 650 900",1]
-        ]
+        "_EOT": [
+            [
+                "town",
+                "EOT"
+            ],
+            [
+                "L1",
+                "DH"
+            ],
+            [
+                "L2",
+                "DH-R4",
+                "input swipe 650 250 650 900"
+            ]
+        ],
+        "questName_ko_KR": "[몬스터] 대설지대 R4",
+        "questCategory_ko_KR": "메인 시나리오 4장"
     },
-
-    "DH-6f":{
-        "_TYPE":"dungeon",
-        "questName":"[宝箱+刷怪]深雪R6",
+    "DH-6f": {
+        "_TYPE": "dungeon",
+        "questName": "[宝箱+刷怪]深雪R6",
         "questName_en_US": "[Farm] Snow R6",
         "questCategory": "主线第四章",
         "questCategory_en_US": "Chapter 4",
-        "_TARGETINFOLIST":[
-            ["stair_DH_R6","右上",[286,236]],
-            ["position","右下",[72,972]],
-            ["chest","右下",[[0,678,432,597]]],
-            ["stair_DH_R5", "右下",[73,1240]],
-            ["harken", "左上",null]
+        "_FloorCheck": "stair_DH_R6",
+        "_TARGETINFOLIST": [
+            [
+                "stair_DH_R6",
+                "右上",
+                [
+                    286,
+                    236
+                ]
+            ],
+            [
+                "position",
+                "右下",
+                [
+                    72,
+                    972
+                ]
+            ],
+            [
+                "chest",
+                "右下",
+                [
+                    [
+                        0,
+                        678,
+                        432,
+                        597
+                    ]
+                ]
+            ],
+            [
+                "stair_DH_R5",
+                "右下",
+                [
+                    73,
+                    1240
+                ]
+            ],
+            [
+                "harken",
+                "左上",
+                null
+            ]
         ],
-        "_EOT":[
-            ["press","DH",["EdgeOfTown",[1,1]],1],
-            ["press","DH-R5","input swipe 650 250 650 900",1]
-        ]
+        "_EOT": [
+            [
+                "town",
+                "EOT"
+            ],
+            [
+                "L1",
+                "DH"
+            ],
+            [
+                "L2",
+                "DH-R6",
+                "input swipe 650 250 650 900"
+            ]
+        ],
+        "questName_ko_KR": "[상자+몬스터] 대설지대 R6",
+        "questCategory_ko_KR": "메인 시나리오 4장"
     },
-
-    "DH-7f-right":{
-        "_TYPE":"dungeon",
-        "questName":"[宝箱+刷怪]深雪R7矿洞右",
+    "DH-7f-right": {
+        "_TYPE": "dungeon",
+        "questName": "[宝箱+刷怪]深雪R7矿洞右",
         "questName_en_US": "[Farm] Snow R7 right part",
         "questCategory": "主线第四章",
         "questCategory_en_US": "Chapter 4",
-        "_TARGETINFOLIST":[
-            ["position","右下",[770,600]],
-            ["position","右下",[770,1190]],
-            ["position","右下",[500,1025]],
-            ["chest","右下",[[420,305,480,1295]]],
-            ["position","右下",[450,545]],
-            ["position","左上",[610,1090]],
-            ["position","右上",[450,925]],
-            ["chest","右上",null],
-            ["harken", "右上",null]
+        "_FloorCheck": "stair_DH_R7",
+        "_TARGETINFOLIST": [
+            [
+                "position",
+                "右下",
+                [
+                    770,
+                    600
+                ]
+            ],
+            [
+                "position",
+                "右下",
+                [
+                    770,
+                    1190
+                ]
+            ],
+            [
+                "position",
+                "右下",
+                [
+                    500,
+                    1025
+                ]
+            ],
+            [
+                "chest",
+                "右下",
+                [
+                    [
+                        420,
+                        305,
+                        480,
+                        1295
+                    ]
+                ]
+            ],
+            [
+                "position",
+                "右下",
+                [
+                    450,
+                    545
+                ]
+            ],
+            [
+                "position",
+                "左上",
+                [
+                    610,
+                    1090
+                ]
+            ],
+            [
+                "position",
+                "右上",
+                [
+                    450,
+                    925
+                ]
+            ],
+            [
+                "chest",
+                "右上",
+                null
+            ],
+            [
+                "harken",
+                "右上",
+                null
+            ]
         ],
-        "_EOT":[
-            ["press","DH",["EdgeOfTown",[1,1]],1],
-            ["press","DH-R7","input swipe 650 900 650 250",1]
-        ]
+        "_EOT": [
+            [
+                "town",
+                "EOT"
+            ],
+            [
+                "L1",
+                "DH"
+            ],
+            [
+                "L2",
+                "DH-R7",
+                "input swipe 650 900 650 250"
+            ]
+        ],
+        "questName_ko_KR": "[상자+몬스터] 대설지대 R7 광산 우측",
+        "questCategory_ko_KR": "메인 시나리오 4장"
     },
-
-    "DH-7f-auto":{
-        "_TYPE":"dungeon",
-        "questName":"[宝箱+刷怪]深雪R7自动箱",
+    "DH-7f-auto": {
+        "_TYPE": "dungeon",
+        "questName": "[宝箱+刷怪]深雪R7自动箱",
         "questName_en_US": "[Farm] Snow R7 whole",
         "questCategory": "主线第四章",
         "questCategory_en_US": "Chapter 4",
-        "_TARGETINFOLIST":[
-            ["chest_auto"],
-            ["harken", "右上",null]
+        "_FloorCheck": "stair_DH_R7",
+        "_TARGETINFOLIST": [
+            [
+                "chest_auto"
+            ],
+            [
+                "harken",
+                "右上",
+                null
+            ]
         ],
-        "_EOT":[
-            ["press","DH",["EdgeOfTown",[1,1]],1],
-            ["press","DH-R7","input swipe 650 900 650 250",1]
-        ]
+        "_EOT": [
+            [
+                "town",
+                "EOT"
+            ],
+            [
+                "L1",
+                "DH"
+            ],
+            [
+                "L2",
+                "DH-R7",
+                "input swipe 650 900 650 250"
+            ]
+        ],
+        "questName_ko_KR": "[상자+몬스터] 대설지대 R7 자동 상자",
+        "questCategory_ko_KR": "메인 시나리오 4장"
     },
-
-    "DH-10f-test":{
-        "_TYPE":"dungeon",
-        "questName":"[宝箱+刷怪]深雪R10",
+    "DH-10f-test": {
+        "_TYPE": "dungeon",
+        "questName": "[宝箱+刷怪]深雪R10",
         "questName_en_US": "[Farm] Snow R10 autochest",
         "questCategory": "主线第四章",
         "questCategory_en_US": "Chapter 4",
-        "_TARGETINFOLIST":[
-            ["stair_DH_R10","左上",[80,235]],
-            ["position","右下",[600,1240]],
-            ["position","右下",[820,865]],
-            ["position","左下",[825,1125]],
-            ["position","左下",[135,1030]],
-            ["position","左下",[665,545]],
-            ["chest","左下",[[530,460,270,220]]],
-            ["chest","左下",[[0,410,745,480],[320,520,425,370]]],
-            ["position","左下",[130,865]],
-            ["chest","左下",[[110,900,790,260]]],
-            ["chest","右下",[[100,790,800,490],[100,1185,350,95]]],
-            ["stair_DH_R9", "右下",[820,1240]],
-            ["harken", "左上",null]
+        "_TARGETINFOLIST": [
+            [
+                "stair_DH_R10",
+                "左上",
+                [
+                    80,
+                    235
+                ]
+            ],
+            [
+                "position",
+                "右下",
+                [
+                    600,
+                    1240
+                ]
+            ],
+            [
+                "position",
+                "右下",
+                [
+                    820,
+                    865
+                ]
+            ],
+            [
+                "position",
+                "左下",
+                [
+                    825,
+                    1125
+                ]
+            ],
+            [
+                "position",
+                "左下",
+                [
+                    135,
+                    1030
+                ]
+            ],
+            [
+                "position",
+                "左下",
+                [
+                    665,
+                    545
+                ]
+            ],
+            [
+                "chest",
+                "左下",
+                [
+                    [
+                        530,
+                        460,
+                        270,
+                        220
+                    ]
+                ]
+            ],
+            [
+                "chest",
+                "左下",
+                [
+                    [
+                        0,
+                        410,
+                        745,
+                        480
+                    ],
+                    [
+                        320,
+                        520,
+                        425,
+                        370
+                    ]
+                ]
+            ],
+            [
+                "position",
+                "左下",
+                [
+                    130,
+                    865
+                ]
+            ],
+            [
+                "chest",
+                "左下",
+                [
+                    [
+                        110,
+                        900,
+                        790,
+                        260
+                    ]
+                ]
+            ],
+            [
+                "chest",
+                "右下",
+                [
+                    [
+                        100,
+                        790,
+                        800,
+                        490
+                    ],
+                    [
+                        100,
+                        1185,
+                        350,
+                        95
+                    ]
+                ]
+            ],
+            [
+                "stair_DH_R9",
+                "右下",
+                [
+                    820,
+                    1240
+                ]
+            ],
+            [
+                "harken",
+                "左上",
+                null
+            ]
         ],
-        "_EOT":[
-            ["press","DH",["EdgeOfTown",[1,1]],1],
-            ["press","DH-R9","input swipe 650 900 650 250",1]
-        ]
+        "_EOT": [
+            [
+                "town",
+                "EOT"
+            ],
+            [
+                "L1",
+                "DH"
+            ],
+            [
+                "L2",
+                "DH-R9",
+                "input swipe 650 900 650 250"
+            ]
+        ],
+        "questName_ko_KR": "[상자+몬스터] 대설지대 R10",
+        "questCategory_ko_KR": "메인 시나리오 4장"
     },
-
-    "DH-10f-JR":{
-        "_TYPE":"dungeon",
-        "questName":"[刷怪]深雪R10巨人",
+    "DH-10f-JR": {
+        "_TYPE": "dungeon",
+        "questName": "[刷怪]深雪R10巨人",
         "questName_en_US": "[Farm] Snow R10 Giant",
         "questCategory": "主线第四章",
         "questCategory_en_US": "Chapter 4",
-        "_TARGETINFOLIST":[
-            ["stair_DH_R10","左上",[80,235]],
-            ["position","右下",[655,330]],
-            ["position","右下",[500,385]],
-            ["stair_DH_R9", "右下",[820,1240]],
-            ["harken", "左上",null]
+        "_TARGETINFOLIST": [
+            [
+                "stair_DH_R10",
+                "左上",
+                [
+                    80,
+                    235
+                ]
+            ],
+            [
+                "position",
+                "右下",
+                [
+                    655,
+                    330
+                ]
+            ],
+            [
+                "position",
+                "右下",
+                [
+                    500,
+                    385
+                ]
+            ],
+            [
+                "stair_DH_R9",
+                "右下",
+                [
+                    820,
+                    1240
+                ]
+            ],
+            [
+                "harken",
+                "左上",
+                null
+            ]
         ],
-        "_EOT":[
-            ["press","DH",["EdgeOfTown",[1,1]],1],
-            ["press","DH-R9","input swipe 650 900 650 250",1]
-        ]
+        "_EOT": [
+            [
+                "town",
+                "EOT"
+            ],
+            [
+                "L1",
+                "DH"
+            ],
+            [
+                "L2",
+                "DH-R9",
+                "input swipe 650 900 650 250"
+            ]
+        ],
+        "questName_ko_KR": "[몬스터] 대설지대 R10 거인",
+        "questCategory_ko_KR": "메인 시나리오 4장"
     },
-
-    "DH-Church-upper":{
-        "_TYPE":"dungeon",
-        "questName":"[宝箱]教会-自动宝箱上半",
+    "DH-Church-upper": {
+        "_TYPE": "dungeon",
+        "questName": "[宝箱]教会-自动宝箱上半",
         "questName_en_US": "[Chest] Snow Church upper",
         "questCategory": "主线第四章",
         "questCategory_en_US": "Chapter 4",
-        "_TARGETINFOLIST":[
-            ["chest","左上",null],
-            ["chest","右上",null],
-            ["position","右上", [816,710]],
-            ["Bharken", "右上","stair_DH_Church"]
+        "_FloorCheck": "stair_DH_CG",
+        "_TARGETINFOLIST": [
+            [
+                "chest",
+                "左上",
+                null
+            ],
+            [
+                "chest",
+                "右上",
+                null
+            ],
+            [
+                "position",
+                "右上",
+                [
+                    816,
+                    710
+                ]
+            ],
+            [
+                "Bharken",
+                "右上",
+                "stair_DH_CG"
+            ]
         ],
-        "_EOT":[
-            ["press","DH",["EdgeOfTown",[1,1]],1],
-            ["press","DH-Church","input swipe 650 900 650 250",1]
-        ]
+        "_EOT": [
+            [
+                "town",
+                "EOT"
+            ],
+            [
+                "L1",
+                "DH"
+            ],
+            [
+                "L2",
+                "DH-Church",
+                "input swipe 650 900 650 250"
+            ]
+        ],
+        "questName_ko_KR": "[상자] 교회 - 자동 상자 상반",
+        "questCategory_ko_KR": "메인 시나리오 4장"
     },
-    
-    "DH-Church-auto":{
-        "_TYPE":"dungeon",
-        "questName":"[宝箱]教会-全范围找箱",
+    "DH-Church-auto": {
+        "_TYPE": "dungeon",
+        "questName": "[宝箱]教会-全范围找箱",
         "questName_en_US": "[Chest] Snow Church whole",
         "questCategory": "主线第四章",
         "questCategory_en_US": "Chapter 4",
-        "_TARGETINFOLIST":[
-            ["chest_auto"],
-            ["position","右上", [816,710]],
-            ["Bharken", "右上","stair_DH_Church"]
+        "_FloorCheck": "stair_DH_CG",
+        "_TARGETINFOLIST": [
+            [
+                "chest_auto"
+            ],
+            [
+                "position",
+                "右上",
+                [
+                    816,
+                    710
+                ]
+            ],
+            [
+                "Bharken",
+                "右上",
+                "stair_DH_CG"
+            ]
         ],
-        "_EOT":[
-            ["press","DH",["EdgeOfTown",[1,1]],1],
-            ["press","DH-Church","input swipe 650 900 650 250",1]
-        ]
+        "_EOT": [
+            [
+                "town",
+                "EOT"
+            ],
+            [
+                "L1",
+                "DH"
+            ],
+            [
+                "L2",
+                "DH-Church",
+                "input swipe 650 900 650 250"
+            ]
+        ],
+        "questName_ko_KR": "[상자] 교회 - 전체 구역 상자 찾기",
+        "questCategory_ko_KR": "메인 시나리오 4장"
     },
-
-    "White-G-v2":{
-        "_TYPE":"dungeon",
-        "questName":"[刷怪]教会白巨人 byXX",
+    "White-G-v2": {
+        "_TYPE": "dungeon",
+        "questName": "[刷怪]教会白巨人 byXX",
         "questName_en_US": "[Chest]Snow Church Giant[@XX] ",
         "questCategory": "主线第四章",
         "questCategory_en_US": "Chapter 4",
-        "_TARGETINFOLIST":[
-            ["Mark_auto"]
+        "_FloorCheck": "stair_DH_CG",
+        "_TARGETINFOLIST": [
+            [
+                "Mark_auto"
+            ]
         ],
-        "_EOT":[
-            ["press","DH",["EdgeOfTown",[1,1]],1],
-            ["press","DH-Church","input swipe 650 900 650 250",1]
+        "_EOT": [
+            [
+                "town",
+                "EOT"
+            ],
+            [
+                "L1",
+                "DH"
+            ],
+            [
+                "L2",
+                "DH-Church",
+                "input swipe 650 900 650 250"
+            ]
         ],
-        "_TIPS":"本任务作者[@XX](不出矮人王100意志好个体不改名)\n1. 进入雪地-“教会区域”，设置唯一标记点，位置为X=26, Y=6\n2. 该脚本需要较高练度，特定角色，特定技能，不解决装备，角色和配队导致的不稳定刷取流程。\n3. （可选）查看如何全自动挂机白巨人视频教程，现在马上三连关注该UP：\n【辟邪除妖】XX教你如何全自动无伤带走教会红色白巨人 思路分享 巫术 Wizardry Variants Daphne】 https://www.bilibili.com/video/BV1jqjw6CEWX/"
+        "_TIPS": "本任务作者[@XX](不出矮人王100意志好个体不改名)\n1. 进入雪地-“教会区域”，设置唯一标记点，位置为X=26, Y=6\n2. 该脚本需要较高练度，特定角色，特定技能，不解决装备，角色和配队导致的不稳定刷取流程。\n3. （可选）查看如何全自动挂机白巨人视频教程，现在马上三连关注该UP：\n【辟邪除妖】XX教你如何全自动无伤带走教会红色白巨人 思路分享 巫术 Wizardry Variants Daphne】 https://www.bilibili.com/video/BV1jqjw6CEWX/\n\nAuthor: [@XX]\n1. Go to the DeepSnow Hinterland. - \"Church area\" and set a single marker at X=26, Y=6.\n2. This script requires high investment plus specific characters and skills; it does not fix unstable runs caused by equipment, characters or party composition.\n3. (Optional) Video tutorial on fully automatic Giant farming (in Chinese): https://www.bilibili.com/video/BV1jqjw6CEWX/",
+        "questName_ko_KR": "[몬스터] 교회 백색 거인 (byXX)",
+        "questCategory_ko_KR": "메인 시나리오 4장",
+        "_TIPS_ko_KR": "제작자: @XX\n1. 대설지대 교회 구역의 X=26, Y=6에 유일한 지도 표식을 설정하세요.\n2. 높은 육성 수준과 특정 캐릭터·스킬이 필요합니다. 장비나 파티 구성으로 인한 불안정성은 이 작업이 해결하지 않습니다.\n3. 참고 영상 (중국어): https://www.bilibili.com/video/BV1jqjw6CEWX/",
+        "_TIPS_en_US": "Author: [@XX]\n1. Go to the DeepSnow Hinterland. - \"Church area\" and set a single marker at X=26, Y=6.\n2. This script requires high investment plus specific characters and skills; it does not fix unstable runs caused by equipment, characters or party composition.\n3. (Optional) Video tutorial on fully automatic Giant farming (in Chinese): https://www.bilibili.com/video/BV1jqjw6CEWX/",
+        "_TIPS_zh_CN": "本任务作者[@XX](不出矮人王100意志好个体不改名)\n1. 进入雪地-“教会区域”，设置唯一标记点，位置为X=26, Y=6\n2. 该脚本需要较高练度，特定角色，特定技能，不解决装备，角色和配队导致的不稳定刷取流程。\n3. （可选）查看如何全自动挂机白巨人视频教程，现在马上三连关注该UP：\n【辟邪除妖】XX教你如何全自动无伤带走教会红色白巨人 思路分享 巫术 Wizardry Variants Daphne】 https://www.bilibili.com/video/BV1jqjw6CEWX/"
     },
-
-    "FFXI-2F":{
-        "_TYPE":"dungeon",
-        "questName":"[宝箱]FFXI 2F 自动宝箱",
+    "FFXI-1F-elite": {
+        "_TYPE": "dungeon",
+        "questName": "[刷怪]FFXI 1F 精英",
+        "questName_en_US": "[Elite] FFXI 1F Elite",
+        "questCategory": "FFXI联动",
+        "questCategory_en_US": "FFXI Cave",
+        "_TARGETINFOLIST": [
+            [
+                "position",
+                "左上",
+                [
+                    30,
+                    300
+                ]
+            ],
+            [
+                "position",
+                "左上",
+                [
+                    350,
+                    880
+                ]
+            ],
+            [
+                "position",
+                "右上",
+                [
+                    870,
+                    300
+                ]
+            ],
+            [
+                "leaveDung"
+            ]
+        ],
+        "_EOT": [
+            [
+                "town",
+                "world"
+            ],
+            [
+                "worldmap",
+                "FFXI/GCN",
+                "input swipe 740 1000 740 1300"
+            ],
+            [
+                "L1",
+                "FFXI/ZONE1"
+            ]
+        ],
+        "_RTT": [
+            "City_RoyalCityLuknalia",
+            "input swipe 400 400 500 300",
+            [
+                500,
+                1100
+            ]
+        ],
+        "questName_ko_KR": "[몬스터] FFXI 1층 엘리트",
+        "questCategory_ko_KR": "FFXI 콜라보"
+    },
+    "FFXI-2F": {
+        "_TYPE": "dungeon",
+        "questName": "[宝箱]FFXI 2F 自动宝箱",
         "questName_en_US": "[Chest] FFXI 2F Chest",
-        "questCategory": "最新洞窟",
-        "questCategory_en_US": "*WHATS NEW*",
-        "_TARGETINFOLIST":[
-            ["chest_auto"],
-            ["position","右上",[496,447]]
+        "questCategory": "FFXI联动",
+        "questCategory_en_US": "FFXI Cave",
+        "_TARGETINFOLIST": [
+            [
+                "chest_auto"
+            ],
+            [
+                "position",
+                "右上",
+                [
+                    496,
+                    447
+                ]
+            ]
         ],
-        "_preEOTcheck":"FFXI/GCN",
-        "_EOT":
-        [
-            ["press","EVENT","FFXI/EVENT_GCN",1],
-            ["press","FFXI/ZONE2",[1,1],1]
+        "_EOT": [
+            [
+                "town",
+                "world"
+            ],
+            [
+                "worldmap",
+                "FFXI/GCN",
+                "input swipe 740 1000 740 1300"
+            ],
+            [
+                "L1",
+                "FFXI/ZONE2"
+            ]
         ],
-        "_RTT": ["FFXI/EVENT_VNH"],
-        "_TIPS":"该任务在小村子住宿. 主要不要开\"住豪华房\"和\"6小时重置队伍\"."
+        "_RTT": [
+            "City_RoyalCityLuknalia",
+            "input swipe 400 400 500 300",
+            [
+                500,
+                1100
+            ]
+        ],
+        "questName_ko_KR": "[상자] FFXI 2F 자동 상자",
+        "questCategory_ko_KR": "FFXI 콜라보"
     },
-
-    "FFXI-2F-elite":{
-        "_TYPE":"dungeon",
-        "questName":"[刷怪]FFXI 2F 精英",
+    "FFXI-2F-elite": {
+        "_TYPE": "dungeon",
+        "questName": "[刷怪]FFXI 2F 精英",
         "questName_en_US": "[Elite] FFXI 2F Elite",
-        "questCategory": "最新洞窟",
-        "questCategory_en_US": "*WHATS NEW*",
-        "_TARGETINFOLIST":[
-            ["position","左下",[300,280]],
-            ["position","左下",[670,920]],
-            ["position","右下",[865,917]],
-            ["position","右上",[496,447]]
+        "questCategory": "FFXI联动",
+        "questCategory_en_US": "FFXI Cave",
+        "_TARGETINFOLIST": [
+            [
+                "position",
+                "左下",
+                [
+                    300,
+                    280
+                ]
+            ],
+            [
+                "position",
+                "左下",
+                [
+                    670,
+                    920
+                ]
+            ],
+            [
+                "position",
+                "右下",
+                [
+                    865,
+                    917
+                ]
+            ],
+            [
+                "position",
+                "右上",
+                [
+                    496,
+                    447
+                ]
+            ]
         ],
-        "_preEOTcheck":"FFXI/GCN",
-        "_EOT":
-        [
-            ["press","EVENT","FFXI/EVENT_GCN",1],
-            ["press","FFXI/ZONE2",[1,1],1]
+        "_EOT": [
+            [
+                "town",
+                "world"
+            ],
+            [
+                "worldmap",
+                "FFXI/GCN",
+                "input swipe 740 1000 740 1300"
+            ],
+            [
+                "L1",
+                "FFXI/ZONE2"
+            ]
         ],
-        "_RTT": ["FFXI/EVENT_VNH"],
-        "_TIPS":"该任务在小村子住宿. 主要不要开\"住豪华房\"和\"6小时重置队伍\"."
+        "_RTT": [
+            "City_RoyalCityLuknalia",
+            "input swipe 400 400 500 300",
+            [
+                500,
+                1100
+            ]
+        ],
+        "questName_ko_KR": "[몬스터] FFXI 2F 엘리트",
+        "questCategory_ko_KR": "FFXI 콜라보"
     },
-
-    "FFXI-5F-4Elite":{
-        "_TYPE":"dungeon",
-        "questName":"[恶名]FFXI 5F 4精英",
+    "FFXI-4f": {
+        "_TYPE": "dungeon",
+        "questName": "[宝箱]FFXI 4F",
+        "questName_en_US": "[Elite] FFXI 4F",
+        "questCategory": "FFXI联动",
+        "questCategory_en_US": "FFXI Cave",
+        "_FloorCheck": [
+            "FFXI/stair_zone4",
+            "FFXI/stair_zone3"
+        ],
+        "_TARGETINFOLIST": [
+            [
+                "FFXI/stair_zone4",
+                "左上",
+                [
+                    719,
+                    237
+                ]
+            ],
+            [
+                "chest",
+                "右下",
+                [
+                    [
+                        20,
+                        893,
+                        709,
+                        329
+                    ],
+                    [
+                        635,
+                        1052,
+                        66,
+                        54
+                    ],
+                    [
+                        29,
+                        1004,
+                        67,
+                        46
+                    ]
+                ]
+            ],
+            [
+                "leaveDung"
+            ]
+        ],
+        "_EOT": [
+            [
+                "town",
+                "world"
+            ],
+            [
+                "worldmap",
+                "FFXI/GCN",
+                "input swipe 740 1000 740 1300"
+            ],
+            [
+                "L1",
+                "FFXI/ZONE3"
+            ]
+        ],
+        "_RTT": [
+            "City_RoyalCityLuknalia",
+            "input swipe 400 400 500 300",
+            [
+                500,
+                1100
+            ]
+        ],
+        "questName_ko_KR": "[상자] FFXI 4층",
+        "questCategory_ko_KR": "FFXI 콜라보"
+    },
+    "FFXI-5F-4Elite": {
+        "_TYPE": "dungeon",
+        "questName": "[恶名]FFXI 5F 最高难度 4精英",
         "questName_en_US": "[Elite] FFXI 5F 4Elite",
-        "questCategory": "最新洞窟",
-        "questCategory_en_US": "*WHATS NEW*",
-        "_TARGETINFOLIST":[
-			["position","左下",[30,652]],
-            ["position","左下",[80,1130]],
-            ["position","右下",[820,1130]],
-            ["position","右下",[870,652]],
-            ["position","左上",[450,392]]
+        "questCategory": "FFXI联动",
+        "questCategory_en_US": "FFXI Cave",
+        "_TARGETINFOLIST": [
+            [
+                "position",
+                "左下",
+                [
+                    30,
+                    652
+                ]
+            ],
+            [
+                "position",
+                "左下",
+                [
+                    80,
+                    1130
+                ]
+            ],
+            [
+                "position",
+                "右下",
+                [
+                    820,
+                    1130
+                ]
+            ],
+            [
+                "position",
+                "右下",
+                [
+                    870,
+                    652
+                ]
+            ],
+            [
+                "position",
+                "左上",
+                [
+                    450,
+                    392
+                ]
+            ]
         ],
-        "_EOT":
-        [
-            ["press","EVENT","FFXI/EVENT_GCN",1],
-            ["press","FFXI/zone5",[1,1],1]
+        "_EOT": [
+            [
+                "town",
+                "world"
+            ],
+            [
+                "worldmap",
+                "FFXI/GCN",
+                "input swipe 740 1000 740 1300"
+            ],
+            [
+                "L1",
+                "FFXI/zone5"
+            ]
         ],
-        "_RTT": ["FFXI/EVENT_VNH"],
-        "_TIPS":"该任务在小村子住宿. 主要不要开\"住豪华房\"和\"6小时重置队伍\"."
+        "_RTT": [
+            "City_RoyalCityLuknalia",
+            "input swipe 400 400 500 300",
+            [
+                500,
+                1100
+            ]
+        ],
+        "questName_ko_KR": "[악명] FFXI 5층 최고 난도 엘리트 4마리",
+        "questCategory_ko_KR": "FFXI 콜라보"
     },
-
-    "FFXI-5F-2Elite-mid":{
-        "_TYPE":"dungeon",
-        "questName":"[恶名]FFXI 5F 中部2精英",
+    "FFXI-5F-2Elite-mid": {
+        "_TYPE": "dungeon",
+        "questName": "[恶名]FFXI 5F 高难度 中部2精英",
         "questName_en_US": "[Elite+Chest] FFXI 5F 2Elite Mid",
-        "questCategory": "最新洞窟",
-        "questCategory_en_US": "*WHATS NEW*",
-        "_TARGETINFOLIST":[
-			["position","左下",[30,652]],
-            ["position","右下",[870,652]],
-            ["position","左上",[450,392]]
+        "questCategory": "FFXI联动",
+        "questCategory_en_US": "FFXI Cave",
+        "_TARGETINFOLIST": [
+            [
+                "position",
+                "左下",
+                [
+                    30,
+                    652
+                ]
+            ],
+            [
+                "position",
+                "右下",
+                [
+                    870,
+                    652
+                ]
+            ],
+            [
+                "position",
+                "左上",
+                [
+                    450,
+                    392
+                ]
+            ]
         ],
-        "_EOT":
-        [
-            ["press","EVENT","FFXI/EVENT_GCN",1],
-            ["press","FFXI/zone5",[1,1],1]
+        "_EOT": [
+            [
+                "town",
+                "world"
+            ],
+            [
+                "worldmap",
+                "FFXI/GCN",
+                "input swipe 740 1000 740 1300"
+            ],
+            [
+                "L1",
+                "FFXI/zone5"
+            ]
         ],
-        "_RTT": ["FFXI/EVENT_VNH"],
-        "_TIPS":"该任务在小村子住宿. 主要不要开\"住豪华房\"和\"6小时重置队伍\"."
+        "_RTT": [
+            "City_RoyalCityLuknalia",
+            "input swipe 400 400 500 300",
+            [
+                500,
+                1100
+            ]
+        ],
+        "questName_ko_KR": "[악명] FFXI 5층 높은 난도 중부 엘리트 2마리",
+        "questCategory_ko_KR": "FFXI 콜라보"
     },
-
-    "FFXI-5F-2Elite-bottom":{
-        "_TYPE":"dungeon",
-        "questName":"[恶名]FFXI 5F 底部2精英",
+    "FFXI-5F-2Elite-bottom": {
+        "_TYPE": "dungeon",
+        "questName": "[恶名]FFXI 5F 中等难度 底部2精英",
         "questName_en_US": "[Elite+Chest] FFXI 5F 2Elite Bottom",
-        "questCategory": "最新洞窟",
-        "questCategory_en_US": "*WHATS NEW*",
-        "_TARGETINFOLIST":[
-            ["position","左下",[80,1130]],
-            ["position","右下",[820,1130]],
-            ["position","左上",[450,392]]
+        "questCategory": "FFXI联动",
+        "questCategory_en_US": "FFXI Cave",
+        "_TARGETINFOLIST": [
+            [
+                "position",
+                "左下",
+                [
+                    80,
+                    1130
+                ]
+            ],
+            [
+                "position",
+                "右下",
+                [
+                    820,
+                    1130
+                ]
+            ],
+            [
+                "position",
+                "左上",
+                [
+                    450,
+                    392
+                ]
+            ]
         ],
-        "_EOT":
-        [
-            ["press","EVENT","FFXI/EVENT_GCN",1],
-            ["press","FFXI/zone5",[1,1],1]
+        "_EOT": [
+            [
+                "town",
+                "world"
+            ],
+            [
+                "worldmap",
+                "FFXI/GCN",
+                "input swipe 740 1000 740 1300"
+            ],
+            [
+                "L1",
+                "FFXI/zone5"
+            ]
         ],
-        "_RTT": ["FFXI/EVENT_VNH"],
-        "_TIPS":"该任务在小村子住宿. 主要不要开\"住豪华房\"和\"6小时重置队伍\"."
+        "_RTT": [
+            "City_RoyalCityLuknalia",
+            "input swipe 400 400 500 300",
+            [
+                500,
+                1100
+            ]
+        ],
+        "questName_ko_KR": "[악명] FFXI 5층 보통 난도 하단 엘리트 2마리",
+        "questCategory_ko_KR": "FFXI 콜라보"
     },
-
-    "FFXI-5F-2Elite-left":{
-        "_TYPE":"dungeon",
-        "questName":"[恶名]FFXI 5F 左侧2精英",
+    "FFXI-5F-2Elite-left": {
+        "_TYPE": "dungeon",
+        "questName": "[恶名]FFXI 5F 中等难度 左侧2精英",
         "questName_en_US": "[Elite+Chest] FFXI 5F 2Elite Left",
+        "questCategory": "FFXI联动",
+        "questCategory_en_US": "FFXI Cave",
+        "_TARGETINFOLIST": [
+            [
+                "position",
+                "左下",
+                [
+                    30,
+                    652
+                ]
+            ],
+            [
+                "position",
+                "左下",
+                [
+                    80,
+                    1130
+                ]
+            ],
+            [
+                "position",
+                "左上",
+                [
+                    450,
+                    392
+                ]
+            ]
+        ],
+        "_EOT": [
+            [
+                "town",
+                "world"
+            ],
+            [
+                "worldmap",
+                "FFXI/GCN",
+                "input swipe 740 1000 740 1300"
+            ],
+            [
+                "L1",
+                "FFXI/zone5"
+            ]
+        ],
+        "_RTT": [
+            "City_RoyalCityLuknalia",
+            "input swipe 400 400 500 300",
+            [
+                500,
+                1100
+            ]
+        ],
         "questName_ko_KR": "[악명] FFXI 5F 좌측 엘리트 2마리",
-        "questCategory": "最新洞窟",
-        "questCategory_en_US": "*WHATS NEW*",
-        "questCategory_ko_KR": "최신 던전",
-        "_TARGETINFOLIST":[
-            ["position","左下",[30,652]],
-            ["position","左下",[80,1130]],
-            ["position","左上",[450,392]]
-        ],
-        "_EOT":
-        [
-            ["press","EVENT","FFXI/EVENT_GCN",1],
-            ["press","FFXI/zone5",[1,1],1]
-        ],
-        "_RTT": ["FFXI/EVENT_VNH"],
-        "_TIPS":"该任务在小村子住宿. 主要不要开\"住豪华房\"和\"6小时重置队伍\"."
+        "questCategory_ko_KR": "FFXI 콜라보"
     },
-
-    "FFXI-5F-Elite":{
-        "_TYPE":"dungeon",
-        "questName":"[恶名]FFXI 5F 单恶魔",
+    "FFXI-5F-Elite": {
+        "_TYPE": "dungeon",
+        "questName": "[恶名]FFXI 5F 低难度 单恶魔",
         "questName_en_US": "[Elite+Chest] FFXI 5F Single Elite",
-        "questCategory": "最新洞窟",
-        "questCategory_en_US": "*WHATS NEW*",
-        "_TARGETINFOLIST":[
-			["position","左下",[80,1130]],
-            ["position","左上",[450,392]]
+        "questCategory": "FFXI联动",
+        "questCategory_en_US": "FFXI Cave",
+        "_TARGETINFOLIST": [
+            [
+                "position",
+                "左下",
+                [
+                    80,
+                    1130
+                ]
+            ],
+            [
+                "position",
+                "左上",
+                [
+                    450,
+                    392
+                ]
+            ]
         ],
-        "_EOT":
-        [
-            ["press","EVENT","FFXI/EVENT_GCN",1],
-            ["press","FFXI/zone5",[1,1],1]
+        "_EOT": [
+            [
+                "town",
+                "world"
+            ],
+            [
+                "worldmap",
+                "FFXI/GCN",
+                "input swipe 740 1000 740 1300"
+            ],
+            [
+                "L1",
+                "FFXI/zone5"
+            ]
         ],
-        "_RTT": ["FFXI/EVENT_VNH"],
-        "_TIPS":"该任务在小村子住宿. 主要不要开\"住豪华房\"和\"6小时重置队伍\"."
+        "_RTT": [
+            "City_RoyalCityLuknalia",
+            "input swipe 400 400 500 300",
+            [
+                500,
+                1100
+            ]
+        ],
+        "questName_ko_KR": "[악명] FFXI 5층 낮은 난도 악마 1마리",
+        "questCategory_ko_KR": "FFXI 콜라보"
     },
-
-    "HSR-1F":{
-        "_TYPE":"dungeon",
-        "questName":"[宝箱]药师洞1f宝箱",
+    "HSR-1F": {
+        "_TYPE": "dungeon",
+        "questName": "[宝箱]药师洞1f宝箱",
         "questName_en_US": "[Chest] Healers' Settlement 1F",
         "questCategory": "任务洞窟",
         "questCategory_en_US": "Request Caves",
-        "_TARGETINFOLIST":[
-            ["chest_auto"],
-            ["position","左下",[720,1135]]
+        "_TARGETINFOLIST": [
+            [
+                "chest_auto"
+            ],
+            [
+                "position",
+                "左下",
+                [
+                    720,
+                    1135
+                ]
+            ]
         ],
-        "_preEOTcheck":"HSR/HSR",
-        "_EOT":
-        [
-            ["press","intoWorldMap",["HSR/HSR","input swipe 400 400 500 500"],1],
-            ["press","HSR/AGMM1F",[1,1],1]
+        "_EOT": [
+            [
+                "town",
+                "world"
+            ],
+            [
+                "worldmap",
+                "HSR/HSR",
+                "input swipe 400 400 500 500"
+            ],
+            [
+                "L1",
+                "HSR/AGMM1F"
+            ],
+            [
+                "L2",
+                "HSR/AGMM1F"
+            ]
         ],
-        "_TIPS":"该任务从第四章出发. This quest departs from Deepsnow Hinterlands."
+        "_TIPS": "该任务从第四章出发.\nThis quest departs from Chapter 4, Deepsnow Hinterlands.",
+        "questName_ko_KR": "[상자] 치유사의 마을 유적 1F",
+        "questCategory_ko_KR": "퀘스트 동굴",
+        "_TIPS_ko_KR": "4장 대설지대에서 출발하는 작업입니다.",
+        "_TIPS_en_US": "This quest departs from Chapter 4, Deepsnow Hinterlands.",
+        "_TIPS_zh_CN": "该任务从第四章出发."
     },
-
-    "IWO":{
-        "_TYPE":"dungeon",
-        "questName":"[宝箱]鬼洞1f 水路出发",
+    "IWO": {
+        "_TYPE": "dungeon",
+        "questName": "[宝箱]鬼洞1f 水路出发",
         "questName_en_US": "[Chest] Oni Island 1F",
         "questCategory": "任务洞窟",
         "questCategory_en_US": "Request Caves",
-        "_TARGETINFOLIST":[
-            ["chest_auto"],
-            ["position","左下", [186,1028]]
+        "_TARGETINFOLIST": [
+            [
+                "chest_auto"
+            ],
+            [
+                "position",
+                "左下",
+                [
+                    186,
+                    1028
+                ]
+            ]
         ],
-        "_preEOTcheck":"IWO/IWO",
-        "_EOT":
-        [
-            ["press","intoWorldMap",["IWO/IWO","input swipe 700 1100 500 1100",[500,1100]],1],
-            ["press","IWO/IWOB1F",["IWO/IWO",[1,1]],1]
+        "_EOT": [
+            [
+                "town",
+                "world"
+            ],
+            [
+                "worldmap",
+                "IWO/IWO",
+                "input swipe 700 1100 500 1100",
+                [
+                    500,
+                    1100
+                ]
+            ],
+            [
+                "L1",
+                "IWO/IWOB1F",
+                "IWO/IWO"
+            ],
+            [
+                "L2",
+                "IWO/IWOB1F",
+                "IWO/IWO"
+            ]
         ],
-        "_RTT": ["City_portTownGrandLegion","input swipe 500 1100 700 700",[500,1100]],
-        "_TIPS":"该任务从第二章水路出发.\nThis quest departs from Trade Waterway."
+        "_RTT": [
+            "City_portTownGrandLegion",
+            "input swipe 500 1100 700 700",
+            [
+                500,
+                1100
+            ]
+        ],
+        "_TIPS": "该任务从第二章水路出发.\nThis quest departs from Trade Waterway (Chapter 2).",
+        "questName_ko_KR": "[상자] 귀곡도 1F (수로 출발)",
+        "questCategory_ko_KR": "퀘스트 동굴",
+        "_TIPS_ko_KR": "2장 무역수로에서 출발하는 작업입니다.",
+        "_TIPS_en_US": "This quest departs from Trade Waterway (Chapter 2).",
+        "_TIPS_zh_CN": "该任务从第二章水路出发."
     },
-    "IWO_2":{
-        "_TYPE":"dungeon",
-        "questName":"[宝箱]鬼洞2F",
+    "IWO_2": {
+        "_TYPE": "dungeon",
+        "questName": "[宝箱]鬼洞2F",
         "questName_en_US": "[Chest] Oni Island 2F",
         "questCategory": "任务洞窟",
         "questCategory_en_US": "Request Caves",
-        "_TARGETINFOLIST":[
-            ["chest_auto"],
-            ["position","右下", [500, 815]]
+        "_TARGETINFOLIST": [
+            [
+                "chest_auto"
+            ],
+            [
+                "position",
+                "右下",
+                [
+                    500,
+                    815
+                ]
+            ]
         ],
-        "_preEOTcheck":"IWO/IWO",
-        "_EOT":
-        [
-            ["press","intoWorldMap",["IWO/IWO","input swipe 700 1100 500 1100",[500,1100]],1],
-            ["press","IWO/IWOB2F",["IWO/IWO",[1,1]],1]
+        "_EOT": [
+            [
+                "town",
+                "world"
+            ],
+            [
+                "worldmap",
+                "IWO/IWO",
+                "input swipe 700 1100 500 1100",
+                [
+                    500,
+                    1100
+                ]
+            ],
+            [
+                "L1",
+                "IWO/IWOB2F",
+                "IWO/IWO"
+            ],
+            [
+                "L2",
+                "IWO/IWOB2F",
+                "IWO/IWO"
+            ]
         ],
-        "_RTT": ["City_portTownGrandLegion","input swipe 500 1100 700 700",[500,1100]],
-        "_TIPS":"该任务从第二章水路出发.\nThis quest departs from Trade Waterway."
+        "_RTT": [
+            "City_portTownGrandLegion",
+            "input swipe 500 1100 700 700",
+            [
+                500,
+                1100
+            ]
+        ],
+        "_TIPS": "该任务从第二章水路出发.\nThis quest departs from Trade Waterway (Chapter 2).",
+        "questName_ko_KR": "[상자] 귀곡도 2F",
+        "questCategory_ko_KR": "퀘스트 동굴",
+        "_TIPS_ko_KR": "2장 무역수로에서 출발하는 작업입니다.",
+        "_TIPS_en_US": "This quest departs from Trade Waterway (Chapter 2).",
+        "_TIPS_zh_CN": "该任务从第二章水路出发."
     },
-    "malice-B3F":{
-        "_TYPE":"dungeon",
-        "questName":"[刷怪]怨嗟洞窟三层",
+    "malice-B3F": {
+        "_TYPE": "dungeon",
+        "questName": "[刷怪]怨嗟洞窟三层",
         "questName_en_US": "[Farm] Cave of Malice B3F",
         "questCategory": "任务洞窟",
         "questCategory_en_US": "Request Caves",
-        "_EOT":[
-            ["press","malice_malice",["EdgeOfTown",[1,1]],1],
-            ["press","malice_B3F",[1,1],1]
+        "_EOT": [
+            [
+                "town",
+                "EOT"
+            ],
+            [
+                "L1",
+                "malice_malice"
+            ],
+            [
+                "L2",
+                "malice_B3F"
+            ]
         ],
-        "_TARGETINFOLIST":
-        [
-            ["position","右上",[715,290]],
-            ["harken2",null,null]
-        ]
+        "_TARGETINFOLIST": [
+            [
+                "position",
+                "右上",
+                [
+                    715,
+                    290
+                ]
+            ],
+            [
+                "position",
+                "右上",
+                [
+                    449,
+                    928
+                ]
+            ]
+        ],
+        "questName_ko_KR": "[몬스터] 원한의 동굴 3층",
+        "questCategory_ko_KR": "퀘스트 동굴"
     },
-    "fordraig-B3F":{
-        "_TYPE":"dungeon",
-        "questName":"[宝箱]弗德莱戈的迷宫三层",
+    "fordraig-B3F": {
+        "_TYPE": "dungeon",
+        "questName": "[宝箱]弗德莱戈的迷宫三层",
         "questName_en_US": "[Chest] Fordraig B3F",
         "questCategory": "任务洞窟",
         "questCategory_en_US": "Request Caves",
-        "_TARGETINFOLIST":[
-            ["chest_auto"],
-            ["harken",[[100,1200,700,100],[700,800,100,800],[400,100,400,1200],[100,800,700,800],[400,1200,400,100]]]
+        "_TARGETINFOLIST": [
+            [
+                "chest_auto"
+            ],
+            [
+                "harken",
+                [
+                    [
+                        100,
+                        1200,
+                        700,
+                        100
+                    ],
+                    [
+                        700,
+                        800,
+                        100,
+                        800
+                    ],
+                    [
+                        400,
+                        100,
+                        400,
+                        1200
+                    ],
+                    [
+                        100,
+                        800,
+                        700,
+                        800
+                    ],
+                    [
+                        400,
+                        1200,
+                        400,
+                        100
+                    ]
+                ]
+            ]
         ],
-        "_preEOTcheck":"fordraig/B3F",
-        "_EOT":[
-            ["press","intoWorldMap",["fordraig/labyrinthOfFordraig","input swipe 450 150 500 150"],2],
-            ["press","fordraig/B3F",["fordraig/labyrinthOfFordraig",[1,1]],1]
-        ]
+        "_EOT": [
+            [
+                "town",
+                "world"
+            ],
+            [
+                "worldmap",
+                "fordraig/labyrinthOfFordraig",
+                "input swipe 450 150 500 150"
+            ],
+            [
+                "L1",
+                "fordraig/B3F",
+                "fordraig/labyrinthOfFordraig"
+            ],
+            [
+                "L2",
+                "fordraig/B3F",
+                "fordraig/labyrinthOfFordraig"
+            ]
+        ],
+        "questName_ko_KR": "[상자] 포드레이그의 미궁 3층 (fordraig B3F)",
+        "questCategory_ko_KR": "퀘스트 동굴"
     },
-
-    "SSC_chest":{
-        "_TYPE":"dungeon",
-        "questName":"[宝箱]忍洞一层",
+    "SSC_chest": {
+        "_TYPE": "dungeon",
+        "questName": "[宝箱]忍洞一层",
         "questName_en_US": "[Chest] Sand Shadow Cave 1F",
         "questCategory": "任务洞窟",
         "questCategory_en_US": "Request Caves",
-        "_TARGETINFOLIST":[
-	        ["chest_auto"],
-            ["SSC/SSC_quit","左下","default"]
+        "_TARGETINFOLIST": [
+            [
+                "chest_auto"
+            ],
+            [
+                "SSC/SSC_quit",
+                "左下",
+                "default"
+            ]
         ],
-        "_preEOTcheck":"SSC/SSC",
-        "_EOT":[
-            ["press","intoWorldMap",["SSC/SSC","input swipe 700 500 600 600"],1]
-        ]
+        "_EOT": [
+            [
+                "town",
+                "world"
+            ],
+            [
+                "worldmap",
+                "SSC/SSC",
+                "input swipe 827 1187 527 1421"
+            ]
+        ],
+        "questName_ko_KR": "[상자] 모래 그림자의 동굴 1층",
+        "questCategory_ko_KR": "퀘스트 동굴"
     },
-
-    "LBC":{
-        "_TYPE":"dungeon",
-        "questName":"[宝箱]卢比肯宝箱",
+    "LBC": {
+        "_TYPE": "dungeon",
+        "questName": "[宝箱]卢比肯宝箱",
         "questName_en_US": "[Chest] Le Bicken Cave",
         "questCategory": "任务洞窟",
         "questCategory_en_US": "Request Caves",
-        "_TARGETINFOLIST":[
-            ["chest"],
-            ["LBC/LBC_quit"]
+        "_TARGETINFOLIST": [
+            [
+                "chest"
+            ],
+            [
+                "LBC/LBC_quit"
+            ]
         ],
-        "_preEOTcheck":"LBC/LBC",
-        "_EOT":
-        [
-            ["press","intoWorldMap",["LBC/LBC","input swipe 400 400 400 500"],1]
-        ]
+        "_EOT": [
+            [
+                "town",
+                "world"
+            ],
+            [
+                "worldmap",
+                "LBC/LBC",
+                "input swipe 400 400 400 500"
+            ]
+        ],
+        "questName_ko_KR": "[상자] 루비콘의 상자",
+        "questCategory_ko_KR": "퀘스트 동굴"
     },
-
-    "AWD":{
-        "_TYPE":"dungeon",
-        "questName":"[宝箱]狼洞2f",
+    "AWD": {
+        "_TYPE": "dungeon",
+        "questName": "[宝箱]狼洞2f",
         "questName_en_US": "[Chest] Alabster Wolf Den 2f",
         "questCategory": "任务洞窟",
         "questCategory_en_US": "Request Caves",
-        "_TARGETINFOLIST":[
-            ["chest_auto"],
-            ["position","右下",[766,974]]
+        "_TARGETINFOLIST": [
+            [
+                "chest_auto"
+            ],
+            [
+                "position",
+                "右下",
+                [
+                    766,
+                    974
+                ]
+            ]
         ],
-        "_preEOTcheck":"AWD/AWD",
-        "_EOT":
-        [
-            ["press","intoWorldMap",["AWD/AWD","input swipe 400 400 500 500"],1],
-            ["press","AWD/AWD2F",[1,1],1]
-        ]
+        "_EOT": [
+            [
+                "town",
+                "world"
+            ],
+            [
+                "worldmap",
+                "AWD/AWD",
+                "input swipe 400 400 500 500"
+            ],
+            [
+                "L1",
+                "AWD/AWD2F"
+            ],
+            [
+                "L2",
+                "AWD/AWD2F"
+            ]
+        ],
+        "questName_ko_KR": "[상자] 백아의 동굴 2F",
+        "questCategory_ko_KR": "퀘스트 동굴"
     },
-    "AWD-noGorgon":{
-        "_TYPE":"dungeon",
-        "questName":"[宝箱]狼洞1f",
+    "AWD-noGorgon": {
+        "_TYPE": "dungeon",
+        "questName": "[宝箱]狼洞1f",
         "questName_en_US": "[Chest] Alabster Wolf Den 1f",
         "questCategory": "任务洞窟",
         "questCategory_en_US": "Request Caves",
-        "_TARGETINFOLIST":[
-            ["chest_auto"],
-            ["position","右上",[766,930]],
-            ["harken","右下"]
+        "_TARGETINFOLIST": [
+            [
+                "chest_auto"
+            ],
+            [
+                "position",
+                "右上",
+                [
+                    766,
+                    930
+                ]
+            ],
+            [
+                "harken",
+                "右下"
+            ]
         ],
-        "_preEOTcheck":"AWD/AWD",
-        "_EOT":
-        [
-            ["press","intoWorldMap",["AWD/AWD","input swipe 400 400 500 500"],1],
-            ["press","AWD/AWD1F",[1,1],1]
-        ]
+        "_EOT": [
+            [
+                "town",
+                "world"
+            ],
+            [
+                "worldmap",
+                "AWD/AWD",
+                "input swipe 400 400 500 500"
+            ],
+            [
+                "L1",
+                "AWD/AWD1F"
+            ],
+            [
+                "L2",
+                "AWD/AWD1F"
+            ]
+        ],
+        "questName_ko_KR": "[상자] 백아의 동굴 1F (고르곤 없음)",
+        "questCategory_ko_KR": "퀘스트 동굴"
     },
-
-
-    "GHB":{
-        "_TYPE":"dungeon",
-        "questName":"[宝箱]百花之庭固定怪",
+    "GHB": {
+        "_TYPE": "dungeon",
+        "questName": "[宝箱]百花之庭固定怪",
         "questCategory": "任务洞窟",
         "questCategory_en_US": "Request Caves",
-        "_TARGETINFOLIST":[
-            ["position","左上",[80,450]],
-            ["position","右上",[340,450]],
-            ["position","右上",[550,290]],
-            ["position","右上",[230,1030]],
-            ["position","左下",[240,860]],
-            ["chest","左下",null],
-            ["chest","左上",null],
-            ["chest","右上",null],
-            ["chest","右下",null],
-            ["GHB/GHB_quit","左下","default"]
+        "_TARGETINFOLIST": [
+            [
+                "position",
+                "左上",
+                [
+                    80,
+                    450
+                ]
+            ],
+            [
+                "position",
+                "右上",
+                [
+                    340,
+                    450
+                ]
+            ],
+            [
+                "position",
+                "右上",
+                [
+                    550,
+                    290
+                ]
+            ],
+            [
+                "position",
+                "右上",
+                [
+                    230,
+                    1030
+                ]
+            ],
+            [
+                "position",
+                "左下",
+                [
+                    240,
+                    860
+                ]
+            ],
+            [
+                "chest",
+                "左下",
+                null
+            ],
+            [
+                "chest",
+                "左上",
+                null
+            ],
+            [
+                "chest",
+                "右上",
+                null
+            ],
+            [
+                "chest",
+                "右下",
+                null
+            ],
+            [
+                "GHB/GHB_quit",
+                "左下",
+                "default"
+            ]
         ],
-        "_preEOTcheck":"GHB/GHB",
-        "_EOT":[
-            ["press","intoWorldMap",["GHB/GHB","input swipe 400 500 450 550"],1]
-        ]
+        "_EOT": [
+            [
+                "town",
+                "world"
+            ],
+            [
+                "worldmap",
+                "GHB/GHB",
+                "input swipe 400 500 450 550"
+            ]
+        ],
+        "questName_ko_KR": "[상자] 백화의 정원 고정 몬스터",
+        "questCategory_ko_KR": "퀘스트 동굴"
     },
-
-    "COS_chest":{
-        "_TYPE":"dungeon",
-        "questName":"[宝箱]离别洞窟",
+    "COS_chest": {
+        "_TYPE": "dungeon",
+        "questName": "[宝箱]离别洞窟",
         "questName_en_US": "[Chest] Separation whole",
         "questCategory": "任务洞窟",
         "questCategory_en_US": "Request Caves",
-        "_TARGETINFOLIST":[
-            ["chest","左上",null],
-            ["chest","右上",null],
-            ["stair_3","左上",[720,822]],
-            ["chest","左上",null],
-            ["chest","左下",null],
-            ["stair_2","左下",[827,547]],
-            ["harken","左下",null]
+        "_TARGETINFOLIST": [
+            [
+                "chest",
+                "左上",
+                null
+            ],
+            [
+                "chest",
+                "右上",
+                null
+            ],
+            [
+                "stair_3",
+                "左上",
+                [
+                    720,
+                    822
+                ]
+            ],
+            [
+                "chest",
+                "左上",
+                null
+            ],
+            [
+                "chest",
+                "左下",
+                null
+            ],
+            [
+                "stair_2",
+                "左下",
+                [
+                    827,
+                    547
+                ]
+            ],
+            [
+                "harken",
+                "左下",
+                null
+            ]
         ],
-        "_EOT":[
-            ["press","COS/COS",["EdgeOfTown",[1,1]],1],
-            ["press","COS/COSB2F",[1,1],1]
-        ]
+        "_EOT": [
+            [
+                "town",
+                "EOT"
+            ],
+            [
+                "L1",
+                "COS/COS"
+            ],
+            [
+                "L2",
+                "COS/COSB2F"
+            ]
+        ],
+        "questName_ko_KR": "[상자] 영별의 동굴",
+        "questCategory_ko_KR": "퀘스트 동굴"
     },
-
-    "COS_chest_short":{
-        "_TYPE":"dungeon",
-        "questName":"[宝箱]离别洞窟(只刷2f)",
+    "COS_chest_short": {
+        "_TYPE": "dungeon",
+        "questName": "[宝箱]离别洞窟(只刷2f)",
         "questName_en_US": "[Chest] Separation 2f",
         "questCategory": "任务洞窟",
         "questCategory_en_US": "Request Caves",
-        "_TARGETINFOLIST":[
-            ["chest_auto"],
-            ["harken","左下",null]
+        "_TARGETINFOLIST": [
+            [
+                "chest_auto"
+            ],
+            [
+                "harken",
+                "左下",
+                null
+            ]
         ],
-        "_EOT":[
-            ["press","COS/COS",["EdgeOfTown",[1,1]],1],
-            ["press","COS/COSB2F",[1,1],1]
-        ]
-    },
-
-    "DOE":{
-        "_TYPE":"dungeon",
-        "questName":"[矿石]土洞(中/次)",
-        "questName_en_US": "[Ore] Den of Earth",
-        "questCategory": "矿石",
-        "questCategory_en_US": "Ore",
-        "_EOT":[
-            ["press","DOE",["EdgeOfTown",[1,1]],1],
-            ["press","DOEB1F",[1,1],1]
+        "_EOT": [
+            [
+                "town",
+                "EOT"
+            ],
+            [
+                "L1",
+                "COS/COS"
+            ],
+            [
+                "L2",
+                "COS/COSB2F"
+            ]
         ],
-        "_TARGETINFOLIST":
-        [
-            ["position", "右下", [713,1027]],
-            ["chest","右下",[[421,768,479,480]]],
-            ["DOE_quit"]
-        ]
+        "questName_ko_KR": "[상자] 영별의 동굴 (2F 전용)",
+        "questCategory_ko_KR": "퀘스트 동굴"
     },
-
     "DOF": {
-        "_TYPE":"dungeon",
-        "questName":"[矿石]火洞(特/中/次)",
+        "_TYPE": "dungeon",
+        "questName": "[矿石]火洞(特/中/次)",
         "questName_en_US": "[Ore] Den of Fire",
         "questCategory": "矿石",
         "questCategory_en_US": "Ore",
-        "_TARGETINFOLIST":[
-            ["position","左下",[347,866]],
-            ["position","左下",[400,1183]],
-            ["chest","左下",[[0,783,480,480],[371,888,127,118]]],
-            ["position","左下",[133,1241]]
+        "_TARGETINFOLIST": [
+            [
+                "position",
+                "左下",
+                [
+                    347,
+                    866
+                ]
+            ],
+            [
+                "position",
+                "左下",
+                [
+                    400,
+                    1183
+                ]
+            ],
+            [
+                "chest",
+                "左下",
+                [
+                    [
+                        0,
+                        783,
+                        480,
+                        480
+                    ],
+                    [
+                        371,
+                        888,
+                        127,
+                        118
+                    ]
+                ]
+            ],
+            [
+                "position",
+                "左下",
+                [
+                    133,
+                    1241
+                ]
+            ]
         ],
-        "_EOT":[
-            ["press","DOF",["EdgeOfTown","input swipe 650 250 650 900"],1],
-            ["press","DOFB1F",[1,1],1]
-        ]
+        "_EOT": [
+            [
+                "town",
+                "EOT"
+            ],
+            [
+                "L1",
+                "DOF",
+                "input swipe 650 250 650 900"
+            ],
+            [
+                "L2",
+                "DOFB1F"
+            ]
+        ],
+        "questName_ko_KR": "[광석] 불의 마굴 (특급/중급/하급)",
+        "questCategory_ko_KR": "광석 파밍"
     },
-
     "DOF_Plus": {
-        "_TYPE":"dungeon",
-        "questName":"[矿石]火洞plus-地图全开",
+        "_TYPE": "dungeon",
+        "questName": "[矿石]火洞plus-地图全开",
         "questName_en_US": "[Ore] Den of Fire whole map",
         "questCategory": "矿石",
         "questCategory_en_US": "Ore",
-        "_TARGETINFOLIST":[
-            ["chest_auto"],
-            ["position","左上",[719,713]]
+        "_TARGETINFOLIST": [
+            [
+                "chest_auto"
+            ],
+            [
+                "position",
+                "左上",
+                [
+                    719,
+                    713
+                ]
+            ]
         ],
-        "_EOT":[
-            ["press","DOF",["EdgeOfTown","input swipe 650 250 650 900"],1],
-            ["press","DOFB1F",[1,1],1]
-        ]
+        "_EOT": [
+            [
+                "town",
+                "EOT"
+            ],
+            [
+                "L1",
+                "DOF",
+                "input swipe 650 250 650 900"
+            ],
+            [
+                "L2",
+                "DOFB1F"
+            ]
+        ],
+        "questName_ko_KR": "[광석] 불의 마굴 Plus (지도 전체 개방)",
+        "questCategory_ko_KR": "광석 파밍"
     },
-
-    "DOW":{
-        "_TYPE":"dungeon",
-        "questName":"[矿石]风洞(特/上/中)",
+    "DOW": {
+        "_TYPE": "dungeon",
+        "questName": "[矿石]风洞(特/上/中)",
         "questName_en_US": "[Ore] Den of Wind",
         "questCategory": "矿石",
         "questCategory_en_US": "Ore",
-        "_TARGETINFOLIST":[
-        ["chest",[[700,1200,100,100]],[[0,780,900,500],[0,780,150,120]]],
-        ["DOW_quit",[[700,1200,100,100]],null]
+        "_TARGETINFOLIST": [
+            [
+                "chest",
+                [
+                    [
+                        700,
+                        1200,
+                        100,
+                        100
+                    ]
+                ],
+                [
+                    [
+                        0,
+                        780,
+                        900,
+                        500
+                    ],
+                    [
+                        0,
+                        780,
+                        150,
+                        120
+                    ]
+                ]
+            ],
+            [
+                "DOW_quit",
+                [
+                    [
+                        700,
+                        1200,
+                        100,
+                        100
+                    ]
+                ],
+                null
+            ]
         ],
-        "_EOT":[
-            ["press","DOW",["EdgeOfTown",[1,1]],1],
-            ["press","DOWB1F",[1,1],1]
-        ]
+        "_EOT": [
+            [
+                "town",
+                "EOT"
+            ],
+            [
+                "L1",
+                "DOW"
+            ],
+            [
+                "L2",
+                "DOWB1F"
+            ]
+        ],
+        "questName_ko_KR": "[광석] 바람의 마굴 (특급/상급/중급)",
+        "questCategory_ko_KR": "광석 파밍"
     },
-
-    "DOW_Plus":{
-        "_TYPE":"dungeon",
-        "questName":"[矿石]风洞plus-地图全开",
+    "DOW_Plus": {
+        "_TYPE": "dungeon",
+        "questName": "[矿石]风洞plus-地图全开",
         "questName_en_US": "[Ore] Den of Wind whole map",
         "questCategory": "矿石",
         "questCategory_en_US": "Ore",
-        "_TARGETINFOLIST":[
-            ["chest_auto"],
-            ["position","左上",[34,822]]
+        "_TARGETINFOLIST": [
+            [
+                "chest_auto"
+            ],
+            [
+                "position",
+                "左上",
+                [
+                    34,
+                    822
+                ]
+            ]
         ],
-        "_EOT":[
-            ["press","DOW",["EdgeOfTown",[1,1]],1],
-            ["press","DOWB1F",[1,1],1]
-        ]
+        "_EOT": [
+            [
+                "town",
+                "EOT"
+            ],
+            [
+                "L1",
+                "DOW"
+            ],
+            [
+                "L2",
+                "DOWB1F"
+            ]
+        ],
+        "questName_ko_KR": "[광석] 바람의 마굴 Plus (지도 전체 개방)",
+        "questCategory_ko_KR": "광석 파밍"
     },
-    
-    "DOL":{
-        "_TYPE":"dungeon",
-        "questName":"[矿石]光洞(特/上/中)",
+    "DOL": {
+        "_TYPE": "dungeon",
+        "questName": "[矿石]光洞(特/上/中)",
         "questName_en_US": "[Ore] Den of Light",
         "questCategory": "矿石",
         "questCategory_en_US": "Ore",
-        "_EOT":[
-            ["press","DOL",["EdgeOfTown",[1,1]],1],
-            ["press","DOLB1F",[1,1],1]
+        "_EOT": [
+            [
+                "town",
+                "EOT"
+            ],
+            [
+                "L1",
+                "DOL"
+            ],
+            [
+                "L2",
+                "DOLB1F"
+            ]
         ],
-        "_TARGETINFOLIST":
-        [
-            ["chest","右下",[[419,304,481,485]]],
-            ["position", "右下", [552,599]],
-            ["position", "右下", [662,546]],
-            ["position", "右下", [819,333]]
-        ]
+        "_TARGETINFOLIST": [
+            [
+                "chest",
+                "右下",
+                [
+                    [
+                        419,
+                        304,
+                        481,
+                        485
+                    ]
+                ]
+            ],
+            [
+                "position",
+                "右下",
+                [
+                    552,
+                    599
+                ]
+            ],
+            [
+                "position",
+                "右下",
+                [
+                    662,
+                    546
+                ]
+            ],
+            [
+                "position",
+                "右下",
+                [
+                    819,
+                    333
+                ]
+            ]
+        ],
+        "questName_ko_KR": "[광석] 빛의 마굴 (특급/상급/중급)",
+        "questCategory_ko_KR": "광석 파밍"
     },
-
-    "DOL_PLUS":{
-        "_TYPE":"dungeon",
-        "questName":"[矿石]光洞plus-地图全开",
+    "DOL_PLUS": {
+        "_TYPE": "dungeon",
+        "questName": "[矿石]光洞plus-地图全开",
         "questName_en_US": "[Ore] Den of Light whole map",
         "questCategory": "矿石",
         "questCategory_en_US": "Ore",
-        "_EOT":[
-            ["press","DOL",["EdgeOfTown",[1,1]],1],
-            ["press","DOLB1F",[1,1],1]
+        "_EOT": [
+            [
+                "town",
+                "EOT"
+            ],
+            [
+                "L1",
+                "DOL"
+            ],
+            [
+                "L2",
+                "DOLB1F"
+            ]
         ],
-        "_TARGETINFOLIST":
-        [
-            ["chest_auto"],
-            ["position", "左下", [34,1078]]
-        ]
+        "_TARGETINFOLIST": [
+            [
+                "chest_auto"
+            ],
+            [
+                "position",
+                "左下",
+                [
+                    34,
+                    1078
+                ]
+            ]
+        ],
+        "questName_ko_KR": "[광석] 빛의 마굴 Plus (지도 전체 개방)",
+        "questCategory_ko_KR": "광석 파밍"
     },
-
-    "DOS":{
-        "_TYPE":"dungeon",
-        "questName":"[矿石]水洞(银/特/上)",
+    "DOS": {
+        "_TYPE": "dungeon",
+        "questName": "[矿石]水洞(银/特/上)",
         "questName_en_US": "[Ore] Den of Water",
         "questCategory": "矿石",
         "questCategory_en_US": "Ore",
-        "_EOT":[
-            ["press","DOS",["EdgeOfTown",[1,1]],1],
-            ["press","DOSB1F",[1,1],1]
+        "_EOT": [
+            [
+                "town",
+                "EOT"
+            ],
+            [
+                "L1",
+                "DOS"
+            ],
+            [
+                "L2",
+                "DOSB1F"
+            ]
         ],
-        "_TARGETINFOLIST":
-        [
-            ["position", "左上", [455,875]],
-            ["position", "左上", [185,1085]],
-            ["chest","左上",[[0,690,481,485]]],
-            ["DOS_quit"]
-        ]
+        "_TARGETINFOLIST": [
+            [
+                "position",
+                "左上",
+                [
+                    403,
+                    876
+                ]
+            ],
+            [
+                "position",
+                "左上",
+                [
+                    185,
+                    1085
+                ]
+            ],
+            [
+                "chest",
+                "左上",
+                [
+                    [
+                        2,
+                        691,
+                        424,
+                        430
+                    ]
+                ]
+            ],
+            [
+                "DOS_quit"
+            ]
+        ],
+        "questName_ko_KR": "[광석] 수류의 구멍 (은/특급/상급)",
+        "questCategory_ko_KR": "광석 파밍"
     },
-    
-    "LMG-GT":{
-        "_TYPE":"dungeon",
-        "questName":"[骨头]炉壶灵庙(王都出发)",
+    "LMG-GT": {
+        "_TYPE": "dungeon",
+        "questName": "[骨头]炉壶灵庙(王都出发)",
         "questName_en_US": "[Bone] Mausoleum Crucible",
         "questCategory": "月常",
         "questCategory_en_US": "Monthly Requests",
-        "_TARGETINFOLIST":[
-            ["position","右下",[393,545]],
-            ["position","右下",[657,755]],
-            ["position","右下",[555,1235]],
-            ["position","右下",[178,1240]]
+        "_TARGETINFOLIST": [
+            [
+                "position",
+                "右下",
+                [
+                    393,
+                    545
+                ]
+            ],
+            [
+                "position",
+                "右下",
+                [
+                    657,
+                    755
+                ]
+            ],
+            [
+                "position",
+                "右下",
+                [
+                    555,
+                    1235
+                ]
+            ],
+            [
+                "position",
+                "右下",
+                [
+                    178,
+                    1240
+                ]
+            ]
         ],
-        "_preEOTcheck":"LMG/LMG",
-        "_EOT":
-        [
-            ["press","intoWorldMap",["LMG/LMG","input swipe 690 590 690 690"],1],
-            ["press","LMG/LMG1F",[1,1],1]
-        ]
+        "_EOT": [
+            [
+                "town",
+                "world"
+            ],
+            [
+                "worldmap",
+                "LMG/LMG",
+                "input swipe 690 590 690 690"
+            ],
+            [
+                "L1",
+                "LMG/LMG1F"
+            ],
+            [
+                "L2",
+                "LMG/LMG1F"
+            ]
+        ],
+        "questName_ko_KR": "[뼈] 용광로의 영묘 (왕도 출발)",
+        "questCategory_ko_KR": "일일/주간/콘텐츠"
     },
-    "LMG-FT":{
-        "_TYPE":"dungeon",
-        "questName":"[骨头]战士灵庙",
+    "LMG-FT": {
+        "_TYPE": "dungeon",
+        "questName": "[骨头]战士灵庙",
         "questName_en_US": "[Bone] Mausoleum Fighter",
         "questCategory": "月常",
         "questCategory_en_US": "Monthly Requests",
-        "_TARGETINFOLIST":[
-            ["position","右下",[393,545]],
-            ["position","右下",[657,755]],
-            ["position","右下",[555,1235]],
-            ["position","右下",[178,1240]]
+        "_TARGETINFOLIST": [
+            [
+                "position",
+                "右下",
+                [
+                    555,
+                    1235
+                ]
+            ],
+            [
+                "position",
+                "右下",
+                [
+                    178,
+                    1240
+                ]
+            ]
         ],
-        "_preEOTcheck":"LMG/LMG",
-        "_EOT":
-        [
-            ["press","intoWorldMap",["LMG/LMG","input swipe 690 590 690 690"],1],
-            ["press","LMG/FTB1F",[1,1],1]
-        ]
+        "_EOT": [
+            [
+                "town",
+                "world"
+            ],
+            [
+                "worldmap",
+                "LMG/LMG",
+                "input swipe 690 590 690 690"
+            ],
+            [
+                "L1",
+                "LMG/FTB1F"
+            ],
+            [
+                "L2",
+                "LMG/FTB1F"
+            ]
+        ],
+        "questName_ko_KR": "[뼈] 전사 영묘",
+        "questCategory_ko_KR": "일일/주간/콘텐츠"
     },
-
-    "7000G":{
-        "questName":"[金币]7000G",
+    "LMG-TH": {
+        "_TYPE": "dungeon",
+        "questName": "[骨头]盗贼灵庙",
+        "questName_en_US": "[Bone] Mausoleum Thief",
+        "questCategory": "月常",
+        "questCategory_en_US": "Monthly Requests",
+        "_TARGETINFOLIST": [
+            [
+                "position",
+                "右下",
+                [
+                    555,
+                    1235
+                ]
+            ],
+            [
+                "position",
+                "右下",
+                [
+                    178,
+                    1240
+                ]
+            ]
+        ],
+        "_EOT": [
+            [
+                "town",
+                "world"
+            ],
+            [
+                "worldmap",
+                "LMG/LMG",
+                "input swipe 690 590 690 690"
+            ],
+            [
+                "L1",
+                "LMG/THB1F"
+            ],
+            [
+                "L2",
+                "LMG/THB1F"
+            ]
+        ],
+        "questName_ko_KR": "[뼈] 도적 영묘",
+        "questCategory_ko_KR": "일일/주간/콘텐츠"
+    },
+    "LMG-PR": {
+        "_TYPE": "dungeon",
+        "questName": "[骨头]僧侣灵庙",
+        "questName_en_US": "[Bone] Mausoleum Priest",
+        "questCategory": "月常",
+        "questCategory_en_US": "Monthly Requests",
+        "_TARGETINFOLIST": [
+            [
+                "position",
+                "右下",
+                [
+                    555,
+                    1235
+                ]
+            ],
+            [
+                "position",
+                "右下",
+                [
+                    178,
+                    1240
+                ]
+            ]
+        ],
+        "_EOT": [
+            [
+                "town",
+                "world"
+            ],
+            [
+                "worldmap",
+                "LMG/LMG",
+                "input swipe 690 590 690 690"
+            ],
+            [
+                "L1",
+                "LMG/PRB1F"
+            ],
+            [
+                "L2",
+                "LMG/PRB1F"
+            ]
+        ],
+        "questName_ko_KR": "[뼈] 승려 영묘",
+        "questCategory_ko_KR": "일일/주간/콘텐츠"
+    },
+    "LMG-MG": {
+        "_TYPE": "dungeon",
+        "questName": "[骨头]法师灵庙",
+        "questName_en_US": "[Bone] Mausoleum Mage",
+        "questCategory": "月常",
+        "questCategory_en_US": "Monthly Requests",
+        "_TARGETINFOLIST": [
+            [
+                "position",
+                "右下",
+                [
+                    555,
+                    1235
+                ]
+            ],
+            [
+                "position",
+                "右下",
+                [
+                    178,
+                    1240
+                ]
+            ]
+        ],
+        "_EOT": [
+            [
+                "town",
+                "world"
+            ],
+            [
+                "worldmap",
+                "LMG/LMG",
+                "input swipe 690 590 690 690"
+            ],
+            [
+                "L1",
+                "LMG/MGB1F"
+            ],
+            [
+                "L2",
+                "LMG/MGB1F"
+            ]
+        ],
+        "questName_ko_KR": "[뼈] 마법사 영묘",
+        "questCategory_ko_KR": "일일/주간/콘텐츠"
+    },
+    "LMG-KN": {
+        "_TYPE": "dungeon",
+        "questName": "[骨头]骑士灵庙",
+        "questName_en_US": "[Bone] Mausoleum Knight",
+        "questCategory": "月常",
+        "questCategory_en_US": "Monthly Requests",
+        "_TARGETINFOLIST": [
+            [
+                "position",
+                "右下",
+                [
+                    555,
+                    1235
+                ]
+            ],
+            [
+                "position",
+                "右下",
+                [
+                    178,
+                    1240
+                ]
+            ]
+        ],
+        "_EOT": [
+            [
+                "town",
+                "world"
+            ],
+            [
+                "worldmap",
+                "LMG/LMG",
+                "input swipe 690 590 690 690"
+            ],
+            [
+                "L1",
+                "LMG/KNB1F"
+            ],
+            [
+                "L2",
+                "LMG/KNB1F"
+            ]
+        ],
+        "questName_ko_KR": "[뼈] 기사 영묘",
+        "questCategory_ko_KR": "일일/주간/콘텐츠"
+    },
+    "LMG-RA": {
+        "_TYPE": "dungeon",
+        "questName": "[骨头]稀有灵庙",
+        "questName_en_US": "[Bone] Mausoleum Rarities",
+        "questCategory": "月常",
+        "questCategory_en_US": "Monthly Requests",
+        "_TARGETINFOLIST": [
+            [
+                "position",
+                "右下",
+                [
+                    555,
+                    1235
+                ]
+            ],
+            [
+                "position",
+                "右下",
+                [
+                    178,
+                    1240
+                ]
+            ]
+        ],
+        "_EOT": [
+            [
+                "town",
+                "world"
+            ],
+            [
+                "worldmap",
+                "LMG/LMG",
+                "input swipe 690 590 690 690"
+            ],
+            [
+                "L1",
+                "LMG/RAB1F"
+            ],
+            [
+                "L2",
+                "LMG/RAB1F"
+            ]
+        ],
+        "questName_ko_KR": "[뼈] Rarities 영묘",
+        "questCategory_ko_KR": "일일/주간/콘텐츠"
+    },
+    "steeltrail": {
+        "questName": "[委托]钢试炼",
+        "questName_en_US": "[Quest] Steel Trial",
+        "questCategory": "月常",
+        "questCategory_en_US": "Monthly Requests",
+        "_TYPE": "quest",
+        "_TIPS": "请打上两个标记: 一个标记最终boss, 一个标记左路的物理路线.",
+        "questName_ko_KR": "[의뢰] 강철의 시련",
+        "questCategory_ko_KR": "일일/주간/콘텐츠",
+        "_TIPS_ko_KR": "최종 보스와 왼쪽 물리 경로에 지도 표식을 각각 하나씩 설정하세요.",
+        "_TIPS_en_US": "Place two map markers: one at the final boss and one on the physical route to the left.",
+        "_TIPS_zh_CN": "请打上两个标记: 一个标记最终boss, 一个标记左路的物理路线."
+    },
+    "7000G": {
+        "questName": "[金币]7000G",
         "questName_en_US": "[Gold] 7000G",
         "questCategory": "其他",
         "questCategory_en_US": "Other",
-        "_TYPE":"quest"
+        "_TYPE": "quest",
+        "questName_ko_KR": "[골드] 황녀에게 7000G 받기",
+        "questCategory_ko_KR": "기타"
     },
-
-    "manualSepDemon":{
-        "questName":"[装备]半自动大恶魔",
+    "manualSepDemon": {
+        "questName": "[装备]半自动大恶魔",
         "questName_en_US": "[Equip.] Semi-Auto Demon",
         "questCategory": "其他",
         "questCategory_en_US": "Other",
-        "_TIPS":"启动脚本时, 如果位于副本内, 会自动退出副本. 然后该脚本会尝试重置并进入离别大恶魔所在房间后停止.\n固定跳跃到第四章结尾.",
-        "_TYPE":"quest"
+        "_TIPS": "启动脚本时, 如果位于副本内, 会自动退出副本. 然后该脚本会尝试重置并进入离别大恶魔所在房间后停止.\n固定跳跃到第四章结尾.\n\nWhen the script starts, if you are inside the dungeon it will leave automatically. The script then tries to reset and enter the room of the Separation Demon, then stops.\nIt always time-leaps to the end of Chapter 4.",
+        "_TYPE": "quest",
+        "questName_ko_KR": "[장비] 대악마 반자동 파밍",
+        "questCategory_ko_KR": "기타",
+        "_TIPS_ko_KR": "시작 시 던전 안에 있으면 자동으로 나갑니다. 이후 초기화하고 영별의 대악마 방에 진입한 뒤 중지합니다. 4장 결말로 시간 이동합니다.",
+        "_TIPS_en_US": "When the script starts, if you are inside the dungeon it will leave automatically. The script then tries to reset and enter the room of the Separation Demon, then stops.\nIt always time-leaps to the end of Chapter 4.",
+        "_TIPS_zh_CN": "启动脚本时, 如果位于副本内, 会自动退出副本. 然后该脚本会尝试重置并进入离别大恶魔所在房间后停止.\n固定跳跃到第四章结尾."
     },
-
-    "darkLight":{
-        "questName":"[装备]暗灯",
+    "darkLight": {
+        "questName": "[装备]暗灯",
         "questName_en_US": "[Equip.] Dark Light",
         "questCategory": "其他",
         "questCategory_en_US": "Other",
-        "_TYPE":"quest"
+        "_TYPE": "quest",
+        "questName_ko_KR": "[장비] 사신의 어둠 등불",
+        "questCategory_ko_KR": "기타"
     },
-
-    "LBC-oneGorgon":{
-        "questName":"[任务]卢比肯 三牛",
+    "LBC-oneGorgon": {
+        "questName": "[任务]卢比肯 三牛",
         "questName_en_US": "[Quest] LBC 3 Gorgons",
         "questCategory": "任务洞窟",
         "questCategory_en_US": "Request Caves",
-        "_TYPE":"quest"
+        "_TYPE": "quest",
+        "questName_ko_KR": "[퀘스트] 루비콘 삼우 (세 마리 황소)",
+        "questCategory_ko_KR": "퀘스트 동굴"
     },
-
-    "SSC-goldenchest":{
-        "questName":"[任务]忍洞一层 金箱",
+    "SSC-goldenchest": {
+        "questName": "[任务]忍洞一层 金箱",
         "questName_en_US": "[Quest] SSC golden chest",
         "questCategory": "任务洞窟",
         "questCategory_en_US": "Request Caves",
-        "_TYPE":"quest"
+        "_TYPE": "quest",
+        "questName_ko_KR": "[퀘스트] 모래 그림자의 동굴 1층 금색 상자",
+        "questCategory_ko_KR": "퀘스트 동굴"
     },
-
-    "jier":{
-        "questName":"[悬赏]吉尔",
-        "questName_en_US": "[Bounty] Jhael",
-        "questCategory": "月常",
-        "questCategory_en_US": "Monthly Requests",
-        "_TYPE":"quest"
-    },
-
-    "Scorpionesses":{
-        "questName":"[悬赏]蝎女",
+    "Scorpionesses": {
+        "questName": "[悬赏]蝎女",
         "questName_en_US": "[Bounty] Scorps.",
         "questCategory": "月常",
         "questCategory_en_US": "Monthly Requests",
-        "_TYPE":"quest"
+        "_TYPE": "quest",
+        "_TIPS": "请在蝎女处打上标记.",
+        "questName_ko_KR": "[현상수배] 스코피온 (전갈 여인)",
+        "questCategory_ko_KR": "일일/주간/콘텐츠",
+        "_TIPS_ko_KR": "전갈 여인의 위치에 지도 표식을 설정하세요.",
+        "_TIPS_en_US": "Place a map marker at the Scorpioness.",
+        "_TIPS_zh_CN": "请在蝎女处打上标记."
     },
-
-    "Scorpionesses_plus_6_hands":{
-        "questName":"[悬赏]蝎女+风暴六手",
+    "Scorpionesses_plus_6_hands": {
+        "questName": "[悬赏]蝎女+风暴六手",
         "questName_en_US": "[Bounty] Scorps. + Six-Limbed",
         "questCategory": "月常",
         "questCategory_en_US": "Monthly Requests",
-        "_TYPE":"quest"
+        "_TYPE": "quest",
+        "_TIPS": "请在蝎女和牛头人处打上标记.",
+        "questName_ko_KR": "[현상수배] 스코피온 + 폭풍의 식스암즈",
+        "questCategory_ko_KR": "일일/주간/콘텐츠",
+        "_TIPS_ko_KR": "전갈 여인과 미노타우로스의 위치에 지도 표식을 설정하세요.",
+        "_TIPS_en_US": "Place map markers at the Scorpioness and the Minotaur.",
+        "_TIPS_zh_CN": "请在蝎女和牛头人处打上标记."
     },
-
-    "gaintKiller":{
-        "questName":"[刷怪]要塞7f刷巨人",
+    "FloralHoney": {
+        "questName": "[药]华蜜",
+        "questName_en_US": "[Draught & Elixir] Floral Honey",
+        "questCategory": "其他",
+        "questCategory_en_US": "Other",
+        "_TYPE": "quest",
+        "questName_ko_KR": "[포션] 꽃꿀",
+        "questCategory_ko_KR": "기타"
+    },
+    "gaintKiller": {
+        "questName": "[刷怪]要塞7f刷巨人",
         "questName_en_US": "[Farm] Fortress Zone 7 Giant",
         "questCategory": "主线前三章",
         "questCategory_en_US": "Chapter 1,2 and 3",
-        "_TYPE":"quest"
+        "_TYPE": "quest",
+        "questName_ko_KR": "[몬스터] 요새 7층 거인 파밍",
+        "questCategory_ko_KR": "메인 시나리오 1~3장"
     },
-    
-    "lovesleep":{
-        "questName":"[刷药]喜欢睡觉",
+    "lovesleep": {
+        "questName": "[刷药]喜欢睡觉",
         "questName_en_US": "[Draught & Elixir]  Just Sleep",
         "questCategory": "其他",
         "questCategory_en_US": "Other",
-        "_TYPE":"quest"
+        "_TYPE": "quest",
+        "questName_ko_KR": "[포션] 잠꾸러기 퀘스트",
+        "questCategory_ko_KR": "기타"
     },
-
-    "FFXI-Org":{
-        "questName":"[矿石]FFXI挖矿",
+    "FFXI-Org": {
+        "questName": "[矿石]FFXI挖矿",
         "questName_en_US": "[Chest] FFXI Org",
-        "questCategory": "最新洞窟",
-        "questCategory_en_US": "*WHATS NEW*",
-        "_TYPE":"quest",
-        "_preEOTcheck":"FFXI/GCN",
-        "_EOT":
-        [
-            ["press","EVENT","FFXI/EVENT_GCN",1],
-            ["press","FFXI/ZONE2",[1,1],1]
+        "questCategory": "矿石",
+        "questCategory_en_US": "Ore",
+        "_TYPE": "quest",
+        "_EOT": [
+            [
+                "town",
+                "world"
+            ],
+            [
+                "worldmap",
+                "FFXI/GCN",
+                "input swipe 740 1000 740 1300"
+            ],
+            [
+                "L1",
+                "FFXI/ZONE2"
+            ],
+            [
+                "L2",
+                "FFXI/ZONE2"
+            ]
         ],
-        "_RTT": ["City_RoyalCityLuknalia","input swipe 400 400 500 300",[500,1100]],
-
-        "_TIPS": "请按照如下步骤设置:\n1 购买9999个鹤嘴锄并保存在仓库里\n2 六人队伍脱掉所有装备, 然后尽可能多的携带鹤嘴锄\n3 在王城的工会里新建一个队伍, 并命名为FFXIStone.\n4 前往活动地图2F, 在哈肯正对的矿点前, 打上标记.\n5 确保这是该层唯一的标记.\n6 副本或主城中启动脚本.\n\nPlease follow these steps to set it up:\n1 Purchase 9,999 pickaxes.\n2 Have your six-person party remove all equipment, then carry as many pickaxes as possible.\n3 Create a new party at the Guild in the Royal City and name it \"FFXIStone\".\n4 Go to the 2nd floor and place a marker at the mining place directly facing Harken.\n5 Ensure this is the only marker on that floor.\n6 Start the script while in the dungeon or the city."
+        "_RTT": [
+            "City_RoyalCityLuknalia",
+            "input swipe 400 400 500 300",
+            [
+                500,
+                1100
+            ]
+        ],
+        "_TIPS": "请按照如下步骤设置:\n1 购买9999个鹤嘴锄并保存在仓库里\n2 六人队伍脱掉所有装备, 然后尽可能多的携带鹤嘴锄\n3 在王城的工会里新建一个队伍, 并命名为FFXIStone.\n4 前往活动地图2F, 在哈肯正对的矿点前, 打上标记.\n5 确保这是该层唯一的标记.\n6 副本或主城中启动脚本.\n注意, 如果在楼层选择处卡住无法继续, 请尝试开启所有哈肯.\n\nPlease follow these steps to set it up:\n1 Purchase 9,999 pickaxes and keep them in storage.\n2 Have your six-person party remove all equipment, then carry as many pickaxes as possible.\n3 Create a new party at the Guild in the Royal Capital and name it \"FFXIStone\".\n4 Go to the 2F event map and place a marker in front of the mining spot directly facing Harken.\n5 Ensure this is the only marker on that floor.\n6 Start the script from inside the dungeon or the city.",
+        "questName_ko_KR": "[광석] FFXI 광석 무한 채굴",
+        "questCategory_ko_KR": "광석 파밍",
+        "_TIPS_ko_KR": "설정 순서:\n1. 곡괭이 9,999개를 구매해 창고에 보관하세요.\n2. 6인 파티의 장비를 모두 벗기고 곡괭이를 최대한 많이 소지하세요.\n3. 왕도의 길드에서 FFXIStone이라는 이름의 파티를 만드세요.\n4. 이벤트 지도 2층에서 하켄을 정면으로 바라보는 채굴 지점 앞에 표식을 설정하세요.\n5. 해당 층의 유일한 표식이어야 합니다.\n6. 던전 또는 도시에서 시작하세요.\n층 선택 화면에서 멈추면 하켄을 모두 개방해 보세요.",
+        "_TIPS_en_US": "Please follow these steps to set it up:\n1 Purchase 9,999 pickaxes and keep them in storage.\n2 Have your six-person party remove all equipment, then carry as many pickaxes as possible.\n3 Create a new party at the Guild in the Royal Capital and name it \"FFXIStone\".\n4 Go to the 2F event map and place a marker in front of the mining spot directly facing Harken.\n5 Ensure this is the only marker on that floor.\n6 Start the script from inside the dungeon or the city.\nIf floor selection gets stuck, try unlocking all Harkens.",
+        "_TIPS_zh_CN": "请按照如下步骤设置:\n1 购买9999个鹤嘴锄并保存在仓库里\n2 六人队伍脱掉所有装备, 然后尽可能多的携带鹤嘴锄\n3 在王城的工会里新建一个队伍, 并命名为FFXIStone.\n4 前往活动地图2F, 在哈肯正对的矿点前, 打上标记.\n5 确保这是该层唯一的标记.\n6 副本或主城中启动脚本.\n注意, 如果在楼层选择处卡住无法继续, 请尝试开启所有哈肯."
     },
-
-    "sandman":{
-        "questName":"[缘]沙人",
-        "questName_en_US":"[bondmate] Sandman",
-        "questName_ko_KR":"[인연] 샌드맨",
-        "questCategory":"主线前三章",
-        "questCategory_en_US":"Chapter 1,2 and 3",
-        "questCategory_ko_KR":"메인 시나리오 1~3장",
-        "_TYPE":"quest"
+    "sandman": {
+        "questName": "[缘]沙人",
+        "questName_en_US": "[bondmate] Sandman",
+        "questCategory": "主线前三章",
+        "questCategory_en_US": "Chapter 1,2 and 3",
+        "_TYPE": "quest",
+        "questName_ko_KR": "[인연] 샌드맨",
+        "questCategory_ko_KR": "메인 시나리오 1~3장"
+    },
+    "fishing": {
+        "questName": "钓鱼(测试)-近端",
+        "questName_en_US": "Fishing(test) - close",
+        "questCategory": "最新任务",
+        "questCategory_en_US": "WHATS NEW",
+        "_TYPE": "quest",
+        "_TIPS": "目前已支持回城拿鱼饵等功能.\n但请注意:\n只会拿去仓库中存在的鱼饵, 脚本不会购买鱼饵.\n目前只支持从主城和钓鱼界面启动. 其他界面无法使用.\n\nReturning to town to fetch bait is now supported.\nNote the following:\nOnly bait already in storage is used; the script will not buy bait.\nThis task can currently only be started from the main city or the fishing interface; other screens will not work.",
+        "questName_ko_KR": "낚시 (시험 기능) - 가까운 지점",
+        "questCategory_ko_KR": "새 작업",
+        "_TIPS_ko_KR": "마을로 돌아가 미끼를 보충할 수 있습니다. 창고에 이미 있는 미끼만 사용하며 미끼를 구매하지 않습니다.\n도시 또는 낚시 화면에서만 시작할 수 있습니다. 보충할 미끼를 찾지 못하면 오류를 보고하고 중지합니다.",
+        "_TIPS_en_US": "Returning to town to fetch bait is now supported.\nNote the following:\nOnly bait already in storage is used; the script will not buy bait.\nThis task can currently only be started from the main city or the fishing interface; other screens will not work.\nIf no bait supply is found, the task stops and reports an error.",
+        "_TIPS_zh_CN": "目前已支持回城拿鱼饵等功能.\n但请注意:\n只会拿去仓库中存在的鱼饵, 脚本不会购买鱼饵.\n目前只支持从主城和钓鱼界面启动. 其他界面无法使用."
+    },
+    "test": {
+        "questName": "测试任务",
+        "questName_en_US": "Test Quest",
+        "questCategory": "其他",
+        "questCategory_en_US": "Other",
+        "_TYPE": "quest",
+        "questName_ko_KR": "테스트 작업",
+        "questCategory_ko_KR": "기타"
     }
-
 }
-

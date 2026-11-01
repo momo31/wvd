@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+import threading
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
@@ -18,12 +19,14 @@ import main  # noqa: E402
 class _Worker:
     def __init__(self):
         self.joined = []
+        self.alive = True
 
     def is_alive(self):
-        return True
+        return self.alive
 
     def join(self, timeout):
         self.joined.append(timeout)
+        self.alive = False
 
 
 class EmulatorRebootTests(unittest.TestCase):
@@ -39,6 +42,7 @@ class EmulatorRebootTests(unittest.TestCase):
             _load_latest_setting=Mock(return_value=setting),
             _active_runtime=runtime,
             _active_latch=latch,
+            _aux_stop_event=threading.Event(),
         )
         context = object()
         device = object()
@@ -52,7 +56,7 @@ class EmulatorRebootTests(unittest.TestCase):
 
         self.assertTrue(succeeded)
         controller._request_local_stop.assert_called_once_with()
-        runtime.clear_handoff.assert_called_once_with(main.HANDOFF_TARGET_7000G)
+        runtime.clear_handoff.assert_called_once_with()
         runtime.mark_exit.assert_called_once_with(
             main.TaskExitReason.LOCAL_STOP,
             "에뮬레이터 재부팅으로 작업이 중지되었습니다.",
@@ -66,6 +70,20 @@ class EmulatorRebootTests(unittest.TestCase):
             context,
             FORCE_RESTART_EMU=True,
         )
+
+    def test_reboot_does_not_overlap_a_worker_that_failed_to_stop(self):
+        worker = Mock()
+        worker.is_alive.return_value = True
+        controller = SimpleNamespace(
+            quest_threading=worker, _request_local_stop=Mock(),
+            _load_latest_setting=Mock(), _active_runtime=None,
+            _aux_stop_event=threading.Event(),
+        )
+        with patch.object(main, 'CheckAndRecoverDevice') as recover:
+            self.assertFalse(main.AppController._reboot_emulator(controller))
+            recover.assert_not_called()
+        worker.join.assert_called_once_with(10)
+        controller._load_latest_setting.assert_not_called()
 
 
 if __name__ == "__main__":

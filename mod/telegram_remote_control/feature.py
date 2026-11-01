@@ -1,4 +1,4 @@
-"""Tk-thread-owned orchestration for Telegram remote control."""
+"""Controller-owned orchestration for Telegram remote control."""
 
 from __future__ import annotations
 
@@ -142,6 +142,9 @@ class TelegramRemoteFeature:
         self._finished_waiting_for_force: dict[str, TaskFinishedPayload] = {}
         self._last_test_request_id: str | None = None
         self._started = False
+        self._stopping = threading.Event()
+        self._background_lock = threading.Lock()
+        self._background_workers: list[threading.Thread] = []
         self.emulator_reboot_in_progress = False
         self._latest_dungeon_summary = ""
         self._next_summary_at: float | None = None
@@ -161,7 +164,28 @@ class TelegramRemoteFeature:
         self._started = True
 
     def stop(self) -> None:
+        # Called on the controller's cleanup worker, with a 36-second deadline
+        # enforced by the owner. Every actual worker remains owned until exit.
+        with self._background_lock:
+            self._stopping.set()
+            workers = self._background_workers[:]
         self.service.stop()
+        self.service.wait_stopped()
+        for worker in workers:
+            worker.join()
+
+    def _start_background(self, target, name, **kwargs) -> None:
+        def run():
+            if not self._stopping.is_set():
+                target(**kwargs)
+
+        with self._background_lock:
+            if self._stopping.is_set():
+                return
+            self._background_workers = [worker for worker in self._background_workers if worker.is_alive()]
+            thread = threading.Thread(target=run, name=name, daemon=True)
+            self._background_workers.append(thread)
+            thread.start()
 
     def handle_event(self, command, value) -> bool:
         handlers = {
@@ -215,12 +239,8 @@ class TelegramRemoteFeature:
             return
         if not runtime.begin_fallback_dispatch():
             return
-        threading.Thread(
-            target=force_stop_game_once,
-            kwargs={"adapter": runtime.adapter, "runtime": runtime, "failure_phase": "stop_watchdog"},
-            name="remote-stop-watchdog",
-            daemon=True,
-        ).start()
+        self._start_background(force_stop_game_once, 'remote-stop-watchdog',
+            adapter=runtime.adapter, runtime=runtime, failure_phase='stop_watchdog')
 
     def _handle_dungeon_summary(self, value) -> None:
         if not isinstance(value, tuple) or len(value) != 2 or self.current_runtime is None:
@@ -357,6 +377,8 @@ class TelegramRemoteFeature:
                 succeeded = False
                 if self.logger is not None:
                     self.logger.exception("Telegram emulator reboot failed")
+            if self._stopping.is_set():
+                return
             self.event_queue.put(
                 (
                     "emulator_reboot_finished",
@@ -369,7 +391,7 @@ class TelegramRemoteFeature:
                 )
             )
 
-        threading.Thread(target=reboot, name="telegram-emulator-reboot", daemon=True).start()
+        self._start_background(reboot, 'telegram-emulator-reboot')
 
     def _handle_quest_command(self, payload: TelegramCommandPayload) -> None:
         if not self._quest_selection_allowed():

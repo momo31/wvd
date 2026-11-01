@@ -17,6 +17,9 @@ from chest_guard import ChestGuardAction, decide_chest_guard_action  # noqa: E40
 from smart_disarm_audit import SmartDisarmAuditor  # noqa: E402
 
 
+from utils import ResolveTemplatePath
+
+
 class RecordingLogger:
     def __init__(self):
         self.lines = []
@@ -451,7 +454,7 @@ class SmartDisarmRunRecoveryTests(unittest.TestCase):
 class SmartDisarmDetectionTests(unittest.TestCase):
     def test_selection_frame_prioritizes_open_over_dialogue_coordinates(self):
         cv2 = smart_disarm.cv2
-        template = cv2.imread(str(ROOT / "resources" / "images" / "chestFlag.png"))
+        template = cv2.imread(str(Path(ResolveTemplatePath('chestFlag.png'))))
         selection = np.zeros((1600, 900, 3), np.uint8)
         h, w = template.shape[:2]
         selection[900:900 + h, 100:100 + w] = template
@@ -510,8 +513,8 @@ class SmartDisarmChanceTemplateTests(unittest.TestCase):
             lambda: 0.0,
             RecordingLogger(),
         )
-        one = smart_disarm.cv2.imread(str(ROOT / "resources" / "images" / "smallgame_1.png"))
-        two = smart_disarm.cv2.imread(str(ROOT / "resources" / "images" / "smallgame_2.png"))
+        one = smart_disarm.cv2.imread(str(Path(ResolveTemplatePath('smallgame_1.png'))))
+        two = smart_disarm.cv2.imread(str(Path(ResolveTemplatePath('smallgame_2.png'))))
         self.assertEqual(one.shape[:2], (36, 26))
 
         roi = np.zeros((80, 130, 3), dtype=np.uint8)
@@ -589,9 +592,9 @@ class SmartDisarmAnalyzerTests(unittest.TestCase):
 
     def test_end_frame_classifier_reuses_existing_templates(self):
         cv2 = smart_disarm.cv2
-        receive = cv2.imread(str(ROOT / "resources" / "images" / "FFXI" / "receive.png"))
-        dialogue = cv2.imread(str(ROOT / "resources" / "images" / "dialogueNext.png"))
-        chest_templates = [cv2.imread(str(ROOT / "resources" / "images" / (name + ".png")))
+        receive = cv2.imread(str(Path(ResolveTemplatePath('FFXI/receive.png'))))
+        dialogue = cv2.imread(str(Path(ResolveTemplatePath('dialogueNext.png'))))
+        chest_templates = [cv2.imread(str(Path(ResolveTemplatePath(name + '.png'))))
                            for name in ("chestFlag", "whowillopenit", "chestOpening")]
         frame = np.zeros((1600, 900, 3), dtype=np.uint8)
         scaled_receive = cv2.resize(receive, None, fx=1.2, fy=1.2)

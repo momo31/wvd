@@ -324,15 +324,12 @@ def analyze_images(img_dir):
     receive_template = dialogue_template = None
     chest_templates = []
     if cv2 is not None:
-        receive_template = cv2.imread(os.path.join(
-            REPO_ROOT, "resources", "images", "FFXI", "receive.png"
-        ), cv2.IMREAD_UNCHANGED)
-        dialogue_template = cv2.imread(os.path.join(
-            REPO_ROOT, "resources", "images", "dialogueNext.png"
-        ), cv2.IMREAD_UNCHANGED)
-        chest_templates = [cv2.imread(os.path.join(
-            REPO_ROOT, "resources", "images", name + ".png"
-        )) for name in ("chestFlag", "whowillopenit", "chestOpening")]
+        if os.path.join(REPO_ROOT, 'src') not in sys.path:
+            sys.path.insert(0, os.path.join(REPO_ROOT, 'src'))
+        from utils import ResolveTemplatePath
+        receive_template = cv2.imread(ResolveTemplatePath('FFXI/receive'), cv2.IMREAD_UNCHANGED)
+        dialogue_template = cv2.imread(ResolveTemplatePath('dialogueNext'), cv2.IMREAD_UNCHANGED)
+        chest_templates = [cv2.imread(ResolveTemplatePath(name)) for name in ('chestFlag', 'whowillopenit', 'chestOpening')]
     for f in sorted(glob.glob(os.path.join(img_dir, "disarm_*.png"))):
         base = os.path.basename(f)
         if base.endswith("_end.png"):

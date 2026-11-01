@@ -31,6 +31,17 @@ class TaskCompletionLatch:
             return self._called
 
 
+def make_worker_completion_callback(runtime, latch, worker_generation: int):
+    def complete() -> bool:
+        with runtime._lock:
+            if runtime.worker_generation != worker_generation:
+                return False
+            if runtime.is_handoff_requested() and runtime.exit_reason is None:
+                return False
+            return latch.callback()
+    return complete
+
+
 def run_farm_worker(
     farm_callable: Callable[[Any], Any],
     setting: Any,
@@ -38,11 +49,13 @@ def run_farm_worker(
     latch: TaskCompletionLatch,
     logger: logging.Logger | Any,
 ) -> None:
+    generation = getattr(setting, "_WORKER_GENERATION", runtime.worker_generation)
+    complete = make_worker_completion_callback(runtime, latch, generation)
     handed_off = False
     try:
         farm_callable(setting)
     except SystemExit:
-        if runtime.is_handoff_requested("7000G"):
+        if runtime.is_handoff_requested():
             handed_off = True
         else:
             runtime.mark_exit(
@@ -61,12 +74,12 @@ def run_farm_worker(
         except Exception:
             pass
     finally:
-        # A 7000G handoff intentionally leaves completion ownership with the
+        # A handoff intentionally leaves completion ownership with the
         # replacement worker.  Avoid returning from ``finally`` so the
         # callback remains exactly-once for every other terminal path.
-        if not handed_off:
+        if not handed_off and generation == runtime.worker_generation:
             if runtime.exit_reason is None:
                 force_event = getattr(setting, "_FORCESTOPING", None)
                 reason = TaskExitReason.LOCAL_STOP if force_event is not None and force_event.is_set() else TaskExitReason.COMPLETED
                 runtime.mark_exit(reason)
-            latch.callback()
+            complete()

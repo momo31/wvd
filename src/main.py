@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import argparse
+import heapq
+import itertools
 import os
 import queue
 import subprocess
@@ -29,17 +31,46 @@ if sys.platform.startswith("win"):
             except Exception:
                 pass
 
-from gui import *  # noqa: F401,F403 - legacy GUI exports are part of this entrypoint
+def parse_args():
+    parser = argparse.ArgumentParser(description="WvDAS controller")
+    parser.add_argument("-headless", "--headless", action="store_true")
+    parser.add_argument("-config", "--config", type=str, default=None)
+    return parser.parse_args()
+
+
+if __name__ == "__main__":
+    startup_args = parse_args()
+    if startup_args.config:
+        # GUI and script modules copy LANGUAGE at import time.
+        import utils
+        utils.LANGUAGE = utils.GetOneVarInGeneralConfig("LANGUAGE_SCRIPT", utils.GetOneVarInGeneralConfig("LANGUAGE", "ko_KR", startup_args.config), startup_args.config)
+        utils.LANGUAGE_SCRIPT = utils.LANGUAGE
+        utils.LANGUAGE_GAME = utils.GetOneVarInGeneralConfig('LANGUAGE_GAME', 'en_US', startup_args.config)
+        utils.trans = utils.gettext.translation("messages", utils.localedir, languages=[utils.LANGUAGE], fallback=True)
+        utils.trans.install()
+
+from script import *
+from utils import *
+from config_model import *
+from auto_updater import AutoUpdater
+
+
+def ConfigPanelApp(*args):
+    from gui import ConfigPanelApp as WebPanel
+    return WebPanel(*args)
 
 from mod.telegram_remote_control.adapters import ControllerPorts
 from mod.telegram_remote_control.config import (
     load_latest_farm_setting,
+    load_farm_setting_for_target,
     resolve_adb_executable,
 )
 from mod.telegram_remote_control.constants import (
     CONTROLLER_TICK_MILLISECONDS,
     HANDOFF_TARGET_7000G,
     MAX_EVENTS_PER_TICK,
+    WORKER_EXIT_TIMEOUT_SECONDS,
+    SERVICE_THREAD_JOIN_TIMEOUT_SECONDS,
 )
 from mod.telegram_remote_control.feature import TelegramRemoteFeature
 from mod.telegram_remote_control.models import (
@@ -50,75 +81,84 @@ from mod.telegram_remote_control.models import (
     TaskFinishedPayload,
 )
 from mod.telegram_remote_control.runtime_bridge import RemoteRuntime
-from mod.telegram_remote_control.worker import TaskCompletionLatch, run_farm_worker
+from mod.telegram_remote_control.worker import TaskCompletionLatch, run_farm_worker, make_worker_completion_callback
 
 
-__version__ = '2.7.1-momo.1'
-OWNER = "arnold2957"
+__version__ = '3.2.1-momo.1'
+OWNER = "momo31"
 REPO = "wvd"
 
 
-class AppController(tk.Tk):
-    """Own the Tk event loop, legacy worker, and remote feature boundary."""
+class AppController:
+    """Serialize all app mutations on one owner thread; WebView owns the main thread."""
 
     def __init__(self, headless: bool, config_path: str | None):
-        super().__init__()
-        self.withdraw()
         self.headless = bool(headless)
         self.config_path = config_path
         self.msg_queue = queue.Queue()
         self.main_window = None
         self.quest_threading = None
         self.quest_setting = None
-        self._active_runtime: RemoteRuntime | None = None
-        self._active_latch: TaskCompletionLatch | None = None
-        self._completion_enqueued: set[str] = set()
-        self._handoff_waiting: set[str] = set()
-
-        if not self.headless:
-            self.main_window = ConfigPanelApp(self, __version__, self.msg_queue)
-
+        self._active_runtime = None
+        self._active_latch = None
+        self._completion_enqueued = set()
+        self._handoff_waiting = set()
+        self._ui_finished = set()
+        self._closing = False
+        self._clock = time.monotonic
+        self._force_exit = os._exit
+        self._owner_ident = None
+        self._scheduled = []
+        self._schedule_lock = threading.Lock()
+        self._schedule_sequence = itertools.count()
+        self._wake = threading.Event()
+        self._shutdown_done = threading.Event()
+        self._shutdown_started = None
+        self._service_stop_thread = None
+        self._log_stop_thread = None
+        self._logging_started = False
+        self._aux_stop_event = threading.Event()
+        self._download_thread = None
+        self._update_check_thread = None
+        self._restart_script = None
+        self.exit_code = 0
         ports = ControllerPorts(
             load_raw_config=lambda path: LoadRawConfigFromFile(path),
             load_latest_setting=self._load_latest_setting,
             start_task=self._start_task,
             task_is_alive=self._task_is_alive,
             sync_ui_state=self._sync_remote_ui,
-            schedule_after=lambda delay, callback: self.after(delay, callback),
+            schedule_after=self.schedule_after,
             show_test_result=self._show_connection_test_result,
             reboot_emulator=self._reboot_emulator,
             list_quest_targets=self._list_quest_targets,
             select_quest_target=self._select_quest_target,
         )
-        self.remote_feature = TelegramRemoteFeature(
-            self.msg_queue,
-            config_path,
-            ports,
-            logger,
-            LANGUAGE,
-        )
-        self.remote_feature.start()
-
-        if self.headless:
-            HeadlessActive(config_path, self.msg_queue)
-
+        self.remote_feature = TelegramRemoteFeature(self.msg_queue, config_path, ports, logger, LANGUAGE)
         self.is_checking_for_update = False
-        self.updater = AutoUpdater(
-            msg_queue=self.msg_queue,
-            github_user=OWNER,
-            github_repo=REPO,
-            current_version=__version__,
-        )
-        self.schedule_periodic_update_check()
-        self.after(CONTROLLER_TICK_MILLISECONDS, self._remote_tick)
-        self.check_queue()
+        self.update_downloading = False
+        self.updater = AutoUpdater(msg_queue=self.msg_queue, github_user=OWNER, github_repo=REPO, current_version=__version__)
+        self.updater.protected_paths = [self.config_path or CONFIG_FILE]
 
     def run_in_thread(self, target_func, *args):
         thread = threading.Thread(target=target_func, args=args, daemon=True)
         thread.start()
         return thread
 
+    def schedule_after(self, delay_ms, callback):
+        with self._schedule_lock:
+            if self._closing:
+                return
+            heapq.heappush(self._scheduled, (self._clock() + max(0, delay_ms) / 1000, next(self._schedule_sequence), callback))
+        self._wake.set()
+
+    def _push_event(self, event):
+        if self.main_window is not None:
+            self.main_window.push_event(event)
+
     def schedule_periodic_update_check(self):
+        if self._closing:
+            return
         if not self.is_checking_for_update:
             self.is_checking_for_update = True
 
@@ -128,14 +168,9 @@ class AppController(tk.Tk):
                 finally:
                     self.is_checking_for_update = False
 
-            self.run_in_thread(check)
-        self.after(3600000, self.schedule_periodic_update_check)
+            self._update_check_thread = self.run_in_thread(check)
+        self.schedule_after(3600000, self.schedule_periodic_update_check)
 
-    def _remote_tick(self):
-        try:
-            self.remote_feature.tick()
-        finally:
-            self.after(CONTROLLER_TICK_MILLISECONDS, self._remote_tick)
 
     def _load_latest_setting(self):
         return load_latest_farm_setting(
@@ -214,18 +249,36 @@ class AppController(tk.Tk):
         )
 
     def _start_task(self, setting, start_reason, run_id, runtime) -> bool:
-        if self._task_is_alive() or getattr(
+        if self._closing or self._task_is_alive() or getattr(
             getattr(self, "remote_feature", None),
             "emulator_reboot_in_progress",
             False,
         ):
             return False
+        saved_target = str(getattr(setting, 'FARM_TARGET', ''))
+        target = QUEST_CODE_ALIASES.get(saved_target, saved_target)
+        language = getattr(setting, 'LANGUAGE_GAME', 'en_US')
+        missing = ValidateQuestResources(target, language)
+        if getattr(setting, 'TELEGRAM_ENABLED', False) or StartReason(start_reason) is StartReason.TELEGRAM:
+            missing += ValidateRemoteResources(language)
+        if missing:
+            logger.error('Task cannot start; unavailable target/resources: %s', ', '.join(missing))
+            self._push_event({'type': 'start_rejected', 'missing': missing})
+            if runtime is not None:
+                runtime.mark_exit(TaskExitReason.ERROR, '작업에 필요한 리소스가 없습니다.', 'task_resources')
+            return False
+        setting.FARM_TARGET = target
+        # A headless/custom-config start has the same image-language contract as the GUI.
+        import utils, script
+        utils.LANGUAGE_GAME = script.LANGUAGE_GAME = language
+        utils.DIALOG_OPTION_IMAGE_LIST = utils.reflectImage('dialogueChoices', language)
+        script.DIALOG_OPTION_IMAGE_LIST = utils.DIALOG_OPTION_IMAGE_LIST
         if runtime is None:
             runtime = self._new_local_runtime(setting)
             run_id = runtime.run_id
         handoff = (
             self._active_runtime is runtime
-            and runtime.is_handoff_requested(HANDOFF_TARGET_7000G)
+            and runtime.is_handoff_requested()
         )
         if runtime is not self._active_runtime:
             self._active_runtime = runtime
@@ -238,18 +291,22 @@ class AppController(tk.Tk):
         setting._START_REASON = StartReason(start_reason)
         setting._TASK_RUN_ID = runtime.run_id
         setting._REMOTE_HANDOFF_TARGET = runtime.handoff_target if handoff else None
+        generation = runtime.begin_worker()
+        setting._WORKER_GENERATION = generation
 
         callback = getattr(setting, "_FINISHINGCALLBACK", None)
         latch = self._active_latch
+        guarded_complete = make_worker_completion_callback(runtime, latch, generation)
 
         def completion_callback():
+            if not guarded_complete():
+                return False
             if callback is not None:
                 try:
                     callback()
                 except Exception:
                     logger.exception("legacy completion callback failed")
-            if latch is not None:
-                latch.callback()
+            return True
 
         setting._FINISHINGCALLBACK = completion_callback
         farm = Factory()
@@ -258,7 +315,7 @@ class AppController(tk.Tk):
             target=run_farm_worker,
             args=(farm, setting, runtime, latch, logger),
             daemon=True,
-            name=f"farm-worker-{runtime.run_id[:8]}",
+            name=f"farm-worker-{runtime.run_id[:8]}-{generation}",
         )
         try:
             self.quest_threading.start()
@@ -269,29 +326,40 @@ class AppController(tk.Tk):
             return False
         if not handoff:
             self.remote_feature.on_task_started(runtime)
+        runtime.update_farm_target(getattr(setting, 'FARM_TARGET_TEXT', '') or target)
+        self._push_event({'type': 'task_started', 'target': target, 'run_id': runtime.run_id})
         return True
 
     def _request_local_stop(self):
+        if self._active_runtime is not None:
+            self._active_runtime.worker_force_stop_event.set()
         if self.quest_setting is not None:
             event = getattr(self.quest_setting, "_FORCESTOPING", None)
             if event is not None:
                 event.set()
 
     def _reboot_emulator(self) -> bool:
+        if self._aux_stop_event.is_set():
+            return False
         worker = self.quest_threading
         if worker is not None and worker.is_alive():
             self._request_local_stop()
         runtime = getattr(self, "_active_runtime", None)
-        if runtime is not None and runtime.clear_handoff(HANDOFF_TARGET_7000G):
+        if runtime is not None and runtime.clear_handoff():
             runtime.mark_exit(TaskExitReason.LOCAL_STOP, "에뮬레이터 재부팅으로 작업이 중지되었습니다.")
             latch = getattr(self, "_active_latch", None)
             if latch is not None:
                 latch.callback()
         if worker is not None and worker.is_alive():
-            # ponytail: fixed grace period; add a stop handshake only if ADB work survives it.
             worker.join(10)
+            if worker.is_alive():
+                return False
+        if self._aux_stop_event.is_set():
+            return False
         setting = self._load_latest_setting()
-        setting._FORCESTOPING = threading.Event()
+        setting._FORCESTOPING = self._aux_stop_event
+        if self._aux_stop_event.is_set():
+            return False
         setting._ADBDEVICE = CheckAndRecoverDevice(
             setting,
             RuntimeContext(),
@@ -305,7 +373,7 @@ class AppController(tk.Tk):
         if runtime is None or runtime.run_id != run_id:
             return
         if self._task_is_alive():
-            self.after(50, lambda: self._handle_task_completion_requested(run_id))
+            self.schedule_after(50, lambda: self._handle_task_completion_requested(run_id))
             return
         if run_id in self._completion_enqueued:
             return
@@ -316,35 +384,87 @@ class AppController(tk.Tk):
 
     def _handle_handoff(self, value):
         runtime = self._active_runtime
-        run_id = str(value or (runtime.run_id if runtime else ""))
-        if runtime is None or runtime.run_id != run_id:
+        if self._closing or runtime is None or not isinstance(value, dict):
             return
-        if not runtime.is_handoff_requested(HANDOFF_TARGET_7000G):
+        run_id = value.get('run_id')
+        generation = value.get('worker_generation')
+        target = value.get('target')
+        if (runtime.run_id != run_id or runtime.worker_generation != generation
+                or not runtime.is_handoff_requested(target)):
             return
-        if run_id in self._handoff_waiting:
+        key = (run_id, generation)
+        if key in self._handoff_waiting:
             return
-        self._handoff_waiting.add(run_id)
+        self._handoff_waiting.add(key)
+        deadline = self._clock() + WORKER_EXIT_TIMEOUT_SECONDS
 
         def wait_for_worker():
+            if (self._closing or self._active_runtime is not runtime
+                    or runtime.worker_generation != generation):
+                self._handoff_waiting.discard(key)
+                return
             if self._task_is_alive():
-                self.after(50, wait_for_worker)
+                if self._clock() >= deadline:
+                    self._handoff_waiting.discard(key)
+                    runtime.worker_force_stop_event.set()
+                    runtime.clear_handoff()
+                    runtime.mark_exit(TaskExitReason.ERROR, '이전 작업이 종료되지 않았습니다.', 'handoff_worker_timeout')
+                    self._active_latch.callback()
+                    return
+                self.schedule_after(50, wait_for_worker)
                 return
-            self._handoff_waiting.discard(run_id)
-            if self._active_runtime is not runtime or not runtime.is_handoff_requested(HANDOFF_TARGET_7000G):
+            self._handoff_waiting.discard(key)
+            if not runtime.is_handoff_requested(target):
                 return
-            setting = self.quest_setting
-            if setting is None:
-                runtime.mark_exit(TaskExitReason.ERROR, "인계할 작업 설정이 없습니다.", "handoff_setting_missing")
-                self._handle_task_completion_requested(run_id)
+            runtime.finish_round()
+            if runtime.worker_force_stop_event.is_set() or runtime.exit_reason is not None:
+                runtime.clear_handoff()
+                runtime.mark_exit(TaskExitReason.LOCAL_STOP, '작업이 중지되었습니다.')
+                self._active_latch.callback()
                 return
-            setting.FARM_TARGET = HANDOFF_TARGET_7000G
-            setting.FARM_TARGET_TEXT = HANDOFF_TARGET_7000G
-            setting._COUNTERDUNG = 0
-            self._start_task(setting, runtime.start_reason, run_id, runtime)
-            if self.main_window:
-                self.main_window.turn_to_7000G()
+            if runtime.is_stop_requested():
+                runtime.clear_handoff()
+                self._finish_handoff_stop(runtime)
+                return
+            try:
+                setting = load_farm_setting_for_target(
+                    self.config_path, target,
+                    lambda path: LoadRawConfigFromFile(path, migrate_recovery=False),
+                    LoadSettingFromDict,
+                )
+                setting.FARM_TARGET_TEXT = next((q.display_name for q in self._list_quest_targets() if q.code == target), target)
+                if self._start_task(setting, runtime.start_reason, run_id, runtime):
+                    return
+                phase = 'handoff_start_rejected'
+            except Exception:
+                logger.exception('handoff setting load failed')
+                phase = 'handoff_setting'
+            runtime.clear_handoff()
+            runtime.mark_exit(TaskExitReason.ERROR, '후속 작업을 시작하지 못했습니다.', phase)
+            self._active_latch.callback()
 
-        self.after(0, wait_for_worker)
+        self.schedule_after(0, wait_for_worker)
+
+    def _finish_handoff_stop(self, runtime):
+        """Finish remote return when the previous Farm exited just before /stop."""
+        from mod.telegram_remote_control.models import CheckpointKind, RemoteStopSignal
+        from mod.telegram_remote_control.stop_orchestrator import execute_remote_stop
+        complete = make_worker_completion_callback(runtime, self._active_latch, runtime.worker_generation)
+
+        def finish():
+            try:
+                if runtime.adapter is None:
+                    runtime.mark_exit(TaskExitReason.ERROR, '정지 전환에 필요한 장치가 없습니다.', 'stop_adapter_missing')
+                else:
+                    execute_remote_stop(runtime.adapter, runtime, RemoteStopSignal(CheckpointKind.BETWEEN_OPERATIONS))
+            except Exception:
+                runtime.mark_exit(TaskExitReason.ERROR, '정지 전환에 실패했습니다.', 'handoff_stop')
+                logger.exception('handoff stop failed')
+            finally:
+                complete()
+
+        self.quest_threading = threading.Thread(target=finish, name='handoff-stop', daemon=True)
+        self.quest_threading.start()
 
     def _sync_remote_ui(self, state):
         if self.main_window is None:
@@ -353,102 +473,246 @@ class AppController(tk.Tk):
         if callback is not None:
             callback(state)
 
-    def _show_connection_test_result(self, result: ConnectionTestResult):
-        if self.main_window is None:
-            return
-        if result.succeeded:
-            messagebox.showinfo("Telegram", result.public_message, parent=self.main_window)
-        else:
-            messagebox.showerror("Telegram", result.public_message, parent=self.main_window)
+    def _show_connection_test_result(self, result):
+        if self.main_window is not None:
+            self.main_window.show_connection_test_result(result)
 
     def _dispatch(self, command, value):
+        if command == 'ui_request':
+            name, data, reply, cancelled = value
+            if cancelled.is_set():
+                return
+            try:
+                result = self._dispatch(name, data)
+            except Exception:
+                logger.exception('UI request failed: %s', name)
+                result = {'ok': False, 'error': 'request_failed'}
+            reply.put(result if isinstance(result, dict) else {'ok': True})
+            return
+        if command == 'close_window':
+            self._begin_shutdown()
+            return {'ok': True}
+        if self._closing and command not in ('download_finished', 'task_completion_requested', 'task_finished'):
+            return {'ok': False, 'error': 'closing'}
+        if command == 'task_finished':
+            runtime = self._active_runtime
+            if runtime is None or value.run_id != runtime.run_id or value.run_id in self._ui_finished:
+                return
+            self._ui_finished.add(value.run_id)
+            self._push_event({'type': 'task_finished', 'reason': value.reason.value, 'detail': value.detail})
         if self.remote_feature.handle_event(command, value):
-            return
-        if command == "task_completion_requested":
+            return {'ok': True}
+        if command == 'task_completion_requested':
             self._handle_task_completion_requested(value)
-            return
-        if command == "start_quest":
-            started = self._start_task(value, StartReason.LOCAL, "", None)
-            if not started and getattr(
-                self.remote_feature,
-                "emulator_reboot_in_progress",
-                False,
-            ):
-                callback = getattr(value, "_FINISHINGCALLBACK", None)
-                if callback is not None:
-                    callback()
-            return
-        if command == "stop_quest":
+        elif command == 'start_quest':
+            try:
+                setting = value if value is not None else self._load_latest_setting()
+                started = self._start_task(setting, StartReason.LOCAL, '', None)
+            except Exception:
+                logger.exception('task settings are unavailable')
+                started = False
+            if not started:
+                self._push_event({'type': 'start_rejected'})
+                if self.headless and self._active_runtime is None:
+                    self.exit_code = 1
+                    self._begin_shutdown()
+            return {'ok': started}
+        elif command == 'stop_quest':
             self._request_local_stop()
-            return
-        if command == "quest_finished":
-            if self.main_window:
-                self.main_window.real_finishingcallback()
-            return
-        if command == "turn_to_7000G":
+            self._push_event({'type': 'local_stopping'})
+        elif command == 'set_stop_after':
+            runtime = self._active_runtime
+            if runtime is None or runtime.exit_reason is not None:
+                return {'ok': False, 'error': 'not_running'}
+            (runtime.stop_after_run_event.set if value else runtime.stop_after_run_event.clear)()
+            self._push_event({'type': 'stop_after', 'enabled': bool(value)})
+        elif command in ('switch_quest', 'turn_to_7000G'):
             self._handle_handoff(value)
-            return
-        if command == "update_available":
+        elif command == 'update_available':
             self._show_update(value)
-            return
-        if command == "download_started":
-            if not hasattr(self, "progress_window") or not self.progress_window.winfo_exists():
-                self.progress_window = Progressbar(self.main_window, title="다운로드 중...", max_size=value)
-            return
-        if command == "progress":
-            if hasattr(self, "progress_window") and self.progress_window.winfo_exists():
-                self.progress_window.update_progress(value)
-            return
-        if command == "download_complete":
-            if hasattr(self, "progress_window") and self.progress_window.winfo_exists():
-                self.progress_window.destroy()
-            return
-        if command == "error":
-            if hasattr(self, "progress_window") and self.progress_window.winfo_exists():
-                self.progress_window.destroy()
-            messagebox.showerror("오류", value, parent=self.main_window)
-            return
-        if command == "restart_ready":
-            script_path = value
-            messagebox.showinfo("재시작", "업데이트가 준비되었습니다.", parent=self.main_window)
-            if sys.platform == "win32":
-                subprocess.Popen([script_path], shell=True)
-            else:
-                os.system(script_path)
-            self.destroy()
-            return
+        elif command == 'update_manual':
+            self._push_event({'type': 'update_manual', 'url': 'https://github.com/momo31/wvd/releases'})
+        elif command == 'download_update':
+            return {'ok': self._start_update_download()}
+        elif command == 'cancel_update':
+            self.updater.cancel_event.set()
+        elif command in ('download_started', 'progress'):
+            if not self.updater.cancel_event.is_set():
+                self._push_event({'type': command, 'value': value})
+        elif command == 'download_finished':
+            self.update_downloading = False
+            self._push_event({'type': 'download_finished'})
+        elif command == 'error':
+            if not self.updater.cancel_event.is_set():
+                self._push_event({'type': 'error', 'message': str(value)})
+        elif command == 'restart_ready':
+            if (self.update_downloading and not self.updater.cancel_event.is_set()
+                    and getattr(sys, 'frozen', False) and value == self.updater.restart_script
+                    and isinstance(value, str) and os.path.isfile(value)):
+                self._restart_script = value
+                self._begin_shutdown()
+        elif command in ('web_action', 'save_settings', 'save_telegram', 'set_language', 'test_connection', 'select_target'):
+            if self.main_window is None:
+                return {'ok': False, 'error': 'no_window'}
+            return self.main_window.handle_request(command, value)
+        return {'ok': True}
 
     def _show_update(self, update_data):
-        if not self.main_window:
-            return
-        version = update_data["version"]
-        for widget in (
-            self.main_window.find_update,
-            self.main_window.update_text,
-            self.main_window.button_auto_download,
-            self.main_window.button_manual_download,
-            self.main_window.update_sep,
-        ):
-            widget.grid()
-        self.main_window.LATEST_VERSION.set(version)
-        self.main_window.button_auto_download.config(command=lambda: self.run_in_thread(self.updater.download))
+        self._push_event({'type': 'update_available', 'data': update_data})
+
+    def _start_update_download(self):
+        if self._closing or self.update_downloading:
+            return False
+        if not self.updater.can_download():
+            self._push_event({'type': 'update_manual', 'url': 'https://github.com/momo31/wvd/releases'})
+            return False
+        self.update_downloading = True
+        self.updater.cancel_event.clear()
+        self._download_thread = self.run_in_thread(self.updater.download)
+        self._push_event({'type': 'download_pending'})
+        return True
 
     def check_queue(self):
+        self.process_once()
+
+
+    def call_on_owner(self, command, value=None, timeout=5):
+        if threading.get_ident() == self._owner_ident:
+            return self._dispatch(command, value)
+        if self._closing:
+            return {'ok': False, 'error': 'closing'}
+        reply = queue.Queue(maxsize=1)
+        cancelled = threading.Event()
+        self.msg_queue.put(('ui_request', (command, value, reply, cancelled)))
+        self._wake.set()
         try:
-            for _ in range(MAX_EVENTS_PER_TICK):
-                command, value = self.msg_queue.get_nowait()
-                self._dispatch(command, value)
+            return reply.get(timeout=timeout)
         except queue.Empty:
-            pass
+            cancelled.set()
+            return {'ok': False, 'error': 'controller_timeout'}
+
+    def process_once(self):
+        for _ in range(MAX_EVENTS_PER_TICK):
+            try:
+                command, value = self.msg_queue.get_nowait()
+            except queue.Empty:
+                break
+            try:
+                self._dispatch(command, value)
+            except Exception:
+                logger.exception('controller event failed: %s', command)
+                self._push_event({'type': 'error', 'message': _('The request could not be completed.')})
+        if self._closing:
+            self._poll_shutdown()
+            return
+        while True:
+            with self._schedule_lock:
+                if not self._scheduled or self._scheduled[0][0] > self._clock():
+                    break
+                _, _, callback = heapq.heappop(self._scheduled)
+            try:
+                callback()
+            except Exception:
+                logger.exception('scheduled controller callback failed')
+            if self._closing:
+                return
+        self.remote_feature.tick()
+
+    def request_shutdown(self):
+        self.msg_queue.put(('close_window', None))
+        self._wake.set()
+
+    def _begin_shutdown(self):
+        if self._closing:
+            return
+        self._closing = True
+        self._shutdown_started = self._clock()
+        with self._schedule_lock:
+            self._scheduled.clear()
+        self._request_local_stop()
+        self._aux_stop_event.set()
+        self.updater.cancel_event.set()
+        self._push_event({'type': 'closing'})
+        self._service_stop_thread = self.run_in_thread(self.remote_feature.stop)
+
+    def _poll_shutdown(self):
+        if self._shutdown_done.is_set() or self._shutdown_started is None:
+            return
+        elapsed = self._clock() - self._shutdown_started
+        alive = lambda thread: thread is not None and thread.is_alive()
+        worker_alive = alive(self.quest_threading)
+        service_alive = alive(self._service_stop_thread)
+        download_alive = alive(self._download_thread) or alive(self._update_check_thread)
+        log_alive = alive(self._log_stop_thread)
+        expired = ((worker_alive and elapsed >= WORKER_EXIT_TIMEOUT_SECONDS)
+                   or (service_alive and elapsed >= SERVICE_THREAD_JOIN_TIMEOUT_SECONDS)
+                   or elapsed >= 45)
+        if expired and (worker_alive or service_alive or download_alive or log_alive):
+            logger.error('Shutdown deadline exceeded (worker=%s, service=%s, update=%s, log=%s)', worker_alive, service_alive, download_alive, log_alive)
+            self.exit_code = 1
+            self._shutdown_done.set()
+            self._force_exit(1)
+            return
+        if worker_alive or service_alive or download_alive:
+            return
+        # Flush after every producer exits. Disk I/O must not block the owner
+        # or bypass its overall 45-second shutdown deadline.
+        if self._logging_started and self._log_stop_thread is None:
+            self._log_stop_thread = self.run_in_thread(LOG_LISTENER_MGR.stop)
+        if alive(self._log_stop_thread):
+            return
+        self._shutdown_done.set()
+        if self._restart_script is not None:
+            script, self._restart_script = self._restart_script, None
+            try:
+                subprocess.Popen(['powershell.exe', '-NoProfile', '-NonInteractive',
+                                  '-ExecutionPolicy', 'Bypass', '-File', script],
+                                 cwd=os.path.dirname(script), creationflags=subprocess.CREATE_NO_WINDOW)
+            except OSError:
+                self.exit_code = 1
+                logger.exception('Could not start update helper; manual update is required')
+        if self.main_window is not None:
+            self.main_window.destroy()
+
+    def _owner_loop(self):
+        self._owner_ident = threading.get_ident()
+        try:
+            if self.headless:
+                RegisterConsoleHandler()
+            RegisterQueueHandler()
+            LOG_LISTENER_MGR.start()
+            self._logging_started = True
+            self.remote_feature.start()
+            if self.headless and not HeadlessActive(self.config_path, self.msg_queue):
+                self.exit_code = 1
+                self._begin_shutdown()
+            self.schedule_periodic_update_check()
+            while not self._shutdown_done.is_set():
+                self._wake.clear()
+                self.process_once()
+                self._wake.wait(CONTROLLER_TICK_MILLISECONDS / 1000)
+        except BaseException:
+            logger.exception('controller loop failed')
+            self.exit_code = 1
+            self._begin_shutdown()
+            while not self._shutdown_done.is_set():
+                self._poll_shutdown()
+                self._wake.wait(.1)
+
+    def run(self):
+        if self.headless:
+            self._owner_loop()
+            return
+        self.main_window = ConfigPanelApp(self, __version__, self.msg_queue)
+        owner = threading.Thread(target=self._owner_loop, name='app-controller', daemon=True)
+        owner.start()
+        try:
+            self.main_window.run()
         finally:
-            self.after(100, self.check_queue)
-
-
-def parse_args():
-    parser = argparse.ArgumentParser(description="WvDAS controller")
-    parser.add_argument("-headless", "--headless", action="store_true")
-    parser.add_argument("-config", "--config", type=str, default=None)
-    return parser.parse_args()
+            self.request_shutdown()
+            owner.join(46)
+            if owner.is_alive():
+                self._force_exit(1)
 
 
 def _load_headless_setting(config_path):
@@ -460,27 +724,26 @@ def _load_headless_setting(config_path):
 
 
 def HeadlessActive(config_path, msg_queue):
-    RegisterConsoleHandler()
-    RegisterQueueHandler()
-    LOG_LISTENER_MGR.start()
     try:
         setting = _load_headless_setting(config_path)
     except Exception as exc:
         logger.error("headless macro settings are unavailable: %s", type(exc).__name__)
-        return
+        return False
     msg_queue.put(("start_quest", setting))
     logger.info("WvDAS headless mode started: v%s", __version__)
+    return True
 
 
-def main():
-    args = parse_args()
+def main(args=None):
+    if args is None:
+        args = parse_args()
     controller = AppController(args.headless, args.config)
     try:
-        controller.mainloop()
+        controller.run()
     finally:
-        controller.remote_feature.stop()
         LOG_LISTENER_MGR.stop()
+    return controller.exit_code
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main(startup_args))

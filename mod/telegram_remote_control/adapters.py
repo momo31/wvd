@@ -38,7 +38,7 @@ def image_root() -> Path:
     if getattr(sys, "frozen", False):
         candidates.insert(0, Path(sys._MEIPASS) / "resources" / "images")
     for candidate in candidates:
-        if candidate.is_dir() and any(candidate.glob("*.png")):
+        if candidate.is_dir() and (any(candidate.glob("*.png")) or (candidate / 'common').is_dir()):
             return candidate
     # Keep a deterministic path in error messages when the packaged resource
     # tree is incomplete.
@@ -61,6 +61,7 @@ class GameAutomationAdapter:
     local_stop_requested: Callable[[], bool]
     local_stop_exception_type: type[BaseException]
     failure_dir: Path
+    image_language: str | None = None
 
     def match_mod(
         self,
@@ -71,11 +72,11 @@ class GameAutomationAdapter:
     ) -> list[int] | None:
         if cv2 is None or np is None:
             raise ModResourceError("OpenCV를 불러오지 못했습니다.")
-        path = image_root() / name
-        if path.suffix.lower() != ".png":
-            path = path.with_suffix(".png")
-        if not path.is_file():
-            raise ModResourceError(f"모듈 이미지가 없습니다: {path.name}")
+        from utils import ResolveTemplatePath
+        try:
+            path = Path(ResolveTemplatePath(name, self.image_language))
+        except FileNotFoundError as exc:
+            raise ModResourceError(f"모듈 이미지가 없습니다: {name}") from exc
         template = _load_template(path)
         if screen is None or not hasattr(screen, "shape"):
             return None

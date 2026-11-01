@@ -2,68 +2,24 @@ import os
 import sys
 import json
 import hashlib
+from pathlib import Path
+import re
 import threading
+from urllib.parse import unquote, urlsplit
 from urllib.request import urlopen, Request
 from urllib.error import URLError
-import subprocess
-import time
-from tkinter import ttk
-import tkinter as tk
 import queue
-from utils import *
+import uuid
+import utils
+
+
+def _(message):
+    return utils.trans.gettext(message)
 
 
 class CancelException(Exception):
     """自定义取消异常"""
     pass
-
-class Progressbar(tk.Toplevel):
-    def __init__(self,parent, title="进度", max_size = 1):
-        self.canceled = False
-        super().__init__(parent)
-        self.title(title)
-        self.geometry(f"300x100")
-        self.resizable(False, False)
-        self.protocol("WM_DELETE_WINDOW", self._on_cancel)
-        
-        # 创建进度条
-        self.bar = ttk.Progressbar(self, length=300-20, mode="determinate")
-        self.bar.pack(pady=20)
-        
-        self.downloaded_size_var = tk.IntVar(value = "")
-        label = ttk.Label(self, textvariable= self.downloaded_size_var)
-        label.pack()
-
-        # 最大值
-        self.max_size = max_size
-
-    def _on_cancel(self):
-        """取消按钮回调函数"""
-        self.canceled = True
-        self.quit()
-        self.destroy()
-
-    def update_progress(self, value):
-        """设置进度值并检查取消状态"""
-        if self.canceled:
-            raise CancelException("用户取消操作")
-
-        percent = round((value / self.max_size) * 100, 2)
-        self.bar["value"] = percent
-
-        def short_byte_string(bytes:int):
-            if bytes >= 1024*1024*1024:
-                return f"{round(bytes/1024/1024/1024,2)} GB"
-            if bytes >= 1024*1024:
-                return f"{round(bytes/1024/1024,2)} MB"
-            if bytes >= 1024:
-                return f"{round(bytes/1024,2)} KB"
-            return f"{bytes} B"
-
-        self.downloaded_size_var.set(f"{short_byte_string(value)} / {short_byte_string(self.max_size)} ({percent}%)")
-        
-        if self.canceled:
-            raise CancelException("用户取消操作")
 
 class AutoUpdater():
     def __init__(self, msg_queue: queue.Queue, github_user: str, github_repo: str, current_version: str):
@@ -71,82 +27,120 @@ class AutoUpdater():
         self.github_repo = github_repo
         self.current_version = current_version
         self.msg_queue = msg_queue
+        self.cancel_event = threading.Event()
+        self.update_data = None
+        self.restart_script = None
+        self.protected_paths = []
+
+    @staticmethod
+    def _version_parts(value):
+        match = re.fullmatch(r'(\d+)\.(\d+)\.(\d+)-momo\.(\d+)', value or '') if isinstance(value, str) else None
+        return tuple(map(int, match.groups())) if match else None
+
+    def _is_allowed_update(self, data):
+        if (self.github_user, self.github_repo) != ('momo31', 'wvd') or not isinstance(data, dict):
+            return False
+        if self._version_parts(data.get('version')) is None or not re.fullmatch(r'[a-fA-F0-9]{32}', str(data.get('md5', ''))):
+            return False
+        try:
+            url = urlsplit(data.get('download_url', ''))
+            path = unquote(url.path)
+            prefix = '/momo31/wvd/releases/download/'
+            return (url.scheme == 'https' and url.netloc == 'github.com'
+                    and not url.query and not url.fragment and '\\' not in path
+                    and path.startswith(prefix) and '..' not in path.split('/')
+                    and len(path[len(prefix):].split('/')) == 2 and path.lower().endswith('.zip'))
+        except (ValueError, TypeError, AttributeError):
+            return False
+
+    def _manual_update(self):
+        self.update_data = None
+        self.msg_queue.put(('update_manual', {'url': 'https://github.com/momo31/wvd/releases'}))
+
+    def can_download(self):
+        return (bool(getattr(sys, 'frozen', False)) and sys.platform == 'win32'
+                and self._is_allowed_update(self.update_data)
+                and self._is_newer_version(self.update_data['version']))
+
+    def _check_cancelled(self):
+        if self.cancel_event.is_set():
+            raise CancelException()
 
     def _is_newer_version(self, new_version):
-        # 分割版本号
-        new_parts = new_version.split('.')[:3]  # 只取前三个部分
-
-        withoutbeta = self.current_version.split('-')[:1][0]  # 只取前三个部分
-        current_parts = withoutbeta.split('.')[:3]  # 只取前三个部分
-        
-        # 确保两个列表都有3个元素（不足的补0）
-        while len(new_parts) < 3:
-            new_parts.append('0')
-        while len(current_parts) < 3:
-            current_parts.append('0')
-        
-        # 逐段比较版本号
-        for i in range(3):
-            new_num = int(new_parts[i])
-            current_num = int(current_parts[i])
-            
-            if new_num > current_num:
-                return True
-            elif new_num < current_num:
-                return False
-        
-        return False  # 所有部分都相等
+        new, current = self._version_parts(new_version), self._version_parts(self.current_version)
+        return bool(new is not None and current is not None and new > current)
 
     def check_for_updates(self):
         """执行更新检查逻辑"""
+        if not getattr(sys, 'frozen', False) or (self.github_user, self.github_repo) != ('momo31', 'wvd'):
+            self._manual_update()
+            return
         update_url = f"https://{self.github_user}.github.io/{self.github_repo}/release.json"
         try:
             req = Request(update_url, headers={'Cache-Control': 'no-cache'})
             with urlopen(req, timeout=10) as response:
-                data = json.loads(response.read().decode())
+                data = json.loads(response.read().decode('utf-8-sig'))
+            if self.cancel_event.is_set():
+                return
+            if not self._is_allowed_update(data):
+                self._manual_update()
+                return
             
             if self._is_newer_version(data['version']):
                 print(f"发现新版本: {data['version']}")
                 self.update_data = data
                 self.msg_queue.put(('update_available', data))
 
-        except (URLError, ValueError, json.JSONDecodeError) as e:
-            # 发生错误，同样通过队列报告。
-            error_message = f"检查更新失败: {e}"
-            # logger.error(error_message) # 暂时把这个关掉 看看是否是多线程问题
-            # self.msg_queue.put(('error', error_message))
+        except (URLError, OSError, ValueError, TypeError):
+            if not self.cancel_event.is_set():
+                self._manual_update()
 
     def download(self):
         try:
+            self._check_cancelled()
+            if not self.can_download():
+                self._manual_update()
+                return
+            update_data = dict(self.update_data)
             # 创建临时目录
-            temp_dir = "__update_temp__"
+            temp_dir = str(Path(sys.executable).resolve().parent / '__update_temp__' / uuid.uuid4().hex)
             os.makedirs(temp_dir, exist_ok=True)
             
             # 下载压缩包
-            download_url = self.update_data['download_url']
-            archive_name = os.path.basename(download_url)
+            download_url = update_data['download_url']
+            archive_name = unquote(urlsplit(download_url).path).rsplit('/', 1)[-1]
             archive_path = os.path.join(temp_dir, archive_name)
             
             self._download_bar_and_retry(download_url,archive_path)
+            self._check_cancelled()
             
             # 验证MD5
-            if not self._verify_md5(archive_path, self.update_data['md5']):
-                self.msg_queue.put(('error', "文件校验失败，请手动更新"))
+            verified = self._verify_md5(archive_path, update_data['md5'])
+            self._check_cancelled()
+            if not verified:
+                self.msg_queue.put(('error', _("文件校验失败，请手动更新")))
                 return
                 
             # 解压到临时目录的子文件夹
             unpack_dir = os.path.join(temp_dir, "unpacked")
             os.makedirs(unpack_dir, exist_ok=True)
             self._extract_archive(archive_path, unpack_dir)
+            self._check_cancelled()
             
             # 生成重启脚本
             restart_script = self._create_restart_script(unpack_dir)
+            self._check_cancelled()
+            self.restart_script = restart_script
             
             # 发送重启信号.
             self.msg_queue.put(('restart_ready', restart_script))
                 
+        except CancelException:
+            pass
         except Exception as e:
-            self.msg_queue.put(('error', f"更新失败: {str(e)}"))
+            self.msg_queue.put(('error', _("Update failed. Please download the fork release manually.")))
+        finally:
+            self.msg_queue.put(('download_finished', None))
     
     def _download_bar_and_retry(self, download_url, archive_path):
         max_retries = 3
@@ -154,9 +148,11 @@ class AutoUpdater():
         success = False
 
         while retry_count <= max_retries and not success:
+            self._check_cancelled()
             try:
                 # 打开网络连接
-                with urlopen(download_url) as response:
+                with urlopen(download_url, timeout=15) as response:
+                    self._check_cancelled()
                     # 获取文件总大小（字节）
                     total_size = int(response.headers.get('Content-Length', 0))
                     
@@ -167,7 +163,9 @@ class AutoUpdater():
                         downloaded = 0
                         # 分块读取数据（每次800KB）
                         while True:
+                            self._check_cancelled()
                             chunk = response.read(819200)  # 800KB缓冲区
+                            self._check_cancelled()
                             if not chunk:
                                 break  # 数据读取完成
                             
@@ -182,6 +180,7 @@ class AutoUpdater():
                 self.msg_queue.put(('download_complete', None))
                 
             except (URLError, IOError, ConnectionResetError) as e:
+                self._check_cancelled()
                 # 网络或IO异常处理
                 retry_count += 1
                 
@@ -191,7 +190,7 @@ class AutoUpdater():
                 else:
                     # 显示重试信息
                     print(f"下载中断，正在重试 ({retry_count}/{max_retries})...")
-                    time.sleep(2)  # 重试前等待2秒
+                    self.cancel_event.wait(2)
 
 
     def _extract_archive(self, archive_path, target_dir):
@@ -200,7 +199,15 @@ class AutoUpdater():
             # 使用Python内置zipfile模块解压
             import zipfile
             with zipfile.ZipFile(archive_path, 'r') as zip_ref:
-                zip_ref.extractall(target_dir)
+                for member in zip_ref.infolist():
+                    self._check_cancelled()
+                    root = Path(target_dir).resolve()
+                    name = member.filename.replace('\\', '/')
+                    destination = (root / name).resolve()
+                    if (name.startswith('/') or ':' in name or '..' in name.split('/')
+                            or not destination.is_relative_to(root)):
+                        raise ValueError('Archive member escapes the staging directory')
+                    zip_ref.extract(member, target_dir)
         else:
             raise Exception(f"不支持的压缩格式: {os.path.splitext(archive_path)[1]}")
 
@@ -209,51 +216,46 @@ class AutoUpdater():
         hash_md5 = hashlib.md5()
         with open(file_path, "rb") as f:
             for chunk in iter(lambda: f.read(4096), b""):
+                self._check_cancelled()
                 hash_md5.update(chunk)
-        return hash_md5.hexdigest() == expected_md5
+        return hash_md5.hexdigest() == expected_md5.lower()
 
     def _create_restart_script(self, unpack_dir):
-        """创建重启脚本(跨平台), 并返回启动脚本的路径或指令."""
-        if sys.platform == "win32":
-            script = f"""@echo off
-REM 等待原始程序退出
-timeout /t 2 /nobreak >nul
-
-REM 复制解压后的文件到当前目录
-xcopy /E /Y /Q "{unpack_dir}\\*" "."
-
-REM 启动新版本程序
-start "" "{os.path.basename(sys.argv[0])}"
-
-REM 清理临时文件
-rmdir /S /Q "__update_temp__"
-
-REM 删除自身
-del "%~f0"
-    """
-            with open("_update_restart.bat", "w") as f:
-                f.write(script)
-            return "_update_restart.bat"
-        else:  # Linux/macOS
-            script = f"""#!/bin/bash
-    # 等待原始程序退出
-    sleep 2
-
-    # 移动解压后的文件到当前目录
-    mv -f "{unpack_dir}"/* .
-
-    # 添加执行权限（如果需要）
-    chmod +x "{os.path.basename(sys.argv[0])}"
-
-    # 启动新版本程序
-    nohup ./{os.path.basename(sys.argv[0])} >/dev/null 2>&1 &
-
-    # 清理临时文件
-    rm -rf "__update_temp__"
-
-    # 删除自身
-    rm -- "$0"
-    """
-            with open("_update_restart.sh", "w") as f:
-                f.write(script)
-            return "nohup ./_update_restart.sh &"
+        """Stage a PowerShell helper; the controller launches it after cleanup."""
+        install = Path(sys.executable).resolve().parent
+        stage = (install / '__update_temp__').resolve()
+        unpack = Path(unpack_dir).resolve()
+        if not unpack.is_relative_to(stage) or not stage.is_relative_to(install):
+            raise ValueError('Update staging must be inside the installation directory')
+        quote = lambda value: "'" + str(value).replace("'", "''") + "'"
+        protected = [install / 'config.json', *(Path(path).resolve() for path in self.protected_paths)]
+        excluded = ', '.join(quote(path) for path in protected)
+        script = f"""$ErrorActionPreference = 'Stop'
+$installRoot = {quote(install)}
+$stageRoot = {quote(stage)}
+$unpackRoot = {quote(unpack)}
+$protectedFiles = @({excluded})
+# The old process releases its executable only after WebView has closed.
+if (Get-Process -Id {os.getpid()} -ErrorAction SilentlyContinue) {{
+    Wait-Process -Id {os.getpid()} -Timeout 60 -ErrorAction Stop
+}}
+Get-ChildItem -LiteralPath $unpackRoot -Recurse -File | ForEach-Object {{
+    $relative = $_.FullName.Substring($unpackRoot.Length + 1)
+    $topLevel = $relative.Split([IO.Path]::DirectorySeparatorChar)[0]
+    if ($topLevel -notin @('_internal', {quote(Path(sys.executable).name)}, 'CHANGES_LOG.md')) {{ return }}
+    $destination = [IO.Path]::GetFullPath((Join-Path $installRoot $relative))
+    if (-not $destination.StartsWith($installRoot + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) {{ throw 'Invalid update destination' }}
+    if ($protectedFiles -notcontains $destination) {{
+        [IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($destination)) | Out-Null
+        Copy-Item -LiteralPath $_.FullName -Destination $destination -Force
+    }}
+}}
+Start-Process -FilePath {quote(Path(sys.executable).resolve())} -WorkingDirectory $installRoot -WindowStyle Hidden
+$resolvedStage = [IO.Path]::GetFullPath($stageRoot)
+if ($resolvedStage -ne [IO.Path]::GetFullPath((Join-Path $installRoot '__update_temp__'))) {{ throw 'Invalid cleanup target' }}
+Remove-Item -LiteralPath $resolvedStage -Recurse -Force
+Remove-Item -LiteralPath $PSCommandPath -Force
+"""
+        path = install / '_update_restart.ps1'
+        path.write_text(script, encoding='utf-8-sig')
+        return str(path)
