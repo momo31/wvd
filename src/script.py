@@ -137,6 +137,7 @@ CONFIG_VAR_LIST = [
             ]
 CONFIG_VAR_LIST += [
     ['GENERAL', 'DARK_THEME', tk.BooleanVar, False],
+    ['GENERAL', 'RELEASE_NOTICES_DISMISSED', tk.BooleanVar, False],
     ['GENERAL', 'LANGUAGE_SCRIPT', tk.StringVar, 'ko_KR'],
     ['GENERAL', 'LANGUAGE_GAME', tk.StringVar, 'en_US'],
     ['GENERAL', 'WEBSITE_ORG_TIME_OLD', tk.StringVar, None],
@@ -1644,6 +1645,7 @@ def Factory():
     ##################################################################
     def FindCoordsOrElseExecuteFallbackAndWait(targetPattern, fallback,waitTime):
         guild_declines = 0
+        transition_deadline = None
         # fallback可以是坐标[x,y]或者字符串. 当为字符串的时候, 视为图片地址
         def pressTarget(target):
             if target.lower() == "return":
@@ -1666,7 +1668,8 @@ def Factory():
             return None
 
         while True:
-            for underscore in range(setting.MAX_TRY_LIMIT):
+            attempts = 0
+            while attempts < setting.MAX_TRY_LIMIT:
                 if setting._FORCESTOPING.is_set():
                     raise TaskStoppedException()
                 remote_stop_checkpoint(
@@ -1674,6 +1677,20 @@ def Factory():
                     CheckpointKind.BETWEEN_OPERATIONS,
                 )
                 scn = ScreenShot()
+                # Back during a fade cancels travel and sends us straight back to town.
+                if classify_screen(scn) is ScreenHealth.BLACK or CheckIf(scn, "abyssReadying"):
+                    if transition_deadline is None:
+                        transition_deadline = time.monotonic() + 90
+                        logger.info("화면 전환 중입니다. 입력 없이 완료를 기다립니다.")
+                    if time.monotonic() >= transition_deadline:
+                        StopTaskWithError(
+                            "화면 전환이 90초 동안 끝나지 않아 작업을 중단했습니다.",
+                            "screen_transition_timeout", scn,
+                        )
+                    Sleep(1)
+                    continue
+                transition_deadline = None
+                attempts += 1
                 if DismissSetTrapScreen(scn):
                     continue
                 if isinstance(targetPattern, (list, tuple)):
@@ -1882,7 +1899,14 @@ def Factory():
             )
             loading = classify_screen(screen) is ScreenHealth.BLACK or CheckIf(screen, "abyssReadying")
             if not (title or disclaimer or loading):
-                clear_frames += 1
+                # An unrecognized splash is not evidence that gameplay is ready.
+                ready = any(CheckIf(screen, pattern) for pattern in (
+                    "Inn", "EdgeOfTown", "intoWorldMap", "openworldmap", "worldmapflag",
+                    "dungFlag", "mapFlag", "chestFlag", "whowillopenit", "chestOpening",
+                    "combatActive", "combatActive_2", "combatActive_3", "combatActive_4",
+                    "guildDecline", "guildRequest", "returnText", "returntoTown", "blessing",
+                ))
+                clear_frames = clear_frames + 1 if ready else 0
                 if clear_frames >= 2:
                     logger.info("시작 화면 종료를 확인했습니다. 중단된 작업을 재개합니다.")
                     return
@@ -2474,11 +2498,11 @@ def Factory():
                 return IdentifyState()
 
             identifyConfig = [
-                ("dungFlag",      DungeonState.Dungeon),
                 ("chestFlag",     DungeonState.Chest),
                 ("whowillopenit", DungeonState.Chest),
                 ("chestOpening",  DungeonState.Chest),
                 ("mapFlag",       DungeonState.Map),
+                ("dungFlag",      DungeonState.Dungeon),
                 ]
             for pattern, state in identifyConfig:
                 if CheckIf(screen, pattern):
@@ -3529,8 +3553,6 @@ def Factory():
             underscore, dungState,screen = IdentifyState()
             if dungState == DungeonState.Map:
                 logger.info(_("开始移动失败. 不要停下来啊面具男!"))
-                FindCoordsOrElseExecuteFallbackAndWait("dungFlag",[[280,1433],[1,1]],1)
-                dungState = dungState.Dungeon
                 break
             if dungState != DungeonState.Dungeon:
                 logger.info(_("已退出移动状态. 当前状态: {a}.").format(a=dungState))
@@ -3591,19 +3613,21 @@ def Factory():
             if target == "dungFlag":
                 Press(searchResult)
                 return None, "DONE"
-            if target in normalPlace or target.endswith("_quit") or target.startswith("stair"):
+            if (target in normalPlace or target.endswith("_quit") or target.startswith("stair")
+                    or CheckIf_FocusCursor(ScreenShot(), target)):
                 Press(searchResult)
-                Press([136,1431]) # automove
+                Sleep(0.5)
+                # The toolbar icon changes map mode; movement uses the button by the destination.
+                selected_map = ScreenShot()
+                move = CheckIf(selected_map, "AutoMove") or CheckIf(selected_map, "AutoMove_light")
+                if not move:
+                    logger.warning("Auto-Move 버튼을 찾지 못해 지도 상태를 다시 확인합니다.")
+                    return DungeonState.Map, "FAIL"
+                Press(move)
                 return StateMoving_CheckStop(), "FAIL"
             else:
-                if (CheckIf_FocusCursor(ScreenShot(),target)): #注意 这里通过二次确认 我们可以看到目标地点 而且是未选中的状态
-                    logger.info(_("经过对比中心区域, 确认没有抵达."))
-                    Press(searchResult)
-                    Press([136,1431]) # automove
-                    return StateMoving_CheckStop(), "FAIL"
-                else:
-                    logger.info(_("经过对比中心区域, 判断为抵达目标地点."))
-                    return DungeonState.Map, "DONE"
+                logger.info(_("经过对比中心区域, 判断为抵达目标地点."))
+                return DungeonState.Map, "DONE"
         return DungeonState.Map, "FAIL"
     def StateChest():
         nonlocal runtimeContext

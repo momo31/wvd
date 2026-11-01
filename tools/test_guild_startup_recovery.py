@@ -163,6 +163,50 @@ class GuildStartupRecoveryTests(unittest.TestCase):
         ns["DeviceShell"].assert_not_called()
         self.assertEqual(ns["runtimeContext"]._CRASHCOUNTER, 0)
 
+    def test_unknown_startup_frames_do_not_resume_interrupted_inputs(self):
+        ns, _, clock, screen = self.harness()
+        unknown = screen()
+        ready = screen("guildDecline", 390, 972)
+        ns["ScreenShot"] = Mock(side_effect=[unknown, unknown, ready, unknown, ready, ready])
+        ns["WaitForGameStartup"]()
+        self.assertEqual(ns["ScreenShot"].call_count, 6)
+        self.assertEqual(clock.now, 5)
+        ns["Press"].assert_not_called()
+
+    def test_unknown_startup_times_out_without_blind_input(self):
+        ns, runtime, clock, screen = self.harness()
+        ns["ScreenShot"] = Mock(return_value=screen())
+        ns["Sleep"] = lambda seconds: setattr(clock, "now", clock.now + 100 * seconds)
+        with self.assertRaises(ns["TaskStoppedException"]):
+            ns["WaitForGameStartup"]()
+        self.assertEqual(runtime.failure_phase, "game_startup_timeout")
+        ns["Press"].assert_not_called()
+        ns["DeviceShell"].assert_not_called()
+
+    def test_transition_frames_do_not_trigger_back_or_consume_target_retries(self):
+        for loading_name in (None, 'abyssReadying'):
+            with self.subTest(loading=loading_name):
+                ns, _, _, screen = self.harness()
+                loading = np.zeros((1600, 900, 3), dtype=np.uint8) if loading_name is None else screen(loading_name)
+                ns['setting'].MAX_TRY_LIMIT = 2
+                ns['ScreenShot'] = Mock(side_effect=[loading] * 4 + [screen('worldmapflag')])
+                ns['restartGame'] = Mock(side_effect=AssertionError('loading triggered restart'))
+                self.assertIsNotNone(ns['FindCoordsOrElseExecuteFallbackAndWait']('worldmapflag', 'return', 1))
+                ns['PressReturn'].assert_not_called()
+                ns['Press'].assert_not_called()
+                ns['restartGame'].assert_not_called()
+
+    def test_stuck_transition_stops_without_back_or_restart(self):
+        ns, runtime, clock, _ = self.harness()
+        ns['ScreenShot'] = Mock(return_value=np.zeros((1600, 900, 3), dtype=np.uint8))
+        ns['Sleep'] = lambda seconds=1: setattr(clock, 'now', clock.now + 30 * seconds)
+        ns['restartGame'] = Mock(side_effect=AssertionError('loading triggered restart'))
+        with self.assertRaises(ns['TaskStoppedException']):
+            ns['FindCoordsOrElseExecuteFallbackAndWait']('worldmapflag', 'return', 1)
+        self.assertEqual(runtime.failure_phase, 'screen_transition_timeout')
+        ns['PressReturn'].assert_not_called()
+        ns['restartGame'].assert_not_called()
+
     def test_local_and_remote_stop_interrupt_startup_wait(self):
         from mod.telegram_remote_control.models import RemoteStopSignal
         for remote in (False, True):

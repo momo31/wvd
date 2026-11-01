@@ -13,6 +13,7 @@ SRC = ROOT / "src"
 sys.path.insert(0, str(SRC))
 
 from recovery import RecoveryPlan, RecoveryReason, RecoverySupervisor
+from screen_health import ScreenHealth, classify_screen
 
 
 from utils import ResolveTemplatePath
@@ -349,6 +350,8 @@ class PartyReunionTests(unittest.TestCase):
             "setting": SimpleNamespace(
                 MAX_TRY_LIMIT=6, _FORCESTOPING=threading.Event(),
             ),
+            "classify_screen": classify_screen,
+            "ScreenHealth": ScreenHealth,
             "ScreenShot": lambda: state["screen"],
             "CheckIf": lambda screen, pattern: screens[screen].get(pattern),
             "Press": press,

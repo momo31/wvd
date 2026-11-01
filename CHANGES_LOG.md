@@ -8,7 +8,12 @@ Updates now accept only momo31 fork releases; cancellation and window closing fi
 Missing recognition images block affected tasks before launch; English FloralHoney and Chinese game safety templates remain unavailable.
 
 ==Unreleased==
-Fighter, Thief, Priest, Mage, Knight and Rarities tombs now visit the third-point chest, finish chest handling, then move to the fourth-point exit. The separate furnace tomb route is unchanged.
+Map movement recognizes both dark and light Auto-Move buttons, fixing repeated exit-selection failures after reaching the Crucible tomb's third point.
+Navigation now waits through black/loading transitions without sending Back or consuming target retries, preventing the town/world-map round trip. A continuous 90-second transition stops with a clear error.
+Map movement now presses the detected Auto-Move button, with an updated English template, instead of the map-mode toolbar. Chest/map markers take priority over the similar dungeon icon, and failed movement stays in map recovery.
+Restart recovery now requires two recognized gameplay frames before resuming interrupted inputs, preventing unrecognized startup screens from triggering Back and repeated restarts.
+Closing the release notice now saves a persistent preference and suppresses future release notices, including after restarting the app.
+Fighter, Thief, Priest, Mage, Knight, Rarities and Crucible tombs now visit the third-point chest, finish chest handling, then move to the fourth-point exit.
 Routine guild requests now dismiss Arna's blocking invitation, while quest-specific choices stay intact; an unresponsive choice stops after three attempts.
 Recovery now waits for startup/loading screens to clear before retrying the interrupted operation, and stops after five minutes instead of repeatedly restarting during loading.
 Server maintenance notices in Korean now stop automation with a clear reason before any fallback taps or recovery retries, preventing repeated game and emulator restarts during maintenance.

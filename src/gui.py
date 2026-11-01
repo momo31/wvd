@@ -393,7 +393,7 @@ class ConfigPanelApp:
             for key, value in patch.items():
                 if key not in self.CONFIG_KEYS or key.startswith('TELEGRAM_') or key in ('FARM_TARGET', 'FARM_TARGET_TEXT', 'TASK_SPECIFIC_CONFIG', 'LANGUAGE_SCRIPT', 'LANGUAGE_GAME'):
                     continue
-                if self._quest_active and key != 'DARK_THEME':
+                if self._quest_active and key not in ('DARK_THEME', 'RELEASE_NOTICES_DISMISSED'):
                     continue
                 self.values[key] = self._coerce_key(key, value)
             self._normalize_values()
@@ -503,7 +503,7 @@ class ConfigPanelApp:
                 'taskSpecific': bool(values.get('TASK_SPECIFIC_CONFIG')),
                 'taskPoints': self._task_points_state(values), 'plans': self._plans_for_js(values.get('STRATEGY') or []),
                 'options': self._options(), 'daily': self._daily_state(values),
-                'update': {'latest': self._latest_version} if self._latest_version else None,
+                'update': {'latest': self._latest_version} if self._latest_version and not values.get('RELEASE_NOTICES_DISMISSED') else None,
                 'running': self._quest_active, 'runningTargetId': self._running_target,
                 'runningTargetText': self._target_text(self._running_target) if self._running_target else '',
                 'startedAt': self._run_started.timestamp() if self._run_started else None,
@@ -921,6 +921,9 @@ class ConfigPanelApp:
                 events.append(self._events.get_nowait())
             except queue.Empty:
                 break
+        with self._lock:
+            if self.values.get('RELEASE_NOTICES_DISMISSED'):
+                events = [event for event in events if event.get('type') not in ('update_manual', 'update_available')]
         return events
 
     def _install_log_sinks(self):

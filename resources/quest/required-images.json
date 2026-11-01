@@ -262,6 +262,8 @@
     "accept_death_cursedWheel_timeLeap",
     "ambush",
     "AssembleParty",
+    "AutoMove",
+    "AutoMove_light",
     "Bharken",
     "blessing",
     "bondmate_close",

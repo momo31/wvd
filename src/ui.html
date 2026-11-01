@@ -2486,6 +2486,7 @@
   }
 
   function showUpdate(ev) {
+    if (state && state.values && state.values.RELEASE_NOTICES_DISMISSED) return;
     $("#autoDownload").classList.remove("hidden");
     const card = $("#updateNotice");
     if (card) card.classList.remove("hidden");
@@ -2765,6 +2766,7 @@
         showUpdate(ev.data || ev);
         break;
       case "update_manual":
+        if (state && state.values && state.values.RELEASE_NOTICES_DISMISSED) break;
         $("#updateNotice").classList.remove("hidden");
         $("#updateTitle").textContent = translateText("Check momo31 releases for a manual update.");
         $("#updateCurrent").textContent = translateText("当前版本 v") + (state.version || "");
@@ -3110,7 +3112,13 @@
     });
 
     $("#cancelUpdate").addEventListener("click", () => call("cancel_update"));
-    $("#dismissUpdate").addEventListener("click", () => $("#updateNotice").classList.add("hidden"));
+    $("#dismissUpdate").addEventListener("click", async () => {
+      const result = await call("save", { RELEASE_NOTICES_DISMISSED: true });
+      if (result && result.ok) {
+        applyState(result);
+        $("#updateNotice").classList.add("hidden");
+      }
+    });
     const telegramPatch = () => ({enabled: $("#telegramEnabled").checked, bot_token: $("#telegramToken").value,
       chat_id: $("#telegramChat").value, clear_token: $("#telegramClear").checked});
     $("#telegramSave").addEventListener("click", async () => {

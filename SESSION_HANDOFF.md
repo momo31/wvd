@@ -1,180 +1,213 @@
-# 길드 선택창·시작 로딩 재시작 반복 수정 (2026-09-10, 배포 완료)
+# 세션 인계 — 3.2.1 통합 및 영묘 6종 배포 완료
 
-- `docs/build-and-release.md` 절차로 `build/release-stage-20260910-192744`에서 Python 3.14.6·PyInstaller 6.22.0 빌드에 성공했다. 이어 `_internal`, `wvd.exe`, `CHANGES_LOG.md`만 `dist/wvd`에 배포했다. 이전 세 항목은 같은 스테이징의 `previous-deploy`에 보관했다.
-- 배포 전후 `config.json`, `logs`, `audit`의 154개 파일은 상대 경로·크기·SHA-256이 모두 일치했으며 폴더 존재 상태도 유지됐다. 매니페스트는 같은 스테이징의 `protected-before.json`, `protected-after.json`이다. 빌드·배포 단계에서는 개발 테스트를 다시 실행하거나 exe·스모크·Tcl/Tk·리소스·프로그램 해시 검증을 하지 않았다. 배포된 exe도 실행하지 않았다.
+## 출구 반복 실패 추가 수정 — 2026-11-02 00:08 배포 완료
 
-- 사용자 요청: 현재 초기화 반복의 원인을 확인한 후 “원인을 찾았으면 해결을 해”로 수정을 지시했다. 앞선 빌드·배포 요청의 후속 수정으로 빌드·배포까지 진행한다.
-- 현재 실패는 `Scorpionesses`의 현상수배 게시판 진입이다. `dist/wvd/logs/20260910_190300.png`에는 Arna의 `I can't.` / `I'll go now.` 선택창이 있다. 일반 길드 진입에는 이 선택지 처리가 빠져 `guildRequest`를 25회 찾지 못했다. 재시작 뒤에는 `Loading master data...` 상태에서 같은 탐색을 재개해 로딩 도중 다시 재시작했다.
-- 공통 `FindCoordsOrElseExecuteFallbackAndWait()`에서 단일 목표 `guildRequest`와 `guild` 폴백이 있는 일반 메뉴 진입에만 기존 `guildDecline` 템플릿을 사용한다. 0.95 임계값·제한 ROI에서 검출하고 새 화면을 캡처하며, 3회 선택 후에도 남아 있으면 `guild_dialog_stuck` 사유로 중단한다. `COS/Okay` 같은 복합 퀘스트 목표에는 적용하지 않는다. 기존 파티 재소집 처리는 유지한다.
-- 공통 `restartGame()`은 재시작 후 `WaitForGameStartup()`이 끝나야 작업 재시도 신호를 내보낸다. 타이틀·약관·검은 화면·심연 로딩을 기다리고, 시작 화면이 연속 2프레임 사라지면 재개한다. 시작 버튼은 실제 표시될 때만 누르며 300초를 넘기면 `game_startup_timeout` 사유로 중단한다. 로컬·원격 중지도 대기를 끊는다.
-- 시작 화면에서 일반 Close 처리를 호출하지 않는다. 실제 19:05:49·19:07:18 로딩 진행 막대가 낮은 임계값의 Close로 오인되는 것을 확인했으며, 시작 대기는 전용 다운로드·세션 종료·시작 버튼만 처리한다. `tools/fixtures/game_startup_loading.png`는 19:05:49 화면의 상단 1490행으로 사용자 ID가 있는 하단은 제외했다.
-- 기존 점검 종료 처리를 `StopTaskWithError()`로 재사용하여 위 두 중단 사유도 오류 상세·중단 이벤트·진단 이미지를 보존한다. 이미지 저장 실패가 중단을 취소하지 않으며 기존 `Farm` 완료 처리를 사용한다. 기존 복구 상한·상자 가드·스마트 상자 변경은 유지한다.
-- 개발 검증: `build/wvd_py314_venv/Scripts/python.exe -B -X utf8 -W ignore::SyntaxWarning -m unittest -v tools.test_guild_startup_recovery tools.test_server_maintenance tools.test_recovery tools.test_runtime_guards tools.test_screen_health mod.telegram_remote_control.tests.test_title_and_login_transition mod.telegram_remote_control.tests.test_runtime_worker` 71개 통과. `git diff --check` 통과.
-- 실제 화면 재생: 로딩 화면 14장에서 불필요한 탭·뒤로가기 0회, 첫 길드 대화 화면에서 `(451, 991)` 선택 1회 및 재시작 0회를 확인했다. 테스트는 장치 입력 없이 캡처·시계를 모사한다. 실제 게임의 선택 이후 진행을 실행한 것은 아니다.
+- 20:54 배포 뒤 `log_261101-205805.txt`와 실패 캡처 18개에서 용광로 3번 도착 뒤 출구 Auto-Move 인식이 약 52%로 실패하고 재시작을 반복한 것을 확인했다. 이전 검증은 첫 이동에 그쳐 밝은 출구 버튼을 놓쳤다.
+- `StateMapSearch`는 같은 새 프레임에서 기존 어두운 버튼과 `AutoMove_light`를 순서대로 인식한다. 밝은 실제 캡처를 별도 템플릿과 fixture로 추가하고 필수 이미지 목록에도 등록했다. 인식 임계값은 유지한다.
+- 밝은 출구 회귀 테스트 RED 확인 후 수정, 지도 테스트 6개 및 전체 tools 299개 PASS. 실제 실패 화면 18장 모두 정확한 버튼 위치에서 0.926~1.0 매칭. 읽기 전용 리뷰 추가 결함 없음. 증거 로그 `.superpowers/sdd/upstream-3.2.1-merge-plan/exit-button-{red,green,full}.log`.
+- 기존 자동화 PID 8816을 종료하고 개발용 ADB 검증 완료. 실제 StateMapSearch로 3번 이동, 00:04:35 실제 도착 판정 DONE, 상자 보상 수령 후 00:04:55 밝은 출구 버튼 `[179,1128]` 탭, 00:06경 영묘 선택 화면 복귀를 확인했다. 증거: `build/exit-button-live/entry-034.png`(3번 도착), `entry-055.png`(영묘 선택 메뉴 복귀), `exit-live-third-confirm.log`, `exit-live-return.log`. 전투는 게임 자동 전투, 상자/보상은 직접 입력 및 기존 SmartDisarm을 이용했으므로 전체 자동 루프 무인 완주로 표현하지 않는다. 마지막 진단 스크립트는 이미 메뉴로 복귀하여 'Not a confirmed dungeon/map screen'으로 안전 중단했다. 게임은 영묘 선택 메뉴에 두었다.
+- builder(gpt-6-luna/high, Fast 상속)가 새 `build/release-stage-20261102-000710-aaebef` 빌드 성공(종료 코드 0). 메인이 00:08:17 KST 상위 `dist/wvd`에 프로그램 파일 3개만 배포했고 설정·로그·audit 131항목 보존을 확인했다. 이전 프로그램은 stage의 `previous-deploy`에 백업했다. `build/current-deployment-stage.txt`와 stage의 `deployment-receipt.json` 참조. 빌드/배포 중 테스트·실행·스모크 검증은 하지 않았고 배포 exe는 자동 실행하지 않았다.
 
----
 
-# 서버 점검 중 재시작 반복 수정 (2026-09-10, 배포 완료)
+## 최신 경로 변경 — 2026-11-01 용광로 영묘도 3번 직행 후 복귀
 
-- 후속 `빌드하고 배포해` 요청으로 `docs/build-and-release.md`를 확인하고 Python 3.14.6·PyInstaller 6.22.0·`wvd.spec`으로 `build/release-stage-20260910-185449`에서 빌드했다. PyInstaller 종료 코드 0 및 COLLECT 완료 후 `CHANGES_LOG.md`를 복사했다. 앞선 `185357` 스테이징은 PowerShell의 native stderr 처리로 중단됐고, `185430` 스테이징은 Start-Process의 환경 변수 `Path`/`PATH` 중복 오류로 실행되지 않았다. 실제 성공한 빌드는 `185449`뿐이다.
-- 새 `_internal`, `wvd.exe`, `CHANGES_LOG.md`만 `dist/wvd`로 이동해 배포했다. 배포 당시 실행 중인 `wvd.exe`는 없었다. 기존 세 항목은 `build/release-stage-20260910-185449/previous-deploy`에 보관했다. `config.json`, `logs`, `audit`의 138개 파일은 배포 전후 상대 경로·크기·SHA-256이 모두 일치했으며 폴더 존재 상태도 일치했다. 매니페스트는 같은 스테이징의 `protected-before.json`, `protected-after.json`에 있다.
-- 배포 스크립트 파일 실행은 PowerShell 실행 정책에 막혀, 정책 변경 없이 동일한 배포 명령을 직접 실행했다. 빌드·배포 단계에서는 테스트·exe 실행·스모크·Tcl/Tk·리소스·프로그램 해시 검증을 하지 않았고, 유일한 배포 검증은 위 사용자 데이터 보존 확인이다. 아래 미배포 기록은 소스 수정 직후의 상태이며 이 배포로 완료됐다.
+- **20:54:10 KST 재빌드·재배포 완료**. 사용자 재요청에 따라 builder가 현재 소스를 새 `build/release-stage-20261101-205255-016d1b`에 빌드했다(종료 코드 0). 메인이 상위 `dist/wvd`의 프로그램 파일 3개만 교체했고 설정·로그·audit 112항목을 보존했다. 직전 20:50 프로그램은 새 stage의 `previous-deploy`에 백업했다. 배포 exe 자동 실행·추가 테스트는 하지 않았다. 최신 포인터/배포 영수증은 새 stage 기준이다.
+- **20:50:31 KST 배포 완료**. builder(gpt-6-luna/high, Fast 상속) 빌드 종료 코드 0, 스테이징 `build/release-stage-20261101-204924-df2111`. 메인이 상위 `dist/wvd`의 프로그램 파일 3개만 교체했고 설정·로그·audit 보호 매니페스트 112항목이 일치했다. 이전 프로그램은 해당 stage의 `previous-deploy`에 보존했다. 배포된 exe는 실행하지 않았다.
+- 사용자 요청으로 `LMG-GT` 용광로의 영묘도 다른 6종과 동일하게 **3번 `[555,1235]` → 상자 처리 → 4번 출구 `[178,1240]`** 순서로 변경했다. 기존 앞 두 목표 `[393,545]`, `[657,755]`만 제거했다. 두 목표의 지도 드래그 `右下`와 용광로 고유 입구 `LMG/LMG1F`, 왕도 출발은 유지했다. 아래 용광로 경로를 변경하지 않았다는 설명은 과거 기록이다.
+- `resources/quest/quest.json`과 변경 기록을 갱신했다. `tools/test_thief_tomb.py`의 실제 StateDungeon 호출 테스트에 `LMG-GT`를 추가해 상자 처리 후 출구로 진행하는 순서를 검증했다. 변경 전 실패 → 변경 후 영묘/자원/지도 관련 **17개 PASS**, diff 공백 검사 PASS. 로그: `.superpowers/sdd/upstream-3.2.1-merge-plan/crucible-route-{red,green}.log`.
+- 이번 경로 변경 후 전체 스위트와 3번 직행 실게임 완주는 추가 실행하지 않았다. 앞선 실게임 확인은 기존 용광로 첫 목표 이동이므로 새 3번 직행 완주 검증으로 표현하지 않는다.
 
-- 사용자 요청: `openworldmap`/`dungFlag` 탐색 실패 후 게임 재시작과 앱플레이어 복구 3회가 반복되는 오류를 수정하고 재발을 방지한다.
-- 실제 원인은 서버 점검 화면을 게임 멈춤으로 오인한 것이다. `dist/wvd/logs/20260910_141810.png`, `20260910_142005.png` 모두 “현재 점검 중입니다. 종료까지 기다려 주시기 바랍니다.” 안내이며 예정 시간은 2026-09-10 13:00~16:30(JST)이다. 로그에서도 13:00:54부터 점검 화면을 저장하며 재시작하고, 14:20:05에 복구 상한으로 종료했다. 점검 종료 여부를 외부에서 확인한 것은 아니다.
-- `src/script.py`의 공통 `ScreenShot()`이 정상 이미지를 반환하기 전에 `StopIfServerMaintenance()`를 호출한다. 한국어 점검 문구를 높은 임계값 0.95와 제한된 ROI로 확인하고, 런타임 종료 사유 `ERROR`/`server_maintenance`를 기록한 뒤 기존 중단 이벤트·예외로 종료한다. 채굴·던전·텔레그램 로그인에 모두 적용되며 게임/ADB/앱플레이어 재시작 횟수 제한은 유지한다. 진단 이미지 저장 실패도 중단을 취소하지 않는다.
-- `resources/images/serverMaintenance_ko.png`는 첫 오류 화면의 날짜 없는 고정 문구 영역 `(244, 620, 414, 80)`을 원본 픽셀 그대로 추출했다. `tools/fixtures/server_maintenance_ko.png`는 두 번째 화면의 안내창 영역 `(200, 580, 500, 440)`이며 사용자 ID를 포함하지 않는다. 다른 게임 언어·변경된 점검 문구는 검증된 캡처를 확보한 뒤 별도 템플릿을 추가해야 한다.
-- 저장 이미지 재생: 9월 10일 타임스탬프 이미지 53장 중 점검 화면 38장 모두 검출(최저 98.6497%), 나머지 15장은 미검출(최고 16.7456%). 첫 점검 검출은 13:00:53, 마지막은 14:20:05이다.
-- 개발 검증: 기존 `tools.test_recovery`, `tools.test_runtime_guards`, `tools.test_screen_health`, `mod.telegram_remote_control.tests.test_title_and_login_transition`, `mod.telegram_remote_control.tests.test_runtime_worker` 62개 통과. 추가 `tools.test_server_maintenance` 3개 통과. Python 명령은 `build/wvd_py314_venv/Scripts/python.exe -B -X utf8 -W ignore::SyntaxWarning -m unittest <모듈명>`이다.
-- 새 테스트는 실제 캡처 변환·매칭·채굴 진입·텔레그램 로그인·작업 종료 코드를 장치 없이 실행한다. 점검 문구가 없는 To Title 창은 통과하고, 점검 시 추가 탭/재시작 없음, 복구 횟수 보존, 저장 실패 시 중단 유지, 종료 사유 보존 및 완료 이벤트 1회를 확인한다.
-- 이번 수정은 실행 파일 빌드·배포를 하지 않았고 게임 입력도 하지 않았다. 분석 시 실행 중인 배포본은 `dist/wvd/wvd.exe` PID 7372(9월 9일 09:00 시작)였다. 새 수정의 실행 파일 적용에는 별도 빌드·배포가 필요하다. 기존 스마트 상자·길드 재소집 변경은 보존했으며 커밋·push·PR은 하지 않았다.
+## 최신 배포 — 2026-11-01 20:24 KST 마을 왕복 수정 재배포 완료
 
----
+- 실게임 검증 및 전체 tools 298개 통과 후 builder(gpt-6-luna/high, Fast 상속)가 새 `build/release-stage-20261101-202255-f91cfb`에 빌드했다. 종료 코드 0.
+- 20:24:05 KST 메인이 상위 `dist/wvd`에 배포 완료. `_internal`, `wvd.exe`, `CHANGES_LOG.md`만 교체하고 설정·로그·audit 보호 매니페스트 111항목의 일치를 확인했다. 이전 프로그램은 같은 stage의 `previous-deploy`에 보존했다.
+- 배포된 exe는 자동 실행하지 않았다. 배포 전 개발 검증에서 실제 게임은 용광로 영묘 내부로 진입해 첫 목표를 향해 이동한 상태였다. 빌드/배포 중 게임 입력·스모크·실행 테스트는 수행하지 않았다. 아래 실게임 검증 범위와 전체 완주는 구분한다.
 
-# 파티 재소집 재시작 반복 수정 (2026-09-07, 미배포)
+## 최신 개발 확인 — 2026-11-01 마을 왕복 수정 및 실게임 검증
 
-- 후속 `빌드해` 요청으로 `docs/build-and-release.md`를 읽고 Python 3.14.6·PyInstaller 6.22.0·`wvd.spec`을 사용해 `build/release-stage-20260907-162743`에서 빌드했다. 스테이징 내부 캐시를 사용했으며 EXE 생성 후 COLLECT 단계에서 `OSError: [Errno 22] Invalid argument`로 실패했다. 배포 가능한 빌드가 아니다.
-- 재시도 `다시해` 요청으로 `build/release-stage-20260907-163054`에서 같은 절차를 다시 수행해 성공했다. 산출물은 `build/release-stage-20260907-163054/dist/wvd`이며 `CHANGES_LOG.md`를 복사했다. 빌드 단계 규칙에 따라 테스트·exe 실행·스모크·Tcl/Tk·리소스·해시 검증은 하지 않았다. 배포는 하지 않았다.
-- 후속 `배포해` 요청으로 해당 산출물을 `dist/wvd`에 배포했다. 기존 `_internal`, `wvd.exe`, `CHANGES_LOG.md`는 `build/release-stage-20260907-163054/previous-deploy`에 보관했다. `config.json`, `logs`, `audit` 1,318개 파일은 배포 전후 경로·크기·SHA-256이 모두 일치했다. 배포된 exe는 실행하지 않았고, 문서 절차에 따라 추가 테스트·스모크 검증도 하지 않았다.
-- 실패 원인은 Defender 격리로 확인했다. Windows Defender Operational 이벤트 1116(16:28:30)·1117(16:28:44)에 `Trojan:Win32/Bearfoos.A!ml`, 대상 `build/release-stage-20260907-162743/work/wvd/wvd.exe`, 조치 `격리`가 기록됐으며 해당 exe는 없어졌다. 오탐 여부는 확인하지 못했다. 보호 설정·예외·격리 상태는 변경하지 않았다. 사용자의 보안 기록 확인 및 외부 상태 변화가 필요하다.
-- 이번 빌드 단계에서 테스트·exe 실행·스모크·Tcl/Tk·리소스·해시 검증은 하지 않았다. `dist/wvd`와 실행 중인 배포본은 변경하지 않았다. 아래 소스 수정 및 개발 검증 결과는 그대로 유효하다.
-- 사용자 요청: 곡괭이 소진 후 `PartyManagementTitle`을 찾지 못해 게임 재시작과 앱플레이어 복구 3회를 반복하는 문제를 해결한다.
-- 실제 근거는 `dist/wvd/logs/log_260907-092329.txt`와 09:26:51~10:40:11의 재시작 전 스크린샷 44장이다. 길드 진입 시 Arna의 대화가 막고 있으며, 선택창에는 `I can't.` / `I'll go there straight away.`가 표시된다. 첫 선택창과 재시작 후 선택창, 마지막 대화 화면을 직접 확인했다.
-- 원인: 공통 `reunionParty()`의 기본 파티·지정 파티 경로 모두 길드 메뉴만 누르고 대화 선택지는 처리하지 않았다. 같은 게임 상태가 재시작 후 복원되므로 ADB/앱플레이어 재시작으로 해결되지 않는다.
-- 수정: 두 경로의 기존 bounded fallback 목록에 `guildDecline`을 추가했다. `resources/images/guildDecline.png`는 첫 실패 화면의 `I can't.` 글자 영역 `(390, 972, 122, 38)`을 원본 픽셀 그대로 추출한 템플릿이다. 일반 대화 옵션 목록에 등록하지 않아 퀘스트별 선택에는 영향을 주지 않는다. 공통 이미지 매칭·상자 로직·복구 횟수 제한은 변경하지 않았다.
-- `tools/test_recovery.py`에 실제 재소집·탐색·복구 래퍼를 실행하는 회귀 테스트를 추가했다. 기본/지정 파티별 정상 길드, 대화 끼어듦, 재시작 후 선택창에서 시작, 이미 파티 관리 화면인 경우와 응답 없는 선택창의 탐색 횟수 상한을 확인한다. 수정 전에는 대화가 있는 두 경로 모두 재시작을 요청하며 실패했고 수정 후 통과했다.
-- 최종 개발 검증: `build/wvd_py314_venv/Scripts/python.exe -B -X utf8 -m unittest tools.test_recovery tools.test_runtime_guards tools.test_upstream_260_merge.Upstream260MergeTests.test_version_changelog_and_party_management_asset` 42개 통과. `git diff --check` 통과.
-- 저장 이미지 재생: 44장 중 선택창 17장 모두 정확한 버튼 중심 `(451, 991)` 검출, 최저 일치도 99.96%. 나머지 27장은 최고 57.97%로 검출되지 않았다. 실제 `_check`·`CheckIf`·탐색 함수와 재소집 함수를 연결해 17장 × 기본/지정 파티 = 34건에서 선택 버튼 1회 탭, 모사한 길드/파티 화면 진행 및 재시작 없음 확인. 로컬 재생 스크립트는 `build/guild-recovery/replay.py`에 있다. 실제 게임의 선택 이후 진행은 아직 검증하지 않았다.
-- 분석 시작 시 WVD PID 6200(`dist/wvd/wvd.exe`), MuMu PID 4212가 실행 중이었다. 이번 요청은 소스 수정·개발 검증만 수행했으며 게임 입력·실행 파일 빌드·배포·커밋·push·PR은 하지 않았다. 실행 파일에 적용하려면 별도 빌드가 필요하며, 배포에는 명시적 요청과 `docs/build-and-release.md` 절차를 따른다. 아래 스마트 상자 관련 기존 변경은 보존했다.
+- 사용자가 20:13 배포 후 마을 왕복을 보고하고 직접 조작하며 수정하도록 명시 요청했다. 새 실행 로그 `dist/wvd/logs/log_261101-201417.txt`에서 실제 선택 작업은 `LMG-GT`(용광로 영묘)였다.
+- 원인: `StateEoT`가 월드맵 진입 직후 검은 전환 프레임을 공통 `FindCoordsOrElseExecuteFallbackAndWait`에 전달했고, 해당 함수가 즉시 fallback BACK을 실행해 마을로 돌아갔다. 앞선 지도/시작화면 수정만으로는 이 일반 화면전환 경로를 막지 못했다.
+- 수정: 공통 목표 탐색에서 BLACK/abyssReadying 프레임 동안 입력 없이 기다리고 일반 재시도 횟수를 소모하지 않는다. 전환이 90초 연속 지속되면 `screen_transition_timeout`으로 중단한다. 정상 프레임을 받으면 전환 제한을 초기화한다.
+- 직접 검증: 사용자 허가 후 실제 ADB 입력으로 수정된 생산 코드의 StateEoT/Teleport/FindCoords 경로를 실행했다. 20:19:33 마을 확인 → 월드맵 → 영묘 메뉴 → 20:20:41 LMG-GT 내부 진입 확인(10개 명령, 40개 캡처). 이어 실제 StateMapSearch로 첫 목표 `[393,545]`를 선택하고 검출된 Auto-Move `[392,435]`를 눌렀으며, 20:22:06 미니맵/장면 변화로 실제 이동을 확인했다. 전체 던전 완주·상자 처리를 검증한 것은 아니다.
+- 진단 스크립트/원본 캡처는 통합 소스의 `build/live-town-entry.py`, `build/live-first-map-move.py`, `build/town-loop-debug/entry-039.png`(진입), `entry-047.png`(이동)에 있다. 실사용 캐릭터 정보가 있으므로 커밋/배포 대상이 아니다.
+- 새 테스트는 기존 코드에서 실패 후 수정본에서 통과했다. 최종 전체 tools **298/298 PASS**, 로그 `.superpowers/sdd/upstream-3.2.1-merge-plan/town-transition-final.log`. AST 추출 기반 파티 테스트에 새 화면 분류 의존성을 연결했다. 기존 FarmConfig RuntimeWarning은 남는다. 리뷰에서 새 blocker 없음(기존 zh_CN 필수 이미지 차단 정책 유지).
 
----
+## 최신 배포 — 2026-11-01 20:13 KST 반복 이동·재시작 오류 수정 배포 완료
 
-# 스마트 상자 최적화 작업 인계 (2026-09-07)
+- 사용자 명시 요청으로 `builder` 역할(gpt-6-luna/high, 부모 `service_tier=fast` 상속)에 스테이징 빌드를 위임했다. 빌드 종료 코드 0. 스테이징은 통합 소스의 `build/release-stage-20261101-201248-4fc63a`다.
+- 20:13:56 KST `3.2.1-momo.1`을 실제 `C:/Users/admin/Documents/momo31-wvd/dist/wvd`에 배포했다. 아래 반복 오류 수정(Auto-Move 버튼/영문 템플릿, 상자·지도 우선 판정, 시작 화면 확인 후 재개)이 반영됐다.
+- `_internal`, `wvd.exe`, `CHANGES_LOG.md`만 교체했다. `config.json`, `logs`, `audit` 보호 매니페스트 110항목이 배포 전후 일치했다. 기존 프로그램 파일은 같은 스테이징의 `previous-deploy`에 보존했다.
+- 빌드·배포 단계의 테스트/스모크/실행은 수행하지 않았다. 배포된 exe는 자동 실행하지 않았다. 개발 단계의 296개 테스트 통과와 실게임 완주 검증은 구분한다.
+- 기록: 스테이징의 `build.log`, `build-exit-code.txt`, `protected-before.json`, `protected-after.json`, `deployment-receipt.json`. `build/current-deployment-stage.txt` 갱신 완료. 배포 스크립트의 프로세스 경로 조회가 접근 제한으로 실패하여 권한 승인 후 같은 스크립트로 배포를 완료했다.
 
-현재 목표: 스마트 상자 개봉 로그를 분석하고 실제 개선이 검증될 때까지 반복한다. 아래 Telegram 인계는 과거 기록이며 이번 작업과 별개다.
+## 최신 상태 — 2026-11-01 반복 이동·재시작 오류 수정 (미배포)
 
-## 2026-09-07 현재 상태와 후속 수정 (미배포)
+- 사용자 요청: 계속 발생하는 오류 진단·수정. 실제 배포 로그 `log_261101-145155.txt`와 재시작 전 캡처, 읽기 전용 ADB 포커스/logcat으로 조사했다.
+- 첫 원인: 영묘 지도에서 `position [555,1235]` 선택 후 고정 좌표 `[136,1431]`(지도 모드 도구)을 눌러 이동하지 못했다. 지도 하단 아이콘이 `dungFlag`에 0.831로 매칭되어 던전으로 오인하고, Resume 20회 후 재시작을 반복했다. 실제 이동 버튼 중심은 캡처에서 `[553,1128]`이다.
+- 수정: `StateMapSearch`는 목적지 선택 후 새 캡처의 `AutoMove`를 찾아 누른다. 없으면 탭하지 않고 지도 재판정으로 돌린다. 기존 영문 AutoMove 템플릿은 최대 0.525로 인식 실패하여 실제 캡처의 버튼 글자/아이콘으로 갱신했고 필수 이미지 목록에 추가했다. `IdentifyState`는 상자 → 지도 → 던전 순서로 판정하며, 이동 실패 시 지도 상태를 유지한다. 영묘 좌표/경로는 변경하지 않았다.
+- 두 번째 원인: 재시작 후 시작 표식이 없는 두 프레임을 준비 완료로 간주했다. 이어서 fallback BACK이 게임을 홈으로 보낸 것을 Android `moveTaskToBack` 로그로 확인했다. 이제 실제 게임/메뉴 표식이 두 프레임 연속 확인돼야 중단된 작업을 재개한다. 알 수 없는 화면은 입력 없이 대기한다.
+- 테스트: `tools/test_map_movement.py`, `tools/test_guild_startup_recovery.py`에 실제 지도 캡처 재생·버튼 없음·지도 오인·상자 우선·시작 화면 대기/시간제한 회귀 검증을 추가했다. 실패를 먼저 확인한 뒤 수정했다. 최종 전체 tools **296/296 PASS**, 종료 코드 0, diff 공백 검사 PASS. 로그: `.superpowers/sdd/upstream-3.2.1-merge-plan/repeated-errors-final.log`. 기존 FarmConfig RuntimeWarning은 남아 있다. 별도 읽기 전용 검토에서 새 회귀 결함은 발견하지 못했다.
+- 빌드·배포·커밋은 수행하지 않았다. 실행본은 14:50 배포본이며 새 소스 변경이 반영되지 않았다. 빌드/배포 요청 시 반드시 builder에 스테이징 빌드를 위임하고, 배포는 메인이 별도로 수행한다. 실제 게임 입력/완주 검증은 하지 않았다. 기존 ScreenShot 내부 복구가 중첩되면 시작 대기 300초가 전체 경과시간의 엄격한 상한은 아니라는 기존 제약은 남는다.
 
-- 09:20 사용자 요청으로 빌드만 수행했다. 첫 스테이징 `build/release-stage-20260907-091854`는 EXE 생성 직후 Defender가 `Trojan:Win32/Bearfoos.A!ml`로 탐지해 COLLECT 단계에서 `OSError: [Errno 22] Invalid argument`로 실패했다. 보호 설정·예외·격리 상태는 변경하지 않았고, 사용자가 이후 Defender에서 직접 복원했다고 알렸다. 이 경로는 실패 스테이징으로 취급한다.
-- 새 스테이징 `build/release-stage-20260907-092000`에서 Python 3.14.6·PyInstaller 6.22.0·`wvd.spec`으로 재빌드해 성공했다. 최종 빌드 산출물은 `build/release-stage-20260907-092000/dist/wvd`이며 `CHANGES_LOG.md`도 복사됐다. 절차에 따라 테스트·exe 실행·스모크·Tcl/Tk·리소스·해시 검증은 하지 않았다. `dist/wvd`는 변경하지 않았으며 배포는 별도 명시 요청 전까지 진행하지 않는다.
-- 사용자 요청: 배포 이후 로그의 개선 여부를 판단한 뒤, `이어서 개선해줘`로 개발을 재개했다. 이번 요청에는 새 빌드·배포를 포함하지 않았다. `dist/wvd`와 실행 중인 앱을 변경하거나 exe를 실행하지 않았다.
-- 재개 시 WVD 프로세스는 없었다. 최신 로그는 `dist/wvd/logs/log_260906-014458.txt`(39,520,499바이트, 최종 기록 2026-09-07 00:44:59)이며, 매크로는 09-06 22:03:15에 중지됐다. 이후 기록은 버전 확인과 일시적인 Telegram 연결 오류다. 아래 09-05 당시의 프로세스·새 로그 부재 기록은 과거 상태다.
-- 앞선 배포 분석의 비교 구간은 09-05 하루와 09-06 20:58:25까지다. 스마트 호출 127→124회, 탭 140→150회. 탭 대기 중앙값은 0.458→0.288초로 개선됐지만, 스마트를 사용한 실제 상자 처리 시간(겹친 전투 시간 제외)은 110→120상자에서 중앙값 33.11→39.92초, 평균 48.22→48.77초였다. 전반 개선으로 판정하지 않았다.
-- 같은 비교에서 캡처 중앙값 0.326→0.495초, 4점 검증 폐기 157→450회, 샘플 상한 폴백 7→20회였다. 스마트 루프 밖 캡처도 0.326→0.493초로 느려져, 전체 지연 증가를 4점 검사만의 비용으로 단정할 수 없다. 09-06 종료 이미지 121장은 보상 후보 59·Oops 함정 확인 21·미확정 41장이었다. 미확정과 무차감을 성공/실패로 강제 분류하지 않는다.
-- 연결된 MuMu에 읽기 전용 캡처로 전송 단계만 측정했다. 현재 화면은 1600x900이므로 실제 상자 플레이 부하와 동일하지 않다. EOF 추가 대기는 0~20ms였고, PNG 캡처는 0.848/0.859초로 raw 0.354/0.395초보다 느렸다. 수신 버퍼 64KiB와 1MiB의 교차 4회씩 측정도 중앙값 0.3534/0.3538초로 이득이 없었다. 전송 방식·버퍼·게임 설정은 변경하지 않았다.
-- 09-06 전체 로그를 메모리에서 재생했다. 직선성 검사를 제거하거나 마지막 두 점으로 반전 후보를 추가하는 수정은 추가 허용된 추정의 다음 프레임 오차가 컸다(직선성 완화 후보 64건의 중앙값 90px). 채택하지 않았다. 기존 직선성·4점 검증·고속 우회 임계값과 캡처 시각 보정 계수는 유지한다.
-- 채택한 최소 수정은 `SmartDisarm.run()`의 중복 캡처 제거다. 탭 후 추가 종료 확인에 사용한 **마지막 정상 프레임 하나**를 다음 조준의 첫 표본으로 재사용한다. 원래 캡처 시작/종료 시각을 함께 보존하고 한 번 사용하면 비운다. 마지막 캡처가 실패하면 이전 확인 화면으로 대체하지 않는다. 종료가 확인되면 기존처럼 즉시 반환하며, 추가 확인 0회 설정도 기존 동작을 유지한다.
-- 이에 따라 재조준 경로에서 캡처 1회를 줄인다. 네 개의 서로 다른 관측점 검증은 그대로 수행하며, 오래된 탭 전 표본이나 감속 측정 프레임은 섞지 않는다. 실제 게임 처리 시간·성공률 개선 수치는 아직 없다. 첫 조준의 반복 검증 실패와 전체 캡처 환경 지연은 이번 수정으로 해결됐다고 주장하지 않는다.
-- 재사용 시 `[smart_disarm_capture] reuse=settle capture_dt=...`를 기록해 차기 배포 로그에서 적용 여부와 횟수를 확인할 수 있게 했다. `capture_dt`는 재사용한 화면의 원래 캡처 비용이지 실측 절약 시간은 아니다.
-- 새 회귀 테스트는 실제 추정·4점 검증을 유지한 채 0.5초 캡처를 모사한다. 정상 재사용(최신 프레임 1회·원래 시각), 마지막 캡처 실패, 추가 확인 중 종료, 추가 확인 비활성의 4개 하위 사례를 검사한다. 수정 전 정상 재사용 사례가 실패했고 수정 후 전부 통과했다.
-- 개발 검증: `build/wvd_py314_venv/Scripts/python.exe -B -X utf8 -m unittest tools.test_smart_disarm_state tools.test_runtime_guards` 46개 통과(상자 선택창 Open 우선 fixture 포함). `-B -X utf8 -u tools/test_smart_disarm_fixes.py` 감속·실패 재조준·커서 리셋 시나리오 전체 PASS. 런타임 수정은 `src/smart_disarm.py`에만 추가했으며 새 의존성은 없다.
-- 배포본은 아래 09-05 빌드 상태 그대로이고 이번 재사용 수정은 소스에만 있다. 명시적인 다음 빌드·배포 요청을 받으면 먼저 `docs/build-and-release.md`를 읽고 별도 스테이징 및 사용자 데이터 보존 절차를 따른다. 다음 실기 검증에서는 재사용 로그·샘플 상한 폴백·상자 실제 처리 시간·종료 이미지를 함께 비교한다. 전체 최적화 목표를 완료로 표시하지 않았다.
+## 최신 상태 — 2026-11-01 14:50 KST 알림 닫기 영구 저장 재배포
 
-## 2026-09-05 확인한 근거와 수정 (배포 완료 기록)
+- 릴리즈 알림 닫기를 누르면 `GENERAL.RELEASE_NOTICES_DISMISSED=true`를 저장한다. 작업 실행 중에도 저장되며, 재실행 후 수동 업데이트 안내·신규 버전 알림과 이미 대기 중인 알림을 숨긴다. 개발 단계에서 관련 테스트 33개 및 JS 닫기/저장 실패 처리 검증 PASS.
+- 사용자 상시 지시대로 `builder` 서브에이전트(Luna, Fast/priority)가 빌드를 수행했다. 종료 코드 0. 통합 소스의 `build/release-stage-20261101-144959-128565`가 새 스테이징이다.
+- 14:50:53 KST `3.2.1-momo.1`을 상위 `dist/wvd`에 재배포했다. `_internal`, `wvd.exe`, `CHANGES_LOG.md`만 교체했고 `config.json`, `logs`, `audit` 보호 매니페스트 72항목이 일치했다. 이전 프로그램은 스테이징의 `previous-deploy`에 보존했다. 배포된 exe를 실행하지 않았다.
+- Git: 통합 작업본은 `feature/upstream-3.2.1-tomb-routes`, HEAD `73ecb46a49d7de0a9816311c6a2af252247945cd`이며 해당 커밋은 origin에 푸시됐다. 이번 알림 영구 저장 변경은 그 이후의 미커밋 변경이다. 아래의 detached HEAD·전체 미커밋 설명은 과거 기록이다.
 
-- `dist/wvd/logs`의 872회 호출, 959회 탭과 `dist/wvd/audit/smart_disarm`의 탭 이미지 722장·종료 이미지 599장을 분석했다.
-- 밝은 배경이 안전구간과 반사 경계에 섞였다. `disarm_20260905_181016_1_unk.png`의 실제 두 노란 구간 사이 장식을 목표 x484로 탭한 기록이 대표 사례다. `detect()`를 900x1600 고정 게이지 내부 ROI `(16, 60, 881, 56)`로 제한했다. 색으로 반사 경계를 재계산하지 않는다. 기존 게임 좌표에 맞춘 경계 `(16, 896)`는 `DisarmConfig.bar_roi`로 조정 가능하다.
-- 722장 재생에서 안전구간 3개 이상 오검출이 25장 → 0장이 됐다. 수정 후 722장 모두 두 구간을 검출했다. 저장 이미지에는 감사용 선이 포함되어 있으므로 이는 실기기 성공률 검증과 구분한다.
-- 4점 검증이 가장 오래된 점만 확인해 중간점이 155px 어긋난 반전도 통과했다. `_est_consistent()`에서 최근 네 표본 전체를 확인한다. 과거 표본 재생에서 추가 배제된 추정 118건은 다음 프레임 오차 중앙값 97px, 유지된 525건은 45px였다. 이는 예측 검증이며 게임 성공률이 아니다.
-- `log_260904-012305.txt`의 2026-09-05 19:32:52에 마지막 기회 1→1을 성공으로 확정했지만, `disarm_20260905_193237_end.png`에는 `Oops! Critical poison needle`이 보인다. 무차감만으로 성공 라벨을 붙이지 않도록 수정했다.
-- 기존 성공 집계 617건은 무차감(미확정)이다. 차감 확정은 232건, 픽셀 차분 추정 실패는 78건이다. 종료 프레임도 보상 문구 후보 359장·미확정 240장으로 구분한다. 보상 문구 부재를 함정으로 단정하지 않는다.
-- `tools/analyze_smart_disarm.py`: 실제 안전폭을 구조화 로그로 읽고, 서로 다른 로그 파일의 탭/판정을 연결하지 않으며, 무막대 중단 중복 집계를 제거했다. 모델 추정/게임 판정 이미지 파일명도 구분한다.
-- 처음 작업 트리에 남아 있던 안전폭 50px·반주기 1.0s·통합 k=2.5 변경은 오염된 성공 지표로 정당화할 수 없었다. 기존 안전폭 100px·반주기 0.8s·통합 k=1.3을 유지한다. `src/script.py`의 실질 변경은 없다.
-- 후속 턴에서 종료 이미지 599장도 게이지 검출기로 재생했다. 144장에 안전구간 후보, 그중 39장에 커서 후보도 있었다. 일부는 폴백 후에도 진행 중인 미니게임이므로 이 수치를 전부 오탐으로 세지 않는다. 보상 화면 `20260903_021014`와 던전 화면 `20260903_013437`에서는 실제 배경 오탐을 확인했다.
-- 이 경우 첫 프레임의 `is_done` 판정이 색 검출에 가로막히던 조건을 제거했다. 두 원본 이미지와 실제 상자/결과 템플릿으로 `run()`을 재생했을 때 각각 캡처 1회·탭 0회·폴백 0회로 종료했다. 상자 표식 우선순위는 기존 종료 콜백에서 유지한다.
-- 21:28 이후 재개에서 `plan_tap()`이 너무 이른 첫 교차를 건너뛸 때 반사 후 같은 구간으로 돌아오는 교차를 누락함을 확인했다. 기존 `_propagate()`로 실행 가능 시점까지 먼저 이동한 뒤 가장 가까운 교차를 고르게 단순화했다. 입력 지연·감속 리드·안전폭 기준은 변경하지 않았다.
-- 오른쪽 진행 x650·속도 1000px/s·구간 중심 225/675·최소 도달 0.35초 사례에서 계획 도달 0.917초 → 0.467초, 왼쪽 진행도 대칭으로 개선된다. 양방향·여러 주기·실행 창 경계의 회귀 테스트는 수정 전 실패하고 수정 후 통과했다.
-- 로그 추정값과 저장 탭 이미지가 연결되는 722건으로 계획 함수만 A/B 재생했다. 양쪽 모두 수정된 경계 `(16, 896)`와 이미지에서 읽은 안전구간을 사용했다. 최소 도달 시점을 0.5초로 가정했을 때 295건이 빨라졌고 해당 건 절약 중앙값은 0.529초, 나머지 427건은 동일했다. 최소 도달 0.35/0.65/0.8초 가정에서도 255/322/347건이 개선되고 악화는 없었다. 이는 가정한 실행 가능 시점의 계획 비교이며 실제 게임 처리 시간·성공률이 아니다.
+## 최신 배포 — 2026-11-01 12:30 KST 상자 후 출구 이동 및 알림 닫기
 
-## 2026-09-05 검증과 배포 기록
+- 이 항목은 아래의 3번 직행 경로 설명보다 우선한다. 전사·도적·승려·마법사·기사·Rarities 영묘 6종은 이제 `3번 [555, 1235] → 상자 처리 완료 → 4번 출구 [178, 1240]` 순서다. 두 지점 모두 `右下` 지도 드래그를 사용한다. 용광로 영묘 `LMG-GT`는 유지했다.
+- `src/ui.html`의 릴리즈 알림에 별도 닫기 버튼을 추가했다. 다운로드 취소와 별도로 알림을 숨기며 기존 한국어·영어·중국어 번역을 사용한다.
+- 개발 검증: 알림 관련 Web UI 10개 PASS, JS 구문·닫기 핸들러·번역 확인. 영묘 변경은 RED 확인 후 6종의 상자 처리/출구 이동 순서를 포함한 관련 38개 PASS. 이번 변경 후 전체 스위트나 실게임 완주 검증은 수행하지 않았다.
+- Python/PyInstaller 빌드 종료 코드 0. `2026-11-01T12:30:38+09:00`에 `3.2.1-momo.1`을 실제 `C:/Users/admin/Documents/momo31-wvd/dist/wvd`에 재배포했다.
+- 통합 worktree의 스테이징: `build/release-stage-20261101-122756-315932`. 이전 프로그램 파일은 해당 폴더의 `previous-deploy`에 보존했다. 빌드 로그·종료 코드·보호 매니페스트·배포 영수증도 같은 폴더에 있다.
+- `_internal`, `wvd.exe`, `CHANGES_LOG.md`만 교체했다. `config.json`, `logs`, `audit` 보호 매니페스트 45항목이 배포 전후 일치했다. 배포된 exe 자동 실행 및 배포 단계 테스트는 수행하지 않았다.
 
-- 개발 검증: `build/wvd_py314_venv/Scripts/python.exe -X utf8 -m unittest discover -s tools -p test_smart_disarm_state.py` 20개 통과(첫 프레임 오탐·반사 후 재교차 회귀 포함).
-- `test_runtime_guards.py` 같은 명령으로 25개 통과. 새 상자 선택창 이미지 fixture에서도 Open이 우선되고 dialogueNext 좌표는 조회되지 않는다.
-- `build/wvd_py314_venv/Scripts/python.exe -X utf8 -u tools/test_smart_disarm_fixes.py`: 감속/재조준/리셋 커서 시나리오 전체 PASS. 반사 후 재교차 수정 후에도 전체 재실행해 통과했다. 첫 기본 Python 실행은 cp949 출력 인코딩 오류로 중단됐으며 UTF-8 재실행은 통과했다.
-- 계획 도달 시점은 독립적인 펼친 왕복 경로 공식으로도 비교했다. 고정 seed 20260905의 난수 입력 10,000건(양방향·속도 80~2500px/s·최소 도달 0~8초·실행 창 0.05~2.6초) 모두 가장 이른 교차와 일치했다.
-- `git diff --check` 통과. 커밋/push/PR은 하지 않았다.
-- 전체 분석 실행: `python -X utf8 tools/analyze_smart_disarm.py --logs dist/wvd/logs --img dist/wvd/audit/smart_disarm`.
-- 현재 배포본 `dist/wvd/wvd.exe`에는 이번 스마트 상자 수정이 적용됐다. 사용자 `진행해`로 빌드·배포 승인을 받은 뒤 `build/release-stage-20260905-214745`에서 새 빌드를 완료하고 `_internal`, `wvd.exe`, `CHANGES_LOG.md`만 배포했다. 배포 전 WVD 프로세스는 없었고 새 exe를 실행하지 않았다.
-- 배포 전후 `config.json`, `logs`, `audit`의 파일 1,335개(1,082,140,619바이트)에 대해 상대 경로·크기·SHA-256이 모두 일치했다. 디렉터리 목록도 동일했다. 보존 목록은 해당 스테이징의 `preservation-before.csv`, `preservation-after.csv`에 남겼다.
-- 이전 프로그램 파일 세 항목은 `build/release-stage-20260905-214745/previous-deploy`에 보관했다. 삭제나 덮어쓰기로 제거하지 않았으며 새 실행 파일을 사용자가 확인할 때까지 유지한다.
-- 스테이징 `build/release-stage-20260905-203411` 빌드는 실패했다. EXE 생성 후 COLLECT 단계에서 원본 exe 읽기가 `OSError: [Errno 22] Invalid argument`로 실패했고, 이후 해당 exe가 없음을 확인했다. 배포 가능한 산출물이 아니다.
-- 원인은 Defender 격리다. Windows Defender Operational 이벤트 1116(20:34:48)·1117(20:35:03)에 `Trojan:Win32/Bearfoos.A!ml`, 대상 `build/release-stage-20260905-203411/work/wvd/wvd.exe`, 조치 `격리`가 기록됐다. 오탐 여부는 확인되지 않았다. 보호 설정이나 예외 목록은 변경하지 않았다.
-- 21:47 새 빌드는 같은 문서의 Python 3.14 환경·`wvd.spec`으로 성공했다. 새 빌드 시작 이후 배포 직전까지 저장소 관련 Defender 1116/1117 이벤트는 없었다. 이전 탐지의 오탐 여부를 판정한 것은 아니며 격리 복원·보호 설정·예외 목록 변경은 하지 않았다. `Get-MpComputerStatus` 조회는 권한 거부로 실패해 보호 설정 전체 상태는 확인하지 못했다.
-- 빌드는 문서의 Python 3.14 환경과 `wvd.spec`, 별도 dist/work 경로로 수행했다. PyInstaller 캐시도 `PYINSTALLER_CONFIG_DIR`를 통해 해당 스테이징 내부에 뒀다. 빌드 중 테스트·exe 실행·스모크·Tcl/Tk/리소스/해시 검증은 하지 않았다. 빌드·배포에는 최신 `docs/build-and-release.md`만 적용하며 아래 과거 Telegram 인계의 스모크 절차를 따라서는 안 된다.
-- 빌드·배포 요청은 완료했지만 전체 최적화 목표는 아직 완료하지 않았다. 사용자가 새 배포본을 실행한 뒤 실제 상자 결과·처리 시간·폴백 빈도를 확인해야 한다. 이번 빌드·배포 단계에서는 문서대로 테스트·exe 실행·스모크·Tcl/Tk/리소스/프로그램 해시 검증을 하지 않았다. 배포 검증은 위 사용자 데이터 보존 확인만 수행했다.
-- 첫 두 목표 턴은 소스 수정·회귀 검증·로그 재생을 수행한 progress다. 세 번째 턴에서 동일 빌드의 Defender 격리와 exe 부재, 새 상자 로그 부재를 다시 확인했다. 최신 상자 종료 기록은 여전히 2026-09-05 19:32:59이며, 실행 중인 PID 9156은 기존 배포본이다. 진행 중인 빌드나 수정본 검증 프로세스는 없다.
-- 앞선 동일 차단 조건이 3개 연속 목표 턴에서 확인돼 목표를 `blocked`로 기록했었다. 완료로 판정한 것이 아니다.
-- 사용자 `다음 진행해`로 21:28에 재개한 턴에서는 위 반사 후 교차 수정·회귀 검증을 수행했다. 이어 사용자 `진행해`를 받은 이번 턴은 새 스테이징 빌드·배포·사용자 데이터 보존 확인을 완료한 progress다. 기존 Defender 격리가 현재 빌드·배포를 계속 막는 상태라고 반복 보고하지 않는다.
-- 실행을 하지 않았으므로 새 수정본의 실전 기록은 아직 없다. 마지막 확인한 로그의 20:23·21:23 추가분은 버전 확인뿐이며 상자 종료 기록은 19:32:59다. 다음 최적화 반복은 새 배포본의 실행 기록에서 시작한다. 과거 실패 빌드나 완료된 소스 검증·배포를 반복하지 않는다.
+## 최신 상태 — 2026-11-01 01:57 KST 영묘 6종 3번 직행 재배포 완료
 
----
+- 이 항목은 아래의 미배포·4번 좌표 설명보다 우선한다. 사용자 요청으로 전사·도적·승려·마법사·기사·Rarities(`LMG-FT/TH/PR/MG/KN/RA`) 모두 `[["position", "右下", [555, 1235]]]` 한 지점 직행으로 변경했다. 기존 `[178, 1240]`은 출구였다. 별도 경로의 용광로 영묘 `LMG-GT`는 유지했다.
+- 테스트 RED 확인 후 관련 32개 PASS, 전체 tools **285/285 PASS**. 소스 변경은 퀘스트 데이터·관련 테스트·변경 기록이며, 실행 중 엔진이나 안전 인식 조건을 변경하지 않았다.
+- 빌드 종료 코드 0. **01:57:24 KST `3.2.1-momo.1` 재배포 완료**, 실제 위치 `C:/Users/admin/Documents/momo31-wvd/dist/wvd`. `_internal`, `wvd.exe`, `CHANGES_LOG.md`만 교체했다. `config.json`, `logs`, `audit` 보호 매니페스트 40항목이 배포 전후 일치했다.
+- 최신 스테이징: 통합 worktree의 `build/release-stage-20261101-015641-163372`. 이 폴더의 `previous-deploy`에 이전 배포본을 보존했다. 기록은 `build.log`, `build-exit-code.txt`, `protected-before.json`, `protected-after.json`, `deployment-receipt.json`. 포인터 `build/current-deployment-stage.txt`도 갱신됐다.
+- 배포된 exe를 자동 실행하거나 스모크/해시 검증하지 않았다. 3번 좌표의 실게임 이동·전투·완주는 아직 미검증이다. 다음 실행 결과를 보고 후속 판단한다.
 
-# Telegram 원격 종료 작업 인계
+## 2026-11-01 후속 수정 — 도적 영묘 3번 지점 직행 (미배포)
 
-마지막 갱신: 2026-08-25 01:27 KST
+- 이 항목은 아래 01:36 인계의 도적 경로 설명보다 우선한다. 사용자가 도적 영묘 이동 실패를 보고하여 실행 로그와 ADB 연속 캡처로 조사했다.
+- 원인: `右下` 드래그 후 `[178, 1240]`은 실제 지도 왼쪽 아래 출구였다. 로그 01:49:47/01:50:50에서 이 좌표를 누른 뒤 전투 없이 영묘 메뉴로 복귀했다. 다른 화면 후보의 DEBUG 이미지 매칭 실패는 이 문제의 직접 원인이 아니다.
+- 사용자 지시: 기존 **3번 좌표**로 이동. 통합 worktree의 `resources/quest/quest.json`에서 **LMG-TH만 `[555, 1235]` 한 지점 직행**으로 변경했다. 지도 드래그는 `右下` 유지. 전사·승려·마법사·기사·Rarities 및 용광로 경로는 변경하지 않았다. 명시적 퇴장 지점은 추가하지 않았다.
+- `tools/test_thief_tomb.py`의 목표 기대값을 갱신하여 RED 1건 → 관련 32개 PASS를 확인했다. Telegram 55개 PASS, 스마트 개봉 독립 시나리오 전체 PASS. 기존 FarmConfig RuntimeWarning은 그대로다.
+- **빌드·배포는 하지 않았다. 현재 실행 중인 `dist/wvd/wvd.exe`는 여전히 출구 좌표를 사용하는 이전 배포본이다.** 새 좌표의 실게임 이동·전투·완주는 검증하지 않았다. 사용자 빌드/배포 요청이 오면 기존 배포 절차를 따른다.
+- 진단 캡처는 통합 worktree의 `build/thief-movement-debug`에 있다. `cycle-02.png`는 드래그 후 실제 도적 지도이며 출구와 3번 지점을 확인할 수 있다. 데스크톱/캐릭터 캡처는 배포·커밋 대상이 아니다.
+- 개발 검증 로그: `.superpowers/sdd/upstream-3.2.1-merge-plan/thief-third-point-*.log`.
+- 전체 tools 검사: 첫 실행 285개 중 `test_shutdown_deadlines_are_bounded`의 download 하위 사례 1건 실패(실제 보조 스레드가 아직 살아 있는 타이밍). 해당 테스트 단독 재검사 PASS, 소스·테스트 추가 변경 없이 전체 재실행 **285/285 PASS**. 이 종료 테스트의 타이밍 민감성은 이번 좌표 수정 범위에서 변경하지 않았다.
 
-## 사용자 규칙
+작성: 2026-11-01 01:36 KST. 이 문서가 이전 세션 인계보다 우선한다. 아래 경로·프로세스는 다음 세션에서 다시 확인한다.
 
-- Codex는 Git 커밋, push, PR 생성·갱신을 하지 않는다.
-- 실행 파일 빌드·배포 시 `docs/build-and-release.md`와 `AGENTS.md`의 사용자 데이터 보존 절차를 따른다.
-- 상자 선택창과 결과창 인식 불변 규칙은 변경하지 않는다.
+## 다음 세션에서 가장 먼저 확인할 것
 
-## 목표와 현재 결과
+1. **실제 수정 대상은 아래 통합 worktree다.** 상위 폴더의 잔여 소스나 `recovered-source` 본체에서 기능 수정을 시작하지 않는다.
+2. 통합 worktree의 `AGENTS.md`와 이 문서를 읽고 현재 HEAD·미커밋 변경을 확인한다. 변경을 초기화하거나 worktree를 삭제하지 않는다.
+3. 마지막 사용자 요청까지 구현·재배포를 완료했다. 사용자 후속 요청이나 실제 사용 결과를 기준으로 진행한다. 과거 인계에 적힌 미완료 버그·옛 빌드를 현재 상태로 반복하지 않는다.
+4. 개발 검증과 배포 절차를 구분한다. 새 빌드·배포가 필요하면 `docs/build-and-release.md`를 먼저 읽는다.
 
-Telegram `/start`와 `/stop`으로 게임을 안전하게 제어하는 기능을 실기기에서 검증 중이다.
+## 경로와 Git 상태
 
-- `/start`는 2026-08-25 01:22 테스트에서 성공했다. 게임 실행, 시작 고지 탭, `FFXI-Org` 매크로 실행까지 확인했다.
-- `/stop`은 아직 실패한다. 첫 재진입 문제는 해결됐지만, 월드맵에서 도시로 들어간 뒤 레거시 복귀 함수가 이미 도시라는 사실을 인식하지 못하고 반복 탭한다.
-- 01:25:08에 `City_RoyalCityLuknalia`를 25회 찾지 못해 `restartGame()` 경로로 들어갔고 게임이 종료됐다.
-- 01:26:39에 게임과 작업이 예상치 않게 다시 시작됐다. 이 재실행 원인은 아직 분석하지 않았다.
-- 마지막 확인 시 WVD PID는 15664, 게임 PID는 10732 계열이었다. 다음 세션 시작 시 실제 상태를 다시 확인하고, 실행 중이면 사용자에게 종료를 요청한 뒤 배포한다.
+| 용도 | 절대 경로 |
+|---|---|
+| 대화 시작 폴더 | `C:/Users/admin/Documents/momo31-wvd` |
+| 원래 복구 저장소 | `C:/Users/admin/Documents/momo31-wvd/recovered-source` |
+| **현재 통합 소스·개발 환경** | `C:/Users/admin/Documents/momo31-wvd/recovered-source/build/merge-321-worktree` |
+| **실제 배포본** | `C:/Users/admin/Documents/momo31-wvd/dist/wvd` |
+| 실행 파일 | `C:/Users/admin/Documents/momo31-wvd/dist/wvd/wvd.exe` |
 
-주요 증거 로그:
+- 원래 저장소와 worktree의 기준 HEAD: `4e907ba8ec40d869cf90dcd8d992afcd1c328ba3`.
+- 통합 worktree는 **detached HEAD이며 변경은 미커밋**이다. 커밋·push·PR은 하지 않았다. 프로그램 버전은 `3.2.1-momo.1`이다.
+- 업스트림 고정 대상: `4ba47a7af16eee874ae1ae178a2ca27055d72f61` (3.2.1). Git merge commit 대신 기존 로컬 수정을 보존한 기능별 소스 이식이다.
+- worktree 생성 시 호스트 도구가 불완전한 상위 폴더에서 실패하여 Git worktree로 만들었다. 현재 디렉터리를 Git이 관리하며 호스트 작업본 UI의 자동 관리 대상은 아니다.
+- 인계 갱신 직전 worktree 상태 항목은 505개였다. 이동·삭제·미추적 디렉터리가 있어 이 수치를 실제 변경 파일 수와 같다고 해석하지 않는다.
+- 원본 소스 530개 보존 검증은 병합 완료 때 수행했다. 이번 인계 요청으로 세 위치의 `SESSION_HANDOFF.md`를 갱신하므로, 이후 원본 해시 검사에서 인계 문서 변경은 의도된 차이로 구분해야 한다.
 
-- `dist/wvd/logs/log_260825-011941.txt:1067`: 도시 표식을 25회 못 찾고 재시작을 판단
-- `dist/wvd/logs/log_260825-011941.txt:1068`: 약 91초 뒤 작업이 다시 초기화됨
+## 업스트림 통합 완료 내용
 
-## 구현된 변경
+- Task 0~8 완료. pywebview/WebView2 UI, 공통 설정 계층, UI/게임 언어 분리, 신규 작업·이미지 구조, 런타임 개선을 도입했다.
+- 한국어 UI, Telegram 제어, 스마트 개봉, 상자 우선 판정과 기존 로컬 복구·안전 조건을 보존했다.
+- 실행별 runtime/worker generation, 단일 컨트롤러 큐, 정지 우선 작업 인계, 회차 후 정지, 종료 제한 시간, 포크 전용 업데이트 검증을 연결했다.
+- 독립 최종 검토의 Important 5건을 모두 수정했다: 일반 GUI 로그 시작·flush, 실제 `__main__`의 언어 변경, 포화된 UI 큐의 비차단 처리, 실제 Telegram/보조 작업 종료 대기, CI 사전 출시 정책 복구.
+- CI에서 `-` 포함 버전의 기존 사전 출시 분류를 유지한다. `3.2.1-momo.1`을 임의로 정식 배포/Pages 게시 대상으로 바꾸지 않는다.
 
-- `resources/images/closeAppPrompt.png`: 실제 `Close the app?` 문구의 전용 템플릿
-- `mod/telegram_remote_control/title_transition.py`: 종료 문구와 제한된 `OK` ROI를 함께 검증하고, 프로세스 종료 후 앱을 다시 실행해 타이틀에서 대기
-- `src/script.py`의 `FindCoordsOrElseExecuteFallbackAndWait`: 각 반복 전에 원격 정지 체크포인트 실행
-- `RemoteRuntime.stop_transition_started`: 안전 정지 상태기 내부에서 두 번째 `RemoteStopSignal`이 발생해 즉시 강제 종료되던 문제 방지
-- 관련 테스트와 설계 문서·변경 로그 갱신
+상세 계획·보고서·검토 기록은 모두 통합 worktree 아래에 있다.
 
-## 다음 세션의 첫 작업
+- `docs/upstream-3.2.1-merge-plan.md`
+- `docs/upstream-3.2.1-merge-report.md`
+- `.superpowers/sdd/upstream-3.2.1-merge-plan/progress.md`
+- `.superpowers/sdd/upstream-3.2.1-merge-plan/final-review.md`
+- `docs/upstream-3.2.1-file-inventory.csv`: 업스트림 변경 743개 판정(722 통합, 17 로컬 보존, 4 제외).
+- `docs/upstream-3.2.1-resource-availability.json`, `final-file-list.json` 등 **병합 시점의 인벤토리는 아래 후속 영묘 추가 이전 자료**다. 현재 전체 상태라고 단정하지 않는다.
 
-1. 최신 프로세스와 `dist/wvd/logs/log_260825-011941.txt`의 마지막 부분을 확인한다.
-2. `src/script.py`의 `TeleportFromDungeonToCity` 전체 호출자를 확인한다.
-3. 최소 수정 후보: 도시 대상 검색 중 `Inn` 또는 기존 도시 표식이 검출되면 이미 도착한 것으로 처리하고, 추가 swipe/tap과 `restartGame()` 없이 반환한다.
-4. 좌표 폴백으로 도시에 먼저 진입한 fixture에서 반복 탭·재시작이 발생하지 않는 회귀 테스트를 추가한다.
-5. 강제 종료 뒤 01:26:39에 작업이 다시 시작된 원인을 작업 완료 callback, bounded worker, Telegram command lifecycle 순서로 조사한다.
-6. 관련 테스트 통과 후 문서 절차대로 새 스테이징 빌드·스모크·배포하고 `/start` → `/stop`을 다시 실기기 검증한다.
+## 이번 후속 수정: 영묘 6종
 
-수정 후보 위치:
+사용자가 전사영묘의 기존 1~3번 방문 지점을 생략하고, 종전 4번 좌표로 즉시 이동하도록 요청했다. 이어 같은 맵을 쓰는 도적·Priest·Mage·Knight·Rarities를 추가했다.
 
-- `src/script.py:1829` `TeleportFromDungeonToCity`
-- `src/script.py:1852` 도시 대상만 기다리는 `FindCoordsOrElseExecuteFallbackAndWait`
-- `mod/telegram_remote_control/runtime_bridge.py:59,206`
-- `mod/telegram_remote_control/stop_orchestrator.py:19`
+| 작업 코드 | 한국어 UI 이름 | 영어 게임 진입 이미지 |
+|---|---|---|
+| `LMG-FT` | `[뼈] 전사 영묘` | `LMG/FTB1F` (기존) |
+| `LMG-TH` | `[뼈] 도적 영묘` | `LMG/THB1F` |
+| `LMG-PR` | `[뼈] 승려 영묘` | `LMG/PRB1F` |
+| `LMG-MG` | `[뼈] 마법사 영묘` | `LMG/MGB1F` |
+| `LMG-KN` | `[뼈] 기사 영묘` | `LMG/KNB1F` |
+| `LMG-RA` | `[뼈] Rarities 영묘` | `LMG/RAB1F` |
 
-## 검증과 배포 상태
+- 6종 모두 `_TYPE: dungeon`, 경로는 **`[["position", "右下", [178, 1240]]]` 하나**다.
+- `右下`는 지도 표시를 맞추는 드래그 `(700,1200) → (100,250)`를 뜻한다. 캐릭터를 우하단으로 직접 걷게 하는 명령이 아니다.
+- 공통 세계 지도 목적지는 `LMG/LMG`. 각 작업의 `_EOT` L1/L2에서 위의 독립 진입 이미지를 사용한다.
+- 경로·세 언어 표시명: `resources/quest/quest.json`. 한국어 역매핑: `src/config_model.py`.
+- 새 영어 이미지 5개: `resources/images/en_US/LMG/{THB1F,PRB1F,MGB1F,KNB1F,RAB1F}.png`.
+- 현재 기본 퀘스트 JSON은 **67개 레코드**다(병합 당시 62개 + 새 영묘 5개).
+- 기존 `LMG-GT` 용광로 영묘는 이번 직행 경로 변경 대상이 아니다. 기존 4개 목표 지점을 유지한다.
+- 이동·전투·상자·회복·휴식·반복은 기존 `StateDungeon`/`DungeonFarm`을 사용한다. 특정 보스나 뼈 획득을 확인하는 전용 조건은 추가하지 않았다.
+- 마지막 좌표에 도달하면 공통 로직이 화면을 다시 판정한다. 경로 자체에는 명시적 퇴장이 없다. 귀환 화면이면 휴식/재진입 조건을 따르고, 던전에 남아 있으면 경로를 다시 처리할 수 있다.
 
-마지막 소스 검증:
+## 실제 화면 캡처와 이미지 검증
 
-- Telegram 원격제어 unittest 35개 통과
-- `tools/test_recovery.py` 14개 통과
-- `tools/test_main_controller.py` 2개 통과
-- `compileall`, `git diff --check` 통과
+- 사용자가 에뮬레이터에 메뉴를 띄운 뒤 직접 캡처하라고 요청하여, **실제 ADB 화면 읽기와 캡처를 수행했다**. 이전 문서의 “실제 ADB를 전혀 사용하지 않음”은 이 후속 작업까지 설명하지 않는다.
+- MuMu ADB: `C:/Program Files/Netease/MuMuPlayer/nx_device/12.0/shell/adb.exe`.
+- 당시 장치 목록: `127.0.0.1:16384`, `emulator-5554`. 두 주소에서 동일한 900×1600 메뉴 화면이 캡처됐다. 다음 세션에는 실제 연결 상태를 다시 확인한다.
+- 원본: 통합 worktree의 `build/thief-tomb-capture/tcp.png`, `emulator.png`. 사용자 캐릭터 화면이 포함되어 있으므로 배포/커밋할 자료가 아니다.
+- 원본 픽셀에서 각 이름만 추출했다. AI 생성 이미지나 전사 이름의 대체 사용은 하지 않았다.
+- 양성 매칭 약 1.0. 해당 행을 제외한 다른 메뉴의 최대 매칭: 도적 0.742, 승려 0.696, 마법사 0.697, 기사 0.723, Rarities 0.439로 기존 0.8 임계값 미만이다.
+- 기록: `build/thief-tomb-capture/match-result.json`, `build/class-tombs-match-results.json`, `build/rarities-tomb-match-result.json`.
+- 나중에 찍은 `build/class-tombs-menu.png`는 정보 팝업이 떠 있는 화면이다. 이미지 추출에는 앞선 선명한 메뉴 원본을 사용했다.
+- 메뉴 선택·던전 진입·실전 전투/완주를 자동 실행해 확인한 것은 아니다.
 
-현재 배포본:
+## 개발 검증 결과와 범위
 
-- `dist/wvd/wvd.exe`
-- SHA-256 `3B4B4A9072813E62725D33176BC003FC57DD331B3837F786F9E0898E7F4256B3`
-- 스테이징 `build/release-stage-20260825-011506`
-- 이전 배포 백업 `build/release-stage-20260825-011506/previous-deploy`
-- 스테이징·최종 스모크 각각 10초 이상 통과, config/logs/audit 보존 확인
+- 병합 최종 전체 검증: **tools 281/281, Telegram 55/55, 스마트 개봉 독립 시나리오 전체 PASS**. 기본/Telegram 6개 카탈로그 재컴파일 바이트 일치, 실제 숨김 WebView2 UI PASS, 한국어 패널의 중국어 잔여/JS 오류 0, JavaScript 구문 검사 PASS.
+- 위 전체 검증은 후속 영묘 추가 전 결과다. 이후 전체 스위트를 다시 돌렸다고 보고하지 않는다.
+- 전사 직행 변경: 실제 `LoadQuest` 경로 확인, 다른 퀘스트 데이터 불변 확인, 자원 관련 7개 테스트 PASS.
+- 도적 추가: RED→GREEN, 관련 31개 PASS. 실제 진입 이미지 추가 후 영어 자산 검사가 빈 누락 목록을 반환했다.
+- 나머지 영묘 추가: `tools/test_class_tombs.py`를 확장해 RED→GREEN. Rarities까지 반영한 최종 관련 **32개 PASS**. 이는 parameter/subTest 항목 수가 아니라 unittest 테스트 수다.
+- 후속 테스트: `tools/test_thief_tomb.py`, `tools/test_class_tombs.py` 및 기존 자원/컨트롤러/Web UI 회귀 테스트.
+- 로그: `.superpowers/sdd/upstream-3.2.1-merge-plan/{lmg-ft-route-regression,thief-tomb-*,class-tombs-*,rarities-tomb-*}.log`.
+- 기존 `FarmConfig`의 `non-string key in __dict__` RuntimeWarning은 남아 있다.
 
-## Git 작업 트리
+개발용 실행 예(통합 worktree에서):
 
-브랜치 `merge/upstream-2.6.1`, HEAD `55aa4a662b3a9d5ce9f80fd1c932329cfc0b28d4` 기준이다. 관련 변경은 커밋되지 않았고 작업 트리에 남아 있다. `SESSION_HANDOFF.md`와 `AGENTS.md`도 새 인계 규칙 때문에 변경됐다. 기존 변경을 되돌리거나 덮어쓰지 말고 현재 diff부터 확인한다.
+```powershell
+& './build/wvd_py314_venv/Scripts/python.exe' -X utf8 build/check.py tombs-check -m unittest tools.test_class_tombs tools.test_thief_tomb tools.test_upstream_321_merge.ResourceMigrationTests tools.test_main_controller tools.test_web_ui -v
+```
+
+## 최신 배포 — 완료
+
+- **2026-11-01 01:31:38 KST**, `3.2.1-momo.1` 재배포 완료. 도적·승려·마법사·기사·Rarities 추가와 전사 직행을 모두 포함한다. 미배포 상태가 아니다.
+- 소스: 위 통합 worktree. 배포 위치는 **상위 폴더의 `dist/wvd`**다. `recovered-source/dist`나 worktree 내부의 일반 `dist`를 배포본으로 혼동하지 않는다.
+- Python 3.14.6 / PyInstaller 6.22.3 / hooks 2026.9. 빌드는 종료 코드 0.
+- 최신 스테이징(worktree 상대 경로): `build/release-stage-20261101-013050-048912`.
+- 이전 프로그램 백업: 같은 스테이징의 **`previous-deploy`**. 사용자가 새 배포를 확인할 때까지 보존한다.
+- `_internal`, `wvd.exe`, `CHANGES_LOG.md`만 교체했다. `config.json`, `logs`, `audit`의 존재 상태·상대 경로·크기·SHA-256을 비교해 일치를 확인했다. 최신 보호 매니페스트 항목은 38개다(파일 수와 동일한 의미가 아님).
+- 기록: 스테이징의 `build.log`, `build-exit-code.txt`, `protected-before.json`, `protected-after.json`, `deployment-receipt.json`.
+- 최신 스테이징 포인터: `build/current-deployment-stage.txt`. 교체 스크립트: `build/deploy-321.ps1`(명시 경로 제한·사용자 데이터 보존·실패 시 프로그램 파일 롤백 포함).
+- 첫 배포 때 PowerShell이 정상 stderr 로그를 오류로 처리해 중단한 적이 있다. 이후 Python `subprocess.run(..., stdout=log, stderr=STDOUT)`로 빌드 로그를 저장해 해결했다. 이 방식을 유지하면 같은 셸 오류를 피할 수 있다.
+- 배포 단계에서는 테스트·exe 실행·스모크·리소스/프로그램 해시 검증을 하지 않았다. 배포된 exe를 자동 실행하지 않았다.
+- 01:36 KST 프로세스 확인 시 실행 중인 `wvd.exe`는 없었고 MuMuNxDevice PID 14004가 있었다. 이 PID와 화면은 다음 세션에서 다시 확인한다.
+
+## 남은 제약과 다음 작업 판단
+
+- UI 언어는 한국어·영어·중국어를 지원한다. 게임 이미지 언어와 별개다. 이번 5개 진입 캡처는 **영어 게임용**이다.
+- 중국어 게임은 로컬 안전 인식 이미지 `EVENT`, `abyssReadying`, `connection`, `didnottakethequest`, `guildDecline`, `settrap`, `startupDisclaimer`, `tabtostart` 등이 부족해 실행을 차단한다. 새 영묘의 중국어 진입 이미지도 없다. 영어 이미지로 대체하거나 안전 검사를 우회하지 않는다.
+- 영어 `FloralHoney`는 해당 작업 이미지가 중국어 전용이라 실행이 차단된다. 병합 시점의 영어 61/62 가용 수치를 현재 67개 카탈로그의 수치로 그대로 사용하지 않는다.
+- 이번 영묘의 실제 이동 경로/반복/귀환 완주와 실제 Telegram 통신·업데이트 적용은 검증하지 않았다. 이미지 인식과 모의 회귀 검증 결과를 실게임 완주 성공으로 표현하지 않는다.
+- **진행 중인 필수 미완료 작업은 없다.** 다음 요청이 실제 영묘 실행 중 문제라면 해당 배포 로그와 현재 화면을 먼저 읽어 재현 조건을 확인한다.
+
+## 반드시 유지할 작업 규칙
+
+- 사용자 변경·개인 설정 보존. 커밋·push·PR 금지. 복구 백업·worktree를 임의 삭제하지 않는다.
+- 상자 표식(`chestFlag`/`whowillopenit`/`chestOpening`)이 있으면 결과창 스킵보다 상자 처리가 우선한다. 0.95 결과창 임계값·최대 3회 스킵·상태 재판정을 유지한다.
+- 빌드·배포는 명시 요청 범위에서 수행한다. 개발 테스트는 빌드 전 완료하고, 빌드는 매번 새 `build/release-stage-*`에서 수행한다.
+- 배포 검증은 사용자 데이터 보존만 수행하며, exe를 실행하거나 스모크 테스트하지 않는다.
+- PowerShell에서 한국어/중국어 here-string을 Python stdin으로 넘기면 `?`로 바뀔 수 있다. 비ASCII 파일 작성은 UTF-8 파일을 `apply_patch`로 만들고 실행한다.
+- 새/미추적 텍스트 파일은 LF를 사용한다. tracked whitespace 검사는 일반 `git diff --check`를 쓰며, tracked 파일에 `core.autocrlf=false`를 강제해 모든 CRLF를 오류로 출력하지 않는다.
+
+이 문서는 상위 작업 폴더·복구 저장소·통합 worktree의 `SESSION_HANDOFF.md`에 동일하게 저장한다. 교체 전 인계 파일들은 상위 작업 폴더의 `build/session-handoff-backup-*`에 보존한다.

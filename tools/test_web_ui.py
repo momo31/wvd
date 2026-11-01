@@ -45,6 +45,38 @@ class WebUiTests(unittest.TestCase):
     def stored(self):
         return json.loads(self.path.read_text(encoding='utf-8'))
 
+    def test_release_notifications_are_shown_until_dismissed(self):
+        self.app.push_event({'type': 'update_manual'})
+        self.app.push_event({'type': 'update_available', 'data': {'version': '3.2.1-momo.2'}})
+        kinds = [event['type'] for event in self.bridge.poll()]
+        self.assertIn('update_manual', kinds)
+        self.assertIn('update_available', kinds)
+        self.assertEqual(self.bridge.bootstrap()['update']['latest'], '3.2.1-momo.2')
+
+    def test_dismissal_persists_while_running_and_filters_queued_notices(self):
+        self.app.push_event({'type': 'update_manual'})
+        self.app.push_event({'type': 'update_available', 'data': {'version': '3.2.1-momo.2'}})
+        self.app._quest_active = True
+        result = self.bridge.save({'RELEASE_NOTICES_DISMISSED': True})
+        self.assertTrue(result['ok'])
+        self.assertTrue(self.stored()['GENERAL'].get('RELEASE_NOTICES_DISMISSED'))
+        self.assertIsNone(result['update'])
+        self.assertNotIn('update_manual', [event['type'] for event in self.bridge.poll()])
+        self.assertEqual(self.stored()['fishing'], self.original['fishing'])
+
+    def test_dismissed_notifications_stay_hidden_after_reopening(self):
+        self.assertTrue(self.bridge.save({'RELEASE_NOTICES_DISMISSED': True})['ok'])
+        reopened = gui.ConfigPanelApp(self.controller, '3.2.1-momo.2', self.controller.msg_queue)
+        self.addCleanup(reopened.destroy)
+        reopened.push_event({'type': 'update_manual'})
+        reopened.push_event({'type': 'update_available', 'data': {'version': '3.2.1-momo.3'}})
+        reopened.push_event({'type': 'download_finished'})
+        kinds = [event['type'] for event in reopened.poll()]
+        self.assertNotIn('update_manual', kinds)
+        self.assertNotIn('update_available', kinds)
+        self.assertIn('download_finished', kinds)
+        self.assertIsNone(reopened.bootstrap()['update'])
+
     def test_telegram_errors_and_results_follow_ui_language(self):
         from mod.telegram_remote_control.models import ConnectionTestResult
         self.bridge.set_language('script', 'en_US')

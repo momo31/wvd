@@ -49,7 +49,7 @@ class ThiefTombTests(unittest.TestCase):
             StateMapSearch=search, StateChest=chest,
         )
         runtime_functions(['StateDungeon'], namespace)
-        for code in ('LMG-TH', 'LMG-FT', 'LMG-PR', 'LMG-MG', 'LMG-KN', 'LMG-RA'):
+        for code in ('LMG-TH', 'LMG-FT', 'LMG-PR', 'LMG-MG', 'LMG-KN', 'LMG-RA', 'LMG-GT'):
             with self.subTest(quest=code):
                 events = []
                 chest_states = iter([states.Chest, states.Map])
